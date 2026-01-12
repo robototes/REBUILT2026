@@ -18,6 +18,9 @@ jobs:
           java-version: 17
           cache: gradle
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - name: Check spotless
         run: ./gradlew spotlessCheck
 
@@ -32,6 +35,9 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
       - name: Automated sim test
         run: ./gradlew simulateJavaDebug -PautomatedTest=true
