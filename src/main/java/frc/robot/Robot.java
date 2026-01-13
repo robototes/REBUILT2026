@@ -4,19 +4,28 @@
 
 package frc.robot;
 
+import au.grapplerobotics.CanBridge;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.subsystems.auto.AutoBuilderConfig;
+import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.subsystems.auto.AutonomousField;
 
-/**
- * The methods in this class are called automatically corresponding to each mode, as described in
- * the TimedRobot documentation. If you change the name of this class or the package after creating
- * this project, you must also update the Main.java file in the project.
- */
+
 public class Robot extends TimedRobot {
-
+  /** Singleton Stuff */
   private static Robot instance = null;
 
   public static Robot getInstance() {
@@ -24,84 +33,121 @@ public class Robot extends TimedRobot {
     return instance;
   }
 
-  private final Controls controls;
+  
   public final Subsystems subsystems;
-  private final PowerDistribution PDH;
-
-  /**
-   * This function is run when the robot is first started up and should be used for any
-   * initialization code.
-   */
+ private final PowerDistribution PDH;
+ private Controls controls;
   protected Robot() {
-    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
-    instance = this;
-    controls = new Controls();
-    subsystems = new Subsystems();
+    // non public for singleton. Protected so test class can subclass
 
+    instance = this;
+    subsystems = new Subsystems();
+   
+   CanBridge.runTCP();
     PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
+    controls = new Controls(subsystems);
+
+      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
+    
+    
+
+
+    if (RobotBase.isReal()) {
+      DataLogManager.start();
+      DriverStation.startDataLog(DataLogManager.getLog(), true);
+    }
+
+    CommandScheduler.getInstance()
+        .onCommandInitialize(
+            command -> System.out.println("Command initialized: " + command.getName()));
+    CommandScheduler.getInstance()
+        .onCommandInterrupt(
+            (command, interruptor) ->
+                System.out.println(
+                    "Command interrupted: "
+                        + command.getName()
+                        + "; Cause: "
+                        + interruptor.map(cmd -> cmd.getName()).orElse("<none>")));
+    CommandScheduler.getInstance()
+        .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
+
+    SmartDashboard.putData(CommandScheduler.getInstance());
+   
+
+    if (SubsystemConstants.DRIVEBASE_ENABLED) {
+
+      AutonomousField.initShuffleBoard("Field", 0, 0, this::addPeriodic);
+      AutoLogic.initShuffleBoard();
+      FollowPathCommand.warmupCommand().schedule();
+    }
+    
+    WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
   }
 
-  /**
-   * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
-   * that you want ran during disabled, autonomous, teleoperated and test.
-   *
-   * <p>This runs after the mode specific periodic functions, but before LiveWindow and
-   * SmartDashboard integrated updating.
-   */
   @Override
   public void robotPeriodic() {
-    // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
-    // commands, running already-scheduled commands, removing finished or interrupted commands,
-    // and running subsystem periodic() methods.  This must be called from the robot's periodic
-    // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    
   }
 
-  /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {}
 
   @Override
   public void disabledPeriodic() {}
 
-  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {}
+  public void disabledExit() {
+    // on the end of diabling, make sure all of the motors are set to break and wont move upon
+    // enabling
+    if (subsystems.drivebaseSubsystem != null) {
+      subsystems.drivebaseSubsystem.brakeMotors();
+    }
+ 
+  
+  }
 
-  /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousInit() {
+    Shuffleboard.startRecording();
+    if (SubsystemConstants.DRIVEBASE_ENABLED && AutoLogic.getSelectedAuto() != null) {
+      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+   
+    }
+    
+  }
+
+  @Override
+  public void autonomousExit() {
+    CommandScheduler.getInstance().cancelAll();
+  }
 
   @Override
   public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
+    CommandScheduler.getInstance().cancelAll();
+    Shuffleboard.startRecording();
   }
 
-  /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {}
 
   @Override
-  public void testInit() {
-    // Cancels all running commands at the start of test mode.
+  public void teleopExit() {
     CommandScheduler.getInstance().cancelAll();
   }
 
-  /** This function is called periodically during test mode. */
+  @Override
+  public void testInit() {
+    CommandScheduler.getInstance().cancelAll();
+  }
+
   @Override
   public void testPeriodic() {}
 
-  /** This function is called once when the robot is first started up. */
   @Override
-  public void simulationInit() {}
+  public void testExit() {}
 
-  /** This function is called periodically whilst in simulation. */
-  @Override
-  public void simulationPeriodic() {}
+  
 }

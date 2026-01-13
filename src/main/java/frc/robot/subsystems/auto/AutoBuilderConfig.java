@@ -6,15 +6,15 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import frc.robot.Robot;
-
-
+import frc.robot.Subsystems;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
 
 public class AutoBuilderConfig {
   public static Robot r = Robot.getInstance();
- 
+    public static final Subsystems s = r.subsystems;
 
   public static void buildAuto(CommandSwerveDrivetrain drivebase) {
 
@@ -44,7 +44,7 @@ public class AutoBuilderConfig {
             // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
             return AllianceUtils.isRed(); // Checking alliance is red
           },
-          drivebaseSubsystem // Reference to this subsystem to set requirements
+          s.drivebaseSubsystem // Reference to this subsystem to set requirements
           );
 
     } catch (IOException | ParseException e) {

@@ -62,7 +62,7 @@ public static void registerCommands() { }
       List.of(
       
   new AutoPath("do try", "M_H"),
-   new AutoPath("Gy", "MLSF_H-I")
+   new AutoPath("Gy", "L-Depot-Climb")
           );
 
   private static List<AutoPath> onePiecePaths =

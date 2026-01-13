@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.subsystems.auto;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -9,8 +9,6 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import frc.robot.subsystems.auto.AutoLogic;
-import frc.robot.subsystems.auto.PathPlannerAutos;
 
 import java.util.List;
 import java.util.Map;

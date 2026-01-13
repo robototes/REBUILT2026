@@ -1,53 +1,70 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.Autos;
-import frc.robot.commands.ExampleCommand;
-import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.ExampleSubsystem;
+import frc.robot.Subsystems;
+import frc.robot.Telemetry;
+import frc.robot.generated.BonkTunerConstants;
 
-/**
- * This class is where the bulk of the robot should be declared. Since Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
- * subsystems, commands, and trigger mappings) should be declared here.
- */
+
+
+import java.util.function.BooleanSupplier;
+
 public class Controls {
-  // The robot's subsystems and commands are defined here...
-  private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
-  private final Subsystems s = new Subsystems();
+  private static final int SOLO_CONTROLLER_PORT = 0;
+  private static final int DRIVER_CONTROLLER_PORT = 1;
+  private static final int OPERATOR_CONTROLLER_PORT = 2;
+  private static final int ARM_PIVOT_SPINNY_CLAW_CONTROLLER_PORT = 3;
+  private static final int ELEVATOR_CONTROLLER_PORT = 4;
+  private static final int CLIMB_TEST_CONTROLLER_PORT = 5;
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  private final CommandXboxController driverController;
+  private final CommandXboxController operatorController;
+  private final CommandXboxController armPivotSpinnyClawController;
+  private final CommandXboxController elevatorTestController;
+  private final CommandXboxController climbTestController;
+  private final CommandXboxController soloController;
 
-  public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+  private final Subsystems s;
+ 
+ 
+
+  
+
+  // Swerve stuff
+  // setting the max speed nad other similar variables depending on which drivebase it is
+  public static final double MaxSpeed =
+      
+           BonkTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+      
   private final double MAX_ACCELERATION = 50;
   private final double MAX_ROTATION_ACCELERATION = 50;
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)
           .in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-
-  private final double driveInputScale = 1;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
@@ -58,19 +75,31 @@ public class Controls {
 
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls() {
-    // Configure the trigger bindings
-    configureBindings();
+  private final BooleanSupplier driveSlowMode;
+
+  public Controls(Subsystems s) {
+    driverController = new CommandXboxController(DRIVER_CONTROLLER_PORT);
+    operatorController = new CommandXboxController(OPERATOR_CONTROLLER_PORT);
+    armPivotSpinnyClawController = new CommandXboxController(ARM_PIVOT_SPINNY_CLAW_CONTROLLER_PORT);
+    elevatorTestController = new CommandXboxController(ELEVATOR_CONTROLLER_PORT);
+    climbTestController = new CommandXboxController(CLIMB_TEST_CONTROLLER_PORT);
+    soloController = new CommandXboxController(SOLO_CONTROLLER_PORT);
+    this.s = s;
+   
+  
+    driveSlowMode = driverController.start();
     configureDrivebaseBindings();
+
+    configureAutoAlignBindings();
+
+
+    
   }
 
-  private Command rumble(CommandXboxController controller, double vibration, Time duration) {
-    return Commands.startEnd(
-            () -> controller.getHID().setRumble(RumbleType.kBothRumble, vibration),
-            () -> controller.getHID().setRumble(RumbleType.kBothRumble, 0))
-        .withTimeout(duration)
-        .withName("Rumble Port " + controller.getHID().getPort());
+ 
+
+  private Trigger connected(CommandXboxController controller) {
+    return new Trigger(() -> controller.isConnected());
   }
 
   // takes the X value from the joystick, and applies a deadband and input scaling
@@ -78,7 +107,8 @@ public class Controls {
     // Joystick +Y is back
     // Robot +X is forward
     double input = MathUtil.applyDeadband(-driverController.getLeftY(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double inputScale = driveSlowMode.getAsBoolean() ? 0.5 : 1;
+    return input * MaxSpeed * inputScale;
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
@@ -86,7 +116,8 @@ public class Controls {
     // Joystick +X is right
     // Robot +Y is left
     double input = MathUtil.applyDeadband(-driverController.getLeftX(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double inputScale = driveSlowMode.getAsBoolean() ? 0.5 : 1;
+    return input * MaxSpeed * inputScale;
   }
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
@@ -94,9 +125,11 @@ public class Controls {
     // Joystick +X is right
     // Robot +angle is CCW (left)
     double input = MathUtil.applyDeadband(-driverController.getRightX(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double inputScale = driveSlowMode.getAsBoolean() ? 0.5 : 1;
+    return input * MaxSpeed * inputScale;
   }
 
+  // all the current control bidings
   private void configureDrivebaseBindings() {
     if (s.drivebaseSubsystem == null) {
       // Stop running this method
@@ -107,18 +140,7 @@ public class Controls {
     // and Y is defined as to the left according to WPILib convention.
 
     // the driving command for just driving around
-    s.drivebaseSubsystem.setDefaultCommand(
-        // s.drivebaseSubsystem will execute this command periodically
-
-        // applying the request to drive with the inputs
-        s.drivebaseSubsystem
-            .applyRequest(
-                () ->
-                    drive
-                        .withVelocityX(getDriveX())
-                        .withVelocityY(getDriveY())
-                        .withRotationalRate(getDriveRotate()))
-            .withName("Drive"));
+   
 
     // various former controls that were previously used and could be referenced in the future
 
@@ -157,44 +179,121 @@ public class Controls {
     // ));
 
     // reset the field-centric heading on back button press
-    driverController
-        .back()
-        .onTrue(
-            s.drivebaseSubsystem
-                .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
-                .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
-                .withName("Reset gyro"));
+   
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+
+    // creats a swerve button that coasts the wheels
+    var swerveCoastButton =
+        Shuffleboard.getTab("Controls")
+            .add("Swerve Coast Mode", false)
+            .withWidget(BuiltInWidgets.kToggleButton)
+            .getEntry();
+    // coast the wheels
+    new Trigger(() -> swerveCoastButton.getBoolean(false))
+        .whileTrue(s.drivebaseSubsystem.coastMotors());
   }
 
-  /**
-   * Use this method to define your trigger->command mappings. Triggers can be created via the
-   * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with an arbitrary
-   * predicate, or via the named factories in {@link
-   * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for {@link
-   * CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
-   * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
-   * joysticks}.
-   */
-  private void configureBindings() {
-    // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-    new Trigger(m_exampleSubsystem::exampleCondition)
-        .onTrue(new ExampleCommand(m_exampleSubsystem));
 
-    // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
-    // cancelling on release.
-    driverController.b().whileTrue(m_exampleSubsystem.exampleMethodCommand());
+  
+  
+   
+    // Controls binding goes here
+
+
+    // operatorController.rightBumper().whileTrue(s.elevatorSubsystem.holdCoastMode());
+  
+    // var elevatorZeroButton = new DigitalInput(Hardware.ELEVATOR_ZERO_BUTTON);
+    // new Trigger(() -> elevatorZeroButton.get())
+    //     .debounce(1, DebounceType.kRising)
+    //     .and(RobotModeTriggers.disabled())
+    //     .onTrue(s.elevatorSubsystem.resetPosZero());
+  
+
+ 
+
+    
+
+  
+
+   
+
+    // regularly run the advanced climb check
+  
+
+    // check if the climb controller is connected, and whne start is pressed move to the next climb
+    // position
+  
+
+  
+
+   
+
+    
+
+  private void configureAutoAlignBindings() {
+    if (s.drivebaseSubsystem == null) {
+      return;
+    }
+   
+    
+
   }
 
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
-  public Command getAutonomousCommand() {
-    // An example command will be run in autonomous
-    return Autos.exampleAuto(m_exampleSubsystem);
+   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
+    return Commands.startEnd(
+            () -> controller.getHID().setRumble(RumbleType.kBothRumble, vibration),
+            () -> controller.getHID().setRumble(RumbleType.kBothRumble, 0))
+        .withTimeout(duration)
+        .withName("Rumble Port " + controller.getHID().getPort());
+  } 
+
+  
+
+  public void vibrateDriveController(double vibration) {
+    if (!DriverStation.isAutonomous()) {
+      driverController.getHID().setRumble(RumbleType.kBothRumble, vibration);
+    }
   }
+
+  public void vibrateCoDriveController(double vibration) {
+    if (!DriverStation.isAutonomous()) {
+      operatorController.getHID().setRumble(RumbleType.kBothRumble, vibration);
+    }
+  }
+
+  private double getJoystickInput(double input) {
+    if (soloController.leftStick().getAsBoolean() || soloController.rightStick().getAsBoolean()) {
+      return 0; // stop driving if either stick is pressed
+    }
+    // Apply a deadband to the joystick input
+    double deadbandedInput = MathUtil.applyDeadband(input, 0.1);
+    return deadbandedInput;
+  }
+
+  // Drive for Solo controller
+  // takes the X value from the joystick, and applies a deadband and input scaling
+  private double getSoloDriveX() {
+    // Joystick +Y is back
+    // Robot +X is forward
+    return getJoystickInput(-soloController.getLeftY()) * MaxSpeed;
+  }
+
+  // takes the Y value from the joystick, and applies a deadband and input scaling
+  private double getSoloDriveY() {
+    // Joystick +X is right
+    // Robot +Y is left
+    return getJoystickInput(-soloController.getLeftX()) * MaxSpeed;
+  }
+
+  // takes the rotation value from the joystick, and applies a deadband and input scaling
+  private double getSoloDriveRotate() {
+    // Joystick +X is right
+    // Robot +angle is CCW (left)
+    return getJoystickInput(-soloController.getRightX()) * MaxSpeed;
+  }
+
+  
+
 }
