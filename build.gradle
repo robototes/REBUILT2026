@@ -9,7 +9,16 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-def ROBOT_MAIN_CLASS = "frc.robot.Main"
+def getProjectBooleanProperty(String name, boolean defaultValue = false) {
+    if (!project.hasProperty(name)) {
+        return defaultValue
+    }
+    // Note that this is equivalent to 'true'.equalsIgnoreCase(project.getProperty(name))
+    // Values that are not "true" or "false" (including null) are treated as false
+    return Boolean.parseBoolean(project.getProperty(name))
+}
+
+def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
