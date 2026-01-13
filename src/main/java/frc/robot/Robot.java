@@ -4,16 +4,11 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
-
-import edu.wpi.first.net.WebServer;
-import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.auto.AutoBuilderConfig;
-import frc.robot.subsystems.auto.AutoLogic;
-import frc.robot.util.AutonomousField;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -21,34 +16,32 @@ import frc.robot.util.AutonomousField;
  * this project, you must also update the Main.java file in the project.
  */
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
 
-
- private static Robot instance = null;
+  private static Robot instance = null;
 
   public static Robot getInstance() {
     if (instance == null) instance = new Robot();
     return instance;
   }
 
+  private final Controls controls;
+  public final Subsystems subsystems;
+  private final PowerDistribution PDH;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
-  public Robot() {
-        AutoBuilderConfig.buildAuto(drivebaseSubsystem);
-          AutoLogic.registerCommands();
-      AutonomousField.initShuffleBoard("Field", 0, 0, this::addPeriodic);
-      AutoLogic.initShuffleBoard();
-      FollowPathCommand.warmupCommand().schedule();
-    
-  
-    WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
-  
+  protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-
     instance = this;
+    controls = new Controls();
+    subsystems = new Subsystems();
+
+    PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
+    LiveWindow.disableAllTelemetry();
+    LiveWindow.enableTelemetry(PDH);
   }
 
   /**
@@ -76,14 +69,7 @@ public class Robot extends TimedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {
-CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      CommandScheduler.getInstance().schedule(m_autonomousCommand);
-    }
-  }
+  public void autonomousInit() {}
 
   /** This function is called periodically during autonomous. */
   @Override
@@ -95,9 +81,6 @@ CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
   }
 
   /** This function is called periodically during operator control. */
