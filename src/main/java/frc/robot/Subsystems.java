@@ -3,7 +3,6 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.*;
 
 import frc.robot.generated.CompTunerConstants;
-
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class Subsystems {
@@ -20,8 +19,8 @@ public class Subsystems {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
     if (DRIVEBASE_ENABLED) {
-      
-        drivebaseSubsystem = CompTunerConstants.createDrivetrain();
+
+      drivebaseSubsystem = CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
     }
