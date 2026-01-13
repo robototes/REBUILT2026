@@ -55,7 +55,7 @@ public class AutoLogic {
   // TODO: might be a duplicate, keep until after comp
 
   // paths lists
-
+public static void registerCommands() { }
   private static AutoPath defaultPath = new AutoPath("do nothing", "YSM0");
 
   private static List<AutoPath> noPiecePaths =

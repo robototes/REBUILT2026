@@ -4,10 +4,16 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
+
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.util.AutonomousField;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -30,6 +36,15 @@ public class Robot extends TimedRobot {
    * initialization code.
    */
   public Robot() {
+        AutoBuilderConfig.buildAuto(drivebaseSubsystem);
+          AutoLogic.registerCommands();
+      AutonomousField.initShuffleBoard("Field", 0, 0, this::addPeriodic);
+      AutoLogic.initShuffleBoard();
+      FollowPathCommand.warmupCommand().schedule();
+    
+  
+    WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+  
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
