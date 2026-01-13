@@ -35,7 +35,7 @@ public class Robot extends TimedRobot {
 
   
   public final Subsystems subsystems;
- private final PowerDistribution PDH;
+
  private Controls controls;
   protected Robot() {
     // non public for singleton. Protected so test class can subclass
@@ -44,9 +44,7 @@ public class Robot extends TimedRobot {
     subsystems = new Subsystems();
    
    CanBridge.runTCP();
-    PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
-    LiveWindow.disableAllTelemetry();
-    LiveWindow.enableTelemetry(PDH);
+  
     controls = new Controls(subsystems);
 
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);

@@ -26,7 +26,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Subsystems;
 import frc.robot.Telemetry;
-import frc.robot.generated.BonkTunerConstants;
+import frc.robot.generated.CompTunerConstants;
 
 
 
@@ -57,7 +57,7 @@ public class Controls {
   // setting the max speed nad other similar variables depending on which drivebase it is
   public static final double MaxSpeed =
       
-           BonkTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+           CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
       
   private final double MAX_ACCELERATION = 50;
   private final double MAX_ROTATION_ACCELERATION = 50;
