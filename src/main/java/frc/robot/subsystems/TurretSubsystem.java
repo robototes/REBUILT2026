@@ -4,6 +4,9 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
@@ -15,23 +18,33 @@ public class TurretSubsystem extends SubsystemBase {
 
   private final int GEARRATIO = 9000; // It's over 9000
 
+  private final SwerveDrivetrain m_driveTrain;
+
   // PLACEHOLDER VALUE. This will probably be handled elsewhere
   public boolean readyToShoot = false;
 
-  public TurretSubsystem() {
+  public TurretSubsystem(SwerveDrivetrain drivetrain) {
+    // --- MOTOR SETUP ---//
     motor1 = new TalonFX(Hardware.TurretMotorID1);
     request = new MotionMagicVoltage(0);
     ConfigureMotors();
+    // --- ACCESS DRIVETRAIN --- //
+    this.m_driveTrain = drivetrain;
   }
 
   private void moveMotor(double xDiff, double robotRotation) {
     double rotations =
         motor1.getPosition().getValueAsDouble(); // Grabs position of motor in rotations
-    double targetDegrees = 0;
-    // The X degree difference and convert that into required rotations to keep xDiff minimized
-    if (rotations > 0.5 || rotations < -0.5) {}
 
-    motor1.setControl(request.withPosition(xDiff / 360));
+    double targetDegrees = calculateRotations(rotations);
+    motor1.setControl(request.withPosition(targetDegrees));
+  }
+
+  private double calculateRotations(double currentRotations) {
+    SwerveDriveState currentState = m_driveTrain.getState();
+    Rotation2d rotation = currentState.Pose.getRotation();
+
+    return 0.0;
   }
 
   // X angle difference -- I think we only care about this. We want to keep this
