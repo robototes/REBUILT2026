@@ -33,7 +33,7 @@ import frc.robot.subsystems.ExampleSubsystem;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
-  private final Subsystems s = new Subsystems();
+  private final Subsystems s;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -59,7 +59,8 @@ public class Controls {
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls() {
+  public Controls(Subsystems subsystems) {
+    s = subsystems;
     // Configure the trigger bindings
     configureBindings();
     configureDrivebaseBindings();
@@ -105,6 +106,7 @@ public class Controls {
       return;
     }
 
+    System.out.println("Drivebase bindigs set");
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
 

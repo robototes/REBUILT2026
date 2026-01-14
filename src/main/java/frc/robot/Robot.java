@@ -36,8 +36,9 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     instance = this;
-    controls = new Controls();
     subsystems = new Subsystems();
+    controls = new Controls(subsystems);
+
 
     PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
@@ -81,6 +82,7 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    System.out.println("truly enabled");
   }
 
   /** This function is called periodically during operator control. */
