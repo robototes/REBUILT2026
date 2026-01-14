@@ -17,12 +17,8 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.Autos;
-import frc.robot.commands.ExampleCommand;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.ExampleSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -32,8 +28,7 @@ import frc.robot.subsystems.ExampleSubsystem;
  */
 public class Controls {
   // The robot's subsystems and commands are defined here...
-  private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
-  private final Subsystems s = new Subsystems();
+  private final Subsystems s;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -59,9 +54,9 @@ public class Controls {
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls() {
+  public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
-    configureBindings();
+    s = subsystems;
     configureDrivebaseBindings();
   }
 
@@ -120,41 +115,10 @@ public class Controls {
                         .withRotationalRate(getDriveRotate()))
             .withName("Drive"));
 
-    // various former controls that were previously used and could be referenced in the future
-
-    // operatorController
-    //     .povUp()
-    //     .whileTrue(
-    //         s.drivebaseSubsystem
-    //             .applyRequest(
-    //                 () ->
-    //                     drive
-    //                         .withVelocityX(MetersPerSecond.of(1.0))
-    //                         .withVelocityY(0)
-    //                         .withRotationalRate(0))
-    //             .withName("1 m/s forward"));
-    // operatorController
-    //     .povRight()
-    //     .whileTrue(
-    //         s.drivebaseSubsystem
-    //             .applyRequest(
-    //                 () ->
-    //                     drive
-    //                         .withVelocityX(MetersPerSecond.of(2.0))
-    //                         .withVelocityY(0)
-    //                         .withRotationalRate(0))
-    //             .withName("2 m/s forward"));
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
     // driverController.b().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kReverse));
     // driverController.y().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kForward));
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
-
-    // driveController.a().whileTrue(s.drivebaseSubsystem.applyRequest(() ->
-    // brake));
-    // driveController.b().whileTrue(s.drivebaseSubsystem.applyRequest(() ->
-    // point.withModuleDirection(new Rotation2d(-driveController.getLeftY(),
-    // -driveController.getLeftX()))
-    // ));
 
     // reset the field-centric heading on back button press
     driverController
@@ -170,31 +134,12 @@ public class Controls {
   }
 
   /**
-   * Use this method to define your trigger->command mappings. Triggers can be created via the
-   * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with an arbitrary
-   * predicate, or via the named factories in {@link
-   * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for {@link
-   * CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
-   * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
-   * joysticks}.
-   */
-  private void configureBindings() {
-    // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-    new Trigger(m_exampleSubsystem::exampleCondition)
-        .onTrue(new ExampleCommand(m_exampleSubsystem));
-
-    // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
-    // cancelling on release.
-    driverController.b().whileTrue(m_exampleSubsystem.exampleMethodCommand());
-  }
-
-  /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Autos.exampleAuto(m_exampleSubsystem);
+    return Commands.none();
   }
 }
