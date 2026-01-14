@@ -31,12 +31,16 @@ public class AutoLogic {
  
 
   public static enum StartPosition {
-    LEFT (
-        "Far Left Cage", new Pose2d(7.187, 7.277, new Rotation2d(Units.degreesToRadians(-90)))),
-    RIGHT(
-        "Center Left Cage", new Pose2d(7.187, 6.171, new Rotation2d(Units.degreesToRadians(-90)))),
+    LEFT_TRENCH(
+        "Left Trench", new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))), //REBUILT
+    LEFT_BUMP(
+        "Left Bump", new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
     MIDDLE(
-        "MIDDLE MIDDLE", new Pose2d(7.187, 4.044, new Rotation2d(Units.degreesToRadians(180)))),
+        "Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),   //REBUILT
+        RIGHT_BUMP(
+        "Right Bump", new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),   //REBUILT
+            RIGHT_TRENCH(
+        "Right Trench", new Pose2d(7.187, 4.044, new Rotation2d(Units.degreesToRadians(90)))),   // NEED X AND Y
    
     MISC("Misc", null);
 
