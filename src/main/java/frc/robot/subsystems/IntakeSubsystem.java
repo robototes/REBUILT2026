@@ -3,22 +3,25 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class IntakeSubsystem extends SubsystemBase {
     private TalonFX pivotMotor;
+    private final TalonFX rollers;
     final MotionMagicVoltage m_request1 = new MotionMagicVoltage(0);
     
     public IntakeSubsystem() {
-        pivotMotor = new TalonFX(Constants.MotorConstants.PivotMotorID);
-
+        pivotMotor = new TalonFX(Constants.HardwareConstants.PivotMotorID);
+        rollers = new TalonFX(Constants.HardwareConstants.kRollersID);
     }
     public void TalonFXConfigs() {
         var talonFXConfigs = new TalonFXConfiguration();
@@ -31,6 +34,7 @@ public class IntakeSubsystem extends SubsystemBase {
         slot0Configs.kI = 0;
         slot0Configs.kD = 0;
         slot0Configs.kG = 0.048;
+        // change PID values during testing, these are placeholders from last year's robot
 
         var motionMagicConfigs = talonFXConfigs.MotionMagic;
         motionMagicConfigs.MotionMagicCruiseVelocity = 100;
@@ -41,9 +45,29 @@ public class IntakeSubsystem extends SubsystemBase {
         }
     public Command runPivot() {
         return run( () -> {
-            pivotMotor.setControl(m_request1.withPosition(500));
+            pivotMotor.setControl(m_request1.withPosition(500)); // placeholder position value, change during testing
         });
     }
     
-    
+    public void rollerConfig() {
+        TalonFXConfigurator rollersCfg = rollers.getConfigurator();
+
+        TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+
+        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
+        rollersCfg.apply(talonFXConfiguration);
+    }
+
+    public Command spinRollers(double speed) {
+        return Commands.runOnce(
+            () -> {
+                rollers.set(speed);
+    });}
+
+    public Command stopRollers() {
+        return Commands.runOnce(
+            () -> {
+                rollers.set(0);
+    });}
 }
