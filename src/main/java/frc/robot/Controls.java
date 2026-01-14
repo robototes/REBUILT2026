@@ -29,7 +29,7 @@ public class Controls {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls() {
     // Configure the trigger bindings
-    configureBindings();
+    configureFeederBindings();
   }
 
   /**
@@ -41,7 +41,10 @@ public class Controls {
    * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
    * joysticks}.
    */
-  private void configureBindings() {
+  private void configureFeederBindings() {
+    //start motor when robot starts
+    m_feederSubsystem.startMotor();
+
     //start feeder motor
     m_driverController.a().onTrue(m_feederSubsystem.startMotor());
 
