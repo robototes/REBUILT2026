@@ -31,7 +31,6 @@ public class Robot extends TimedRobot {
     subsystems = new Subsystems();
     controls = new Controls(subsystems);
 
-    
     PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
