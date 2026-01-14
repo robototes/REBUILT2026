@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -125,10 +124,10 @@ public class VisionSubsystem extends SubsystemBase {
         processLimelight(BCamera, rawFieldPose3dEntryLeft, rf);
       }
     }
-    
   }
 
-  private void processLimelight(LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
+  private void processLimelight(
+      LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
     if (disableVision.getBoolean(false)) {
       return;
     }
@@ -164,9 +163,7 @@ public class VisionSubsystem extends SubsystemBase {
             timestampSeconds,
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
-            DISTANCE_SC_STANDARD_DEVS
-                .times(Math.max(0, this.distance - 1))
-                .plus(STANDARD_DEVS));
+            DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
         robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
       }
       if (timestampSeconds > lastTimestampSeconds) {
