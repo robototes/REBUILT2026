@@ -6,16 +6,11 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVelocityDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,6 +28,7 @@ public class Flywheels extends SubsystemBase {
           LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.6194175216, 1),
           DCMotor.getKrakenX60(1),
           0);
+
   // Constructor
   public Flywheels() {
     Flywheel = new TalonFX(Hardware.FLYWHEEL_ID);
@@ -85,17 +81,14 @@ public class Flywheels extends SubsystemBase {
         .withName("Stop Flywheels");
   }
 
-  public boolean atTargetVelocity(
-      double targetRPM, double toleranceRPM) {
-    double velocity =
-        (Flywheel.getVelocity().getValueAsDouble());
+  public boolean atTargetVelocity(double targetRPM, double toleranceRPM) {
+    double velocity = (Flywheel.getVelocity().getValueAsDouble());
 
     boolean atTarget = Math.abs(velocity - targetRPM) <= toleranceRPM;
     return atTarget;
   }
 
-  public Trigger atTargetVelocityTrigger(
-      double targetRPM, double toleranceRPM) {
+  public Trigger atTargetVelocityTrigger(double targetRPM, double toleranceRPM) {
     return new Trigger(() -> atTargetVelocity(targetRPM, toleranceRPM));
   }
 

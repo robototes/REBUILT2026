@@ -3,10 +3,10 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.*;
 
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Flywheels;
 import frc.robot.subsystems.Index;
+import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class Subsystems {
   public static class SubsystemConstants {
