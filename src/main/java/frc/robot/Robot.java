@@ -24,11 +24,10 @@ public class Robot extends TimedRobot {
     if (instance == null) instance = new Robot();
     return instance;
   }
+
   private final Controls controls;
-    public final Subsystems subsystems;
-    private final PowerDistribution PDH;
-
-
+  public final Subsystems subsystems;
+  private final PowerDistribution PDH;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -40,7 +39,7 @@ public class Robot extends TimedRobot {
     instance = this;
     controls = new Controls();
     subsystems = new Subsystems();
-    
+
     PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
@@ -70,21 +69,20 @@ public class Robot extends TimedRobot {
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, 1);
     }
   }
+
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-          LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, 0);
-        }
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, 0);
+    }
   }
+
   @Override
   public void disabledPeriodic() {}
 
-
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {
-    }
-
+  public void autonomousInit() {}
 
   /** This function is called periodically during autonomous. */
   @Override

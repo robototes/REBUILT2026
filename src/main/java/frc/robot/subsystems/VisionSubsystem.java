@@ -1,9 +1,6 @@
 package frc.robot.subsystems;
 
-import java.util.Optional;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -32,6 +29,7 @@ import frc.robot.Subsystems;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
+import java.util.Optional;
 
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
@@ -44,13 +42,13 @@ public class VisionSubsystem extends SubsystemBase {
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
-private final SwerveRequest.FieldCentricFacingAngle autoOrient = 
-    new SwerveRequest.FieldCentricFacingAngle();
+  private final SwerveRequest.FieldCentricFacingAngle autoOrient =
+      new SwerveRequest.FieldCentricFacingAngle();
 
   // AprilTag field layout for 2025
   private static final AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
-private Controls controls;
+  private Controls controls;
 
   private final DrivebaseWrapper drivebaseWrapper;
 
@@ -72,7 +70,7 @@ private Controls controls;
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dRight", Pose3d.struct)
           .publish();
-public static double offsetCorrection;
+  public static double offsetCorrection;
 
   // state
   private double lastTimestampSeconds = 0;
@@ -121,7 +119,7 @@ public static double offsetCorrection;
 
   public void update() {
     processLimelight(BCamera, rawFieldPose3dEntryLeft);
-    RawFiducial[] rawFiducialsL =  BCamera.getRawFiducials();
+    RawFiducial[] rawFiducialsL = BCamera.getRawFiducials();
     if (rawFiducialsL != null) {
       for (RawFiducial rf : rawFiducialsL) {
         processFiducials(rf);
@@ -157,14 +155,15 @@ public static double offsetCorrection;
       // return;
       // }
       if (!pose_bad) {
-       
+
         drivebaseWrapper.addVisionMeasurement(
             fieldPose3d.toPose2d(),
             timestampSeconds,
-            //start with STANDARD_DEVS, and for every
+            // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
-            DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.closestRawFiducial.distToRobot -
-            1)).plus(STANDARD_DEVS));
+            DISTANCE_SC_STANDARD_DEVS
+                .times(Math.max(0, this.closestRawFiducial.distToRobot - 1))
+                .plus(STANDARD_DEVS));
         robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
       }
       if (timestampSeconds > lastTimestampSeconds) {
@@ -184,29 +183,28 @@ public static double offsetCorrection;
   }
 
   public double getTargetAutoOrientAngle() {
-   
+
     double correctedRadian = limelightbTX + offsetCorrection;
 
     // Combine with current heading
-    return lastFieldPose.getRotation().getRadians()
-                        + correctedRadian;
+    return lastFieldPose.getRotation().getRadians() + correctedRadian;
   }
-  // you have to reset by putting out new swerve request after this to start driving again
-    private Command setTargetAngle(double p) {
-        return runOnce(
-            () -> {
-            subsystems.drivebaseSubsystem.setControl(autoOrient
-            .withVelocityX(controls.getDriveX())
-            .withVelocityY(controls.getDriveY())
-            .withTargetDirection(Rotation2d.fromRadians(getTargetAutoOrientAngle())));
-            });
-    }
-        
-    
-   public Command moveToRadian() {
-    return setTargetAngle(0.0);
 
-   }
+  // you have to reset by putting out new swerve request after this to start driving again
+  private Command setTargetAngle(double p) {
+    return runOnce(
+        () -> {
+          subsystems.drivebaseSubsystem.setControl(
+              autoOrient
+                  .withVelocityX(controls.getDriveX())
+                  .withVelocityY(controls.getDriveY())
+                  .withTargetDirection(Rotation2d.fromRadians(getTargetAutoOrientAngle())));
+        });
+  }
+
+  public Command moveToRadian() {
+    return setTargetAngle(0.0);
+  }
 
   private void processFiducials(RawFiducial rf) {
     // distance to closest fiducial

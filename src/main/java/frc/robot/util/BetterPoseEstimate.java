@@ -49,6 +49,4 @@ public class BetterPoseEstimate {
     this.rawFiducials = rawFiducials;
     this.isMegaTag2 = isMegaTag2;
   }
-} 
-    
-
+}
