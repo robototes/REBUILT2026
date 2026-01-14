@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -29,14 +30,13 @@ import frc.robot.Subsystems;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
-import java.util.Optional;
 
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
   private static double limelightbTX;
-  private Subsystems subsystems;
+  private final Subsystems subsystems = new Subsystems();
   // Deviations
   private static final Vector<N3> STANDARD_DEVS =
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
@@ -48,7 +48,8 @@ public class VisionSubsystem extends SubsystemBase {
   // AprilTag field layout for 2025
   private static final AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
-  private Controls controls;
+  private final Controls controls = new Controls(subsystems);
+  double lastBestDistance = 0;
 
   private final DrivebaseWrapper drivebaseWrapper;
 
@@ -70,7 +71,7 @@ public class VisionSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dRight", Pose3d.struct)
           .publish();
-  public static double offsetCorrection;
+  public static double offsetCorrection = 0;
 
   // state
   private double lastTimestampSeconds = 0;
@@ -118,19 +119,21 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void update() {
-    processLimelight(BCamera, rawFieldPose3dEntryLeft);
-    RawFiducial[] rawFiducialsL = BCamera.getRawFiducials();
-    if (rawFiducialsL != null) {
-      for (RawFiducial rf : rawFiducialsL) {
-        processFiducials(rf);
+    RawFiducial[] rawFiducialsB = BCamera.getRawFiducials();
+    if (rawFiducialsB != null) {
+      for (RawFiducial rf : rawFiducialsB) {
+        processLimelight(BCamera, rawFieldPose3dEntryLeft, rf);
       }
     }
+    
   }
 
-  private void processLimelight(LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry) {
+  private void processLimelight(LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
     if (disableVision.getBoolean(false)) {
       return;
     }
+
+    processFiducials(rf);
     BetterPoseEstimate estimate = camera.getBetterPoseEstimate();
 
     if (estimate != null) {
@@ -162,7 +165,7 @@ public class VisionSubsystem extends SubsystemBase {
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
             DISTANCE_SC_STANDARD_DEVS
-                .times(Math.max(0, this.closestRawFiducial.distToRobot - 1))
+                .times(Math.max(0, this.distance - 1))
                 .plus(STANDARD_DEVS));
         robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
       }
@@ -184,40 +187,33 @@ public class VisionSubsystem extends SubsystemBase {
 
   public double getTargetAutoOrientAngle() {
 
-    double correctedRadian = limelightbTX + offsetCorrection;
+    double correctedDegree = limelightbTX + offsetCorrection;
 
     // Combine with current heading
-    return lastFieldPose.getRotation().getRadians() + correctedRadian;
+    return lastFieldPose.getRotation().getDegrees() + correctedDegree;
   }
 
   // you have to reset by putting out new swerve request after this to start driving again
-  private Command setTargetAngle(double p) {
+  private Command setTargetAngle() {
     return runOnce(
         () -> {
           subsystems.drivebaseSubsystem.setControl(
               autoOrient
                   .withVelocityX(controls.getDriveX())
                   .withVelocityY(controls.getDriveY())
-                  .withTargetDirection(Rotation2d.fromRadians(getTargetAutoOrientAngle())));
+                  .withTargetDirection(Rotation2d.fromDegrees(getTargetAutoOrientAngle())));
         });
   }
 
   public Command moveToRadian() {
-    return setTargetAngle(0.0);
+    return setTargetAngle();
   }
 
   private void processFiducials(RawFiducial rf) {
     // distance to closest fiducial
-    Optional<Pose3d> tagPose = fieldLayout.getTagPose(rf.id);
-    double lastBestDistance = 0;
-    if (tagPose.isPresent()) {
-      this.distance = rf.distToCamera;
+    if (fieldLayout.getTagPose(rf.id).isPresent()) {
+      this.distance = rf.distToRobot;
       this.tagAmbiguity = rf.ambiguity;
-      if (lastBestDistance < rf.distToCamera) {
-        lastBestDistance = rf.distToCamera;
-        this.closestRawFiducial = rf;
-        offsetCorrection = Math.toDegrees(Math.atan(0.178 / lastBestDistance));
-      }
     }
   }
 
