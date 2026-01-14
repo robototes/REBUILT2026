@@ -1,18 +1,10 @@
 package frc.robot.Sensors;
 
-import static edu.wpi.first.units.Units.Seconds;
-
-import com.ctre.phoenix6.configs.CANdleConfiguration;
 import com.ctre.phoenix6.configs.CANdleConfigurator;
 import com.ctre.phoenix6.hardware.CANdle;
-import com.ctre.phoenix6.hardware.CANdle.*;
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.controls.SolidColor;
 
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.AddressableLEDBufferView;
-import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -21,7 +13,6 @@ import frc.robot.Constants;
 import frc.robot.util.SoloScoringMode;
 
 import java.util.function.Supplier;
-import java.util.ArrayList;
 
 public class LED_lights {
     private CANdle candle;
