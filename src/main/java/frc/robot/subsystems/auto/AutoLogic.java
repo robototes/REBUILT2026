@@ -35,12 +35,12 @@ public class AutoLogic {
         "Left Trench", new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))), //REBUILT
     LEFT_BUMP(
         "Left Bump", new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
-    MIDDLE(
+    CENTER(
         "Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),   //REBUILT
         RIGHT_BUMP(
         "Right Bump", new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),   //REBUILT
             RIGHT_TRENCH(
-        "Right Trench", new Pose2d(7.187, 4.044, new Rotation2d(Units.degreesToRadians(90)))),   // NEED X AND Y
+        "Right Trench", new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),   // NEED X AND Y
    
     MISC("Misc", null);
 
@@ -57,44 +57,38 @@ public class AutoLogic {
 
   // paths lists
 public static void registerCommands() { }
-  private static AutoPath defaultPath = new AutoPath("do nothing", "YSM0");
+  private static AutoPath defaultPath = new AutoPath("Just DRIVE!", "Drive");
 
-  private static List<AutoPath> noPiecePaths =
-      List.of(
+ /*  private static List<AutoPath> DepotPaths =
+      List.of(); */
       
-  new AutoPath("do try", "M_H"),
-   new AutoPath("Gy", "L-Depot-Climb")
+
+  
+
+  private static List<AutoPath> RebuiltPaths =
+      List.of(
+         new AutoPath("RT-OutPost", "RT-OutPost"),
+             new AutoPath("RB-OutPost", "RB-OutPost"),
+              new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
+         new AutoPath(" C-Depot-Climb", " C-Depot-Climb"),
+              new AutoPath("LT-Depot-Climb", " LT-Depot-Climb")
           );
+           
 
-  private static List<AutoPath> onePiecePaths =
-      List.of(
-          );
 
-  private static List<AutoPath> twoPiecePaths =
-      List.of(
-          );
 
-  private static List<AutoPath> threePiecePaths =
+ 
+  /* private static List<AutoPath> FerryingPaths=
       List.of(
-       );
-
-  private static List<AutoPath> fourPiecePaths =
-      List.of(
-        );
+        ); */
 
   // map (gulp)
   private static Map<Integer, List<AutoPath>> commandsMap =
       Map.of(
           0,
-          noPiecePaths,
-          1,
-          onePiecePaths,
-          2,
-          twoPiecePaths,
-          3,
-          threePiecePaths,
-          4,
-          fourPiecePaths);
+          RebuiltPaths);
+         
+         
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
 
