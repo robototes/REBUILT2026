@@ -78,7 +78,8 @@ public class Robot extends TimedRobot {
 
       AutonomousField.initShuffleBoard("Field", 0, 0, this::addPeriodic);
       AutoLogic.initShuffleBoard();
-      FollowPathCommand.warmupCommand().schedule();
+      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+      
     }
     
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
