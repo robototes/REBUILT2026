@@ -31,17 +31,7 @@ public class AutoLogic {
  
 
   public static enum StartPosition {
-    LEFT_TRENCH(
-        "Left Trench", new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))), //REBUILT
-    LEFT_BUMP(
-        "Left Bump", new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
-    CENTER(
-        "Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),   //REBUILT
-        RIGHT_BUMP(
-        "Right Bump", new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),   //REBUILT
-            RIGHT_TRENCH(
-        "Right Trench", new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),   // NEED X AND Y
-   
+  /* */ 
     MISC("Misc", null);
 
     final String title; // for shuffleboard display
@@ -59,34 +49,34 @@ public class AutoLogic {
 public static void registerCommands() { }
   private static AutoPath defaultPath = new AutoPath("Just DRIVE!", "Drive");
 
- /*  private static List<AutoPath> DepotPaths =
-      List.of(); */
+  private static List<AutoPath> DepotPaths =
+      List.of(    new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
+         new AutoPath(" C-Depot-Climb", " C-Depot-Climb"),
+              new AutoPath("LT-Depot-Climb", " LT-Depot-Climb")); 
       
 
   
 
-  private static List<AutoPath> RebuiltPaths =
+   private static List<AutoPath> OutPostPaths =
       List.of(
          new AutoPath("RT-OutPost", "RT-OutPost"),
-             new AutoPath("RB-OutPost", "RB-OutPost"),
-              new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
-         new AutoPath(" C-Depot-Climb", " C-Depot-Climb"),
-              new AutoPath("LT-Depot-Climb", " LT-Depot-Climb")
-          );
+             new AutoPath("RB-OutPost", "RB-OutPost")
+
+          ); 
            
 
 
 
  
-  /* private static List<AutoPath> FerryingPaths=
+   private static List<AutoPath> FerryingPaths=
       List.of(
-        ); */
+        ); 
 
   // map (gulp)
   private static Map<Integer, List<AutoPath>> commandsMap =
       Map.of(
-          0,
-          RebuiltPaths);
+          0,DepotPaths
+     ,1,   OutPostPaths);
          
          
 
@@ -104,7 +94,7 @@ public static void registerCommands() { }
 
   // shuffleboard
   private static ShuffleboardTab tab = Shuffleboard.getTab("Autos");
-
+public static  String keys =  "RB = Right Bump, LB = Left Bump, LT = Left Trench, RT = Right Trench";
   private static SendableChooser<StartPosition> startPositionChooser =
       new SendableChooser<StartPosition>();
   private static DynamicSendableChooser<String> availableAutos =
@@ -152,6 +142,7 @@ public static void registerCommands() { }
     tab.add("Launch Type", isVision).withPosition(4, 1);
     tab.add("Game Objects", gameObjects).withPosition(5, 1);
     tab.add("Available Auto Variants", availableAutos).withPosition(4, 2).withSize(2, 1);
+    tab.add("Abbr. Key:", keys);
 
     tab.addDouble("MATCH TIME(TIMER FOR AUTO)", () -> DriverStation.getMatchTime());
     autoDelayEntry = tab.add("Auto Delay", 0).withPosition(4, 3).withSize(1, 1).getEntry();
@@ -176,6 +167,7 @@ public static void registerCommands() { }
 
     // filter more then add to chooser
     for (AutoPath auto : autoCommandsList) {
+ 
       if (auto.getStartPose().equals(startPositionChooser.getSelected())
           && auto.isVision() == isVision.getSelected()) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
