@@ -63,6 +63,8 @@ public class Controls {
     // Configure the trigger bindings
     configureBindings();
     configureDrivebaseBindings();
+    configureIntakeBindings();
+    configureLaunchingBindings();
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -120,41 +122,13 @@ public class Controls {
                         .withRotationalRate(getDriveRotate()))
             .withName("Drive"));
 
-    // various former controls that were previously used and could be referenced in the future
 
-    // operatorController
-    //     .povUp()
-    //     .whileTrue(
-    //         s.drivebaseSubsystem
-    //             .applyRequest(
-    //                 () ->
-    //                     drive
-    //                         .withVelocityX(MetersPerSecond.of(1.0))
-    //                         .withVelocityY(0)
-    //                         .withRotationalRate(0))
-    //             .withName("1 m/s forward"));
-    // operatorController
-    //     .povRight()
-    //     .whileTrue(
-    //         s.drivebaseSubsystem
-    //             .applyRequest(
-    //                 () ->
-    //                     drive
-    //                         .withVelocityX(MetersPerSecond.of(2.0))
-    //                         .withVelocityY(0)
-    //                         .withRotationalRate(0))
-    //             .withName("2 m/s forward"));
+    // // buttons for starting system ID routines
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
     // driverController.b().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kReverse));
     // driverController.y().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kForward));
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
-    // driveController.a().whileTrue(s.drivebaseSubsystem.applyRequest(() ->
-    // brake));
-    // driveController.b().whileTrue(s.drivebaseSubsystem.applyRequest(() ->
-    // point.withModuleDirection(new Rotation2d(-driveController.getLeftY(),
-    // -driveController.getLeftX()))
-    // ));
 
     // reset the field-centric heading on back button press
     driverController
@@ -186,6 +160,16 @@ public class Controls {
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
     // cancelling on release.
     driverController.b().whileTrue(m_exampleSubsystem.exampleMethodCommand());
+  }
+
+  private void configureIntakeBindings(){
+    // Add subsystem bindings here
+    driverController.leftTrigger().whileTrue(s.Intake.setPowerCommand(1));
+  }
+
+  private void configureLaunchingBindings(){
+    // Add subsystem bindings here
+    driverController.rightTrigger().whileTrue(s.Flywheels.setVelocityCommand(3000).andThen(s.Index.setPowerCommand(0.3).onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))));
   }
 
   /**
