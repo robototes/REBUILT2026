@@ -7,13 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L-Depot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Depot-Climb"
+            "pathName": "BR-Climb"
           }
         }
       ]

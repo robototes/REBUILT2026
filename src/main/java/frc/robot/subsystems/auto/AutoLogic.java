@@ -31,16 +31,13 @@ public class AutoLogic {
  
 
   public static enum StartPosition {
-    FAR_LEFT_CAGE(
+    LEFT (
         "Far Left Cage", new Pose2d(7.187, 7.277, new Rotation2d(Units.degreesToRadians(-90)))),
-    CENTER_LEFT_CAGE(
+    RIGHT(
         "Center Left Cage", new Pose2d(7.187, 6.171, new Rotation2d(Units.degreesToRadians(-90)))),
-    MIDDLE_MIDDLE(
+    MIDDLE(
         "MIDDLE MIDDLE", new Pose2d(7.187, 4.044, new Rotation2d(Units.degreesToRadians(180)))),
-    CENTER_RIGHT_CAGE(
-        "Center Right Cage", new Pose2d(7.187, 1.908, new Rotation2d(Units.degreesToRadians(90)))),
-    FAR_RIGHT_CAGE(
-        "Far Right Cage", new Pose2d(7.187, 0.811, new Rotation2d(Units.degreesToRadians(90)))),
+   
     MISC("Misc", null);
 
     final String title; // for shuffleboard display

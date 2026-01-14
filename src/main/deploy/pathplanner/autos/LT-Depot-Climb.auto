@@ -7,19 +7,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L-NeutralLeft"
+            "pathName": "LT-Depot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Neutral Sweep"
+            "pathName": "Depot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-TowerRight"
+            "pathName": "Depot-Pre-Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Depot-Shoot"
           }
         }
       ]
