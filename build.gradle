@@ -18,10 +18,7 @@ def getProjectBooleanProperty(String name, boolean defaultValue = false) {
     return Boolean.parseBoolean(project.getProperty(name))
 }
 
-def ROBOT_MAIN_CLASS =
-getProjectBooleanProperty('automatedTest') ?
-"frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
-
+def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.

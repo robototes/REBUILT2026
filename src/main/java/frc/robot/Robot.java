@@ -18,13 +18,6 @@ import frc.robot.util.LimelightHelpers;
  */
 public class Robot extends TimedRobot {
 
-  private static Robot instance = null;
-
-  public static Robot getInstance() {
-    if (instance == null) instance = new Robot();
-    return instance;
-  }
-
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
@@ -36,9 +29,8 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    instance = this;
-    controls = new Controls();
     subsystems = new Subsystems();
+    controls = new Controls(subsystems);
 
     PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
