@@ -15,9 +15,6 @@ import frc.robot.Hardware;
 public class Index extends SubsystemBase {
 
   private final TalonFX Index;
-  private final Alert NotConnectedError =
-      new Alert("ArmPivot", "Motor not connected", AlertType.kError);
-  private final Debouncer notConnectedDebouncer = new Debouncer(.1, DebounceType.kBoth);
 
   public Index() {
     Index = new TalonFX(Hardware.INDEX_MOTOR_ID);

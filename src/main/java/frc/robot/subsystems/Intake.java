@@ -15,10 +15,6 @@ import frc.robot.Hardware;
 public class Intake extends SubsystemBase {
 
   private final TalonFX intake;
-  private final Alert NotConnectedError =
-      new Alert("ArmPivot", "Motor not connected", AlertType.kError);
-  private final Debouncer notConnectedDebouncer = new Debouncer(.1, DebounceType.kBoth);
-
   public Intake() {
     intake = new TalonFX(Hardware.INTAKE_MOTOR_ID);
     configureMotors();

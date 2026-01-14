@@ -26,11 +26,6 @@ import frc.robot.Hardware;
 public class Flywheels extends SubsystemBase {
   private final TalonFX Flywheel;
 
-  // alerts if motor is not connected.
-  private final Alert NotConnectedError =
-      new Alert("Flywheels", "Motor not connected", AlertType.kError);
-  private final Debouncer notConnectedDebouncer = new Debouncer(.1, DebounceType.kBoth);
-
   private final MotionMagicVelocityDutyCycle request = new MotionMagicVelocityDutyCycle(0);
 
   private final FlywheelSim Sim =

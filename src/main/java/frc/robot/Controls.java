@@ -163,13 +163,24 @@ public class Controls {
   }
 
   private void configureIntakeBindings(){
+    if (s.Intake == null) {
+      // Stop running this method
+      return;
+    }
     // Add subsystem bindings here
     driverController.leftTrigger().whileTrue(s.Intake.setPowerCommand(1));
   }
 
   private void configureLaunchingBindings(){
+    if (s.Flywheels == null || s.Index == null) {
+      // Stop running this method
+      return;
+    }
     // Add subsystem bindings here
-    driverController.rightTrigger().whileTrue(s.Flywheels.setVelocityCommand(3000).andThen(s.Index.setPowerCommand(0.3).onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))));
+    driverController.rightTrigger()
+    .whileTrue(s.Flywheels.setVelocityCommand(3000)
+    .andThen(s.Index.setPowerCommand(0.3)
+      .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))));
   }
 
   /**
