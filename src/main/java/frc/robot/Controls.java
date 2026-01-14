@@ -23,6 +23,7 @@ public class Controls {
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
   private final IntakeSubsystem intakePivot = new IntakeSubsystem();
+  private final IntakeSubsystem intakeRollers = new IntakeSubsystem();
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController =
@@ -51,6 +52,7 @@ public class Controls {
     // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
     // cancelling on release.
     m_driverController.b().onTrue(intakePivot.runPivot());
+    m_driverController.a().whileTrue(intakeRollers.spinRollers(1));
   }
 
   /**
