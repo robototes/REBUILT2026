@@ -34,9 +34,6 @@ public class Controls {
 
   private final CommandXboxController driverController;
   private final CommandXboxController operatorController;
-  private final CommandXboxController armPivotSpinnyClawController;
-  private final CommandXboxController elevatorTestController;
-  private final CommandXboxController climbTestController;
   private final CommandXboxController soloController;
 
   private final Subsystems s;
@@ -69,10 +66,7 @@ public class Controls {
   public Controls(Subsystems s) {
     driverController = new CommandXboxController(DRIVER_CONTROLLER_PORT);
     operatorController = new CommandXboxController(OPERATOR_CONTROLLER_PORT);
-    armPivotSpinnyClawController =
-        new CommandXboxController(ARM_PIVOT_SPINNY_CLAW_CONTROLLER_PORT);
-    elevatorTestController = new CommandXboxController(ELEVATOR_CONTROLLER_PORT);
-    climbTestController = new CommandXboxController(CLIMB_TEST_CONTROLLER_PORT);
+  
     soloController = new CommandXboxController(SOLO_CONTROLLER_PORT);
 
     this.s = s;
