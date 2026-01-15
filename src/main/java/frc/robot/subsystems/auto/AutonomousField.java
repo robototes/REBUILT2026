@@ -21,7 +21,7 @@ public class AutonomousField {
 
   /* ---------------- NetworkTables init ---------------- */
 
-  public static void initNetworkTables(
+  public static void initSmartDashBoard(
       Supplier<String> tabName,
       int columnIndex,
       int rowIndex,

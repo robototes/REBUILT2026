@@ -1,23 +1,19 @@
 package frc.robot.subsystems.auto;
 
-
-
 import com.pathplanner.lib.auto.AutoBuilder;
-
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-
-
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,160 +23,144 @@ import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
 
+  /* ---------------- Start positions ---------------- */
 
- 
-
-  public static enum StartPosition {
-  /* */  Left_Trench( "Left Trench",
-    new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))), //REBUILT
+  public enum StartPosition {
+    LEFT_TRENCH(
+        "Left Trench",
+        new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))),
     LEFT_BUMP(
-        "Left Bump", new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Left Bump",
+        new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
     CENTER(
-        "Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),   //REBUILT
-        RIGHT_BUMP(
-        "Right Bump", new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),   //REBUILT
-            RIGHT_TRENCH(
-        "Right Trench", new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),   // NEED X AND Y
+        "Center",
+        new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),
+    RIGHT_BUMP(
+        "Right Bump",
+        new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),
+    RIGHT_TRENCH(
+        "Right Trench",
+        new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),
     MISC("Misc", null);
 
-    final String title; // for shuffleboard display
-    final Pose2d startPose; // for identifying path's starting positions for filtering
+    final String title;
+    final Pose2d startPose;
 
     StartPosition(String title, Pose2d startPose) {
       this.title = title;
       this.startPose = startPose;
     }
-  };
+  }
 
-  // TODO: might be a duplicate, keep until after comp
+  /* ---------------- Paths ---------------- */
 
-  // paths lists
-public static void registerCommands() { }
-  private static AutoPath defaultPath = new AutoPath("Just DRIVE!", "Drive");
+  private static final AutoPath defaultPath =
+      new AutoPath("Just DRIVE!", "Drive");
 
-  private static List<AutoPath> RebuiltPaths =
-      List.of(    new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
-         new AutoPath(" C-Depot-Climb", "C-Depot-Climb"),
-          new AutoPath("RT-OutPost", "RT-OutPost"),
-             new AutoPath("RB-OutPost", "RB-OutPost"),
-              new AutoPath("LT-Depot-Climb", "LT-Depot-Climb")); 
-      
-
-  
-
-           
-
-
-
- 
-   /*private static List<AutoPath> FerryingPaths=
+  private static final List<AutoPath> rebuiltPaths =
       List.of(
-        ); 
-*/
-  // map (gulp)
-  private static Map<Integer, List<AutoPath>> commandsMap =
-      Map.of(
-          0,RebuiltPaths
-     );
-         
-         
+          new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
+          new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
+          new AutoPath("RT-OutPost", "RT-OutPost"),
+          new AutoPath("RB-OutPost", "RB-OutPost"),
+          new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"));
+
+  private static final Map<Integer, List<AutoPath>> commandsMap =
+      Map.of(0, rebuiltPaths);
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
 
   static {
-    for (List<AutoPath> autoPaths : commandsMap.values()) {
-      for (AutoPath autoPath : autoPaths) {
-        namesToAuto.put(autoPath.getDisplayName(), autoPath);
+    for (List<AutoPath> autos : commandsMap.values()) {
+      for (AutoPath auto : autos) {
+        namesToAuto.put(auto.getDisplayName(), auto);
       }
     }
   }
 
+  /* ---------------- Choosers ---------------- */
 
+  private static final SendableChooser<StartPosition> startPositionChooser =
+      new SendableChooser<>();
 
-  // shuffleboard
-  private static ShuffleboardTab tab = Shuffleboard.getTab("Autos");
-public static  String keys =  "RB = Right Bump, LB = Left Bump, LT = Left Trench, RT = Right Trench";
-  private static SendableChooser<StartPosition> startPositionChooser =
-      new SendableChooser<StartPosition>();
-  private static DynamicSendableChooser<String> availableAutos =
-      new DynamicSendableChooser<String>();
-  private static SendableChooser<Integer> gameObjects = new SendableChooser<Integer>();
-  private static SendableChooser<Boolean> isVision = new SendableChooser<Boolean>();
+  private static final DynamicSendableChooser<String> availableAutos =
+      new DynamicSendableChooser<>();
 
-  private static GenericEntry autoDelayEntry;
+  private static final SendableChooser<Integer> gameObjects =
+      new SendableChooser<>();
 
-  /** Registers commands in PathPlanner */
-  
-  // public Command getConditionalCommand(){}
+  private static final SendableChooser<Boolean> isVision =
+      new SendableChooser<>();
 
-  /**
-   * Takes a PathPlanner path and returns it as a command.
-   *
-   * @param pathName
-   * @return follow path command
-   * @throws ParseException
-   * @throws IOException
-   * @throws FileVersionException
-   */
-  public static Command getAutoCommand(String pathName)
-      throws FileVersionException, IOException, ParseException {
-    // Load the path you want to follow using its name in the GUI
-    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+  private static final NetworkTableEntry autoDelayEntry =
+      NetworkTableInstance.getDefault()
+          .getTable("Autos")
+          .getEntry("Auto Delay");
 
-    // Create a path following command using AutoBuilder. This will also trigger event markers.
-    return AutoBuilder.followPath(path);
-  }
+  public static final String keys =
+      "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
-  public static void initShuffleBoard() {
-    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
-    for (StartPosition startPosition : StartPosition.values()) {
-      startPositionChooser.addOption(startPosition.title, startPosition);
+  /* ---------------- Init ---------------- */
+
+  public static void initSmartDashBoard() {
+
+    startPositionChooser.setDefaultOption(
+        StartPosition.MISC.title, StartPosition.MISC);
+
+    for (StartPosition pos : StartPosition.values()) {
+      startPositionChooser.addOption(pos.title, pos);
     }
+
     isVision.setDefaultOption("Presets", false);
     isVision.addOption("Vision", true);
+
     gameObjects.setDefaultOption("0", 0);
     for (int i = 1; i < commandsMap.size(); i++) {
       gameObjects.addOption(String.valueOf(i), i);
     }
 
-    tab.add("Starting Position", startPositionChooser).withPosition(4, 0).withSize(2, 1);
-    tab.add("Launch Type", isVision).withPosition(4, 1);
-    tab.add("Game Objects", gameObjects).withPosition(5, 1);
-    tab.add("Available Auto Variants", availableAutos).withPosition(4, 2).withSize(2, 1);
-    tab.add("Abbr. Key:", keys);
+    autoDelayEntry.setDouble(0.0);
 
-    tab.addDouble("MATCH TIME(TIMER FOR AUTO)", () -> DriverStation.getMatchTime());
-    autoDelayEntry = tab.add("Auto Delay", 0).withPosition(4, 3).withSize(1, 1).getEntry();
+    SmartDashboard.putData("Starting Position", startPositionChooser);
+    SmartDashboard.putData("Launch Type", isVision);
+    SmartDashboard.putData("Game Objects", gameObjects);
+    SmartDashboard.putData("Available Auto Variants", availableAutos);
+    SmartDashboard.putString("Auto Key", keys);
 
-    isVision.onChange((dummyVar) -> AutoLogic.filterAutos(gameObjects.getSelected()));
-    startPositionChooser.onChange((dummyVar) -> AutoLogic.filterAutos(gameObjects.getSelected()));
-    gameObjects.onChange((dummyVar) -> AutoLogic.filterAutos(gameObjects.getSelected()));
+    SmartDashboard.putNumber(
+        "MATCH TIME (AUTO)",
+        DriverStation.getMatchTime());
+
+    isVision.onChange(v -> filterAutos(gameObjects.getSelected()));
+    startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
+    gameObjects.onChange(v -> filterAutos(gameObjects.getSelected()));
 
     filterAutos(gameObjects.getSelected());
   }
 
-  /** Takes the auto filtering entries in shuffleboard to provide a list of suitable autos */
+  /* ---------------- Filtering ---------------- */
+
   public static void filterAutos(int numGameObjects) {
 
-    // resets/clears all options
     availableAutos.clearOptions();
+    availableAutos.setDefaultOption(
+        defaultPath.getDisplayName(),
+        defaultPath.getDisplayName());
 
-    // filter based off gameobject count
-    availableAutos.setDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
+    List<AutoPath> autoList = commandsMap.get(numGameObjects);
+    if (autoList == null) return;
 
-    List<AutoPath> autoCommandsList = commandsMap.get(numGameObjects);
-
-    // filter more then add to chooser
-    for (AutoPath auto : autoCommandsList) {
- 
+    for (AutoPath auto : autoList) {
       if (auto.getStartPose().equals(startPositionChooser.getSelected())
           && auto.isVision() == isVision.getSelected()) {
-        availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
+        availableAutos.addOption(
+            auto.getDisplayName(),
+            auto.getDisplayName());
       }
     }
   }
 
-  // get auto
+  /* ---------------- Getters ---------------- */
 
   public static String getSelectedAutoName() {
     return availableAutos.getSelectedName();
@@ -191,18 +171,28 @@ public static  String keys =  "RB = Right Bump, LB = Left Bump, LT = Left Trench
   }
 
   public static Command getSelectedAuto() {
-    double waitTimer = autoDelayEntry.getDouble(0);
+    double delay = autoDelayEntry.getDouble(0.0);
+
     AutoPath path = namesToAuto.get(getSelectedAutoName());
     if (path == null) {
       path = defaultPath;
     }
+
     String autoName = path.getAutoName();
 
-    return Commands.waitSeconds(waitTimer)
+    return Commands.waitSeconds(delay)
         .andThen(AutoBuilder.buildAuto(autoName))
         .withName(autoName);
   }
 
-  // commands util
- 
+  /* ---------------- PathPlanner ---------------- */
+
+  public static Command getAutoCommand(String pathName)
+      throws FileVersionException, IOException, ParseException {
+
+    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+    return AutoBuilder.followPath(path);
+  }
+
+  public static void registerCommands() {}
 }

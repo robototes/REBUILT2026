@@ -76,9 +76,9 @@ public class Robot extends TimedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
 
-  AutonomousField.initNetworkTables(() -> "Field", 0, 0, this::addPeriodic);
+  AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
-      AutoLogic.initShuffleBoard();
+      AutoLogic.initSmartDashBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
       
     }
