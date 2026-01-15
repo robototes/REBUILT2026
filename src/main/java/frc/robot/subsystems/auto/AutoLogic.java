@@ -51,8 +51,8 @@ public static void registerCommands() { }
 
   private static List<AutoPath> DepotPaths =
       List.of(    new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
-         new AutoPath(" C-Depot-Climb", " C-Depot-Climb"),
-              new AutoPath("LT-Depot-Climb", " LT-Depot-Climb")); 
+         new AutoPath(" C-Depot-Climb", "C-Depot-Climb"),
+              new AutoPath("LT-Depot-Climb", "LT-Depot-Climb")); 
       
 
   
