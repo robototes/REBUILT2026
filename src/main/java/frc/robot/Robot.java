@@ -80,9 +80,9 @@ public class Robot extends TimedRobot {
     }
     
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
-  }
+  
 
-    PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
+    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
   }
