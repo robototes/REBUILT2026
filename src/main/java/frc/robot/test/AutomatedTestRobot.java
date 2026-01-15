@@ -13,14 +13,7 @@ public class AutomatedTestRobot extends Robot {
     }
   }
 
-  private static AutomatedTestRobot instance = null;
-
-  public static AutomatedTestRobot getInstance() {
-    if (instance == null) instance = new AutomatedTestRobot();
-    return instance;
-  }
-
-  private AutomatedTestRobot() {
+  public AutomatedTestRobot() {
     System.out.println("Robot type: Automated test");
   }
 

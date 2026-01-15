@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
@@ -21,22 +22,20 @@ import frc.robot.subsystems.auto.AutonomousField;
 
 
 public class Robot extends TimedRobot {
-  /** Singleton Stuff */
-  private static Robot instance = null;
 
-  public static Robot getInstance() {
-    if (instance == null) instance = new Robot();
-    return instance;
-  }
-
-  
+  private final Controls controls;
   public final Subsystems subsystems;
+  private final PowerDistribution PDH;
 
- private Controls controls;
+
+
+  /**
+   * This function is run when the robot is first started up and should be used for any
+   * initialization code.
+   */
   protected Robot() {
-    // non public for singleton. Protected so test class can subclass
-
-    instance = this;
+    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
+    // autonomous chooser on the dashboard.
     subsystems = new Subsystems();
    
    CanBridge.runTCP();
@@ -82,6 +81,18 @@ public class Robot extends TimedRobot {
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
   }
 
+    PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
+    LiveWindow.disableAllTelemetry();
+    LiveWindow.enableTelemetry(PDH);
+  }
+
+  /**
+   * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
+   * that you want ran during disabled, autonomous, teleoperated and test.
+   *
+   * <p>This runs after the mode specific periodic functions, but before LiveWindow and
+   * SmartDashboard integrated updating.
+   */
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
