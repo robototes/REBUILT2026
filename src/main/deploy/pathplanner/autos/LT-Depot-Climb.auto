@@ -27,6 +27,12 @@
           "data": {
             "pathName": "Depot-Shoot"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Depot-Climb"
+          }
         }
       ]
     }
