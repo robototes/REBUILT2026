@@ -76,7 +76,7 @@ public class AutoLogic {
 
   private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
 
-  private static final SendableChooser<Boolean> isVision = new SendableChooser<>();
+ 
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
@@ -93,9 +93,6 @@ public class AutoLogic {
       startPositionChooser.addOption(pos.title, pos);
     }
 
-    isVision.setDefaultOption("Presets", false);
-    isVision.addOption("Vision", true);
-
     gameObjects.setDefaultOption("0", 0);
     for (int i = 1; i < commandsMap.size(); i++) {
       gameObjects.addOption(String.valueOf(i), i);
@@ -104,14 +101,12 @@ public class AutoLogic {
     autoDelayEntry.setDouble(0.0);
 
     SmartDashboard.putData("Starting Position", startPositionChooser);
-    SmartDashboard.putData("Launch Type", isVision);
-    SmartDashboard.putData("Game Objects", gameObjects);
+
     SmartDashboard.putData("Available Auto Variants", availableAutos);
     SmartDashboard.putString("Auto Key", keys);
 
-    SmartDashboard.putNumber("MATCH TIME (AUTO)", DriverStation.getMatchTime());
 
-    isVision.onChange(v -> filterAutos(gameObjects.getSelected()));
+
     startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
     gameObjects.onChange(v -> filterAutos(gameObjects.getSelected()));
 
@@ -129,8 +124,7 @@ public class AutoLogic {
     if (autoList == null) return;
 
     for (AutoPath auto : autoList) {
-      if (auto.getStartPose().equals(startPositionChooser.getSelected())
-          && auto.isVision() == isVision.getSelected()) {
+      if (auto.getStartPose().equals(startPositionChooser.getSelected())) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }
