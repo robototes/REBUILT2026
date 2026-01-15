@@ -22,7 +22,8 @@ import org.json.simple.parser.ParseException;
 public class AutoLogic {
 
   /* ---------------- Start positions ---------------- */
-
+//Replace with season-specific paths
+//They MUST match what you put in pathplanner
   public enum StartPosition {
     LEFT_TRENCH(
         "Left Trench", new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))),
