@@ -31,7 +31,16 @@ public class AutoLogic {
  
 
   public static enum StartPosition {
-  /* */ 
+  /* */  Left_Trench( "Left Trench",
+    new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))), //REBUILT
+    LEFT_BUMP(
+        "Left Bump", new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
+    CENTER(
+        "Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),   //REBUILT
+        RIGHT_BUMP(
+        "Right Bump", new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),   //REBUILT
+            RIGHT_TRENCH(
+        "Right Trench", new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),   // NEED X AND Y
     MISC("Misc", null);
 
     final String title; // for shuffleboard display
@@ -49,34 +58,30 @@ public class AutoLogic {
 public static void registerCommands() { }
   private static AutoPath defaultPath = new AutoPath("Just DRIVE!", "Drive");
 
-  private static List<AutoPath> DepotPaths =
+  private static List<AutoPath> RebuiltPaths =
       List.of(    new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
          new AutoPath(" C-Depot-Climb", "C-Depot-Climb"),
+          new AutoPath("RT-OutPost", "RT-OutPost"),
+             new AutoPath("RB-OutPost", "RB-OutPost"),
               new AutoPath("LT-Depot-Climb", "LT-Depot-Climb")); 
       
 
   
 
-   private static List<AutoPath> OutPostPaths =
-      List.of(
-         new AutoPath("RT-OutPost", "RT-OutPost"),
-             new AutoPath("RB-OutPost", "RB-OutPost")
-
-          ); 
            
 
 
 
  
-   private static List<AutoPath> FerryingPaths=
+   /*private static List<AutoPath> FerryingPaths=
       List.of(
         ); 
-
+*/
   // map (gulp)
   private static Map<Integer, List<AutoPath>> commandsMap =
       Map.of(
-          0,DepotPaths
-     ,1,   OutPostPaths);
+          0,RebuiltPaths
+     );
          
          
 
