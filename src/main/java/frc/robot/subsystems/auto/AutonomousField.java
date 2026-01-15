@@ -2,78 +2,81 @@ package frc.robot.subsystems.auto;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.ObjDoubleConsumer;
+import java.util.function.Supplier;
 
 public class AutonomousField {
-  private static final double DEFAULT_PLAYBACK_SPEED = 1;
+  private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
   private static final double UPDATE_RATE = 0.05;
-  private static final double lowerPlaybackSpeedLimit = 0.5;
-  private static final double upperPlaybackSpeedLimit = 2.0;
 
-  public static void initShuffleBoard(
-      String tabName, int columnIndex, int rowIndex, ObjDoubleConsumer<Runnable> addPeriodic) {
-    ShuffleboardTab tab = Shuffleboard.getTab(tabName);
-    GenericEntry speedMultiplier =
-        tab.add("Auto display speed", DEFAULT_PLAYBACK_SPEED)
-            .withWidget(BuiltInWidgets.kNumberSlider)
-            .withProperties(Map.of("Min", lowerPlaybackSpeedLimit, "Max", upperPlaybackSpeedLimit))
-            .withPosition(10, 5) // Offset by height of Field2d display
-            // .withPosition(columnIndex + 1, rowIndex + 3) // Offset by height of Field2d display
-            .withSize(3, 1)
-            .getEntry();
+  /* ---------------- NetworkTables init ---------------- */
 
-    var autonomousField =
+  public static void initNetworkTables(
+      Supplier<String> tabName,
+      int columnIndex,
+      int rowIndex,
+      ObjDoubleConsumer<Runnable> addPeriodic) {
+
+    NetworkTableEntry speedMultiplier =
+        NetworkTableInstance.getDefault()
+            .getTable("Auto")
+            .getEntry("DisplaySpeed");
+
+    speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
+
+    AutonomousField autonomousField =
         new AutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
-    addPeriodic.accept(() -> autonomousField.update(AutoLogic.getSelectedAutoName()), UPDATE_RATE);
-    tab.add("Selected auto", autonomousField.getField())
-        .withPosition(0, 0)
-        // .withPosition(columnIndex, rowIndex)
-        .withSize(10, 6);
+    SmartDashboard.putData("Selected auto", autonomousField.getField());
+    SmartDashboard.putData("Start pose", autonomousField.getStartPose());
 
-    tab.add("Start pose", autonomousField.getStartPose())
-        .withPosition(0, 0)
-        // .withPosition(columnIndex, rowIndex)
-        .withSize(12, 6);
-
-    tab.addDouble("Est. Time (s)", () -> Math.round(autonomousField.autoTotalTime() * 100) / 100.0)
-        .withPosition(columnIndex, rowIndex + 3)
-        .withSize(1, 1)
-        .withPosition(10, 4);
-    // .withPosition(columnIndex, rowIndex + 3).withSize(1,1);
-
+    addPeriodic.accept(
+        () -> {
+          autonomousField.update(AutoLogic.getSelectedAutoName());
+          SmartDashboard.putNumber(
+              "Est. Time (s)",
+              Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0
+          );
+        },
+        UPDATE_RATE
+    );
   }
 
-  // Display
+  /* ---------------- Display ---------------- */
+
   private final Field2d field = new Field2d();
   private final Field2d fieldPoseStart = new Field2d();
-  // Keeping track of the current /
+
+  /* ---------------- Auto data ---------------- */
+
   private PathPlannerAutos autoData;
   private List<PathPlannerTrajectory> trajectories;
   private int trajectoryIndex = 0;
 
-  // Time
+  /* ---------------- Time ---------------- */
+
   private final DoubleSupplier speedMultiplier;
   private double lastFPGATime;
   private double lastTrajectoryTimeOffset;
 
-  // Checking for changes
+  /* ---------------- State tracking ---------------- */
+
   private Optional<String> lastName = Optional.empty();
 
+  /* ---------------- Constructors ---------------- */
+
   public AutonomousField() {
-    this(() -> 1);
+    this(() -> 1.0);
   }
 
   public AutonomousField(double speedMultiplier) {
@@ -84,11 +87,8 @@ public class AutonomousField {
     this.speedMultiplier = speedMultiplier;
   }
 
-  /**
-   * Returns the {@link Field2d} that this object will update.
-   *
-   * @return The Field2d object.
-   */
+  /* ---------------- Accessors ---------------- */
+
   public Field2d getField() {
     return field;
   }
@@ -97,15 +97,12 @@ public class AutonomousField {
     return fieldPoseStart;
   }
 
-  /**
-   * Calculates the pose to display.
-   *
-   * @param autoName The selected auto name.
-   * @return The pose along the auto trajectory
-   */
+  /* ---------------- Pose update ---------------- */
+
   public Pose2d getUpdatedPose(String autoName) {
     double speed = speedMultiplier.getAsDouble();
     double fpgaTime = Timer.getFPGATimestamp();
+
     if (lastName.isEmpty() || !lastName.get().equals(autoName)) {
       lastName = Optional.of(autoName);
       autoData = new PathPlannerAutos(autoName);
@@ -114,30 +111,37 @@ public class AutonomousField {
       lastFPGATime = fpgaTime;
       lastTrajectoryTimeOffset = 0;
     }
+
     if (trajectories.isEmpty()) {
       if (autoData.getStartingPose() != null) {
         return autoData.getStartingPose();
       }
       return Pose2d.kZero;
     }
+
     lastTrajectoryTimeOffset += (fpgaTime - lastFPGATime) * speed;
     lastFPGATime = fpgaTime;
-    while (lastTrajectoryTimeOffset > trajectories.get(trajectoryIndex).getTotalTimeSeconds()) {
-      lastTrajectoryTimeOffset -= trajectories.get(trajectoryIndex).getTotalTimeSeconds();
+
+    while (lastTrajectoryTimeOffset >
+        trajectories.get(trajectoryIndex).getTotalTimeSeconds()) {
+
+      lastTrajectoryTimeOffset -=
+          trajectories.get(trajectoryIndex).getTotalTimeSeconds();
+
       trajectoryIndex++;
       if (trajectoryIndex >= trajectories.size()) {
         trajectoryIndex = 0;
       }
     }
-    return trajectories.get(trajectoryIndex).sample(lastTrajectoryTimeOffset).pose;
+
+    return trajectories
+        .get(trajectoryIndex)
+        .sample(lastTrajectoryTimeOffset)
+        .pose;
   }
 
-  /**
-   * Updates the {@link Field2d} robot pose. If the robot is enabled, does nothing and the
-   * trajectory will restart when the robot is disabled.
-   *
-   * @param autoName The name of the selected PathPlanner autonomous routine.
-   */
+  /* ---------------- Periodic update ---------------- */
+
   public void update(String autoName) {
     if (DriverStation.isEnabled()) {
       lastName = Optional.empty();
@@ -147,6 +151,8 @@ public class AutonomousField {
     field.setRobotPose(getUpdatedPose(autoName));
     fieldPoseStart.setRobotPose(autoData.getStartingPose());
   }
+
+  /* ---------------- Timing ---------------- */
 
   public double autoTotalTime() {
     if (autoData == null) {

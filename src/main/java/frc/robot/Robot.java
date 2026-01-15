@@ -76,7 +76,8 @@ public class Robot extends TimedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
 
-      AutonomousField.initShuffleBoard("Field", 0, 0, this::addPeriodic);
+  AutonomousField.initNetworkTables(() -> "Field", 0, 0, this::addPeriodic);
+
       AutoLogic.initShuffleBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
       
