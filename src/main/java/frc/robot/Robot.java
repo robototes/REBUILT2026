@@ -111,7 +111,13 @@ public class Robot extends TimedRobot {
     // on the end of diabling, make sure all of the motors are set to break and wont move upon
     // enabling
     if (subsystems.drivebaseSubsystem != null) {
+      if (Robot.isSimulation()) {
+
+      }
+      else {
+
       subsystems.drivebaseSubsystem.brakeMotors();
+      }
     }
  
   
