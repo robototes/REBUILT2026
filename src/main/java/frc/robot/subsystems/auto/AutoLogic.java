@@ -3,7 +3,6 @@ package frc.robot.subsystems.auto;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
@@ -14,7 +13,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -27,20 +25,12 @@ public class AutoLogic {
 
   public enum StartPosition {
     LEFT_TRENCH(
-        "Left Trench",
-        new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))),
-    LEFT_BUMP(
-        "Left Bump",
-        new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
-    CENTER(
-        "Center",
-        new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),
-    RIGHT_BUMP(
-        "Right Bump",
-        new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),
+        "Left Trench", new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))),
+    LEFT_BUMP("Left Bump", new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
+    CENTER("Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),
+    RIGHT_BUMP("Right Bump", new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),
     RIGHT_TRENCH(
-        "Right Trench",
-        new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),
+        "Right Trench", new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),
     MISC("Misc", null);
 
     final String title;
@@ -54,8 +44,7 @@ public class AutoLogic {
 
   /* ---------------- Paths ---------------- */
 
-  private static final AutoPath defaultPath =
-      new AutoPath("Drive", "Drive");
+  private static final AutoPath defaultPath = new AutoPath("Drive", "Drive");
 
   private static final List<AutoPath> rebuiltPaths =
       List.of(
@@ -65,8 +54,7 @@ public class AutoLogic {
           new AutoPath("RB-OutPost", "RB-OutPost"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"));
 
-  private static final Map<Integer, List<AutoPath>> commandsMap =
-      Map.of(0, rebuiltPaths);
+  private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
 
@@ -86,26 +74,20 @@ public class AutoLogic {
   private static final DynamicSendableChooser<String> availableAutos =
       new DynamicSendableChooser<>();
 
-  private static final SendableChooser<Integer> gameObjects =
-      new SendableChooser<>();
+  private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
 
-  private static final SendableChooser<Boolean> isVision =
-      new SendableChooser<>();
+  private static final SendableChooser<Boolean> isVision = new SendableChooser<>();
 
   private static final NetworkTableEntry autoDelayEntry =
-      NetworkTableInstance.getDefault()
-          .getTable("Autos")
-          .getEntry("Auto Delay");
+      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
-  public static final String keys =
-      "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
+  public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
   /* ---------------- Init ---------------- */
 
   public static void initSmartDashBoard() {
 
-    startPositionChooser.setDefaultOption(
-        StartPosition.MISC.title, StartPosition.MISC);
+    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
 
     for (StartPosition pos : StartPosition.values()) {
       startPositionChooser.addOption(pos.title, pos);
@@ -127,9 +109,7 @@ public class AutoLogic {
     SmartDashboard.putData("Available Auto Variants", availableAutos);
     SmartDashboard.putString("Auto Key", keys);
 
-    SmartDashboard.putNumber(
-        "MATCH TIME (AUTO)",
-        DriverStation.getMatchTime());
+    SmartDashboard.putNumber("MATCH TIME (AUTO)", DriverStation.getMatchTime());
 
     isVision.onChange(v -> filterAutos(gameObjects.getSelected()));
     startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
@@ -143,9 +123,7 @@ public class AutoLogic {
   public static void filterAutos(int numGameObjects) {
 
     availableAutos.clearOptions();
-    availableAutos.setDefaultOption(
-        defaultPath.getDisplayName(),
-        defaultPath.getDisplayName());
+    availableAutos.setDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
     List<AutoPath> autoList = commandsMap.get(numGameObjects);
     if (autoList == null) return;
@@ -153,9 +131,7 @@ public class AutoLogic {
     for (AutoPath auto : autoList) {
       if (auto.getStartPose().equals(startPositionChooser.getSelected())
           && auto.isVision() == isVision.getSelected()) {
-        availableAutos.addOption(
-            auto.getDisplayName(),
-            auto.getDisplayName());
+        availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }
   }
@@ -180,9 +156,7 @@ public class AutoLogic {
 
     String autoName = path.getAutoName();
 
-    return Commands.waitSeconds(delay)
-        .andThen(AutoBuilder.buildAuto(autoName))
-        .withName(autoName);
+    return Commands.waitSeconds(delay).andThen(AutoBuilder.buildAuto(autoName)).withName(autoName);
   }
 
   /* ---------------- PathPlanner ---------------- */

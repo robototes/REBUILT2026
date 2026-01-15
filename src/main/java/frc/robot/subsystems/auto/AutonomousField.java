@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
@@ -28,9 +27,7 @@ public class AutonomousField {
       ObjDoubleConsumer<Runnable> addPeriodic) {
 
     NetworkTableEntry speedMultiplier =
-        NetworkTableInstance.getDefault()
-            .getTable("Auto")
-            .getEntry("DisplaySpeed");
+        NetworkTableInstance.getDefault().getTable("Auto").getEntry("DisplaySpeed");
 
     speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
 
@@ -44,12 +41,9 @@ public class AutonomousField {
         () -> {
           autonomousField.update(AutoLogic.getSelectedAutoName());
           SmartDashboard.putNumber(
-              "Est. Time (s)",
-              Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0
-          );
+              "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
         },
-        UPDATE_RATE
-    );
+        UPDATE_RATE);
   }
 
   /* ---------------- Display ---------------- */
@@ -122,11 +116,9 @@ public class AutonomousField {
     lastTrajectoryTimeOffset += (fpgaTime - lastFPGATime) * speed;
     lastFPGATime = fpgaTime;
 
-    while (lastTrajectoryTimeOffset >
-        trajectories.get(trajectoryIndex).getTotalTimeSeconds()) {
+    while (lastTrajectoryTimeOffset > trajectories.get(trajectoryIndex).getTotalTimeSeconds()) {
 
-      lastTrajectoryTimeOffset -=
-          trajectories.get(trajectoryIndex).getTotalTimeSeconds();
+      lastTrajectoryTimeOffset -= trajectories.get(trajectoryIndex).getTotalTimeSeconds();
 
       trajectoryIndex++;
       if (trajectoryIndex >= trajectories.size()) {
@@ -134,10 +126,7 @@ public class AutonomousField {
       }
     }
 
-    return trajectories
-        .get(trajectoryIndex)
-        .sample(lastTrajectoryTimeOffset)
-        .pose;
+    return trajectories.get(trajectoryIndex).sample(lastTrajectoryTimeOffset).pose;
   }
 
   /* ---------------- Periodic update ---------------- */

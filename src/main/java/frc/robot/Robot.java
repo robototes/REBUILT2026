@@ -13,22 +13,19 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 
-
 public class Robot extends TimedRobot {
 
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
-
-
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -38,15 +35,12 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     subsystems = new Subsystems();
-   
-   CanBridge.runTCP();
-  
+
+    CanBridge.runTCP();
+
     controls = new Controls(subsystems);
 
-      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
-    
-    
-
+    AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
 
     if (RobotBase.isReal()) {
       DataLogManager.start();
@@ -68,19 +62,16 @@ public class Robot extends TimedRobot {
         .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
 
     SmartDashboard.putData(CommandScheduler.getInstance());
-   
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
 
-  AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
       AutoLogic.initSmartDashBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
-      
     }
-    
+
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
-  
 
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
@@ -97,7 +88,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    
   }
 
   @Override
@@ -113,24 +103,19 @@ public class Robot extends TimedRobot {
     if (subsystems.drivebaseSubsystem != null) {
       if (Robot.isSimulation()) {
 
-      }
-      else {
+      } else {
 
-      subsystems.drivebaseSubsystem.brakeMotors();
+        subsystems.drivebaseSubsystem.brakeMotors();
       }
     }
- 
-  
   }
 
   @Override
   public void autonomousInit() {
-    
+
     if (SubsystemConstants.DRIVEBASE_ENABLED && AutoLogic.getSelectedAuto() != null) {
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-   
     }
-    
   }
 
   @Override
@@ -162,6 +147,4 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testExit() {}
-
-  
 }
