@@ -82,11 +82,15 @@ public class LLCamera {
       String limelightName, String entryName, boolean isMegaTag2) {
     DoubleArrayEntry poseEntry =
         LimelightHelpers.getLimelightDoubleArrayEntry(limelightName, entryName);
+
+    if (poseEntry == null || poseEntry.get().length == 0) {
+      // Handle the case where no data is available
+      return null; // or some default PoseEstimate
+    }
     TimestampedDoubleArray tsValue = poseEntry.getAtomic();
     double[] poseArray = tsValue.value;
     long timestamp = tsValue.timestamp;
-
-    if (poseArray.length == 0) {
+    if (poseArray == null || poseArray.length == 0) {
       // Handle the case where no data is available
       return null; // or some default PoseEstimate
     }
