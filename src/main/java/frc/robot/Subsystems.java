@@ -1,9 +1,8 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
-
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.VisionSubsystem;
@@ -14,7 +13,7 @@ public class Subsystems {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
-    public static final boolean VISION_ENABLED = false;
+    public static final boolean VISION_ENABLED = true;
   }
 
   // Subsystems go here
