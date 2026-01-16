@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -52,8 +51,7 @@ public class AutoLogic {
           new AutoPath("LT-NeutralLeft-Intake", "LT-NeutralLeft-Intake"),
           new AutoPath("LB-NeutralLeft-Intake", "LB-NeutralLeft-Intake"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
-
-          new AutoPath("RT-NeutralRight-HorseShoe", "RT-NeutralRight-HorseShoe"),
+          new AutoPath("RT-NeutralRight-Intake", "RT-NeutralRight-Intake"),
           new AutoPath("RT-OutPost-Climb", "RT-OutPost-Climb"),
           new AutoPath("RB-OutPost-Climb", "RB-OutPost-Climb"),
           new AutoPath("RB-NeutralRight-Intake", "RB-NeutralRight-Intake"),
@@ -86,8 +84,6 @@ public class AutoLogic {
 
   private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
 
- 
-
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
@@ -114,8 +110,6 @@ public class AutoLogic {
 
     SmartDashboard.putData("Available Auto Variants", availableAutos);
     SmartDashboard.putString("Auto Key", keys);
-
-
 
     startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
     gameObjects.onChange(v -> filterAutos(gameObjects.getSelected()));

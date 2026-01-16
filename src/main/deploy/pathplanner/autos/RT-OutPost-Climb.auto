@@ -15,6 +15,12 @@
           "data": {
             "pathName": "OutPost-Shoot"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Outpost-Climb"
+          }
         }
       ]
     }
