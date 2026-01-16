@@ -12,7 +12,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
@@ -50,7 +49,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
-  private BooleanSubscriber disableVision;
+  private boolean disableVision;
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
@@ -85,9 +84,8 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("april tag distance meters", getDistanceToTarget());
     SmartDashboard.putNumber("time since last reading", getTimeSinceLastReading());
     SmartDashboard.putNumber("tag ambiguity", getTagAmbiguity());
-    if (disableVision.exists()) {
-        SmartDashboard.putBoolean("Disable Vision", disableVision.get(false));
-    }
+    disableVision = SmartDashboard.putBoolean("Disable Vision", false);
+    
   }
 
   public void update() {
@@ -104,7 +102,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   private void processLimelight(
       LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
-    if (disableVision.get(false)) {
+    if (disableVision) {
       return;
     }
 
@@ -210,7 +208,7 @@ public class VisionSubsystem extends SubsystemBase {
     return tagAmbiguity;
   }
 
-  public BooleanSubscriber getDisableVision() {
+  public boolean getDisableVision() {
     return disableVision;
   }
 }
