@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -87,12 +88,12 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void update() {
-    System.out.println("updating");
+    // System.out.println("updating");
     RawFiducial[] rawFiducialsB = BCamera.getRawFiducials();
-    System.out.println("got raw fiducials");
+    // System.out.println("got raw fiducials");
     if (rawFiducialsB != null) {
       for (RawFiducial rf : rawFiducialsB) {
-        System.out.println("processing raw fiducials");
+        // System.out.println("processing raw fiducials");
         processLimelight(BCamera, rawFieldPose3dEntryLeft, rf);
       }
     }
@@ -105,13 +106,13 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     processFiducials(rf);
-    System.out.println("processed a raw fiducial");
+    // System.out.println("processed a raw fiducial");
     BetterPoseEstimate estimate = camera.getBetterPoseEstimate();
-    System.out.println("got a pose estimate");
+    // System.out.println("got a pose estimate");
 
     if (estimate != null) {
       if (estimate.tagCount <= 0) {
-        System.out.println("no tags");
+        // System.out.println("no tags");
         return;
       }
 
@@ -120,13 +121,13 @@ public class VisionSubsystem extends SubsystemBase {
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
       limelightbTX = camera.getTX();
-      System.out.println("got new data");
+    //   System.out.println("got new data");
 
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.10)
           || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(8))
           || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(8))) {
         pose_bad = true;
-        System.out.println("pose bad");
+        // System.out.println("pose bad");
       }
 
       if (!pose_bad) {
@@ -138,17 +139,17 @@ public class VisionSubsystem extends SubsystemBase {
             // meter of distance past 1 meter,
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
         robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
-        System.out.println("put pose in");
+        // System.out.println("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {
         if (!pose_bad) {
           fieldPose3dEntry.set(fieldPose3d);
           lastFieldPose = fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
-          System.out.println("updated pose");
+        //   System.out.println("updated pose");
         }
         lastTimestampSeconds = timestampSeconds;
-        System.out.println("updated time");
+        // System.out.println("updated time");
       }
     }
   }
