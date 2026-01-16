@@ -41,7 +41,7 @@ public class AutonomousField {
         () -> {
           autonomousField.update(AutoLogic.getSelectedAutoName());
           SmartDashboard.putNumber(
-              "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
+              "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0 );
         },
         UPDATE_RATE);
   }
