@@ -1,10 +1,7 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.configs.MotionMagicConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -48,10 +45,10 @@ public class IntakeSubsystem extends SubsystemBase {
         slot0Configs.kG = 0.048;
         // change PID values during testing, these are placeholders from last year's robot
 
-        var motionMagicConfigs = talonFXConfigs.MotionMagic;
-        motionMagicConfigs.MotionMagicCruiseVelocity = 100;
-        motionMagicConfigs.MotionMagicAcceleration = 200;
-        motionMagicConfigs.MotionMagicJerk = 2000;
+    var motionMagicConfigs = talonFXConfigs.MotionMagic;
+    motionMagicConfigs.MotionMagicCruiseVelocity = 100;
+    motionMagicConfigs.MotionMagicAcceleration = 200;
+    motionMagicConfigs.MotionMagicJerk = 2000;
 
         pivotMotor.getConfigurator().apply(talonFXConfigs);
         }
@@ -59,9 +56,9 @@ public class IntakeSubsystem extends SubsystemBase {
     public void rollerConfig() {
         TalonFXConfigurator rollersCfg = rollers.getConfigurator();
 
-        TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+    TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         rollersCfg.apply(talonFXConfiguration);
     }
@@ -73,11 +70,11 @@ public class IntakeSubsystem extends SubsystemBase {
             },
             () -> {
             rollers.set(0);
-            pivotMotor.setControl(m_request1.withPosition(0));
+            pivotMotor.setControl(m_request1.withPosition(0)); // hopefully this retracts the intake
             }
             );
         }
 
 
 }
-// max was here
+
