@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -79,7 +78,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   public VisionSubsystem(DrivebaseWrapper drivebaseWrapper) {
     this.drivebaseWrapper = drivebaseWrapper;
-    disableVision = (GenericSubscriber) NetworkTableInstance.getDefault().getBooleanTopic("vision/disable").subscribe(false);
+    disableVision =
+        (GenericSubscriber)
+            NetworkTableInstance.getDefault().getBooleanTopic("vision/disable").subscribe(false);
 
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
