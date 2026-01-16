@@ -50,9 +50,14 @@ public class AutoLogic {
       List.of(
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
+          new AutoPath("RT-NeutralRight-HorseShoe", "RT-NeutralRight-HorseShoe"),
+          new AutoPath("RT-OutPost-Climb", "RT-OutPost-Climb"),
+          new AutoPath("RB-OutPost-Climb", "RB-OutPost-Climb"),
+          new AutoPath("RB-NeutralRight-Intake", "RB-NeutralRight-Intake"),
           new AutoPath("RT-OutPost", "RT-OutPost"),
           new AutoPath("RB-OutPost", "RB-OutPost"),
-          new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"));
+          new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
+          new AutoPath("Drive", "Drive"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
