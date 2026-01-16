@@ -44,22 +44,22 @@ public class LED_lights {
     }
     public Command showIntakeColor(){
         return Commands.run(() -> {
-            updateLeds(intakeColor);
-        }
+            updateLEDs(intakeColor);
+        });
     }
     public Command showClimbColor(){
         return Commands.run(() -> {
-            updateLeds(climbColor);
-        }
+            updateLEDs(climbColor);
+        });
     }
     public Command showShootingColor(){
         return Commands.run(() -> {
-            updateLeds(shootingColor);
-        }
+            updateLEDs(shootingColor);
+        });
     }
     public Command showDefaultColor(){
         return Commands.run(() -> {
-            updateLeds(defaultColor);
-        }
+            updateLEDs(defaultColor);
+        });
     }
 }
