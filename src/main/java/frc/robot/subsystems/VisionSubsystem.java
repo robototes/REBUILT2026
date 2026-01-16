@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -15,9 +16,6 @@ import edu.wpi.first.networktables.GenericSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -55,7 +53,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
-  private final GenericSubscriber disableVision;
+  private final GenericSubscriber disableVision = null;
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
@@ -85,36 +83,12 @@ public class VisionSubsystem extends SubsystemBase {
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
-
-    ShuffleboardTab shuffleboardTab = Shuffleboard.getTab("AprilTags");
-    shuffleboardTab
-        .addDouble("Last timestamp", this::getLastTimestampSeconds)
-        .withPosition(0, 0)
-        .withSize(1, 1);
-    shuffleboardTab
-        .addInteger("Num targets", this::getNumTargets)
-        .withPosition(0, 1)
-        .withSize(1, 1);
-    shuffleboardTab
-        .addDouble("april tag distance meters", this::getDistanceToTarget)
-        .withPosition(1, 1)
-        .withSize(1, 1);
-    shuffleboardTab
-        .addDouble("time since last reading", this::getTimeSinceLastReading)
-        .withPosition(2, 0)
-        .withSize(1, 1);
-    shuffleboardTab
-        .addDouble("tag ambiguity", this::getTagAmbiguity)
-        .withPosition(1, 0)
-        .withSize(1, 1);
-
-    disableVision =
-        shuffleboardTab
-            .add("Disable vision", false)
-            .withPosition(4, 0)
-            .withSize(3, 2)
-            .withWidget(BuiltInWidgets.kToggleButton)
-            .getEntry();
+    SmartDashboard.putNumber("Last timestamp", getLastTimestampSeconds());
+    SmartDashboard.putNumber("Num targets", getNumTargets());
+    SmartDashboard.putNumber("april tag distance meters", getDistanceToTarget());
+    SmartDashboard.putNumber("time since last reading", getTimeSinceLastReading());
+    SmartDashboard.putNumber("tag ambiguity", getTagAmbiguity());
+    SmartDashboard.putBoolean("Disable Vision", disableVision.get().getBoolean());
   }
 
   public void update() {
