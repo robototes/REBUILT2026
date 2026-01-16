@@ -49,7 +49,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
-  private final GenericSubscriber disableVision = null;
+  private GenericSubscriber disableVision;
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
