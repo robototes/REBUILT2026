@@ -7,7 +7,6 @@ import com.ctre.phoenix6.controls.SolidColor;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants;
 
@@ -19,7 +18,6 @@ public class LED_lights {
     private RGBWColor intakeColor = new RGBWColor(255, 255, 0);
     private RGBWColor shootingColor = new RGBWColor(0, 255, 0);
     private RGBWColor climbColor = new RGBWColor(0, 0, 255);
-    private CommandXboxController m_driverController;
 
     public LED_lights() {
         candle = new CANdle(Constants.OperatorConstants.LED_ID); // replace id with actual id
@@ -32,13 +30,7 @@ public class LED_lights {
         solid.withColor(color);
         candle.setControl(solid);
     }
-
-    public void customBindings(){
-        m_driverController.a().onTrue(showIntakeColor());
-        m_driverController.b().onTrue(showClimbColor());
-        m_driverController.x().onTrue(showShootingColor());
-        m_driverController.y().onTrue(showDefaultColor());
-    }
+    
     public Command showIntakeColor(){
         return Commands.run(() -> {
             updateLEDs(intakeColor);

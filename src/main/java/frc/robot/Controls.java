@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import frc.robot.Sensors.LED_lights;
+
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
@@ -30,6 +32,7 @@ public class Controls {
   public Controls() {
     // Configure the trigger bindings
     configureBindings();
+    customBindings();
   }
 
   /**
@@ -50,6 +53,14 @@ public class Controls {
     // cancelling on release.
     m_driverController.b().whileTrue(m_exampleSubsystem.exampleMethodCommand());
   }
+
+  public void customBindings(){
+    LED_lights leds = new LED_lights();
+        m_driverController.a().onTrue(leds.showIntakeColor());
+        m_driverController.b().onTrue(leds.showClimbColor());
+        m_driverController.x().onTrue(leds.showShootingColor());
+        m_driverController.y().onTrue(leds.showDefaultColor());
+    }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
