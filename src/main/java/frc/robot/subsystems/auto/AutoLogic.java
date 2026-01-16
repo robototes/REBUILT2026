@@ -49,11 +49,16 @@ public class AutoLogic {
   private static final List<AutoPath> rebuiltPaths =
       List.of(
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
+          new AutoPath("LT-NeutralLeft-Intake", "LT-NeutralLeft-Intake"),
+          new AutoPath("LB-NeutralLeft-Intake", "LB-NeutralLeft-Intake"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
+
           new AutoPath("RT-NeutralRight-HorseShoe", "RT-NeutralRight-HorseShoe"),
           new AutoPath("RT-OutPost-Climb", "RT-OutPost-Climb"),
           new AutoPath("RB-OutPost-Climb", "RB-OutPost-Climb"),
           new AutoPath("RB-NeutralRight-Intake", "RB-NeutralRight-Intake"),
+          new AutoPath("C-Climb", "C-Climb"),
+          new AutoPath("Center-Outpost-Climb", "Center-Outpost-Climb"),
           new AutoPath("RT-OutPost", "RT-OutPost"),
           new AutoPath("RB-OutPost", "RB-OutPost"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
