@@ -9,6 +9,14 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -18,10 +26,12 @@ public class IntakeSubsystem extends SubsystemBase {
     private TalonFX pivotMotor;
     private final TalonFX rollers;
     final MotionMagicVoltage m_request1 = new MotionMagicVoltage(0);
+    double speed;
     
     public IntakeSubsystem() {
         pivotMotor = new TalonFX(Constants.HardwareConstants.PivotMotorID);
         rollers = new TalonFX(Constants.HardwareConstants.kRollersID);
+        speed = 0;
     }
     public void TalonFXConfigs() {
         var talonFXConfigs = new TalonFXConfiguration();
@@ -58,16 +68,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
         rollersCfg.apply(talonFXConfiguration);
     }
-
-    public Command spinRollers(double speed) {
-        return Commands.runOnce(
+    public Command runIntake(double speed) {
+        return Commands.runEnd(
             () -> {
-                rollers.set(speed);
-    });}
-
-    public Command stopRollers() {
-        return Commands.runOnce(
+            pivotMotor.setControl(m_request1.withPosition(500));
+            rollers.set(speed);
+            },
             () -> {
-                rollers.set(0);
-    });}
+            rollers.set(0);
+            }
+            );
+        }
 }
+
