@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -121,7 +120,7 @@ public class VisionSubsystem extends SubsystemBase {
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
       limelightbTX = camera.getTX();
-    //   System.out.println("got new data");
+      //   System.out.println("got new data");
 
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.10)
           || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(8))
@@ -146,7 +145,7 @@ public class VisionSubsystem extends SubsystemBase {
           fieldPose3dEntry.set(fieldPose3d);
           lastFieldPose = fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
-        //   System.out.println("updated pose");
+          //   System.out.println("updated pose");
         }
         lastTimestampSeconds = timestampSeconds;
         // System.out.println("updated time");
