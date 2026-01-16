@@ -34,7 +34,7 @@ public class DrivebaseWrapper {
 
     // Because there's no drivebase attached, we aren't using odometry and so module
     // locations etc.
-    // don't matter (but kinematics requires at least 2 module positions)
+    // kinematics requires at least 2 module positions
     var dummyModulePositions =
         new SwerveModulePosition[] {new SwerveModulePosition(), new SwerveModulePosition()};
     var poseEstimator =

@@ -94,6 +94,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void update() {
+    System.out.println("updating");
     RawFiducial[] rawFiducialsB = BCamera.getRawFiducials();
     System.out.println("got raw fiducials");
     if (rawFiducialsB != null) {
