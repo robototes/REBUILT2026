@@ -39,7 +39,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   // AprilTag field layout for 2025
   private static final AprilTagFieldLayout fieldLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
   //   private final Controls controls = new Controls(subsystems);
   double lastBestDistance = 0;
 
