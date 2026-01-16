@@ -10,6 +10,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -32,6 +33,7 @@ public class IntakeSubsystem extends SubsystemBase {
         pivotMotor = new TalonFX(Constants.HardwareConstants.PivotMotorID);
         rollers = new TalonFX(Constants.HardwareConstants.kRollersID);
         speed = 0;
+
     }
     public void TalonFXConfigs() {
         var talonFXConfigs = new TalonFXConfiguration();
@@ -53,11 +55,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
         pivotMotor.getConfigurator().apply(talonFXConfigs);
         }
-    public Command runPivot() {
-        return run( () -> {
-            pivotMotor.setControl(m_request1.withPosition(500)); // placeholder position value, change during testing
-        });
-    }
     
     public void rollerConfig() {
         TalonFXConfigurator rollersCfg = rollers.getConfigurator();
@@ -71,13 +68,16 @@ public class IntakeSubsystem extends SubsystemBase {
     public Command runIntake(double speed) {
         return Commands.runEnd(
             () -> {
-            pivotMotor.setControl(m_request1.withPosition(500));
+            pivotMotor.setControl(m_request1.withPosition(500)); // placeholder value, change during testing
             rollers.set(speed);
             },
             () -> {
             rollers.set(0);
+            pivotMotor.setControl(m_request1.withPosition(0));
             }
             );
         }
-}
 
+
+}
+// max was here
