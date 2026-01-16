@@ -5,6 +5,5 @@ import edu.wpi.first.wpilibj.RobotBase;
 public final class AutomatedTestMain {
   public static void main(String[] args) {
     RobotBase.startRobot(AutomatedTestRobot::new);
-    System.exit(0);
   }
 }
