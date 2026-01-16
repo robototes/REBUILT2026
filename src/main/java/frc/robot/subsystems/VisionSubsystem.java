@@ -75,9 +75,6 @@ public class VisionSubsystem extends SubsystemBase {
 
   public VisionSubsystem(DrivebaseWrapper drivebaseWrapper) {
     this.drivebaseWrapper = drivebaseWrapper;
-    disableVision =
-        (GenericSubscriber)
-            NetworkTableInstance.getDefault().getBooleanTopic("vision/disable").subscribe(false);
 
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
