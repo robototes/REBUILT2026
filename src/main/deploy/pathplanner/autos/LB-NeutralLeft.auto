@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-NeutralRight"
+            "pathName": "LB-NeutralLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-HorseShoe"
+            "pathName": "NeutralLeft-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralLeft-Shoot"
           }
         }
       ]

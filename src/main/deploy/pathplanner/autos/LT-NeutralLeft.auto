@@ -9,6 +9,18 @@
           "data": {
             "pathName": "LT-NeutralLeft"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralLeft-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralLeft-Shoot"
+          }
         }
       ]
     }
