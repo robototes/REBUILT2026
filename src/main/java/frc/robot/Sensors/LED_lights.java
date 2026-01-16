@@ -36,7 +36,7 @@ public class LED_lights {
         candle.setControl(solid);
     }
 
-    private void customBindings(){
+    public void customBindings(){
         m_driverController.a().onTrue(showIntakeColor());
         m_driverController.b().onTrue(showClimbColor());
         m_driverController.x().onTrue(showShootingColor());
