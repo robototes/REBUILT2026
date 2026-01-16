@@ -9,6 +9,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -104,7 +105,6 @@ public class VisionSubsystem extends SubsystemBase {
       return;
     }
 
-    processFiducials(rf);
     // System.out.println("processed a raw fiducial");
     BetterPoseEstimate estimate = camera.getBetterPoseEstimate();
     // System.out.println("got a pose estimate");
@@ -117,6 +117,8 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
+      this.distance = getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), fieldLayout.getTagPose(rf.id).get().toPose2d());
+      this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
       limelightbTX = camera.getTX();
@@ -182,14 +184,6 @@ public class VisionSubsystem extends SubsystemBase {
   //     return setTargetAngle();
   //   }
 
-  private void processFiducials(RawFiducial rf) {
-    // distance to closest fiducial
-    if (fieldLayout.getTagPose(rf.id).isPresent()) {
-      this.distance = rf.distToRobot;
-      this.tagAmbiguity = rf.ambiguity;
-    }
-  }
-
   public double getLastTimestampSeconds() {
     return lastTimestampSeconds;
   }
@@ -200,6 +194,10 @@ public class VisionSubsystem extends SubsystemBase {
 
   public double getDistanceToTarget() {
     return (double) Math.round(distance * 1000) / 1000;
+  }
+  public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
+    double distance = Math.hypot(targetPose.getX() - yourPose.getX(),targetPose.getY() - yourPose.getY());
+    return (double) Math.round(distance * 10000) / 10000; 
   }
 
   public double getTagAmbiguity() {
