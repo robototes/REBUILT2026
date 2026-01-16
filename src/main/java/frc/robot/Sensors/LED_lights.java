@@ -36,18 +36,30 @@ public class LED_lights {
         candle.setControl(solid);
     }
 
-    public Command showScoringModeColor(Supplier<SoloScoringMode> scoringMode) {
+    private void customBindings(){
+        m_driverController.a().onTrue(showIntakeColor());
+        m_driverController.b().onTrue(showClimbColor());
+        m_driverController.x().onTrue(showShootingColor());
+        m_driverController.y().onTrue(showDefaultColor());
+    }
+    public Command showIntakeColor(){
         return Commands.run(() -> {
-            SoloScoringMode current_Mode = scoringMode.get();
-            if (current_Mode == SoloScoringMode.INTAKE_IN_PROGRESS) {
-                updateLEDs(intakeColor);
-            } else if (current_Mode == SoloScoringMode.CLIMB_IN_PROGRESS) {
-                updateLEDs(climbColor);
-            } else if (current_Mode == SoloScoringMode.SHOOTING_IN_PROGRESS) {
-                updateLEDs(shootingColor);
-            } else if (current_Mode == SoloScoringMode.DEFAULT) {
-                updateLEDs(defaultColor);
-            }
-        });
+            updateLeds(intakeColor);
+        }
+    }
+    public Command showClimbColor(){
+        return Commands.run(() -> {
+            updateLeds(climbColor);
+        }
+    }
+    public Command showShootingColor(){
+        return Commands.run(() -> {
+            updateLeds(shootingColor);
+        }
+    }
+    public Command showDefaultColor(){
+        return Commands.run(() -> {
+            updateLeds(defaultColor);
+        }
     }
 }
