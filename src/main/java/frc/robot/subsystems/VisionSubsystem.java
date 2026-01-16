@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -75,7 +76,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   public VisionSubsystem(DrivebaseWrapper drivebaseWrapper) {
     this.drivebaseWrapper = drivebaseWrapper;
-    disableVision.get(false);
+    
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
@@ -84,7 +85,9 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("april tag distance meters", getDistanceToTarget());
     SmartDashboard.putNumber("time since last reading", getTimeSinceLastReading());
     SmartDashboard.putNumber("tag ambiguity", getTagAmbiguity());
-    SmartDashboard.putBoolean("Disable Vision", disableVision.get());
+    if (disableVision.exists()) {
+        SmartDashboard.putBoolean("Disable Vision", disableVision.get(false));
+    }
   }
 
   public void update() {
