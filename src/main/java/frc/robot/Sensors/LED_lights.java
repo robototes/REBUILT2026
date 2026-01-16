@@ -10,9 +10,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants;
-import frc.robot.util.SoloScoringMode;
-
-import java.util.function.Supplier;
 
 public class LED_lights {
     private CANdle candle;
