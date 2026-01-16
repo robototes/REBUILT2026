@@ -125,10 +125,6 @@ public class VisionSubsystem extends SubsystemBase {
         pose_bad = true;
       }
 
-      // // // filter invalid tags by alliance reef
-      // if (rf.id >= 0 && BadAprilTagDetector(rf)) {
-      // return;
-      // }
       if (!pose_bad) {
 
         drivebaseWrapper.addVisionMeasurement(
@@ -202,17 +198,4 @@ public class VisionSubsystem extends SubsystemBase {
   public double getTagAmbiguity() {
     return tagAmbiguity;
   }
-
-  // private static boolean BadAprilTagDetector(LimelightHelpers.RawFiducial r) {
-  //   boolean isRed = DriverStation.getAlliance().equals(Optional.of(DriverStation.Alliance.Red));
-  //   boolean isBlue =
-  // DriverStation.getAlliance().equals(Optional.of(DriverStation.Alliance.Blue));
-  //     boolean isRedReef = 6 <= r.id && r.id <= 11;
-  //     boolean isBlueReef = 17 <= r.id && r.id <= 22;
-  //     boolean isValid = isBlueReef && !isRed || isRedReef && !isBlue;
-  //     if (!isValid) {
-  //       return true;
-  //     }
-  //   return false;
-  // }
 }
