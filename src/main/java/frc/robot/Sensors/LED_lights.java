@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
 import frc.robot.Constants;
-import frc.robot.util.ScoringMode;
+import frc.robot.util.LEDMode;
 
 import java.util.function.Supplier;
 
@@ -34,21 +34,20 @@ public class LED_lights {
         candle.setControl(solid);
     }
 
-    public Command scoringMode(Supplier<ScoringMode> scoringMode){ 
+    public Command LED_Mode(Supplier<LEDMode> mode){ 
         return Commands.run(()->{
-            ScoringMode currentMode = scoringMode.get();
-            if (currentMode == ScoringMode.DEFAULT){
+            LEDMode currentMode = mode.get();
+            if (currentMode == LEDMode.DEFAULT){
                 showDefaultColor();
-            } else if (currentMode == ScoringMode.OUTTAKE_IN_PROGRESS){
+            } else if (currentMode == LEDMode.OUTTAKE_IN_PROGRESS){
                 showOuttakeColor();
-            } else if (currentMode == ScoringMode.INTAKE_IN_PROGRESS){
+            } else if (currentMode == LEDMode.INTAKE_IN_PROGRESS){
                 showIntakeColor();
-            } else if (currentMode == ScoringMode.CLIMB_IN_PROGRESS){
+            } else if (currentMode == LEDMode.CLIMB_IN_PROGRESS){
                 showClimbColor();
             }
         });
     }
-
      
     public Command showIntakeColor(){
         return Commands.run(() -> {
