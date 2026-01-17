@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVelocityDutyCycle;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -14,6 +13,9 @@ import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
@@ -26,6 +28,10 @@ import frc.robot.util.NtTunableDouble;
 public class Flywheels extends SubsystemBase {
   private final TalonFX Flywheel_One;
   private final TalonFX Flywheel_Two;
+  private final DoubleTopic currentTopic;
+  private final DoubleTopic velocityTopic;
+  private final DoublePublisher currentPub;
+  private final DoublePublisher velocityPub;
 
   private final MotionMagicVelocityVoltage request = new MotionMagicVelocityVoltage(0);
 
@@ -46,6 +52,14 @@ public class Flywheels extends SubsystemBase {
     targetVelocity = new NtTunableDouble("/launcher/targetVelocity", 0.0);
     configureMotors();
     simulationInit();
+
+    var nt = NetworkTableInstance.getDefault();
+    velocityTopic = nt.getDoubleTopic("/launcher/velocity");
+    currentTopic = nt.getDoubleTopic("/launcher/current");
+    velocityPub = velocityTopic.publish();
+    currentPub = currentTopic.publish();
+    velocityPub.set(0.0);
+    currentPub.set(0.0);
   }
 
   private void configureMotors() {
@@ -65,7 +79,7 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 11.825/99;
+    config.Slot0.kV = 11.825 / 99;
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
@@ -74,18 +88,18 @@ public class Flywheels extends SubsystemBase {
     flConfigurator.apply(config);
   }
 
-
-  public Command setVelocityCommand(double rpm) {
-    request.Velocity = rpm;
+  public Command setVelocityCommand(double rps) {
+    request.Velocity = rps;
     return runOnce(
             () -> {
               Flywheel_One.setControl(request);
+              System.out.println("setting control");
               Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
             })
         .withName("Set Flywheel Velocity");
   }
 
-  public void setVelocityRPM(double rpm){
+  public void setVelocityRPM(double rpm) {
     request.Velocity = rpm / 60;
     Flywheel_One.setControl(request);
     Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
@@ -139,10 +153,14 @@ public class Flywheels extends SubsystemBase {
   }
 
   @Override
-    public void periodic() {
-        if (targetVelocity.hasChangedSince(lastVelocityUpdateTime)) {
-            TimestampedDouble currentTarget = targetVelocity.getAtomic();
-            setVelocityRPM(currentTarget.value);
-            lastVelocityUpdateTime = currentTarget.timestamp;
-        }
-}}
+  public void periodic() {
+    if (targetVelocity.hasChangedSince(lastVelocityUpdateTime)) {
+      TimestampedDouble currentTarget = targetVelocity.getAtomic();
+      setVelocityRPM(currentTarget.value);
+      lastVelocityUpdateTime = currentTarget.timestamp;
+    }
+
+    velocityPub.set(Flywheel_One.getVelocity().getValueAsDouble());
+    currentPub.set(Flywheel_One.getVelocity().getValueAsDouble());
+  }
+}
