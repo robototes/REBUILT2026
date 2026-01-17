@@ -91,18 +91,12 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    if (subsystems.visionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      subsystems.visionSubsystem.update();
-    }
+
   }
 
   @Override
   public void disabledInit() {
-    if (subsystems.visionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
-    }
+
   }
 
   @Override
@@ -116,9 +110,7 @@ public class Robot extends TimedRobot {
       if (Robot.isSimulation()) {
 
       } else {
-        if (subsystems.visionSubsystem != null) {
-          LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
-        }
+
 
         subsystems.drivebaseSubsystem.brakeMotors();
       }

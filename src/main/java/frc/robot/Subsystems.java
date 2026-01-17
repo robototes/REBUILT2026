@@ -6,7 +6,7 @@ import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DrivebaseWrapper;
-import frc.robot.subsystems.VisionSubsystem;
+
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class Subsystems {
@@ -20,7 +20,7 @@ public class Subsystems {
   // Subsystems go here
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final DrivebaseWrapper drivebaseWrapper;
-  public final VisionSubsystem visionSubsystem;
+
 
   public Subsystems() {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -34,12 +34,7 @@ public class Subsystems {
       drivebaseWrapper = new DrivebaseWrapper();
     }
 
-    if (VISION_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseWrapper);
-      SmartDashboard.putData(visionSubsystem);
-    } else {
-      visionSubsystem = null;
-    }
+
   }
 
   public CommandSwerveDrivetrain getDrivetrain() {
