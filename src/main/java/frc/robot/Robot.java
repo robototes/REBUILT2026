@@ -20,12 +20,15 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.LimelightHelpers;
 
 public class Robot extends TimedRobot {
 
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
+  private final int APRILTAG_PIPELINE = 0;
+  private final int VIEWFINDER_PIPELINE = 1;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -88,10 +91,21 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    if (subsystems.visionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      subsystems.visionSubsystem.update();
+    }
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    if (subsystems.visionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
+    }
+  }
+
+
 
   @Override
   public void disabledPeriodic() {}
@@ -104,6 +118,9 @@ public class Robot extends TimedRobot {
       if (Robot.isSimulation()) {
 
       } else {
+        if (subsystems.visionSubsystem != null) {
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+    }
 
         subsystems.drivebaseSubsystem.brakeMotors();
       }

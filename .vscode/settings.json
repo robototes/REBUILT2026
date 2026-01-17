@@ -57,5 +57,11 @@
     "edu.wpi.first.math.**.proto.*",
     "edu.wpi.first.math.**.struct.*",
   ],
-  "java.dependency.enableDependencyCheckup": false
+  "java.dependency.enableDependencyCheckup": false,
+  "[java]": {
+    "editor.defaultFormatter": "josevseb.google-java-format-for-vs-code"
+  },
+  "java.format.enabled": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
 }
