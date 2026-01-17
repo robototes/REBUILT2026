@@ -51,9 +51,8 @@ public class LED_lights {
 
      
     public Command showIntakeColor(){
-        return Commands.sequence(() -> {
+        return Commands.run(() -> {
             updateLEDs(intakeColor);
-            updateLEDs(outtakeColor);
         });
     } 
     public Command showClimbColor(){
