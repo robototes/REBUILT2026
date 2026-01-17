@@ -4,6 +4,7 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INDEX_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.SERIALIZER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
