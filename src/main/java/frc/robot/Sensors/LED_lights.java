@@ -1,4 +1,4 @@
-package frc.robot.Sensors;
+package frc.robot.sensors;
 
 import com.ctre.phoenix6.configs.CANdleConfigurator;
 import com.ctre.phoenix6.hardware.CANdle;
@@ -9,6 +9,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
 import frc.robot.Constants;
+import frc.robot.util.ScoringMode;
+
+import java.util.function.Supplier;
 
 public class LED_lights {
     private CANdle candle;
@@ -16,11 +19,11 @@ public class LED_lights {
 
     private RGBWColor defaultColor = new RGBWColor(255, 0, 0);
     private RGBWColor intakeColor = new RGBWColor(255, 255, 0);
-    private RGBWColor shootingColor = new RGBWColor(0, 255, 0);
+    private RGBWColor outtakeColor = new RGBWColor(0, 255, 0);
     private RGBWColor climbColor = new RGBWColor(0, 0, 255);
 
     public LED_lights() {
-        candle = new CANdle(Constants.OperatorConstants.LED_ID); // replace id with actual id
+        candle = new CANdle(Constants.OtherConstants.LED_ID); // replace id with actual id
         candleConfigurator = candle.getConfigurator();
 
     }
@@ -30,20 +33,36 @@ public class LED_lights {
         solid.withColor(color);
         candle.setControl(solid);
     }
-    
+
+    public Command scoringMode(Supplier<ScoringMode> scoringMode){ 
+        return Commands.run(()->{
+            ScoringMode currentMode = scoringMode.get();
+            if (currentMode == ScoringMode.DEFAULT){
+                showDefaultColor();
+            } else if (currentMode == ScoringMode.OUTTAKE_IN_PROGRESS){
+                showOuttakeColor();
+            } else if (currentMode == ScoringMode.INTAKE_IN_PROGRESS){
+                showIntakeColor();
+            } else if (currentMode == ScoringMode.CLIMB_IN_PROGRESS){
+                showClimbColor();
+            }
+        });
+    }
+
+     
     public Command showIntakeColor(){
         return Commands.run(() -> {
             updateLEDs(intakeColor);
         });
-    }
+    } 
     public Command showClimbColor(){
         return Commands.run(() -> {
             updateLEDs(climbColor);
         });
-    }
-    public Command showShootingColor(){
+    } 
+    public Command showOuttakeColor(){
         return Commands.run(() -> {
-            updateLEDs(shootingColor);
+            updateLEDs(outtakeColor);
         });
     }
     public Command showDefaultColor(){

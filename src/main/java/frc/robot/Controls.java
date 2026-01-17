@@ -7,12 +7,11 @@ package frc.robot;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
+import frc.robot.sensors.LED_lights;
 import frc.robot.subsystems.ExampleSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-
-import frc.robot.Sensors.LED_lights;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -58,7 +57,7 @@ public class Controls {
     LED_lights leds = new LED_lights();
         m_driverController.a().onTrue(leds.showIntakeColor());
         m_driverController.b().onTrue(leds.showClimbColor());
-        m_driverController.x().onTrue(leds.showShootingColor());
+        m_driverController.x().onTrue(leds.showOuttakeColor());
         m_driverController.y().onTrue(leds.showDefaultColor());
     }
 
