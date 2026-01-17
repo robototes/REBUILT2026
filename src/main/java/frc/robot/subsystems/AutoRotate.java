@@ -10,6 +10,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,10 +20,9 @@ import frc.robot.util.AllianceUtils;
 import java.util.List;
 
 public class AutoRotate {
-
   public static Command autoRotate(
-      CommandSwerveDrivetrain drivebaseSubsystem, Controls controls) {
-    return new AutoAlignCommand(drivebaseSubsystem, controls).withName("Auto Align");
+      CommandSwerveDrivetrain drivebaseSubsystem, Pose2d rotatePose) {
+    return new AutoRotateCommand(drivebaseSubsystem, rotatePose).withName("Auto Align");
   }
 
 
@@ -33,50 +33,33 @@ public class AutoRotate {
   private static final Pose2d wantedTag = aprilTagFieldLayout.getTagPose(9).get().toPose2d().plus(robot);
   private static final Pose2d REDHUB_POSE2D = new Pose2d(11.950, 4.105, new Rotation2d(0));
 
-  private static class AutoAlignCommand extends Command {
-
-    protected final PIDController pidX = new PIDController(4, 0, 0);
-    protected final PIDController pidY = new PIDController(4, 0, 0);
+  private static class AutoRotateCommand extends Command {
     protected final PIDController pidRotate = new PIDController(8, 0, 0);
 
     protected final CommandSwerveDrivetrain drive;
-    protected final Controls controls;
-    protected Pose2d branchPose;
+    protected final Pose2d targetPose;
 
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric() // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
-    public AutoAlignCommand(CommandSwerveDrivetrain drive, Controls controls) {
+    public AutoRotateCommand(CommandSwerveDrivetrain drive, Pose2d rotatePose2d) {
       this.drive = drive;
+      targetPose = rotatePose2d;
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
-      this.controls = controls;
       setName("Auto Align");
-    }
-
-    @Override
-    public void initialize() {
-      Pose2d robotPose = drive.getState().Pose;
-      pidX.setSetpoint(wantedTag.getX());
-      pidY.setSetpoint(wantedTag.getY());
-      pidRotate.setSetpoint(wantedTag.getRotation().getRadians());
     }
 
     @Override
     public void execute() {
       Pose2d currentPose = drive.getState().Pose;
-      // Calculate the power for X direction and clamp it between -1 and 1
-      double powerX = pidX.calculate(currentPose.getX());
-      double powerY = pidY.calculate(currentPose.getY());
-      powerX = MathUtil.clamp(powerX, -2, 2);
-      powerY = MathUtil.clamp(powerY, -2, 2);
-      powerX += .05 * Math.signum(powerX);
-      powerY += .05 * Math.signum(powerY);
-      double powerRotate = pidRotate.calculate(currentPose.getRotation().getRadians());
-      powerRotate = MathUtil.clamp(powerRotate, -4, 4);
+      Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
+      Rotation2d targetRotate = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
+      double rotationOutput = pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
+      rotationOutput = MathUtil.clamp(rotationOutput, -4.0, 4);
       SwerveRequest request =
-          driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(powerRotate);
+          driveRequest.withRotationalRate(rotationOutput);
       // Set the drive control with the created request
       drive.setControl(request);
     }
@@ -84,15 +67,10 @@ public class AutoRotate {
     @Override
     public boolean isFinished() {
       Pose2d currentPose = drive.getState().Pose;
-      Transform2d robotToBranch = branchPose.minus(currentPose);
-      /*if (robotToBranch.getTranslation().getNorm() < 0.01
-          && Math.abs(robotToBranch.getRotation().getDegrees()) < 1) {
-        return true;
-      }*/
-      if (Math.abs(robotToBranch.getRotation().getDegrees()) < 1) {
-        return true;
-      }
-      return false;
+      Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
+      Rotation2d wantedRotation = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
+      return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < 1;
+
     }
 
     @Override
