@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.LimelightHelpers;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -20,6 +21,8 @@ public class Robot extends TimedRobot {
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
+  private final int APRILTAG_PIPELINE = 0;
+  private final int VIEWFINDER_PIPELINE = 1;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -50,11 +53,27 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    if (subsystems.visionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      subsystems.visionSubsystem.update();
+    }
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    if (subsystems.visionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
+    }
+  }
+
+  @Override
+  public void disabledExit() {
+    if (subsystems.visionSubsystem != null) {
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+    }
+  }
 
   @Override
   public void disabledPeriodic() {}

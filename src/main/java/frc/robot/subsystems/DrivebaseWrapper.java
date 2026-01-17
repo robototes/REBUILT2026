@@ -12,7 +12,10 @@ import edu.wpi.first.math.numbers.N3;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import java.util.function.Supplier;
 
+<<<<<<< HEAD
 /// this is for vision better handling without a drive base and with one
+=======
+>>>>>>> main
 /**
  * Wrapper class around members of {@link SwerveDrive}, like the Field2d telemetry and the pose
  * estimator.
@@ -34,7 +37,11 @@ public class DrivebaseWrapper {
 
     // Because there's no drivebase attached, we aren't using odometry and so module
     // locations etc.
+<<<<<<< HEAD
     // don't matter (but kinematics requires at least 2 module positions)
+=======
+    // kinematics requires at least 2 module positions
+>>>>>>> main
     var dummyModulePositions =
         new SwerveModulePosition[] {new SwerveModulePosition(), new SwerveModulePosition()};
     var poseEstimator =

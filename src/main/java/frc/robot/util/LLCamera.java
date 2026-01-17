@@ -3,6 +3,10 @@ package frc.robot.util;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.TimestampedDoubleArray;
+<<<<<<< HEAD
+=======
+import edu.wpi.first.wpilibj.DriverStation;
+>>>>>>> main
 import frc.robot.util.LimelightHelpers.RawDetection;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 
@@ -82,11 +86,23 @@ public class LLCamera {
       String limelightName, String entryName, boolean isMegaTag2) {
     DoubleArrayEntry poseEntry =
         LimelightHelpers.getLimelightDoubleArrayEntry(limelightName, entryName);
+<<<<<<< HEAD
     TimestampedDoubleArray tsValue = poseEntry.getAtomic();
     double[] poseArray = tsValue.value;
     long timestamp = tsValue.timestamp;
 
     if (poseArray.length == 0) {
+=======
+
+    if (poseEntry == null) {
+      // Handle the case where no data is available
+      return null; // or some default PoseEstimate
+    }
+    TimestampedDoubleArray tsValue = poseEntry.getAtomic();
+    double[] poseArray = tsValue.value;
+    long timestamp = tsValue.timestamp;
+    if (poseArray == null || poseArray.length < 11) {
+>>>>>>> main
       // Handle the case where no data is available
       return null; // or some default PoseEstimate
     }
@@ -107,6 +123,15 @@ public class LLCamera {
 
     if (poseArray.length != expectedTotalVals) {
       // Don't populate fiducials
+<<<<<<< HEAD
+=======
+      DriverStation.reportWarning(
+          "Limelight pose array size mismatch. Expected "
+              + expectedTotalVals
+              + " but got "
+              + poseArray.length,
+          false);
+>>>>>>> main
     } else {
       for (int i = 0; i < tagCount; i++) {
         int baseIndex = 11 + (i * valsPerFiducial);
