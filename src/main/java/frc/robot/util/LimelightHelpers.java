@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-// LimelightHelpers v1.11 (REQUIRES LLOS 2025.0 OR LATER)
-=======
 // LimelightHelpers v1.12 (REQUIRES LLOS 2025.0 OR LATER)
->>>>>>> main
 
 package frc.robot.util;
 
@@ -30,10 +26,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-<<<<<<< HEAD
-=======
 import java.util.Arrays;
->>>>>>> main
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -471,8 +464,6 @@ public class LimelightHelpers {
       this.distToRobot = distToRobot;
       this.ambiguity = ambiguity;
     }
-<<<<<<< HEAD
-=======
 
     @Override
     public boolean equals(Object obj) {
@@ -487,7 +478,6 @@ public class LimelightHelpers {
           && Double.compare(distToRobot, other.distToRobot) == 0
           && Double.compare(ambiguity, other.ambiguity) == 0;
     }
->>>>>>> main
   }
 
   /** Represents a Limelight Raw Neural Detector result from Limelight's NetworkTables output. */
@@ -580,8 +570,6 @@ public class LimelightHelpers {
       this.rawFiducials = rawFiducials;
       this.isMegaTag2 = isMegaTag2;
     }
-<<<<<<< HEAD
-=======
 
     @Override
     public boolean equals(Object obj) {
@@ -598,7 +586,6 @@ public class LimelightHelpers {
           && pose.equals(that.pose)
           && Arrays.equals(rawFiducials, that.rawFiducials);
     }
->>>>>>> main
   }
 
   /** Encapsulates the state of an internal Limelight IMU. */
@@ -638,11 +625,7 @@ public class LimelightHelpers {
   static boolean profileJSON = false;
 
   static final String sanitizeName(String name) {
-<<<<<<< HEAD
-    if (name == "" || name == null) {
-=======
     if ("".equals(name) || name == null) {
->>>>>>> main
       return "limelight";
     }
     return name;
@@ -1576,8 +1559,6 @@ public class LimelightHelpers {
   }
 
   /**
-<<<<<<< HEAD
-=======
    * Configures the complementary filter alpha value for IMU Assist Modes (Modes 3 and 4)
    *
    * @param limelightName Name/identifier of the Limelight
@@ -1601,7 +1582,6 @@ public class LimelightHelpers {
   }
 
   /**
->>>>>>> main
    * Sets the 3D point-of-interest offset for the current fiducial pipeline.
    * https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-3d#point-of-interest-tracking
    *
@@ -1718,11 +1698,7 @@ public class LimelightHelpers {
     try {
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("GET");
-<<<<<<< HEAD
-      if (snapshotName != null && snapshotName != "") {
-=======
       if (snapshotName != null && !"".equals(snapshotName)) {
->>>>>>> main
         connection.setRequestProperty("snapname", snapshotName);
       }
 

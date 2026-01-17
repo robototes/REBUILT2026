@@ -4,18 +4,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 
 public class BetterPoseEstimate {
-<<<<<<< HEAD
-  public Pose3d pose3d;
-  public double timestampSeconds;
-  public double latency;
-  public int tagCount;
-  public double tagSpan;
-  public double avgTagDist;
-  public double avgTagArea;
-
-  public RawFiducial[] rawFiducials;
-  public boolean isMegaTag2;
-=======
   public final Pose3d pose3d;
   public final double timestampSeconds;
   public final double latency;
@@ -26,7 +14,6 @@ public class BetterPoseEstimate {
 
   public final RawFiducial[] rawFiducials;
   public final boolean isMegaTag2;
->>>>>>> main
 
   /** Instantiates a PoseEstimate object with default values */
   public BetterPoseEstimate() {

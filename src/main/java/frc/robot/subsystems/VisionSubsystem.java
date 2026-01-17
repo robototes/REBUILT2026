@@ -1,25 +1,5 @@
 package frc.robot.subsystems;
 
-<<<<<<< HEAD
-import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.GenericSubscriber;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Controls;
-import frc.robot.Hardware;
-import frc.robot.Subsystems;
-import frc.robot.util.LLCamera;
-=======
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -42,66 +22,35 @@ import frc.robot.Hardware;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
->>>>>>> main
 
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
-<<<<<<< HEAD
-  private static double limelightbTX;
-  private final Subsystems subsystems = new Subsystems();
-=======
   // hub pose blue X: 4.536m, Y: 4.053m
   // hub pose red X: 11.950m, Y: 4.105m,
->>>>>>> main
   // Deviations
   private static final Vector<N3> STANDARD_DEVS =
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
-<<<<<<< HEAD
-  private final SwerveRequest.FieldCentricFacingAngle autoOrient =
-      new SwerveRequest.FieldCentricFacingAngle();
-
-  // AprilTag field layout for 2025
-  private static final AprilTagFieldLayout fieldLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
-  private final Controls controls = new Controls(subsystems);
-  double lastBestDistance = 0;
-=======
 
   // AprilTag field layout for this year
   private static final AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
->>>>>>> main
 
   private final DrivebaseWrapper drivebaseWrapper;
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
-<<<<<<< HEAD
-  private final GenericSubscriber disableVision;
-=======
   private boolean disableVision;
->>>>>>> main
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/fieldPose3d", Pose3d.struct)
           .publish();
-<<<<<<< HEAD
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryLeft =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dLeft", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryRight =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dRight", Pose3d.struct)
-          .publish();
-=======
   private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dLeft", Pose3d.struct)
@@ -236,5 +185,4 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean getDisableVision() {
     return disableVision;
   }
->>>>>>> main
 }
