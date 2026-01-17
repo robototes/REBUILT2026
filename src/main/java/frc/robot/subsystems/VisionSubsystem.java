@@ -97,6 +97,8 @@ public class VisionSubsystem extends SubsystemBase {
 
   private void processLimelight(
       LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
+
+    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
     if (disableVision) {
       return;
     }
