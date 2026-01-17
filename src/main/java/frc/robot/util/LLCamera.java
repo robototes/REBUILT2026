@@ -84,7 +84,7 @@ public class LLCamera {
     DoubleArrayEntry poseEntry =
         LimelightHelpers.getLimelightDoubleArrayEntry(limelightName, entryName);
 
-    if (poseEntry == null || poseEntry.get().length >= 11) {
+    if (poseEntry == null) {
       // Handle the case where no data is available
       return null; // or some default PoseEstimate
     }
