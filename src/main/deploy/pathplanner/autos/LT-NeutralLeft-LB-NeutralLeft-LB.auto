@@ -7,19 +7,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-OutPost"
+            "pathName": "LT-NeutralLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "OutPost-Shoot"
+            "pathName": "NeutralLeft-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Outpost-Climb"
+            "pathName": "NeutralLeft-Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LB-NeutralLeftIntake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralLeft-Shoot"
           }
         }
       ]
