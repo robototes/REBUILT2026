@@ -1,15 +1,14 @@
 package frc.robot.util;
 
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.TimestampedDouble;
-import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
+import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.TimestampedDouble;
 
 /**
- * A pure NT4 tunable double that requires no Shuffleboard/SmartDashboard.
- * Publish a default once; read the current value (including edits from
- * Elastic).
+ * A pure NT4 tunable double that requires no Shuffleboard/SmartDashboard. Publish a default once;
+ * read the current value (including edits from Elastic).
  */
 public final class NtTunableDouble {
   private final DoubleTopic topic;
@@ -17,7 +16,7 @@ public final class NtTunableDouble {
   private final DoubleSubscriber sub;
 
   /**
-   * @param path         Full NT path (e.g., "/tuning/intakeSpeed")
+   * @param path Full NT path (e.g., "/tuning/intakeSpeed")
    * @param defaultValue Initial/default value to publish and subscribe to
    */
   public NtTunableDouble(String path, double defaultValue) {

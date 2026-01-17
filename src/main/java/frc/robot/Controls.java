@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.AutoRotate;
@@ -139,7 +138,6 @@ public class Controls {
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
   }
 
-
   private void configureIntakeBindings() {
     if (s.Intake == null) {
       // Stop running this method
@@ -158,10 +156,18 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-            s.Flywheels.setVelocityCommand(3000)
+            s.Flywheels.setVelocityCommand(40)
                 .andThen(
                     s.Index.setPowerCommand(0.3)
-                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))).alongWith(AutoRotate.autoRotate(s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));}
+                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))).alongWith(AutoRotate.autoRotate(s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
+
+    driverController
+        .x()
+        .whileTrue(s.Index.setTunerPowerCommand().alongWith(s.Serializer.setTunerPowerCommand()));
+    driverController.y().onTrue(s.Flywheels.setVelocityCommand(66.667));
+    driverController.a().whileTrue(s.Flywheels.stopCommand());
+  }
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *

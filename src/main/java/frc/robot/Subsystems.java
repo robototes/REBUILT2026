@@ -13,6 +13,7 @@ import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Flywheels;
 import frc.robot.subsystems.Index;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class Subsystems {
@@ -24,6 +25,7 @@ public class Subsystems {
     public static final boolean INTAKE_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean INDEX_ENABLED = true;
+    public static final boolean SERIALIZER_ENABLED = true;
   }
 
   // Subsystems go here
@@ -33,6 +35,7 @@ public class Subsystems {
   public final Intake Intake;
   public final Flywheels Flywheels;
   public final Index Index;
+  public final Serializer Serializer;
 
   public Subsystems() {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -65,6 +68,11 @@ public class Subsystems {
       Index = new Index();
     } else {
       Index = null;
+    }
+    if (SERIALIZER_ENABLED) {
+      Serializer = new Serializer();
+    } else {
+      Serializer = null;
     }
   }
 
