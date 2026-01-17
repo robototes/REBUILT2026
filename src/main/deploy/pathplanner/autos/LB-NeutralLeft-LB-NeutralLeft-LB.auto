@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-NeutralLeft"
+            "pathName": "LB-NeutralLeft"
           }
         },
         {
@@ -20,6 +20,18 @@
           "type": "path",
           "data": {
             "pathName": "NeutralLeft-Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralLeft-Shoot-Second"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralLeft-Shoot-Third"
           }
         }
       ]
