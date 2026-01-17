@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.generated.CompTunerConstants;
 
@@ -55,9 +56,11 @@ public class Controls {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems) {
-    // Configure the trigger bindings
     s = subsystems;
+    // Configure the trigger bindings
     configureDrivebaseBindings();
+    configureIntakeBindings();
+    configureLaunchingBindings();
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -98,6 +101,7 @@ public class Controls {
       return;
     }
 
+    System.out.println("Drivebase bindigs set");
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
 
@@ -115,6 +119,7 @@ public class Controls {
                         .withRotationalRate(getDriveRotate()))
             .withName("Drive"));
 
+    // // buttons for starting system ID routines
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
     // driverController.b().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kReverse));
     // driverController.y().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kForward));
@@ -133,6 +138,30 @@ public class Controls {
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
   }
 
+
+  private void configureIntakeBindings() {
+    if (s.Intake == null) {
+      // Stop running this method
+      return;
+    }
+    // Add subsystem bindings here
+    driverController.leftTrigger().whileTrue(s.Intake.setPowerCommand(1));
+  }
+
+  private void configureLaunchingBindings() {
+    if (s.Flywheels == null || s.Index == null) {
+      // Stop running this method
+      return;
+    }
+    // Add subsystem bindings here
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            s.Flywheels.setVelocityCommand(3000)
+                .andThen(
+                    s.Index.setPowerCommand(0.3)
+                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))));}
+ 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
