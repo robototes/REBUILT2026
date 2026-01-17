@@ -20,7 +20,6 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
-import frc.robot.util.LimelightHelpers;
 
 public class Robot extends TimedRobot {
 
@@ -91,13 +90,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-
   }
 
   @Override
-  public void disabledInit() {
-
-  }
+  public void disabledInit() {}
 
   @Override
   public void disabledPeriodic() {}
@@ -110,7 +106,6 @@ public class Robot extends TimedRobot {
       if (Robot.isSimulation()) {
 
       } else {
-
 
         subsystems.drivebaseSubsystem.brakeMotors();
       }
