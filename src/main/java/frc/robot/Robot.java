@@ -22,7 +22,7 @@ public class Robot extends TimedRobot {
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
-  private final int VIEWFINDER_PIPELINE = 0;
+  private final int VIEWFINDER_PIPELINE = 1;
 
   /**
    * This function is run when the robot is first started up and should be used for any
