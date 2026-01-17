@@ -4,14 +4,14 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
+import edu.wpi.first.math.MathUtil;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
-
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -69,7 +69,7 @@ public class Controls {
   }
 
   // takes the X value from the joystick, and applies a deadband and input scaling
-  public double getDriveX() {
+  private double getDriveX() {
     // Joystick +Y is back
     // Robot +X is forward
     double input = MathUtil.applyDeadband(-driverController.getLeftY(), 0.1);
@@ -77,7 +77,7 @@ public class Controls {
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
-  public double getDriveY() {
+  private double getDriveY() {
     // Joystick +X is right
     // Robot +Y is left
     double input = MathUtil.applyDeadband(-driverController.getLeftX(), 0.1);
