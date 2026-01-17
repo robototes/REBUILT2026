@@ -61,7 +61,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": " NeutralLeft-Climb"
+            "pathName": "BumpLeft-Climb"
           }
         }
       ]
