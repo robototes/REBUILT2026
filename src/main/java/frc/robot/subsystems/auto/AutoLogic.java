@@ -182,13 +182,13 @@ private static final List<AutoPath> rebuiltPaths =
   }
 
   public static Command launcherCommand() {
-    return Commands.idle();
+    return Commands.none();
   }
   public static Command intakeCommand() {
-    return Commands.idle();
+    return Commands.none();
   }
   public static Command climbCommand() {
-    return Commands.idle();
+    return Commands.none();
   }
 
 }
