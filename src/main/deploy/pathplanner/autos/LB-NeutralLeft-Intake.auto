@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-OutPost"
+            "pathName": "LB-NeutralLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "OutPost-Shoot"
+            "pathName": "NeutralLeft-Intake"
           }
         }
       ]

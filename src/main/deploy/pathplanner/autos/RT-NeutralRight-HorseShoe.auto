@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-OutPost"
+            "pathName": "RT-NeutralRight"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "OutPost-Shoot"
+            "pathName": "NeutralRight-HorseShoe"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-RB"
           }
         }
       ]
