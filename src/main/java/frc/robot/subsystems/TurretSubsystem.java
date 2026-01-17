@@ -9,17 +9,10 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.util.LLCamera;
-import frc.robot.util.LimelightHelpers;
-import frc.robot.util.LimelightHelpers.RawFiducial;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import org.opencv.core.Mat;
 
 // import java.util.hash;
 public class TurretSubsystem extends SubsystemBase {
@@ -32,10 +25,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   // ----- HARDWARE OBJECTS ----- //
   private final SwerveDrivetrain m_driveTrain;
-  private final LLCamera C_Camera; // Camera
-
-  // ------ APRILTAGS -------//
-  Set<Integer> tags = new HashSet<>(Arrays.asList(2, 5, 8, 9, 10, 11, 18, 19, 20, 21, 24, 27));
 
   // PLACEHOLDER VALUE. This will probably be handled elsewhere
   public static boolean readyToShoot = false;
@@ -46,50 +35,43 @@ public class TurretSubsystem extends SubsystemBase {
     request = new MotionMagicVoltage(0);
     ConfigureMotors();
     // --- SET DRIVETRAIN --- //
-
-    // --- SET CAMERA --- //
-    this.C_Camera = new LLCamera(Hardware.LIMELIGHT_C);
+    this.m_driveTrain = drivetrain;
   }
 
-  private void moveMotor(double targetDegrees) {
-    motor1.setControl(request.withPosition(targetDegrees));
+  public void moveMotor(double targetDegrees) {
+    motor1.setControl(request.withPosition(Units.degreesToRotations(targetDegrees)));
   }
 
-  // ALL SIDES OF THE HUB APRIL TAGS ARE 14 INCHES APART. THE MIDDLE TAG IS ALWAYS CENTER. ALL ARE
-  // 44.25 INCHES TALL
-  // SIDE LENGTH OF THE HUB IS 47 INCHES WIDE
-  private double calculateRotations(double currentRotations) {}
+  private double calculateRotations() {
+    // 158.84 Inches in the Y Direction
+    // 182.11 inches in the X Direction
+    // double distance =
+    //      Math.cos(
+    //          Units.metersToFeet(
+    //              closestCam.distToCamera)); // distance from camera to aprilTag in feet
 
-  // Uses the closest camera detected to use determine the specific calculation required to
-  // calculate the requiredxDiff
-  private RawFiducial GetClosestCamera() {
-    /*
-    for (RawFiducial fiducial : fiducials) {
-        int id = fiducial.id;                    // Tag ID
-        double txnc = fiducial.txnc;             // X offset (no crosshair)
-        double tync = fiducial.tync;             // Y offset (no crosshair)
-        double ta = fiducial.ta;                 // Target area
-        double distToCamera = fiducial.distToCamera;  // Distance to camera
-        double distToRobot = fiducial.distToRobot;    // Distance to robot
-        double ambiguity = fiducial.ambiguity;   // Tag pose ambiguity
-    }
-    */
-    RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("");
+    SwerveDriveState driveState = m_driveTrain.getState(); // Get current drive state
+    Pose2d currentPose = driveState.Pose;
+    Rotation2d rotation = currentPose.getRotation();
 
-    if (fiducials.length != 0) {
-      // Search for the closest cam
-      RawFiducial closestCam = fiducials[0];
-      for (int i = 1; i < fiducials.length; i++) {
-        if (fiducials[i].ambiguity > 0.2) {
-          if (fiducials[i].distToCamera < closestCam.distToCamera) {
-            closestCam = fiducials[i];
-          }
-        }
-      }
-      return closestCam;
-    } else {
-      return null;
-    }
+    double robotRotation = rotation.getDegrees();
+    double TurretRotation = motor1.getPosition().getValueAsDouble() * 360;
+    double TurretRotationsRad =
+        MathUtil.angleModulus(Units.degreesToRadians(robotRotation + TurretRotation));
+    double TurretRotationFieldRelative = Units.radiansToDegrees(TurretRotationsRad);
+
+    Translation2d hub =
+        new Translation2d(Units.inchesToMeters(182.11), Units.inchesToMeters(158.84));
+    Translation2d difference = hub.minus(currentPose.getTranslation());
+    double requiredAngles =
+        Units.radiansToDegrees(
+            Math.atan2(
+                difference.getY(),
+                difference.getX())); // This will give the angle from the difference of x and y.
+
+    double turretDegrees =
+        MathUtil.clamp(requiredAngles - TurretRotationFieldRelative, -90.0, 90.0);
+    return turretDegrees;
   }
 
   private void ConfigureMotors() {
@@ -121,41 +103,52 @@ public class TurretSubsystem extends SubsystemBase {
   // PERIODIC FUNCTIONS
   @Override
   public void periodic() {
-    // RawFiducial closestCam = GetClosestCamera();
-    // if (closestCam == null) {
-    // Check to see is robot is in the alliance zone
-    // if ()
-    // } else {
-    // 158.84 Inches in the Y Direction
-    // 182.11 inches in the X Direction
-    // double distance =
-    //      Math.cos(
-    //          Units.metersToFeet(
-    //              closestCam.distToCamera)); // distance from camera to aprilTag in feet
-
-    SwerveDriveState driveState = m_driveTrain.getState(); // Get current drive state
-    Pose2d currentPose = driveState.Pose;
-    Rotation2d rotation = currentPose.getRotation();
-    // REMOVE THIS IF FIELD IS ROTATED AUTOMATICALLY IN DRIVEBASE
-    if (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
-        == DriverStation.Alliance.Red) {
-      rotation = rotation.rotateBy(Rotation2d.fromDegrees(180));
-    }
-    rotation.getDegrees();
-    double YDiff = 158.84 - Units.metersToInches(currentPose.getY());
-    double XDiff = 182.11 - Units.metersToInches(currentPose.getX());
-    double requiredAngles = 90 - Math.atan(YDiff / XDiff); // This will give the angle
-    double turretDegrees =
-        motor1.getPosition().getValueAsDouble() * 360; // Straight ahead is 0 degrees
-    MathUtil.clamp(, requiredAngles, turretDegrees)
-    if (offset)
-    // }
+    moveMotor(calculateRotations());
     super.periodic();
   }
 
   @Override
   public void simulationPeriodic() {
-
     super.simulationPeriodic();
   }
 }
+
+/* Unused Methods / Code
+
+private final LLCamera C_Camera; // Camera
+
+  /*
+    // ------ APRILTAGS -------//
+  Set<Integer> tags = new HashSet<>(Arrays.asList(2, 5, 8, 9, 10, 11, 18, 19, 20, 21, 24, 27));
+
+// Uses the closest camera detected to use determine the specific calculation required to
+  // calculate the requiredxDiff
+  private RawFiducial GetClosestCamera() {
+    /*
+    for (RawFiducial fiducial : fiducials) {
+        int id = fiducial.id;                    // Tag ID
+        double txnc = fiducial.txnc;             // X offset (no crosshair)
+        double tync = fiducial.tync;             // Y offset (no crosshair)
+        double ta = fiducial.ta;                 // Target area
+        double distToCamera = fiducial.distToCamera;  // Distance to camera
+        double distToRobot = fiducial.distToRobot;    // Distance to robot
+        double ambiguity = fiducial.ambiguity;   // Tag pose ambiguity
+    }
+    RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("");
+
+    if (fiducials.length != 0) {
+      // Search for the closest cam
+      RawFiducial closestCam = fiducials[0];
+      for (int i = 1; i < fiducials.length; i++) {
+        if (fiducials[i].ambiguity > 0.2) {
+          if (fiducials[i].distToCamera < closestCam.distToCamera) {
+            closestCam = fiducials[i];
+          }
+        }
+      }
+      return closestCam;
+    } else {
+      return null;
+    }
+  }
+*/
