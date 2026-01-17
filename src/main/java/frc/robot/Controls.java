@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.AutoRotate;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -161,7 +162,6 @@ public class Controls {
                 .andThen(
                     s.Index.setPowerCommand(0.3)
                         .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))));}
- 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *

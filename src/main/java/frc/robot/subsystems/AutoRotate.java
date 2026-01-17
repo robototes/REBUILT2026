@@ -30,8 +30,10 @@ public class AutoRotate {
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
   private static final Transform2d robot = new Transform2d(Units.inchesToMeters(34 / 2), Units.inchesToMeters(0), Rotation2d.k180deg);
-  private static final Pose2d wantedTag = aprilTagFieldLayout.getTagPose(9).get().toPose2d().plus(robot);
-  private static final Pose2d REDHUB_POSE2D = new Pose2d(11.950, 4.105, new Rotation2d(0));
+  // hub pose blue X: 4.625m, Y: 4.035m
+  // hub pose red X: 11.915m, Y: 4.035m
+  private static final Pose2d REDHUB_POSE2D = new Pose2d(11.915, 4.035, Rotation2d.kZero);
+  private static final Pose2d BLUEHUB_POSE2D = new Pose2d(4.625, 4.035, Rotation2d.kZero);
 
   private static class AutoRotateCommand extends Command {
     protected final PIDController pidRotate = new PIDController(8, 0, 0);

@@ -27,8 +27,8 @@ public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
-  // hub pose blue X: 4.536m, Y: 4.053m
-  // hub pose red X: 11.950m, Y: 4.105m,
+  // hub pose blue X: 4.625m, Y: 4.035m
+  // hub pose red X: 11.915m, Y: 4.035m
   // Deviations
   private static final Vector<N3> STANDARD_DEVS =
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
