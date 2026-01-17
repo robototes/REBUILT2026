@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -117,7 +116,9 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
-      this.distance = getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), fieldLayout.getTagPose(rf.id).get().toPose2d());
+      this.distance =
+          getDistanceToTargetViaPoseEstimation(
+              fieldPose3d.toPose2d(), fieldLayout.getTagPose(rf.id).get().toPose2d());
       this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
@@ -195,10 +196,12 @@ public class VisionSubsystem extends SubsystemBase {
   public double getDistanceToTarget() {
     return (double) Math.round(distance * 1000) / 1000;
   }
+
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
-    double distance = Math.hypot(targetPose.getX() - yourPose.getX(),targetPose.getY() - yourPose.getY());
+    double distance =
+        Math.hypot(targetPose.getX() - yourPose.getX(), targetPose.getY() - yourPose.getY());
     // 0.1 millimeter
-    return (double) Math.round(distance * 10000) / 10000; 
+    return (double) Math.round(distance * 10000) / 10000;
   }
 
   public double getTagAmbiguity() {
