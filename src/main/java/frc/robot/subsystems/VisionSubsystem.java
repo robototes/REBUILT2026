@@ -29,18 +29,15 @@ public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
   // hub pose blue X: 4.536m, Y: 4.053m
   // hub pose red X: 11.950m, Y: 4.105m,
-  //   private final Subsystems subsystems = new Subsystems();
   // Deviations
   private static final Vector<N3> STANDARD_DEVS =
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
 
-  // AprilTag field layout for 2025
+  // AprilTag field layout for this year
   private static final AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
-  //   private final Controls controls = new Controls(subsystems);
-  double lastBestDistance = 0;
 
   private final DrivebaseWrapper drivebaseWrapper;
 
@@ -54,13 +51,9 @@ public class VisionSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/fieldPose3d", Pose3d.struct)
           .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryLeft =
+  private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dLeft", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryRight =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dRight", Pose3d.struct)
           .publish();
 
   // state
@@ -90,7 +83,7 @@ public class VisionSubsystem extends SubsystemBase {
     if (rawFiducialsB != null) {
       for (RawFiducial rf : rawFiducialsB) {
         // System.out.println("processing raw fiducials");
-        processLimelight(BCamera, rawFieldPose3dEntryLeft, rf);
+        processLimelight(BCamera, rawFieldPose3dEntryB, rf);
       }
     }
   }
