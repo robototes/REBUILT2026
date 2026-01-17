@@ -39,6 +39,12 @@
           "data": {
             "pathName": "NeutralLeft-Shoot-Third"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": " NeutralLeft-Climb"
+          }
         }
       ]
     }

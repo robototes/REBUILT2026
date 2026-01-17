@@ -7,37 +7,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-NeutralLeft"
+            "pathName": "RT-NeutralRight"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Intake"
+            "pathName": "NeutralRight-HorseShoe"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Shoot"
+            "pathName": "NeutralRight-Shoot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Shoot-Second"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralLeft-Shoot-Second-Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralLeft-Shoot-Third"
+            "pathName": " NeutralRight-Climb"
           }
         }
       ]

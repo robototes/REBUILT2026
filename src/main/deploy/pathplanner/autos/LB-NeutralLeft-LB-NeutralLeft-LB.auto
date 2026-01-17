@@ -31,6 +31,12 @@
         {
           "type": "path",
           "data": {
+            "pathName": "NeutralLeft-Shoot-Second-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "NeutralLeft-Shoot-Third"
           }
         }

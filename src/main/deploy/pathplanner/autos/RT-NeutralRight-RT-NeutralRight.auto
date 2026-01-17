@@ -19,7 +19,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-RB"
+            "pathName": "NeutralRight-Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-Second"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-Second-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": " NeutralRight-Second-Shoot"
           }
         }
       ]

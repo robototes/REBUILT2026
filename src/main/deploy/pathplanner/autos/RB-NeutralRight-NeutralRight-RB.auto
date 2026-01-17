@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-NeutralRight"
+            "pathName": "RB-NeutralRight"
           }
         },
         {
@@ -20,6 +20,24 @@
           "type": "path",
           "data": {
             "pathName": "NeutralRight-Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-Second"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-Second-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": " NeutralRight-Second-Shoot"
           }
         }
       ]
