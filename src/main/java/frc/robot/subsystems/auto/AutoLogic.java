@@ -54,14 +54,15 @@ public class AutoLogic {
           new AutoPath("LB-NeutralLeft-LB-NeutralLeft-LB", "LB-NeutralLeft-LB-NeutralLeft-LB"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-NeutralRight-RB-NeutralRight", "RT-NeutralRight-RB-NeutralRight"),
+                   new AutoPath("RT-NeutralRight-RB-NeutralRight", "RT-NeutralRight-RB-NeutralRight"),
+                   new AutoPath("LB-NeutralRight-LB-NeutralRight", "LB-NeutralRight-LB-NeutralRight"),
+
           new AutoPath("RT-OutPost-Climb", "RT-OutPost-Climb"),
           new AutoPath("RB-OutPost-Climb", "RB-OutPost-Climb"),
           new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
           new AutoPath("C-Climb", "C-Climb"),
           new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
           new AutoPath("RT-OutPost", "RT-OutPost"),
-          new AutoPath("RT-OutPost-Climb", "RT-OutPost-Climb"),
           new AutoPath("RB-OutPost", "RB-OutPost"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
           new AutoPath("Drive", "Drive"));
