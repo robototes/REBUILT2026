@@ -1,6 +1,7 @@
 package frc.robot.subsystems.auto;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -174,5 +175,20 @@ public class AutoLogic {
     return AutoBuilder.followPath(path);
   }
 
-  public static void registerCommands() {}
+  public static void registerCommands() {
+    NamedCommands.registerCommand("launch", launcherCommand());
+    NamedCommands.registerCommand("intake", intakeCommand());
+    NamedCommands.registerCommand("climb", climbCommand());
+  }
+
+  public static Command launcherCommand() {
+    return Commands.idle();
+  }
+  public static Command intakeCommand() {
+    return Commands.idle();
+  }
+  public static Command climbCommand() {
+    return Commands.idle();
+  }
+
 }
