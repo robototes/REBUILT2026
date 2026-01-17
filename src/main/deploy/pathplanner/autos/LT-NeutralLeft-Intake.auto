@@ -7,13 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-OutPost"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "OutPost-Shoot"
+            "pathName": "LT-NeutralLeft"
           }
         }
       ]

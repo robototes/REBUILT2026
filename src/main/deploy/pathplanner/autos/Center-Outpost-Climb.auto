@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-OutPost"
+            "pathName": "Center-Outpost"
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "OutPost-Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Outpost-Climb"
           }
         }
       ]
