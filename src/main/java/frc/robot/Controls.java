@@ -133,6 +133,13 @@ public class Controls {
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
   }
 
+  private void configureLEDBindings() {
+     driverController.a().onTrue(s.led_Lights.showIntakeColor());
+     driverController.b().onTrue(s.led_Lights.showClimbColor());
+     driverController.x().onTrue(s.led_Lights.showOuttakeColor());
+     driverController.y().onTrue(s.led_Lights.showDefaultColor());
+  }
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
