@@ -136,6 +136,7 @@ public class VisionSubsystem extends SubsystemBase {
             timestampSeconds,
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
+            // add a distance standard dev
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
         robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
         // System.out.println("put pose in");
