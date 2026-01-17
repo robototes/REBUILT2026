@@ -161,7 +161,7 @@ public class Controls {
             s.Flywheels.setVelocityCommand(3000)
                 .andThen(
                     s.Index.setPowerCommand(0.3)
-                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))));}
+                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))).alongWith(AutoRotate.autoRotate(s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));}
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *

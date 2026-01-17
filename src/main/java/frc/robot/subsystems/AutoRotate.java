@@ -17,12 +17,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Controls;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
-import java.util.List;
+import java.util.function.DoubleSupplier;
 
 public class AutoRotate {
   public static Command autoRotate(
-      CommandSwerveDrivetrain drivebaseSubsystem, Pose2d rotatePose) {
-    return new AutoRotateCommand(drivebaseSubsystem, rotatePose).withName("Auto Align");
+      CommandSwerveDrivetrain drivebaseSubsystem, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+    return new AutoRotateCommand(drivebaseSubsystem, (AllianceUtils.isBlue() ? BLUEHUB_POSE2D : REDHUB_POSE2D), xSupplier, ySupplier).withName("Auto Align");
   }
 
 
@@ -40,15 +40,19 @@ public class AutoRotate {
 
     protected final CommandSwerveDrivetrain drive;
     protected final Pose2d targetPose;
+    private DoubleSupplier xSupplier;
+    private DoubleSupplier ySupplier;
 
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric() // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
-    public AutoRotateCommand(CommandSwerveDrivetrain drive, Pose2d rotatePose2d) {
+    public AutoRotateCommand(CommandSwerveDrivetrain drive, Pose2d rotatePose2d, DoubleSupplier xSupplier, DoubleSupplier ySupplier){
       this.drive = drive;
       targetPose = rotatePose2d;
+      this.xSupplier = xSupplier;
+      this.ySupplier = ySupplier;
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       setName("Auto Align");
     }
@@ -61,7 +65,7 @@ public class AutoRotate {
       double rotationOutput = pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
       rotationOutput = MathUtil.clamp(rotationOutput, -4.0, 4);
       SwerveRequest request =
-          driveRequest.withRotationalRate(rotationOutput);
+          driveRequest.withVelocityX(xSupplier.getAsDouble()).withVelocityY(ySupplier.getAsDouble()).withRotationalRate(rotationOutput);
       // Set the drive control with the created request
       drive.setControl(request);
     }
