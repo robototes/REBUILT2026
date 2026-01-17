@@ -3,6 +3,7 @@ package frc.robot.util;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.TimestampedDoubleArray;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.util.LimelightHelpers.RawDetection;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 
@@ -111,6 +112,12 @@ public class LLCamera {
 
     if (poseArray.length != expectedTotalVals) {
       // Don't populate fiducials
+      DriverStation.reportWarning(
+          "Limelight pose array size mismatch. Expected "
+              + expectedTotalVals
+              + " but got "
+              + poseArray.length,
+          false);
     } else {
       for (int i = 0; i < tagCount; i++) {
         int baseIndex = 11 + (i * valsPerFiducial);

@@ -4,16 +4,16 @@ import edu.wpi.first.math.geometry.Pose3d;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 
 public class BetterPoseEstimate {
-  public Pose3d pose3d;
-  public double timestampSeconds;
-  public double latency;
-  public int tagCount;
-  public double tagSpan;
-  public double avgTagDist;
-  public double avgTagArea;
+  public final Pose3d pose3d;
+  public final double timestampSeconds;
+  public final double latency;
+  public final int tagCount;
+  public final double tagSpan;
+  public final double avgTagDist;
+  public final double avgTagArea;
 
-  public RawFiducial[] rawFiducials;
-  public boolean isMegaTag2;
+  public final RawFiducial[] rawFiducials;
+  public final boolean isMegaTag2;
 
   /** Instantiates a PoseEstimate object with default values */
   public BetterPoseEstimate() {

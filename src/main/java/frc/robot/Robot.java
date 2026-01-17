@@ -21,6 +21,8 @@ public class Robot extends TimedRobot {
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
+  private final int APRILTAG_PIPELINE = 0;
+  private final int VIEWFINDER_PIPELINE = 0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -62,14 +64,14 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, 1);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
     }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, 0);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
     }
   }
 

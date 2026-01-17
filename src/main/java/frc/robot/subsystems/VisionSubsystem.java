@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -13,6 +12,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -27,15 +27,14 @@ public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
-  private static double limelightbTX;
+  // hub pose blue X: 4.536m, Y: 4.053m
+  // hub pose red X: 11.950m, Y: 4.105m,
   //   private final Subsystems subsystems = new Subsystems();
   // Deviations
   private static final Vector<N3> STANDARD_DEVS =
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
-  private final SwerveRequest.FieldCentricFacingAngle autoOrient =
-      new SwerveRequest.FieldCentricFacingAngle();
 
   // AprilTag field layout for 2025
   private static final AprilTagFieldLayout fieldLayout =
@@ -63,14 +62,12 @@ public class VisionSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dRight", Pose3d.struct)
           .publish();
-  public static double offsetCorrection = 0;
 
   // state
   private double lastTimestampSeconds = 0;
   private Pose2d lastFieldPose = new Pose2d(-1, -1, new Rotation2d());
   private double distance = 0;
   private double tagAmbiguity = 0;
-  private RawFiducial closestRawFiducial;
 
   public VisionSubsystem(DrivebaseWrapper drivebaseWrapper) {
     this.drivebaseWrapper = drivebaseWrapper;
@@ -116,13 +113,18 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
+      var tagPose = fieldLayout.getTagPose(rf.id);
+      if (tagPose.isEmpty()) {
+        DriverStation.reportWarning(
+            "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
+            false);
+        return;
+      }
       this.distance =
-          getDistanceToTargetViaPoseEstimation(
-              fieldPose3d.toPose2d(), fieldLayout.getTagPose(rf.id).get().toPose2d());
+          getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), tagPose.get().toPose2d());
       this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
-      limelightbTX = camera.getTX();
       //   System.out.println("got new data");
 
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.10)
@@ -160,30 +162,6 @@ public class VisionSubsystem extends SubsystemBase {
     int B = BCamera.getNumTargets();
     return B;
   }
-
-  public double getTargetAutoOrientAngle() {
-
-    double correctedDegree = limelightbTX + offsetCorrection;
-
-    // Combine with current heading
-    return lastFieldPose.getRotation().getDegrees() + correctedDegree;
-  }
-
-  // you have to reset by putting out new swerve request after this to start driving again
-  //   private Command setTargetAngle() {
-  //     return runOnce(
-  //         () -> {
-  //           subsystems.drivebaseSubsystem.setControl(
-  //               autoOrient
-  //                   .withVelocityX(controls.getDriveX())
-  //                   .withVelocityY(controls.getDriveY())
-  //                   .withTargetDirection(Rotation2d.fromDegrees(getTargetAutoOrientAngle())));
-  //         });
-  //   }
-
-  //   public Command moveToRadian() {
-  //     return setTargetAngle();
-  //   }
 
   public double getLastTimestampSeconds() {
     return lastTimestampSeconds;
