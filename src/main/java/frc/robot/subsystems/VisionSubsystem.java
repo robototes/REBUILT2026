@@ -73,7 +73,7 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("april tag distance meters", getDistanceToTarget());
     SmartDashboard.putNumber("time since last reading", getTimeSinceLastReading());
     SmartDashboard.putNumber("tag ambiguity", getTagAmbiguity());
-    SmartDashboard.putBoolean("Disable Vision", false);
+    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
   }
 
   public void update() {
