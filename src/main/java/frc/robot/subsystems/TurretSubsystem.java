@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -11,6 +12,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
@@ -22,7 +24,7 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private final int GEARRATIO = 9000; // It's over 9000
-
+  private final double MAXIMUMDERIVATIVE = 0.3;
   // ----- HARDWARE OBJECTS ----- //
   private final SwerveDrivetrain m_driveTrain;
 
@@ -45,10 +47,6 @@ public class TurretSubsystem extends SubsystemBase {
   private double calculateRotations() {
     // 158.84 Inches in the Y Direction
     // 182.11 inches in the X Direction
-    // double distance =
-    //      Math.cos(
-    //          Units.metersToFeet(
-    //              closestCam.distToCamera)); // distance from camera to aprilTag in feet
 
     SwerveDriveState driveState = m_driveTrain.getState(); // Get current drive state
     Pose2d currentPose = driveState.Pose;
@@ -72,6 +70,34 @@ public class TurretSubsystem extends SubsystemBase {
     double turretDegrees =
         MathUtil.clamp(requiredAngles - TurretRotationFieldRelative, -90.0, 90.0);
     return turretDegrees;
+  }
+
+  public boolean AutoZero() {
+    double previousTimeStamp = Timer.getTimestamp();
+    double previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
+    motor1.setControl(
+        new VoltageOut(0.3)); // SET TO REALLY LOW VOLTAGE SO THAT I DON'T BREAK THE DAMN THING
+
+    int hits = 0;
+    final double MIN_DT =
+        0.005; // Minimum change in time before it can be used to calculate derivative
+    while (hits < 10) {
+      Boolean isDerivativeHigh =
+          ((motor1.getTorqueCurrent(true).getValueAsDouble()) - previousCurrent)
+                  / (Timer.getTimestamp() - previousTimeStamp)
+              >= MAXIMUMDERIVATIVE;
+      if (isDerivativeHigh) {
+        hits++;
+      } else {
+        hits = 0;
+      }
+      previousTimeStamp = Timer.getTimestamp();
+      previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
+    }
+    motor1.setControl(new VoltageOut(0));
+    motor1.setPosition(Units.degreesToRotations(91));
+    motor1.setControl(request.withPosition(Units.degreesToRotations(90)));
+    return true;
   }
 
   private void ConfigureMotors() {
@@ -114,6 +140,10 @@ public class TurretSubsystem extends SubsystemBase {
 }
 
 /* Unused Methods / Code
+ // double distance =
+    //      Math.cos(
+    //          Units.metersToFeet(
+    //              closestCam.distToCamera)); // distance from camera to aprilTag in feet
 
 private final LLCamera C_Camera; // Camera
 
