@@ -7,12 +7,8 @@ import com.ctre.phoenix6.controls.SolidColor;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants;
-import frc.robot.util.SoloScoringMode;
-
-import java.util.function.Supplier;
 
 public class LED_lights {
     private CANdle candle;
@@ -22,7 +18,6 @@ public class LED_lights {
     private RGBWColor intakeColor = new RGBWColor(255, 255, 0);
     private RGBWColor shootingColor = new RGBWColor(0, 255, 0);
     private RGBWColor climbColor = new RGBWColor(0, 0, 255);
-    private CommandXboxController m_driverController;
 
     public LED_lights() {
         candle = new CANdle(Constants.OperatorConstants.LED_ID); // replace id with actual id
@@ -35,19 +30,25 @@ public class LED_lights {
         solid.withColor(color);
         candle.setControl(solid);
     }
-
-    public Command showScoringModeColor(Supplier<SoloScoringMode> scoringMode) {
+    
+    public Command showIntakeColor(){
         return Commands.run(() -> {
-            SoloScoringMode current_Mode = scoringMode.get();
-            if (current_Mode == SoloScoringMode.INTAKE_IN_PROGRESS) {
-                updateLEDs(intakeColor);
-            } else if (current_Mode == SoloScoringMode.CLIMB_IN_PROGRESS) {
-                updateLEDs(climbColor);
-            } else if (current_Mode == SoloScoringMode.SHOOTING_IN_PROGRESS) {
-                updateLEDs(shootingColor);
-            } else if (current_Mode == SoloScoringMode.DEFAULT) {
-                updateLEDs(defaultColor);
-            }
+            updateLEDs(intakeColor);
+        });
+    }
+    public Command showClimbColor(){
+        return Commands.run(() -> {
+            updateLEDs(climbColor);
+        });
+    }
+    public Command showShootingColor(){
+        return Commands.run(() -> {
+            updateLEDs(shootingColor);
+        });
+    }
+    public Command showDefaultColor(){
+        return Commands.run(() -> {
+            updateLEDs(defaultColor);
         });
     }
 }
