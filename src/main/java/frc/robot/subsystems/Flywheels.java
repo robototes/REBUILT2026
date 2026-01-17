@@ -156,7 +156,7 @@ public class Flywheels extends SubsystemBase {
   public void periodic() {
     if (targetVelocity.hasChangedSince(lastVelocityUpdateTime)) {
       TimestampedDouble currentTarget = targetVelocity.getAtomic();
-      setVelocityRPM(currentTarget.value);
+      //setVelocityRPM(currentTarget.value);
       lastVelocityUpdateTime = currentTarget.timestamp;
     }
 
