@@ -105,8 +105,6 @@ public class Robot extends TimedRobot {
     }
   }
 
-
-
   @Override
   public void disabledPeriodic() {}
 
@@ -119,8 +117,8 @@ public class Robot extends TimedRobot {
 
       } else {
         if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
-    }
+          LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+        }
 
         subsystems.drivebaseSubsystem.brakeMotors();
       }

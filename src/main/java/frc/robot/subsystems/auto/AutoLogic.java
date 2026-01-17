@@ -61,11 +61,11 @@ public class AutoLogic {
           new AutoPath("RB-OutPost", "RB-OutPost"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
           new AutoPath("Drive", "Drive"));
-           private static final List<AutoPath> choreoPaths =  List.of(
-            new AutoPath("LB-Depot-Climb(CHOREO)", "LB-Depot-Climb(CHOREO)"));
+  private static final List<AutoPath> choreoPaths =
+      List.of(new AutoPath("LB-Depot-Climb(CHOREO)", "LB-Depot-Climb(CHOREO)"));
 
-
-  private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths,1,choreoPaths);
+  private static final Map<Integer, List<AutoPath>> commandsMap =
+      Map.of(0, rebuiltPaths, 1, choreoPaths);
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
 
