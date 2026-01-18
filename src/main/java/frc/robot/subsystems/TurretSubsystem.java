@@ -55,9 +55,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private void moveMotor(double targetDegrees) {
-    motor1.setControl(
-        request.withPosition(
-            motor1.getPosition().getValueAsDouble() + Units.degreesToRotations(targetDegrees)));
+    motor1.setControl(request.withPosition(Units.degreesToRotations(targetDegrees)));
   }
 
   private double calculateRotations() {
@@ -84,7 +82,8 @@ public class TurretSubsystem extends SubsystemBase {
                 difference.getX())); // This will give the angle from the difference of x and y.
     double errorRad =
         MathUtil.angleModulus(Units.degreesToRadians(requiredAngles - TurretRotationFieldRelative));
-    double turretDegrees = MathUtil.clamp(Units.radiansToDegrees(errorRad), TURRET_MIN, TURRET_MAX);
+    double turretDegrees =
+        MathUtil.clamp(TurretRotation + Units.radiansToDegrees(errorRad), TURRET_MIN, TURRET_MAX);
     return turretDegrees;
   }
 
