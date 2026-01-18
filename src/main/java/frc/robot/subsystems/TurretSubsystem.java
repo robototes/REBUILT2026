@@ -47,9 +47,11 @@ public class TurretSubsystem extends SubsystemBase {
     motor1 = new TalonFX(Hardware.TURRET_MOTOR_ID_1);
     request = new MotionMagicVoltage(0);
     configureMotors();
-    CommandScheduler.getInstance().schedule(autoZeroCommand());
     // --- SET DRIVETRAIN --- //
     this.m_driveTrain = drivetrain;
+
+    // --- SCHEDULE AUTO ZERO --- //
+    CommandScheduler.getInstance().schedule(autoZeroCommand());
   }
 
   private void moveMotor(double targetDegrees) {
