@@ -55,7 +55,9 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private void moveMotor(double targetDegrees) {
-    motor1.setControl(request.withPosition(Units.degreesToRotations(targetDegrees)));
+    motor1.setControl(
+        request.withPosition(
+            motor1.getPosition().getValueAsDouble() + Units.degreesToRotations(targetDegrees)));
   }
 
   private double calculateRotations() {
