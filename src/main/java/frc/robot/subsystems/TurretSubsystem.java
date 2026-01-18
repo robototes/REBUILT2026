@@ -14,6 +14,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
@@ -45,7 +47,7 @@ public class TurretSubsystem extends SubsystemBase {
     motor1 = new TalonFX(Hardware.TURRET_MOTOR_ID_1);
     request = new MotionMagicVoltage(0);
     configureMotors();
-    autoZeroCommand();
+    CommandScheduler.getInstance().schedule(autoZeroCommand());
     // --- SET DRIVETRAIN --- //
     this.m_driveTrain = drivetrain;
   }
@@ -83,7 +85,49 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command autoZeroCommand() {
-    return new Command() {
+    final double[] previousTimeStamp = new double[1];
+    final double[] previousCurrent = new double[1];
+    final int[] hits = new int[1];
+    return new FunctionalCommand(
+        () -> {
+          previousTimeStamp[0] = Timer.getTimestamp();
+          previousCurrent[0] = motor1.getTorqueCurrent(true).getValueAsDouble();
+          hits[0] = 0;
+          motor1.setControl(new VoltageOut(0.3));
+        },
+        () -> {
+          double now = Timer.getTimestamp();
+          double currentNow = motor1.getTorqueCurrent(true).getValueAsDouble();
+          double currentDT = now - previousTimeStamp[0];
+          if (currentDT < MIN_DT) {
+            return;
+          }
+          boolean isDerivativeHigh =
+              (currentNow - previousCurrent[0]) / (now - previousTimeStamp[0])
+                  >= MAXIMUM_DERIVATIVE;
+          boolean stopped = Math.abs(motor1.getVelocity().getValueAsDouble()) <= MIN_VELOCITY;
+          if (isDerivativeHigh && stopped) {
+            hits[0]++;
+          } else {
+            hits[0] = 0;
+          }
+          previousTimeStamp[0] = now;
+          previousCurrent[0] = currentNow;
+        },
+        (Boolean interrupted) -> {
+          motor1.setControl(new VoltageOut(0));
+          if (!interrupted) {
+            motor1.setPosition(Units.degreesToRotations(91));
+            motor1.setControl(request.withPosition(Units.degreesToRotations(90)));
+            readyToShoot = true;
+          }
+        },
+        () -> (hits[0] >= MIN_HITS),
+        TurretSubsystem.this);
+  }
+
+  /*
+      return new Command() {
       double previousTimeStamp;
       double previousCurrent;
       int hits;
@@ -94,7 +138,6 @@ public class TurretSubsystem extends SubsystemBase {
 
       @Override
       public void initialize() {
-        addRequirements();
         this.previousTimeStamp = Timer.getTimestamp();
         this.previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
         this.hits = 0;
@@ -136,8 +179,7 @@ public class TurretSubsystem extends SubsystemBase {
         }
       }
     };
-  }
-
+  } */
   private void configureMotors() {
     TalonFXConfiguration configs = new TalonFXConfiguration();
     Slot0Configs slot1 = configs.Slot0;
