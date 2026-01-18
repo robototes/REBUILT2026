@@ -144,7 +144,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     var MotionMagicConfig = configs.MotionMagic;
     MotionMagicConfig.MotionMagicCruiseVelocity = 1.5;
-    MotionMagicConfig.MotionMagicCruiseVelocity = 160;
+    MotionMagicConfig.MotionMagicAcceleration = 160;
     MotionMagicConfig.MotionMagicJerk = 1000;
 
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
