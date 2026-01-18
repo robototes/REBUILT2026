@@ -24,7 +24,15 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private final int GEARRATIO = 9000; // It's over 9000
-  private final double MAXIMUMDERIVATIVE = 0.3;
+  private final double MAXIMUM_DERIVATIVE = 0.3;
+  private final int TURRET_MIN = -90; // In Degrees
+  private final int TURRET_MAX = 90; // In Degrees
+
+  // ------- AUTOZERO ------ //
+  private final double MIN_DT = 0.005;
+  private final double MIN_VELOCITY = 0.3;
+  private final double MIN_HITS = 10;
+
   // ----- HARDWARE OBJECTS ----- //
   private final SwerveDrivetrain m_driveTrain;
 
@@ -40,7 +48,7 @@ public class TurretSubsystem extends SubsystemBase {
     this.m_driveTrain = drivetrain;
   }
 
-  public void moveMotor(double targetDegrees) {
+  private void moveMotor(double targetDegrees) {
     motor1.setControl(request.withPosition(Units.degreesToRotations(targetDegrees)));
   }
 
@@ -66,12 +74,13 @@ public class TurretSubsystem extends SubsystemBase {
             Math.atan2(
                 difference.getY(),
                 difference.getX())); // This will give the angle from the difference of x and y.
-
-    double turretDegrees =
-        MathUtil.clamp(requiredAngles - TurretRotationFieldRelative, -90.0, 90.0);
+    double errorRad =
+        MathUtil.angleModulus(Units.degreesToRadians(requiredAngles - TurretRotationFieldRelative));
+    double turretDegrees = MathUtil.clamp(Units.radiansToDegrees(errorRad), -90.0, 90.0);
     return turretDegrees;
   }
 
+  // Very Sketchy AutoZero method. Need to add debugging stuff before using it
   public boolean AutoZero() {
     double previousTimeStamp = Timer.getTimestamp();
     double previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
@@ -79,20 +88,24 @@ public class TurretSubsystem extends SubsystemBase {
         new VoltageOut(0.3)); // SET TO REALLY LOW VOLTAGE SO THAT I DON'T BREAK THE DAMN THING
 
     int hits = 0;
-    final double MIN_DT =
-        0.005; // Minimum change in time before it can be used to calculate derivative
-    while (hits < 10) {
-      Boolean isDerivativeHigh =
-          ((motor1.getTorqueCurrent(true).getValueAsDouble()) - previousCurrent)
-                  / (Timer.getTimestamp() - previousTimeStamp)
-              >= MAXIMUMDERIVATIVE;
-      if (isDerivativeHigh) {
-        hits++;
+    while (hits < MIN_HITS) {
+      double now = Timer.getTimestamp();
+      double currentNow = motor1.getTorqueCurrent(true).getValueAsDouble();
+      double currentDT = now - previousTimeStamp;
+      if (currentDT >= MIN_DT) {
+        Boolean isDerivativeHigh =
+            (currentNow - previousCurrent) / (now - previousTimeStamp) >= MAXIMUM_DERIVATIVE;
+        Boolean stopped = Math.abs(motor1.getVelocity().getValueAsDouble()) <= MIN_VELOCITY;
+        if (isDerivativeHigh && stopped) {
+          hits++;
+        } else {
+          hits = 0;
+        }
+        previousTimeStamp = now;
+        previousCurrent = currentNow;
       } else {
-        hits = 0;
+        continue;
       }
-      previousTimeStamp = Timer.getTimestamp();
-      previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
     }
     motor1.setControl(new VoltageOut(0));
     motor1.setPosition(Units.degreesToRotations(91));
