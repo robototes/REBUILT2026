@@ -126,60 +126,6 @@ public class TurretSubsystem extends SubsystemBase {
         TurretSubsystem.this);
   }
 
-  /*
-      return new Command() {
-      double previousTimeStamp;
-      double previousCurrent;
-      int hits;
-
-      {
-        addRequirements(TurretSubsystem.this);
-      }
-
-      @Override
-      public void initialize() {
-        this.previousTimeStamp = Timer.getTimestamp();
-        this.previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
-        this.hits = 0;
-        motor1.setControl(new VoltageOut(0.3));
-      }
-
-      @Override
-      public void execute() {
-        double now = Timer.getTimestamp();
-        double currentNow = motor1.getTorqueCurrent(true).getValueAsDouble();
-        double currentDT = now - previousTimeStamp;
-        if (currentDT < MIN_DT) {
-          return;
-        }
-        boolean isDerivativeHigh =
-            (currentNow - previousCurrent) / (now - previousTimeStamp) >= MAXIMUM_DERIVATIVE;
-        boolean stopped = Math.abs(motor1.getVelocity().getValueAsDouble()) <= MIN_VELOCITY;
-        if (isDerivativeHigh && stopped) {
-          hits++;
-        } else {
-          hits = 0;
-        }
-        previousTimeStamp = now;
-        previousCurrent = currentNow;
-      }
-
-      @Override
-      public boolean isFinished() {
-        return hits >= MIN_HITS;
-      }
-
-      @Override
-      public void end(boolean interrupted) {
-        motor1.setControl(new VoltageOut(0));
-        if (!interrupted) {
-          motor1.setPosition(Units.degreesToRotations(91));
-          motor1.setControl(request.withPosition(Units.degreesToRotations(90)));
-          readyToShoot = true;
-        }
-      }
-    };
-  } */
   private void configureMotors() {
     TalonFXConfiguration configs = new TalonFXConfiguration();
     Slot0Configs slot1 = configs.Slot0;
