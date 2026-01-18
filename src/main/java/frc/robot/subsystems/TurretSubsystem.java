@@ -76,7 +76,7 @@ public class TurretSubsystem extends SubsystemBase {
                 difference.getX())); // This will give the angle from the difference of x and y.
     double errorRad =
         MathUtil.angleModulus(Units.degreesToRadians(requiredAngles - TurretRotationFieldRelative));
-    double turretDegrees = MathUtil.clamp(Units.radiansToDegrees(errorRad), -90.0, 90.0);
+    double turretDegrees = MathUtil.clamp(Units.radiansToDegrees(errorRad), TURRET_MIN, TURRET_MAX);
     return turretDegrees;
   }
 
