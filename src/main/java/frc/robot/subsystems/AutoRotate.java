@@ -26,6 +26,13 @@ public class AutoRotate {
   }
 
 
+  //Tunable:
+  private static final double SPEED_LIMIT = 4.0; // Radians / second
+
+  private static final double kP = 8.0;
+  private static final double kI = 0.0;
+  private static final double kD = 0.0;
+
   private static final AprilTagFieldLayout aprilTagFieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
@@ -36,7 +43,7 @@ public class AutoRotate {
   private static final Pose2d BLUEHUB_POSE2D = new Pose2d(4.625, 4.035, Rotation2d.kZero);
 
   private static class AutoRotateCommand extends Command {
-    protected final PIDController pidRotate = new PIDController(8, 0, 0);
+    protected final PIDController pidRotate = new PIDController(kP, kI, kD);
 
     protected final CommandSwerveDrivetrain drive;
     protected final Pose2d targetPose;
@@ -63,7 +70,9 @@ public class AutoRotate {
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
       Rotation2d targetRotate = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
       double rotationOutput = pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
-      rotationOutput = MathUtil.clamp(rotationOutput, -4.0, 4);
+
+
+      rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       SwerveRequest request =
           driveRequest.withVelocityX(xSupplier.getAsDouble()).withVelocityY(ySupplier.getAsDouble()).withRotationalRate(rotationOutput);
       // Set the drive control with the created request
