@@ -13,21 +13,22 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
-// import java.util.hash;
 public class TurretSubsystem extends SubsystemBase {
   // ------ VARIABLES ------//
   private final TalonFX motor1;
-  private TalonFXConfiguration configs;
   private MotionMagicVoltage request;
 
-  private final int GEARRATIO = 9000; // It's over 9000
+  private final int GEAR_RATIO = 9000; // It's over 9000
   private final double MAXIMUM_DERIVATIVE = 0.3;
   private final int TURRET_MIN = -90; // In Degrees
   private final int TURRET_MAX = 90; // In Degrees
 
+  private static final double HUB_X_INCHES = 182.11;
+  private static final double HUB_Y_INCHES = 158.84;
   // ------- AUTOZERO ------ //
   private final double MIN_DT = 0.005;
   private final double MIN_VELOCITY = 0.3;
@@ -37,13 +38,14 @@ public class TurretSubsystem extends SubsystemBase {
   private final SwerveDrivetrain m_driveTrain;
 
   // PLACEHOLDER VALUE. This will probably be handled elsewhere
-  public static boolean readyToShoot = false;
+  private boolean readyToShoot = false;
 
   public TurretSubsystem(SwerveDrivetrain drivetrain) {
     // --- MOTOR SETUP ---//
-    motor1 = new TalonFX(Hardware.TurretMotorID1);
+    motor1 = new TalonFX(Hardware.TURRET_MOTOR_ID_1);
     request = new MotionMagicVoltage(0);
-    ConfigureMotors();
+    configureMotors();
+    autoZeroCommand();
     // --- SET DRIVETRAIN --- //
     this.m_driveTrain = drivetrain;
   }
@@ -67,7 +69,7 @@ public class TurretSubsystem extends SubsystemBase {
     double TurretRotationFieldRelative = Units.radiansToDegrees(TurretRotationsRad);
 
     Translation2d hub =
-        new Translation2d(Units.inchesToMeters(182.11), Units.inchesToMeters(158.84));
+        new Translation2d(Units.inchesToMeters(HUB_X_INCHES), Units.inchesToMeters(HUB_Y_INCHES));
     Translation2d difference = hub.minus(currentPose.getTranslation());
     double requiredAngles =
         Units.radiansToDegrees(
@@ -80,22 +82,36 @@ public class TurretSubsystem extends SubsystemBase {
     return turretDegrees;
   }
 
-  // Very Sketchy AutoZero method. Need to add debugging stuff before using it
-  public boolean AutoZero() {
-    double previousTimeStamp = Timer.getTimestamp();
-    double previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
-    motor1.setControl(
-        new VoltageOut(0.3)); // SET TO REALLY LOW VOLTAGE SO THAT I DON'T BREAK THE DAMN THING
+  public Command autoZeroCommand() {
+    return new Command() {
+      double previousTimeStamp;
+      double previousCurrent;
+      int hits;
 
-    int hits = 0;
-    while (hits < MIN_HITS) {
-      double now = Timer.getTimestamp();
-      double currentNow = motor1.getTorqueCurrent(true).getValueAsDouble();
-      double currentDT = now - previousTimeStamp;
-      if (currentDT >= MIN_DT) {
-        Boolean isDerivativeHigh =
+      {
+        addRequirements(TurretSubsystem.this);
+      }
+
+      @Override
+      public void initialize() {
+        addRequirements();
+        this.previousTimeStamp = Timer.getTimestamp();
+        this.previousCurrent = motor1.getTorqueCurrent(true).getValueAsDouble();
+        this.hits = 0;
+        motor1.setControl(new VoltageOut(0.3));
+      }
+
+      @Override
+      public void execute() {
+        double now = Timer.getTimestamp();
+        double currentNow = motor1.getTorqueCurrent(true).getValueAsDouble();
+        double currentDT = now - previousTimeStamp;
+        if (currentDT < MIN_DT) {
+          return;
+        }
+        boolean isDerivativeHigh =
             (currentNow - previousCurrent) / (now - previousTimeStamp) >= MAXIMUM_DERIVATIVE;
-        Boolean stopped = Math.abs(motor1.getVelocity().getValueAsDouble()) <= MIN_VELOCITY;
+        boolean stopped = Math.abs(motor1.getVelocity().getValueAsDouble()) <= MIN_VELOCITY;
         if (isDerivativeHigh && stopped) {
           hits++;
         } else {
@@ -103,18 +119,27 @@ public class TurretSubsystem extends SubsystemBase {
         }
         previousTimeStamp = now;
         previousCurrent = currentNow;
-      } else {
-        continue;
       }
-    }
-    motor1.setControl(new VoltageOut(0));
-    motor1.setPosition(Units.degreesToRotations(91));
-    motor1.setControl(request.withPosition(Units.degreesToRotations(90)));
-    return true;
+
+      @Override
+      public boolean isFinished() {
+        return hits >= MIN_HITS;
+      }
+
+      @Override
+      public void end(boolean interrupted) {
+        motor1.setControl(new VoltageOut(0));
+        if (!interrupted) {
+          motor1.setPosition(Units.degreesToRotations(91));
+          motor1.setControl(request.withPosition(Units.degreesToRotations(90)));
+          readyToShoot = true;
+        }
+      }
+    };
   }
 
-  private void ConfigureMotors() {
-    configs = new TalonFXConfiguration();
+  private void configureMotors() {
+    TalonFXConfiguration configs = new TalonFXConfiguration();
     Slot0Configs slot1 = configs.Slot0;
     slot1.kS = 0.25; // Required voltage to overcome static friction.
     slot1.kV = 2; // 2 volts to maintain 1 rps
@@ -134,7 +159,7 @@ public class TurretSubsystem extends SubsystemBase {
     MotionMagicConfig.MotionMagicCruiseVelocity = 160;
     MotionMagicConfig.MotionMagicJerk = 1000;
 
-    configs.Feedback.SensorToMechanismRatio = GEARRATIO;
+    configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     motor1.getConfigurator().apply(configs);
   }
@@ -142,7 +167,9 @@ public class TurretSubsystem extends SubsystemBase {
   // PERIODIC FUNCTIONS
   @Override
   public void periodic() {
-    moveMotor(calculateRotations());
+    if (readyToShoot) {
+      moveMotor(calculateRotations());
+    }
     super.periodic();
   }
 
@@ -151,47 +178,3 @@ public class TurretSubsystem extends SubsystemBase {
     super.simulationPeriodic();
   }
 }
-
-/* Unused Methods / Code
- // double distance =
-    //      Math.cos(
-    //          Units.metersToFeet(
-    //              closestCam.distToCamera)); // distance from camera to aprilTag in feet
-
-private final LLCamera C_Camera; // Camera
-
-  /*
-    // ------ APRILTAGS -------//
-  Set<Integer> tags = new HashSet<>(Arrays.asList(2, 5, 8, 9, 10, 11, 18, 19, 20, 21, 24, 27));
-
-// Uses the closest camera detected to use determine the specific calculation required to
-  // calculate the requiredxDiff
-  private RawFiducial GetClosestCamera() {
-    /*
-    for (RawFiducial fiducial : fiducials) {
-        int id = fiducial.id;                    // Tag ID
-        double txnc = fiducial.txnc;             // X offset (no crosshair)
-        double tync = fiducial.tync;             // Y offset (no crosshair)
-        double ta = fiducial.ta;                 // Target area
-        double distToCamera = fiducial.distToCamera;  // Distance to camera
-        double distToRobot = fiducial.distToRobot;    // Distance to robot
-        double ambiguity = fiducial.ambiguity;   // Tag pose ambiguity
-    }
-    RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("");
-
-    if (fiducials.length != 0) {
-      // Search for the closest cam
-      RawFiducial closestCam = fiducials[0];
-      for (int i = 1; i < fiducials.length; i++) {
-        if (fiducials[i].ambiguity > 0.2) {
-          if (fiducials[i].distToCamera < closestCam.distToCamera) {
-            closestCam = fiducials[i];
-          }
-        }
-      }
-      return closestCam;
-    } else {
-      return null;
-    }
-  }
-*/
