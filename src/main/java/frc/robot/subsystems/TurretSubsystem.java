@@ -5,6 +5,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
@@ -43,7 +44,8 @@ public class TurretSubsystem extends SubsystemBase {
   // --- STATES ---- //
   public static enum turretState {
     MANUAL(),
-    AUTO();
+    AUTO(),
+    IDLE();
 
     public turretState next() {
       turretState[] states = values();
@@ -53,7 +55,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // PLACEHOLDER VALUE. This will probably be handled elsewhere
   private boolean readyToShoot = false;
-  private turretState currentState = turretState.AUTO;
+  private turretState currentState = turretState.IDLE;
 
   public TurretSubsystem(SwerveDrivetrain drivetrain) {
     // --- MOTOR SETUP ---//
@@ -146,16 +148,23 @@ public class TurretSubsystem extends SubsystemBase {
     return Commands.none();
   }
 
-  public Command autoAimCommand(DoubleSupplier xJoystick) {
+  public Command turretControlCommand(DoubleSupplier xJoystick) {
     return run(() -> {
-          if (readyToShoot) {
-            if (currentState == turretState.AUTO) {
-              moveMotor(calculateTargetDegrees());
-            } else {
-              manualMove(xJoystick);
-            }
-          } else {
+          if (!readyToShoot) {
             stop();
+            return;
+          }
+          switch (currentState) {
+            case AUTO:
+              moveMotor(calculateTargetDegrees());
+              break;
+            case MANUAL:
+              manualMove(xJoystick);
+              break;
+            case IDLE:
+            default:
+              stop();
+              break;
           }
         })
         .finallyDo(interrupted -> stop());
@@ -188,6 +197,7 @@ public class TurretSubsystem extends SubsystemBase {
   private void configureMotors() {
     TalonFXConfiguration configs = new TalonFXConfiguration();
     Slot0Configs slot1 = configs.Slot0;
+
     slot1.kS = 0.25; // Required voltage to overcome static friction.
     slot1.kV = 2; // 2 volts to maintain 1 rps
     slot1.kA = 4; // 4 volts required to maintain 1 rps/s
@@ -208,13 +218,14 @@ public class TurretSubsystem extends SubsystemBase {
 
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
+    // set to coast
+    configs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     motor1.getConfigurator().apply(configs);
   }
 
   // PERIODIC FUNCTIONS
   @Override
   public void periodic() {
-
     super.periodic();
   }
 
