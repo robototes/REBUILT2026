@@ -28,8 +28,8 @@ public class TurretSubsystem extends SubsystemBase {
 
   private final int GEAR_RATIO = 9000; // It's over 9000
   private final double MAXIMUM_DERIVATIVE = 0.3;
-  private final double TURRET_MIN = -90.0; // In Degrees
-  private final double TURRET_MAX = 90.0; // In Degrees
+  private final int TURRET_MIN = -90; // In Degrees
+  private final int TURRET_MAX = 90; // In Degrees
 
   private static final double HUB_X_INCHES = 182.11;
   private static final double HUB_Y_INCHES = 158.84;
