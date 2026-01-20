@@ -170,10 +170,6 @@ public class TurretSubsystem extends SubsystemBase {
         .finallyDo(interrupted -> stop());
   }
 
-  public void switchState() {
-    currentState = currentState.next();
-  }
-
   public void manualMove(DoubleSupplier joystick) {
     double deg = motor1.getPosition().getValueAsDouble() * 360.0;
     double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
@@ -192,6 +188,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   public void stop() {
     motor1.setControl(new VoltageOut(0));
+  }
+
+  public void switchState() {
+    currentState = currentState.next();
   }
 
   private void configureMotors() {
