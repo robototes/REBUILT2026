@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.Hood;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -60,6 +62,7 @@ public class Controls {
     configureDrivebaseBindings();
     configureIntakeBindings();
     configureLaunchingBindings();
+    configureHoodBindings();
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -147,7 +150,7 @@ public class Controls {
   }
 
   private void configureLaunchingBindings() {
-    if (s.Flywheels == null || s.Index == null) {
+    if (s.Flywheels == null || s.Index == null || s.Serializer == null || s.Hood == null) {
       // Stop running this method
       return;
     }
@@ -155,7 +158,7 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-            s.Flywheels.setVelocityCommand(40)
+            Commands.parallel(s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(0.5))
                 .andThen(
                     s.Index.setPowerCommand(0.3)
                         .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))));
@@ -165,6 +168,20 @@ public class Controls {
         .whileTrue(s.Index.setTunerPowerCommand().alongWith(s.Serializer.setTunerPowerCommand()));
     driverController.y().onTrue(s.Flywheels.setVelocityCommand(66.667));
     driverController.a().whileTrue(s.Flywheels.stopCommand());
+  }
+
+  private void configureHoodBindings() {
+    if (s.Hood == null) {
+      // Stop running this method
+      return;
+    }
+
+    driverController.start().onTrue(s.Hood.zeroHoodCommand());
+    driverController
+        .leftStick()
+        .whileTrue(
+            s.Hood.voltageControl(
+                () -> Volts.of(Hood.VOLTAGE_CONTROL * -driverController.getLeftX())));
   }
 
   /**
