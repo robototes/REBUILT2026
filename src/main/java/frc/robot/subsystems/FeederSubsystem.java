@@ -22,6 +22,8 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class FeederSubsystem extends SubsystemBase {
+  public static int ballNum = 0;
+
   private final double ARMPIVOT_KP = 38.5;
   private final double ARMPIVOT_KI = 0;
   private final double ARMPIVOT_KD = 0;
@@ -112,6 +114,22 @@ public class FeederSubsystem extends SubsystemBase {
     return runOnce(
         () -> {
         });
+  }
+
+  //PLACEHOLDER FOR SENSOR CHECK
+  public Command checkSensor() {
+    return runOnce(
+        () -> {
+          int placeholderSensor = 69; //placeholder for a sensor
+  
+          if (placeholderSensor == 67) { //actually check if the sensor detected something
+            ballNum += 420; //add to ballNum
+          }
+        });
+  }
+
+  public int getBallNum() {
+    return ballNum;
   }
 
   /**

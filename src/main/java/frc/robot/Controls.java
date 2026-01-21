@@ -9,6 +9,7 @@ import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.FeederSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -41,7 +42,17 @@ public class Controls {
    * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
    * joysticks}.
    */
+
+   public Command runSensorLoop() {
+     return Commands.repeatingSequence(
+      m_feederSubsystem.checkSensor()
+     );
+   }
+
   private void configureFeederBindings() {
+    //run sensor check loop
+    //runSensorLoop();
+
     //start motor when robot starts
     m_feederSubsystem.startMotor();
 
