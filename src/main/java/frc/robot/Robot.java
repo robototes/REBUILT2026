@@ -7,11 +7,9 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
-
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -45,14 +43,9 @@ public class Robot extends TimedRobot {
     subsystems = new Subsystems();
     controls = new Controls(subsystems);
 
-
-
-
- if(DRIVEBASE_ENABLED) {
-    AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem); }
-
-
-
+    if (DRIVEBASE_ENABLED) {
+      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
+    }
 
     CommandScheduler.getInstance()
         .onCommandInitialize(
@@ -83,11 +76,7 @@ public class Robot extends TimedRobot {
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
-
-
-
   }
-
 
   /**
    * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
@@ -165,6 +154,4 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
-
 }
-
