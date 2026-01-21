@@ -13,6 +13,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -53,10 +56,21 @@ public class TurretSubsystem extends SubsystemBase {
     }
   }
 
+  // NETWORKTABLES
+  NetworkTableInstance inst;
+  NetworkTable TurretNetworkTable;
+  final DoublePublisher turretRotation;
+  final DoublePublisher turretRotationFieldRelative;
+  final DoublePublisher robotRotation;
+  final DoublePublisher errorDeg;
+  final DoublePublisher targetDegrees;
+  final DoublePublisher current;
+
   // PLACEHOLDER VALUE. This will probably be handled elsewhere
   private boolean readyToShoot = false;
   private turretState currentState = turretState.IDLE;
 
+  // --- CONSTRUCTOR --- //
   public TurretSubsystem(SwerveDrivetrain drivetrain) {
     // --- MOTOR SETUP ---//
     motor1 = new TalonFX(Hardware.TURRET_MOTOR_ID_1);
@@ -64,6 +78,17 @@ public class TurretSubsystem extends SubsystemBase {
     configureMotors();
     // --- SET DRIVETRAIN --- //
     this.m_driveTrain = drivetrain;
+
+    // --- NETWORK TABLES --- //
+    this.inst = NetworkTableInstance.getDefault();
+    TurretNetworkTable = inst.getTable("Turret Subsystem");
+    turretRotation = TurretNetworkTable.getDoubleTopic("Turret Rotation").publish();
+    turretRotationFieldRelative =
+        TurretNetworkTable.getDoubleTopic("Turret Rotation field relative").publish();
+    robotRotation = TurretNetworkTable.getDoubleTopic("Robot rotation").publish();
+    errorDeg = TurretNetworkTable.getDoubleTopic("errorDeg").publish();
+    targetDegrees = TurretNetworkTable.getDoubleTopic("Target Degrees").publish();
+    current = TurretNetworkTable.getDoubleTopic("Current").publish();
   }
 
   private void moveMotor(double targetDegrees) {
@@ -94,8 +119,15 @@ public class TurretSubsystem extends SubsystemBase {
                 difference.getX())); // This will give the angle from the difference of x and y.
     double errorRad =
         MathUtil.angleModulus(Units.degreesToRadians(requiredAngles - TurretRotationFieldRelative));
-    double turretDegrees =
-        MathUtil.clamp(TurretRotation + Units.radiansToDegrees(errorRad), TURRET_MIN, TURRET_MAX);
+    double errorDeg = Units.radiansToDegrees(errorRad);
+    double turretDegrees = MathUtil.clamp(TurretRotation + errorDeg, TURRET_MIN, TURRET_MAX);
+
+    // NETWORK TABLES
+    this.errorDeg.set(errorDeg);
+    this.targetDegrees.set(turretDegrees);
+    this.robotRotation.set(robotRotation);
+    this.turretRotation.set(TurretRotation);
+    this.turretRotationFieldRelative.set(Units.radiansToDegrees(TurretRotationFieldRelative));
     return turretDegrees;
   }
 
@@ -226,6 +258,7 @@ public class TurretSubsystem extends SubsystemBase {
   // PERIODIC FUNCTIONS
   @Override
   public void periodic() {
+    current.set(motor1.getStatorCurrent().getValueAsDouble());
     super.periodic();
   }
 
