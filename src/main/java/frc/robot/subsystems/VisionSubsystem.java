@@ -26,9 +26,9 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
-  private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
-  // hub pose blue X: 4.536m, Y: 4.053m
-  // hub pose red X: 11.950m, Y: 4.105m,
+  private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
+  // hub pose blue X: 4.625m, Y: 4.035m
+  // hub pose red X: 11.915m, Y: 4.035m
   // Deviations
   private static final Vector<N3> STANDARD_DEVS =
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
@@ -45,7 +45,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final FieldObject2d rawVisionFieldObject;
 
   private boolean disableVision;
-  private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
+  private final LLCamera CCamera = new LLCamera(LIMELIGHT_B);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()

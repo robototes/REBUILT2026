@@ -1,14 +1,21 @@
 package frc.robot;
 
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INDEX_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.SERIALIZER_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
+
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DrivebaseWrapper;
+import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Flywheels;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.Index;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Serializer;
-import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class Subsystems {
@@ -16,6 +23,7 @@ public class Subsystems {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
+
     public static final boolean INTAKE_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean INDEX_ENABLED = true;
@@ -30,6 +38,7 @@ public class Subsystems {
   public final Flywheels Flywheels;
   public final Index Index;
   public final Serializer Serializer;
+
   public final Hood Hood;
   public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;
