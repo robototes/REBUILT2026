@@ -21,7 +21,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-public class FeederSubsystem extends SubsystemBase {
+public class SerializerSubsystem extends SubsystemBase {
   private final double ARMPIVOT_KP = 38.5;
   private final double ARMPIVOT_KI = 0;
   private final double ARMPIVOT_KD = 0;
@@ -38,9 +38,9 @@ public class FeederSubsystem extends SubsystemBase {
 
   private final SingleJointedArmSim motorSim;
 
-  public FeederSubsystem() {
+  public SerializerSubsystem() {
     feedMotor = new TalonFX(Constants.HardwareConstants.feedMotorID);
-    feederConfig();
+    serializerConfig();
 
     if (RobotBase.isSimulation()) {
       motorSim = new SingleJointedArmSim(
@@ -58,7 +58,7 @@ public class FeederSubsystem extends SubsystemBase {
     }
   }
 
-  public void feederConfig() {
+  public void serializerConfig() {
     //DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
