@@ -8,6 +8,7 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.FeederSubsystem;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -43,9 +44,17 @@ public class Controls {
    * joysticks}.
    */
 
+   public Command setRumble(RumbleType type, double value) {
+    return Commands.runOnce(
+        () -> {
+          m_driverController.setRumble(type, value);
+        });
+   }
+
    public Command runSensorLoop() {
      return Commands.repeatingSequence(
-      m_feederSubsystem.checkSensor()
+      m_feederSubsystem.checkSensor(),
+      ((m_feederSubsystem.getBallNum() > 67) ? setRumble(null, 0) : m_feederSubsystem.doNothing())
      );
    }
 
