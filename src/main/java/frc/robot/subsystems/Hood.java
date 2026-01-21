@@ -115,9 +115,6 @@ public class Hood extends SubsystemBase {
   }
 
   public Command hoodPositionCommand(double positionRotations) {
-    if (!hoodZeroed) {
-      return runOnce(null);
-    }
     return runOnce(() -> setHoodPosition(positionRotations));
   }
 

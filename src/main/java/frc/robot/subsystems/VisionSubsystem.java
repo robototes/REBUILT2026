@@ -26,7 +26,7 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
-  private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
+  private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
   // hub pose blue X: 4.536m, Y: 4.053m
   // hub pose red X: 11.950m, Y: 4.105m,
   // Deviations
@@ -45,7 +45,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final FieldObject2d rawVisionFieldObject;
 
   private boolean disableVision;
-  private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
+  private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()
@@ -78,12 +78,12 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void update() {
     // System.out.println("updating");
-    RawFiducial[] rawFiducialsB = BCamera.getRawFiducials();
+    RawFiducial[] rawFiducialsB = CCamera.getRawFiducials();
     // System.out.println("got raw fiducials");
     if (rawFiducialsB != null) {
       for (RawFiducial rf : rawFiducialsB) {
         // System.out.println("processing raw fiducials");
-        processLimelight(BCamera, rawFieldPose3dEntryB, rf);
+        processLimelight(CCamera, rawFieldPose3dEntryB, rf);
       }
     }
   }
@@ -155,8 +155,8 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public int getNumTargets() {
-    int B = BCamera.getNumTargets();
-    return B;
+    int C = CCamera.getNumTargets();
+    return C;
   }
 
   public double getLastTimestampSeconds() {
