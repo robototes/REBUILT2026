@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
+
 import com.pathplanner.lib.commands.FollowPathCommand;
 
 import edu.wpi.first.net.WebServer;
@@ -46,8 +48,9 @@ public class Robot extends TimedRobot {
 
 
 
+ if(DRIVEBASE_ENABLED) {
+    AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem); }
 
-    AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
 
 
 
