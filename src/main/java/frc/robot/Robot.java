@@ -4,11 +4,20 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
+
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.subsystems.auto.AutoBuilderConfig;
+import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.LimelightHelpers;
 
 /**
@@ -34,10 +43,48 @@ public class Robot extends TimedRobot {
     subsystems = new Subsystems();
     controls = new Controls(subsystems);
 
-    PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
+
+
+
+
+    AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
+
+
+
+    CommandScheduler.getInstance()
+        .onCommandInitialize(
+            command -> System.out.println("Command initialized: " + command.getName()));
+    CommandScheduler.getInstance()
+        .onCommandInterrupt(
+            (command, interruptor) ->
+                System.out.println(
+                    "Command interrupted: "
+                        + command.getName()
+                        + "; Cause: "
+                        + interruptor.map(cmd -> cmd.getName()).orElse("<none>")));
+    CommandScheduler.getInstance()
+        .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
+
+    SmartDashboard.putData(CommandScheduler.getInstance());
+
+    if (SubsystemConstants.DRIVEBASE_ENABLED) {
+      AutoLogic.registerCommands();
+      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+
+      AutoLogic.initSmartDashBoard();
+      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+    }
+
+    WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
+
+
+
   }
+
 
   /**
    * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
@@ -115,4 +162,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
+
 }
+
