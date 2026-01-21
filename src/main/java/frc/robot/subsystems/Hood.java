@@ -19,6 +19,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.NtTunableBoolean;
 import frc.robot.util.NtTunableDouble;
+
+import static edu.wpi.first.units.Units.Volts;
+
 import java.util.function.Supplier;
 
 public class Hood extends SubsystemBase {
@@ -38,6 +41,7 @@ public class Hood extends SubsystemBase {
 
   private static final double TARGET_TOLERANCE = 0.1;
   public static final double VOLTAGE_CONTROL = 1;
+  private static final double STATOR_CURRENT_LIMIT = 20;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -62,9 +66,9 @@ public class Hood extends SubsystemBase {
     TalonFXConfigurator hood_Configurator = hood.getConfigurator();
 
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 20;
+    config.CurrentLimits.SupplyCurrentLimit = 10;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.StatorCurrentLimit = 40;
+    config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create brake mode for motors
@@ -142,5 +146,9 @@ public class Hood extends SubsystemBase {
         () -> {
           hood.stopMotor();
         });
+  }
+
+  public Command autoZeroCommand(){
+    return Commands.parallel(voltageControl(() -> Volts.of(-0.5))).until(() -> hood.getStatorCurrent().getValueAsDouble() > STATOR_CURRENT_LIMIT).andThen(zeroHoodCommand());
   }
 }
