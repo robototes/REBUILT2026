@@ -17,8 +17,7 @@ public final class Constants {
     public static final int kDriverControllerPort = 0;
   }
   public static class HardwareConstants {
-    public static final int feedMotorID1 = 1;
-    public static final int feedMotorID2 = 2;
+    public static final int feedMotorID = 1;
     public static final int digitalInputChannel = 0;
   }
   public static class TuningConstants {

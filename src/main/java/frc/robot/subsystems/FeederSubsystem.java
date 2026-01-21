@@ -30,8 +30,7 @@ public class FeederSubsystem extends SubsystemBase {
   private final double ARMPIVOT_KG = 0;
   private final double ARMPIVOT_KA = 0;
 
-  private final TalonFX feedMotor1;
-  private final TalonFX feedMotor2;
+  private final TalonFX feedMotor;
 
   //MechanismRoot2d motorRoot = Robot.getInstance().getRobotMechanism2d().getRoot("motorRoot", 0, 0.0);
   //MechanismLigament2d flywheelmotor1 = motorRoot.append(new MechanismLigament2d("flywheelMotor1", 0, 0));
@@ -40,8 +39,7 @@ public class FeederSubsystem extends SubsystemBase {
   private final SingleJointedArmSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor1 = new TalonFX(Constants.HardwareConstants.feedMotorID1);
-    feedMotor2 = new TalonFX(Constants.HardwareConstants.feedMotorID2);
+    feedMotor = new TalonFX(Constants.HardwareConstants.feedMotorID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
@@ -63,8 +61,7 @@ public class FeederSubsystem extends SubsystemBase {
   public void feederConfig() {
     //DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
-    TalonFXConfigurator cfg1 = feedMotor1.getConfigurator();
-    TalonFXConfigurator cfg2 = feedMotor2.getConfigurator();
+    TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
@@ -89,13 +86,11 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.Slot0.kG = ARMPIVOT_KG;
     talonFXConfiguration.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    cfg1.apply(talonFXConfiguration);
-    cfg2.apply(talonFXConfiguration);
+    cfg.apply(talonFXConfiguration);
   }
 
   public void setSpeed(double speed) {
-    feedMotor1.set(speed);
-    feedMotor2.set(-speed);
+    feedMotor.set(speed);
   }
 
   public Command startMotor() {
