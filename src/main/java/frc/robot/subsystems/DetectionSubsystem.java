@@ -39,12 +39,16 @@ public class DetectionSubsystem extends SubsystemBase {
     return B;
   }
 
-  public Pose2d getDistanceToTarget() {
+  public Pose2d getClosestTargetPose() {
     Pose2d a = null;
     return a;
   }
 
-  public double getTargetRotation() {
+  public double getDistanceToTarget(Pose2d target) {
+    return 0.0;
+  }
+
+  public double getTargetRotation(Pose2d target) {
     return 0.0;
   }
 
@@ -59,5 +63,11 @@ public class DetectionSubsystem extends SubsystemBase {
       Pose3d nullPose = null;
       return nullPose;
     }
+  }
+
+  public void autoAlign() {
+    Pose2d target = getClosestTargetPose();
+    double rotation = getTargetRotation(target);
+    rotateRobot(rotation);
   }
 }
