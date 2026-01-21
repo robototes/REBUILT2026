@@ -5,11 +5,6 @@ public class Hardware {
 
   public static final int PDH_ID = 1;
   // Swerve: 1-12
-  // Vision
-  // TODO: Use more descriptive names for Limelights once their positions are known.
-  public static final String LIMELIGHT_A = "limelight-a";
-  public static final String LIMELIGHT_B = "limelight-b";
-  public static final String LIMELIGHT_C = "limelight-c";
 
   // Alpha bot
   public static final int FLYWHEEL_ONE_ID = 13;
@@ -17,4 +12,11 @@ public class Hardware {
   public static final int INTAKE_MOTOR_ID = 14;
   public static final int INDEX_MOTOR_ID = 15;
   public static final int SERIALIZER_MOTOR_ID = 17;
+  public static final int HOOD_MOTOR_ID = 18;
+
+  // Vision
+  // TODO: Use more descriptive names for Limelights once their positions are known.
+  public static final String LIMELIGHT_A = "limelight-a";
+  public static final String LIMELIGHT_B = "limelight-b";
+  public static final String LIMELIGHT_C = "limelight-c";
 }
