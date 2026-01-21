@@ -12,17 +12,20 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Controls;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
+
 import java.util.function.DoubleSupplier;
 
 public class AutoRotate {
   public static Command autoRotate(
       CommandSwerveDrivetrain drivebaseSubsystem, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
-    return new AutoRotateCommand(drivebaseSubsystem, (AllianceUtils.isBlue() ? BLUEHUB_POSE2D : REDHUB_POSE2D), xSupplier, ySupplier).withName("Auto Align");
+    return new AutoRotateCommand(drivebaseSubsystem, xSupplier, ySupplier).withName("Auto Align");
   }
 
 
@@ -49,17 +52,23 @@ public class AutoRotate {
     protected final Pose2d targetPose;
     private DoubleSupplier xSupplier;
     private DoubleSupplier ySupplier;
+    private final DoubleTopic targetAngle;
+    private final DoublePublisher anglePub;
 
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric() // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
-    public AutoRotateCommand(CommandSwerveDrivetrain drive, Pose2d rotatePose2d, DoubleSupplier xSupplier, DoubleSupplier ySupplier){
+    public AutoRotateCommand(CommandSwerveDrivetrain drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier){
       this.drive = drive;
-      targetPose = rotatePose2d;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
+      targetPose = (AllianceUtils.isBlue() ? BLUEHUB_POSE2D : REDHUB_POSE2D);
+      var nt = NetworkTableInstance.getDefault();
+      targetAngle = nt.getDoubleTopic("/launcher/targetAngle");
+      anglePub = targetAngle.publish();
+      anglePub.set(0.0);
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       setName("Auto Align");
     }
@@ -73,6 +82,7 @@ public class AutoRotate {
 
 
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
+      anglePub.set(rotationOutput);
       SwerveRequest request =
           driveRequest.withVelocityX(xSupplier.getAsDouble()).withVelocityY(ySupplier.getAsDouble()).withRotationalRate(rotationOutput);
       // Set the drive control with the created request
@@ -81,10 +91,11 @@ public class AutoRotate {
 
     @Override
     public boolean isFinished() {
-      Pose2d currentPose = drive.getState().Pose;
+      /* Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
       Rotation2d wantedRotation = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
-      return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < 1;
+      return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < 1; */
+      return false;
 
     }
 
@@ -95,6 +106,5 @@ public class AutoRotate {
       // Set the drive control with the stop request to halt all movement
       drive.setControl(stop);
     }
-
   }
 }

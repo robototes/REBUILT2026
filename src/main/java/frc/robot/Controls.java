@@ -170,6 +170,8 @@ public class Controls {
         .whileTrue(s.Index.setTunerPowerCommand().alongWith(s.Serializer.setTunerPowerCommand()));
     driverController.y().onTrue(s.Flywheels.setVelocityCommand(66.667));
     driverController.a().whileTrue(s.Flywheels.stopCommand());
+    //Test Auto rotate contorl
+    driverController.b().whileTrue(AutoRotate.autoRotate(s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()));
   }
 
   private void configureHoodBindings() {
