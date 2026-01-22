@@ -41,6 +41,9 @@ public class Hood extends SubsystemBase {
   private static final double TARGET_TOLERANCE = 0.1;
   public static final double VOLTAGE_CONTROL = 1;
   private static final double STATOR_CURRENT_LIMIT = 20;
+  private static final double GEAR_RATIO = 2.90909;
+  private static final double FORWARD_SOFT_LIMIT = 2.6;
+  private static final double BACKWARD_SOFT_LIMIT = 0;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -73,8 +76,14 @@ public class Hood extends SubsystemBase {
     // create brake mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = FORWARD_SOFT_LIMIT;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = BACKWARD_SOFT_LIMIT;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+
     // create PID gains
-    config.Slot0.kP = 0.00;
+    config.Slot0.kP = 0.01;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
@@ -82,8 +91,8 @@ public class Hood extends SubsystemBase {
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 80;
-    config.MotionMagic.MotionMagicAcceleration = 160;
+    config.MotionMagic.MotionMagicCruiseVelocity = 1;
+    config.MotionMagic.MotionMagicAcceleration = 2;
 
     hood_Configurator.apply(config);
   }
