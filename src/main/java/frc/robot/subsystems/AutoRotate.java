@@ -31,7 +31,7 @@ public class AutoRotate {
 
   //Tunable:
   private static final double SPEED_LIMIT = 4.0; // Radians / second
-
+  private static final double TOLERANCE = 5;
   private static final double kP = 8.0;
   private static final double kI = 0.0;
   private static final double kD = 0.0;
@@ -91,11 +91,10 @@ public class AutoRotate {
 
     @Override
     public boolean isFinished() {
-      /* Pose2d currentPose = drive.getState().Pose;
+      Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
       Rotation2d wantedRotation = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
-      return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < 1; */
-      return false;
+      return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < TOLERANCE;
 
     }
 
