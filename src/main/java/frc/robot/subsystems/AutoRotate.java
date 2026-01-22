@@ -30,9 +30,9 @@ public class AutoRotate {
 
 
   //Tunable:
-  private static final double SPEED_LIMIT = 4.0; // Radians / second
+  private static final double SPEED_LIMIT = 100.0; // Radians / second
 
-  private static final double kP = 8.0;
+  private static final double kP = 16.0;
   private static final double kI = 0.0;
   private static final double kD = 0.0;
 
@@ -84,7 +84,7 @@ public class AutoRotate {
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(rotationOutput);
       SwerveRequest request =
-          driveRequest.withVelocityX(xSupplier.getAsDouble()).withVelocityY(ySupplier.getAsDouble()).withRotationalRate(rotationOutput);
+          driveRequest.withVelocityX(-xSupplier.getAsDouble()).withVelocityY(-ySupplier.getAsDouble()).withRotationalRate(rotationOutput);
       // Set the drive control with the created request
       drive.setControl(request);
     }
