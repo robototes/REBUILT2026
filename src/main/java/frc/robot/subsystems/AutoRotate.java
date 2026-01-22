@@ -15,6 +15,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
@@ -85,17 +86,28 @@ public class AutoRotate {
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(rotationOutput);
       SwerveRequest request =
-          driveRequest.withVelocityX(-xSupplier.getAsDouble()).withVelocityY(-ySupplier.getAsDouble()).withRotationalRate(rotationOutput);
+          driveRequest
+              .withVelocityX(-xSupplier.getAsDouble())
+              .withVelocityY(-ySupplier.getAsDouble())
+              .withRotationalRate(rotationOutput);
       // Set the drive control with the created request
       drive.setControl(request);
     }
 
-    @Override
-    public boolean isFinished() {
+    private boolean isAtGoal() {
       Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
       Rotation2d wantedRotation = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
       return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < TOLERANCE;
+    }
+
+    @Override
+    public boolean isFinished() {
+      if (DriverStation.isAutonomousEnabled()) {
+        return isAtGoal();
+      } else {
+        return false;
+      }
     }
 
     @Override

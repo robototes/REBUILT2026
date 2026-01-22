@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
@@ -81,7 +82,6 @@ public class Hood extends SubsystemBase {
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-
     // create PID gains
     config.Slot0.kP = 0.01;
     config.Slot0.kI = 0.0;
@@ -90,6 +90,7 @@ public class Hood extends SubsystemBase {
     config.Slot0.kV = 0;
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
+    config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 1;
     config.MotionMagic.MotionMagicAcceleration = 2;

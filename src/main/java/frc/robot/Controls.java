@@ -159,13 +159,14 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-            Commands.parallel(s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(0.5))
-                .andThen(
+            Commands.parallel(
+                Commands.sequence(
+                    Commands.parallel(
+                        s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(0.5)),
                     s.Index.setPowerCommand(0.3)
-                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100)))
-                .alongWith(
-                    AutoRotate.autoRotate(
-                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
+                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))),
+                AutoRotate.autoRotate(
+                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
 
     driverController
         .x()
