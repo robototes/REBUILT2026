@@ -46,6 +46,7 @@ public class Robot extends TimedRobot {
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
+    AutoLogic.init(subsystems);
 
     CommandScheduler.getInstance()
         .onCommandInitialize(
