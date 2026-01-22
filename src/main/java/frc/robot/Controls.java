@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.AutoRotate;
-
 import frc.robot.subsystems.Hood;
 
 /**
@@ -163,15 +162,22 @@ public class Controls {
             Commands.parallel(s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(0.5))
                 .andThen(
                     s.Index.setPowerCommand(0.3)
-                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))).alongWith(AutoRotate.autoRotate(s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
+                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100)))
+                .alongWith(
+                    AutoRotate.autoRotate(
+                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
 
     driverController
         .x()
         .whileTrue(s.Index.setTunerPowerCommand().alongWith(s.Serializer.setTunerPowerCommand()));
     driverController.y().onTrue(s.Flywheels.setVelocityCommand(66.667));
     driverController.a().whileTrue(s.Flywheels.stopCommand());
-    //Test Auto rotate contorl
-    driverController.b().whileTrue(AutoRotate.autoRotate(s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()));
+    // Test Auto rotate contorl
+    driverController
+        .b()
+        .whileTrue(
+            AutoRotate.autoRotate(
+                s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()));
   }
 
   private void configureHoodBindings() {

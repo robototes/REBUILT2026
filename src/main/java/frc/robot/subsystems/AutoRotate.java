@@ -15,21 +15,20 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
-
 import java.util.function.DoubleSupplier;
 
 public class AutoRotate {
   public static Command autoRotate(
-      CommandSwerveDrivetrain drivebaseSubsystem, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+      CommandSwerveDrivetrain drivebaseSubsystem,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier) {
     return new AutoRotateCommand(drivebaseSubsystem, xSupplier, ySupplier).withName("Auto Align");
   }
 
-
-  //Tunable:
+  // Tunable:
   private static final double SPEED_LIMIT = 4.0; // Radians / second
   private static final double TOLERANCE = 5;
   private static final double kP = 8.0;
@@ -39,7 +38,8 @@ public class AutoRotate {
   private static final AprilTagFieldLayout aprilTagFieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
-  private static final Transform2d robot = new Transform2d(Units.inchesToMeters(34 / 2), Units.inchesToMeters(0), Rotation2d.k180deg);
+  private static final Transform2d robot =
+      new Transform2d(Units.inchesToMeters(34 / 2), Units.inchesToMeters(0), Rotation2d.k180deg);
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
   private static final Pose2d REDHUB_POSE2D = new Pose2d(11.915, 4.035, Rotation2d.kZero);
@@ -60,7 +60,8 @@ public class AutoRotate {
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
-    public AutoRotateCommand(CommandSwerveDrivetrain drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier){
+    public AutoRotateCommand(
+        CommandSwerveDrivetrain drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
       this.drive = drive;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
@@ -78,13 +79,16 @@ public class AutoRotate {
       Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
       Rotation2d targetRotate = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
-      double rotationOutput = pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
-
+      double rotationOutput =
+          pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
 
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(rotationOutput);
       SwerveRequest request =
-          driveRequest.withVelocityX(xSupplier.getAsDouble()).withVelocityY(ySupplier.getAsDouble()).withRotationalRate(rotationOutput);
+          driveRequest
+              .withVelocityX(xSupplier.getAsDouble())
+              .withVelocityY(ySupplier.getAsDouble())
+              .withRotationalRate(rotationOutput);
       // Set the drive control with the created request
       drive.setControl(request);
     }
@@ -95,7 +99,6 @@ public class AutoRotate {
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
       Rotation2d wantedRotation = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
       return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < TOLERANCE;
-
     }
 
     @Override

@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -19,9 +21,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.NtTunableBoolean;
 import frc.robot.util.NtTunableDouble;
-
-import static edu.wpi.first.units.Units.Volts;
-
 import java.util.function.Supplier;
 
 public class Hood extends SubsystemBase {
@@ -148,7 +147,9 @@ public class Hood extends SubsystemBase {
         });
   }
 
-  public Command autoZeroCommand(){
-    return Commands.parallel(voltageControl(() -> Volts.of(-0.5))).until(() -> hood.getStatorCurrent().getValueAsDouble() > STATOR_CURRENT_LIMIT).andThen(zeroHoodCommand());
+  public Command autoZeroCommand() {
+    return Commands.parallel(voltageControl(() -> Volts.of(-0.5)))
+        .until(() -> hood.getStatorCurrent().getValueAsDouble() > STATOR_CURRENT_LIMIT)
+        .andThen(zeroHoodCommand());
   }
 }

@@ -1,21 +1,14 @@
 package frc.robot;
 
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.INDEX_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.SERIALIZER_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
-
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DrivebaseWrapper;
-import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.Flywheels;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.Index;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Serializer;
+import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class Subsystems {
