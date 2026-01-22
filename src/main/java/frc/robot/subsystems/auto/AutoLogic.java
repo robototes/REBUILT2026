@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Subsystems;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +23,7 @@ import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
 
+  private static Subsystems s;
   /* ---------------- Start positions ---------------- */
 
   public enum StartPosition {
@@ -98,6 +101,9 @@ public class AutoLogic {
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
   /* ---------------- Init ---------------- */
+  public static void init(Subsystems subsystems){
+    s = subsystems;
+  }
 
   public static void initSmartDashBoard() {
 
