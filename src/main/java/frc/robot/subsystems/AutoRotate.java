@@ -83,7 +83,7 @@ public class AutoRotate {
     public void execute() {
       Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
-      Rotation2d targetRotate = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()));
+      Rotation2d targetRotate = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
       double rotationOutput =
           pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
 
