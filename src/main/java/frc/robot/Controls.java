@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -139,6 +140,12 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+
+    driverController
+        .rightStick()
+        .onTrue(
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetTranslation(new Translation2d(13, 4))));
   }
 
   private void configureIntakeBindings() {
@@ -147,7 +154,7 @@ public class Controls {
       return;
     }
     // Add subsystem bindings here
-    driverController.leftTrigger().whileTrue(s.Intake.setPowerCommand(1));
+    driverController.rightStick().whileTrue(s.Intake.setPowerCommand(1));
   }
 
   private void configureLaunchingBindings() {
@@ -164,7 +171,7 @@ public class Controls {
                     Commands.parallel(
                         s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(0.5)),
                     s.Index.setPowerCommand(0.3)
-                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(3000, 100))),
+                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(40, 10))),
                 AutoRotate.autoRotate(
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
 

@@ -50,7 +50,7 @@ public class AutoRotate {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
 
     protected final CommandSwerveDrivetrain drive;
-    protected final Pose2d targetPose;
+    protected Pose2d targetPose;
     private DoubleSupplier xSupplier;
     private DoubleSupplier ySupplier;
     private final DoubleTopic targetAngle;
@@ -66,13 +66,17 @@ public class AutoRotate {
       this.drive = drive;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
-      targetPose = (AllianceUtils.isBlue() ? BLUEHUB_POSE2D : REDHUB_POSE2D);
       var nt = NetworkTableInstance.getDefault();
       targetAngle = nt.getDoubleTopic("/launcher/targetAngle");
       anglePub = targetAngle.publish();
       anglePub.set(0.0);
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       setName("Auto Align");
+    }
+
+    @Override
+    public void initialize() {
+      targetPose = (AllianceUtils.isBlue() ? BLUEHUB_POSE2D : REDHUB_POSE2D);
     }
 
     @Override
