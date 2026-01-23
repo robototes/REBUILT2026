@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
+import frc.robot.Robot;
 import frc.robot.util.NtTunableDouble;
 
 public class Flywheels extends SubsystemBase {
@@ -43,6 +44,8 @@ public class Flywheels extends SubsystemBase {
 
   private long lastVelocityUpdateTime = 0;
   private NtTunableDouble targetVelocity;
+
+  public final double FLYWHEEL_TOLERANCE = 5;
 
   // Constructor
   public Flywheels() {
@@ -90,13 +93,13 @@ public class Flywheels extends SubsystemBase {
 
   public Command setVelocityCommand(double rps) {
     request.Velocity = rps;
-    return runOnce(
-            () -> {
-              Flywheel_One.setControl(request);
-              System.out.println("setting control");
-              Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
-            })
-        .withName("Set Flywheel Velocity");
+    return run(() -> {
+          Flywheel_One.setControl(request);
+          System.out.println("setting control");
+          Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
+        })
+        .withName("Set Flywheel Velocity")
+        .until(() -> atTargetVelocity(rps, FLYWHEEL_TOLERANCE));
   }
 
   public void setVelocityRPM(double rpm) {
@@ -114,10 +117,13 @@ public class Flywheels extends SubsystemBase {
         .withName("Stop Flywheels");
   }
 
-  public boolean atTargetVelocity(double targetRPM, double toleranceRPM) {
+  public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
+    if (Robot.isSimulation()) {
+      return true;
+    }
     double velocity = (Flywheel_One.getVelocity().getValueAsDouble());
 
-    boolean atTarget = Math.abs(velocity - targetRPM) <= toleranceRPM;
+    boolean atTarget = Math.abs(velocity - targetRPS) <= toleranceRPS;
     return atTarget;
   }
 

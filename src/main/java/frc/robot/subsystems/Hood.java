@@ -1,9 +1,12 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
@@ -14,6 +17,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.NtTunableBoolean;
@@ -37,6 +41,10 @@ public class Hood extends SubsystemBase {
 
   private static final double TARGET_TOLERANCE = 0.1;
   public static final double VOLTAGE_CONTROL = 1;
+  private static final double STATOR_CURRENT_LIMIT = 20;
+  private static final double GEAR_RATIO = 2.90909;
+  private static final double FORWARD_SOFT_LIMIT = 2.6;
+  private static final double BACKWARD_SOFT_LIMIT = 0;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -61,25 +69,31 @@ public class Hood extends SubsystemBase {
     TalonFXConfigurator hood_Configurator = hood.getConfigurator();
 
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 20;
+    config.CurrentLimits.SupplyCurrentLimit = 10;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.StatorCurrentLimit = 40;
+    config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create brake mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = FORWARD_SOFT_LIMIT;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = BACKWARD_SOFT_LIMIT;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
     // create PID gains
-    config.Slot0.kP = 0.00;
+    config.Slot0.kP = 0.01;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
     config.Slot0.kV = 0;
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
+    config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 80;
-    config.MotionMagic.MotionMagicAcceleration = 160;
+    config.MotionMagic.MotionMagicCruiseVelocity = 1;
+    config.MotionMagic.MotionMagicAcceleration = 2;
 
     hood_Configurator.apply(config);
   }
@@ -141,5 +155,11 @@ public class Hood extends SubsystemBase {
         () -> {
           hood.stopMotor();
         });
+  }
+
+  public Command autoZeroCommand() {
+    return Commands.parallel(voltageControl(() -> Volts.of(-0.5)))
+        .until(() -> hood.getStatorCurrent().getValueAsDouble() > STATOR_CURRENT_LIMIT)
+        .andThen(zeroHoodCommand());
   }
 }

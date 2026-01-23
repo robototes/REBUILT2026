@@ -16,6 +16,7 @@ public class Subsystems {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
+
     public static final boolean INTAKE_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean INDEX_ENABLED = true;
@@ -30,6 +31,7 @@ public class Subsystems {
   public final Flywheels Flywheels;
   public final Index Index;
   public final Serializer Serializer;
+
   public final Hood Hood;
   public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;

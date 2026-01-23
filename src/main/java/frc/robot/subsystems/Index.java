@@ -40,6 +40,7 @@ public class Index extends SubsystemBase {
   public Command setPowerCommand(double power) {
     return runEnd(
         () -> {
+          System.out.println("SHOOTING");
           Index.set(power);
         },
         () -> {

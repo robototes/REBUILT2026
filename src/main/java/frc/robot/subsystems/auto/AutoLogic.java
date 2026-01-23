@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Subsystems;
+import frc.robot.subsystems.AutoRotate;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,8 @@ import java.util.Map;
 import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
+
+  private static Subsystems s;
 
   /* ---------------- Start positions ---------------- */
 
@@ -98,6 +102,9 @@ public class AutoLogic {
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
   /* ---------------- Init ---------------- */
+  public static void init(Subsystems subsystems) {
+    s = subsystems;
+  }
 
   public static void initSmartDashBoard() {
 
@@ -181,11 +188,16 @@ public class AutoLogic {
   }
 
   public static Command launcherCommand() {
-    return Commands.none();
+    return Commands.sequence(
+        Commands.parallel(
+            s.Flywheels.setVelocityCommand(40),
+            s.Hood.hoodPositionCommand(0.5),
+            AutoRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0)),
+        s.Index.setPowerCommand(0.3).withTimeout(2));
   }
 
   public static Command intakeCommand() {
-    return Commands.none();
+    return s.Intake.setPowerCommand(1);
   }
 
   public static Command climbCommand() {

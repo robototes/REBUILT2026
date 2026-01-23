@@ -46,6 +46,7 @@ public class Robot extends TimedRobot {
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
+    AutoLogic.init(subsystems);
 
     CommandScheduler.getInstance()
         .onCommandInitialize(
@@ -119,7 +120,11 @@ public class Robot extends TimedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    if (AutoLogic.getSelectedAuto() != null) {
+      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+    }
+  }
 
   /** This function is called periodically during autonomous. */
   @Override
