@@ -154,7 +154,7 @@ public class Controls {
       return;
     }
     // Add subsystem bindings here
-    driverController.rightStick().whileTrue(s.Intake.setPowerCommand(1));
+    driverController.leftTrigger().whileTrue(s.Intake.setPowerCommand(0.5));
   }
 
   private void configureLaunchingBindings() {
@@ -169,9 +169,9 @@ public class Controls {
             Commands.parallel(
                 Commands.sequence(
                     Commands.parallel(
-                        s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(0.5)),
-                    s.Index.setPowerCommand(0.3)
-                        .onlyWhile(() -> s.Flywheels.atTargetVelocity(40, 10))),
+                        s.Flywheels.setVelocityCommand(70), s.Hood.hoodPositionCommand(0.5)),
+                    Commands.waitUntil(() -> s.Flywheels.atTargetVelocity(70, 10)),
+                    Commands.parallel(s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
                 AutoRotate.autoRotate(
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
 

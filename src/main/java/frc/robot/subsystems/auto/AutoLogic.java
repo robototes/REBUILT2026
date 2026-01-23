@@ -190,7 +190,7 @@ public class AutoLogic {
   public static Command launcherCommand() {
     return Commands.sequence(
         Commands.parallel(
-            s.Flywheels.setVelocityCommand(40),
+            s.Flywheels.setVelocityCommand(100),
             s.Hood.hoodPositionCommand(0.5),
             AutoRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0)),
         s.Index.setPowerCommand(0.3).withTimeout(2));

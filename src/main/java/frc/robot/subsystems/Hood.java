@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
@@ -43,8 +44,8 @@ public class Hood extends SubsystemBase {
   public static final double VOLTAGE_CONTROL = 1;
   private static final double STATOR_CURRENT_LIMIT = 20;
   private static final double GEAR_RATIO = 2.90909;
-  private static final double FORWARD_SOFT_LIMIT = 2.6;
-  private static final double BACKWARD_SOFT_LIMIT = 0;
+  private static final double FORWARD_SOFT_LIMIT = 1.72;
+  private static final double BACKWARD_SOFT_LIMIT = -0.02;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -76,6 +77,7 @@ public class Hood extends SubsystemBase {
 
     // create brake mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = FORWARD_SOFT_LIMIT;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = BACKWARD_SOFT_LIMIT;
@@ -158,8 +160,8 @@ public class Hood extends SubsystemBase {
   }
 
   public Command autoZeroCommand() {
-    return Commands.parallel(voltageControl(() -> Volts.of(-0.5)))
-        .until(() -> hood.getStatorCurrent().getValueAsDouble() > STATOR_CURRENT_LIMIT)
+    return Commands.parallel(voltageControl(() -> Volts.of(-0.1)))
+        .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .andThen(zeroHoodCommand());
   }
 }

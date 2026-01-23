@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
@@ -76,9 +77,10 @@ public class Flywheels extends SubsystemBase {
 
     // create brake mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.00;
+    config.Slot0.kP = 0.1;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
@@ -92,14 +94,13 @@ public class Flywheels extends SubsystemBase {
   }
 
   public Command setVelocityCommand(double rps) {
-    request.Velocity = rps;
-    return run(() -> {
+    return runOnce(() -> {
+          request.Velocity = rps;
           Flywheel_One.setControl(request);
-          System.out.println("setting control");
+          System.out.println("setting control to "+ rps);
           Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
         })
-        .withName("Set Flywheel Velocity")
-        .until(() -> atTargetVelocity(rps, FLYWHEEL_TOLERANCE));
+        .withName("Set Flywheel Velocity");
   }
 
   public void setVelocityRPM(double rpm) {
