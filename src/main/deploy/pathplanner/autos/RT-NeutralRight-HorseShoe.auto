@@ -5,33 +5,21 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "launch"
+            "pathName": "RT-NeutralRight"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "RB-OutPost"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 0.75
+            "pathName": "NeutralRight-HorseShoe"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "OutPost-Shoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
+            "pathName": "NeutralRight-RB"
           }
         }
       ]

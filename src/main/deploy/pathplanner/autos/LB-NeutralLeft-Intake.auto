@@ -5,21 +5,15 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "launch"
+            "pathName": "LB-NeutralLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "C-Climb"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climb"
+            "pathName": "NeutralLeft-Intake"
           }
         }
       ]
