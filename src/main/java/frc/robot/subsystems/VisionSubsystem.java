@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -19,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
@@ -26,7 +25,7 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
-  private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
+  private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
   // hub pose blue X: 4.536m, Y: 4.053m
   // hub pose red X: 11.950m, Y: 4.105m,
   // Deviations
@@ -35,17 +34,13 @@ public class VisionSubsystem extends SubsystemBase {
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
 
-  // AprilTag field layout for this year
-  private static final AprilTagFieldLayout fieldLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
-
   private final DrivebaseWrapper drivebaseWrapper;
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
   private boolean disableVision;
-  private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
+  private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()
@@ -78,12 +73,12 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void update() {
     // System.out.println("updating");
-    RawFiducial[] rawFiducialsB = BCamera.getRawFiducials();
+    RawFiducial[] rawFiducialsB = CCamera.getRawFiducials();
     // System.out.println("got raw fiducials");
     if (rawFiducialsB != null) {
       for (RawFiducial rf : rawFiducialsB) {
         // System.out.println("processing raw fiducials");
-        processLimelight(BCamera, rawFieldPose3dEntryB, rf);
+        processLimelight(CCamera, rawFieldPose3dEntryB, rf);
       }
     }
   }
@@ -108,7 +103,7 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = fieldLayout.getTagPose(rf.id);
+      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
       if (tagPose.isEmpty()) {
         DriverStation.reportWarning(
             "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
@@ -155,8 +150,8 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public int getNumTargets() {
-    int B = BCamera.getNumTargets();
-    return B;
+    int C = CCamera.getNumTargets();
+    return C;
   }
 
   public double getLastTimestampSeconds() {
