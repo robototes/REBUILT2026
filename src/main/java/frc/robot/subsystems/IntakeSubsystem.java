@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import java.net.NetworkInterface;
+import java.util.EnumSet;
 import java.util.concurrent.Flow.Subscriber;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -16,6 +17,8 @@ import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.event.EventLoop;
@@ -48,9 +51,12 @@ public class IntakeSubsystem extends SubsystemBase {
     private DoubleSubscriber pivotSub;
     private final BooleanTopic rollerTopic;
     private final BooleanPublisher rollerPub;
-    private final EventLoop eventLoop;
+
 
     double pivotAngle;
+    int connListenerHandle;
+    int valueListenerHandle;
+    int topicListenerHandle;
 
     private final double MAX_ANGULAR_RATE = Controls.MaxAngularRate;
 
@@ -60,7 +66,7 @@ public class IntakeSubsystem extends SubsystemBase {
         speed = 0;
         pivotAngle = 0;
         if (intakepivotEnabled) {
-            pivotMotor = new TalonFX(Constants.HardwareConstants.PivotMotorID);
+            pivotMotor = new TalonFX(Constants.HardwareConstants.kPivotMotorID);
         } else {
             pivotMotor = null;
         }
@@ -71,7 +77,7 @@ public class IntakeSubsystem extends SubsystemBase {
         }
         // intake roller sim
         var nt = NetworkTableInstance.getDefault();
-        this.rollerTopic = nt.getBooleanTopic("intake status/status");
+        this.rollerTopic = nt.getBooleanTopic("intake status/enabled");
         this.rollerPub = rollerTopic.publish();
 
 
@@ -79,11 +85,7 @@ public class IntakeSubsystem extends SubsystemBase {
         var nt2 = NetworkTableInstance.getDefault();
         this.pivotTopic = nt2.getDoubleTopic("pivot position/position");
         this.pivotPub = pivotTopic.publish();
-        this.pivotSub = pivotTopic.subscribe(0);
-
-        pivotSub.addListener(eventLoop, event -> {
-            double pivotValue = event.value;
-        });
+        this.pivotSub = pivotTopic.subscribe(getCurrentPivotPos());
     }
     public void TalonFXConfigs() {
         var talonFXConfigs = new TalonFXConfiguration();
@@ -155,9 +157,6 @@ public class IntakeSubsystem extends SubsystemBase {
         @Override
         public void periodic() {
            rollerPub.set(intakeRunning());
-           pivotSub.get(getCurrentPivotPos());
            pivotPub.set(getCurrentPivotPos());
-
-           eventLoop.poll();
         }
 }

@@ -19,6 +19,6 @@ public final class Constants {
 
   public static class HardwareConstants {
     public static final int kRollersID = 0;
-    public static final int PivotMotorID = 1;
+    public static final int kPivotMotorID = 1;
   }
 }
