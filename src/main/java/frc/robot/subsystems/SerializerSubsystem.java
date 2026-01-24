@@ -7,8 +7,7 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
-import frc.robot.Constants.TuningConstants;
+import frc.robot.Hardware;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 
@@ -28,6 +27,8 @@ public class SerializerSubsystem extends SubsystemBase {
   private static final double SERIALMOTOR_KG = 0;
   private static final double SERIALMOTOR_KA = 0;
 
+  public static final double serializerSpeed = 1.0;
+
   private final TalonFX serialMotor;
 
   private final FlywheelSim motorSim;
@@ -38,12 +39,12 @@ public class SerializerSubsystem extends SubsystemBase {
   );
 
   public SerializerSubsystem() {
-    serialMotor = new TalonFX(Constants.HardwareConstants.serializerMotorID);
+    serialMotor = new TalonFX(Hardware.serializerMotorID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
       motorSim = new FlywheelSim(
-        serialMotorSystem, 
+        serialMotorSystem,
         DCMotor.getKrakenX60(1),
         0.0
       );
@@ -64,9 +65,9 @@ public class SerializerSubsystem extends SubsystemBase {
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 20; 
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 10; 
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 10;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     // PID
@@ -90,7 +91,7 @@ public class SerializerSubsystem extends SubsystemBase {
   public Command startMotor() {
     return runOnce(
         () -> {
-          setSpeed(TuningConstants.serializerSpeed);
+          setSpeed(serializerSpeed);
         });
   }
 
