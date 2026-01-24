@@ -71,6 +71,9 @@ public class FuelAutoAlign {
     @Override
     public void execute() {
       if (s.detectionSubsystem.fieldFuelPose2d() == null) {
+        SwerveRequest request =
+            driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
+        drive.setControl(request);
         return;
       } else {
         targetPose = s.detectionSubsystem.fieldFuelPose2d();
