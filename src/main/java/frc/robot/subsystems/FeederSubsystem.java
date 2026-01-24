@@ -1,6 +1,14 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
@@ -8,15 +16,6 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import edu.wpi.first.math.system.LinearSystem;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.GravityTypeValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballNum = 0;
@@ -35,28 +34,22 @@ public class FeederSubsystem extends SubsystemBase {
 
   private final FlywheelSim motorSim;
 
-  LinearSystem feedMotorSystem = LinearSystemId.createFlywheelSystem(
-    DCMotor.getKrakenX60(1),
-    0.0,0.0
-  );
+  LinearSystem feedMotorSystem =
+      LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.0, 0.0);
 
   public FeederSubsystem() {
     feedMotor = new TalonFX(Hardware.feederMotorID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
-      motorSim = new FlywheelSim(
-        feedMotorSystem,
-        DCMotor.getKrakenX60(1),
-        0.0
-      );
+      motorSim = new FlywheelSim(feedMotorSystem, DCMotor.getKrakenX60(1), 0.0);
     } else {
       motorSim = null;
     }
   }
 
   public void feederConfig() {
-    //DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
+    // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
@@ -104,18 +97,16 @@ public class FeederSubsystem extends SubsystemBase {
         });
   }
 
-  //remove in final, only here to stop Autos.java from throwing errors while also doing nothing
+  // remove in final, only here to stop Autos.java from throwing errors while also doing nothing
   public Command doNothing() {
-    return runOnce(
-        () -> {
-        });
+    return runOnce(() -> {});
   }
 
-  //PLACEHOLDER FOR SENSOR CHECK
+  // PLACEHOLDER FOR SENSOR CHECK
   public Command checkSensor() {
     return runOnce(
         () -> {
-          //TODO: add logic for ballNum going up after sensor triggers
+          // TODO: add logic for ballNum going up after sensor triggers
         });
   }
 
@@ -124,18 +115,13 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   @Override
-  public void periodic() {
-
-  }
+  public void periodic() {}
 
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(feedMotor.getSimState().getMotorVoltage());
-    motorSim.update(0.020); //every 20 ms
+    motorSim.update(0.020); // every 20 ms
     RoboRioSim.setVInVoltage(
-      BatterySim.calculateDefaultBatteryLoadedVoltage(
-        motorSim.getCurrentDrawAmps()
-      )
-    );
+        BatterySim.calculateDefaultBatteryLoadedVoltage(motorSim.getCurrentDrawAmps()));
   }
 }
