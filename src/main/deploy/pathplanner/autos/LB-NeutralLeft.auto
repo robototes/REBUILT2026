@@ -13,13 +13,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LB-NeutralLeft"
+            "pathName": "LB-NeutralLeft-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "LB-NeutralLeft-Intake"
+            "pathName": "LT-NeutralLeft-Intake"
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-NeutralRight"
+            "pathName": "LT-NeutralLeft-AGAIN"
           }
         }
       ]

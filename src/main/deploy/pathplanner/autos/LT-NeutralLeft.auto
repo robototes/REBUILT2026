@@ -19,7 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LB-NeutralLeft-Intake"
+            "pathName": "LT-NeutralLeft-Intake"
           }
         },
         {
@@ -32,12 +32,6 @@
           "type": "named",
           "data": {
             "name": "launch"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LT-NeutralRight"
           }
         }
       ]
