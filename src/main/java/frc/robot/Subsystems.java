@@ -46,7 +46,7 @@ public class Subsystems {
     }
 
     if (GAMEPIECE_DETECTION_ENABLED) {
-      detectionSubsystem = new DetectionSubsystem();
+      detectionSubsystem = new DetectionSubsystem(drivebaseSubsystem);
     } else {
       detectionSubsystem = null;
     }

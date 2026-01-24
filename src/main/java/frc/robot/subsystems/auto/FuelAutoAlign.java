@@ -55,8 +55,8 @@ public class FuelAutoAlign {
     ;
 
     public AutoAlignCommand(Controls controls, Subsystems subsystems) {
-      this.drive = s.drivebaseSubsystem;
       s = subsystems;
+      this.drive = s.drivebaseSubsystem;
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       this.controls = controls;
       setName("Fuel Auto Align");
