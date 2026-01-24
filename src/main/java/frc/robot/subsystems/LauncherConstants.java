@@ -18,25 +18,27 @@ public class LauncherConstants {
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
-    public final double shooterPower;
+    public final double flywheelPower;
     public final double distance;
 
-    public LauncherDistanceDataPoint(double m_hoodAngle, double m_shooterPower, double m_distance) {
+    public LauncherDistanceDataPoint(
+        double m_hoodAngle, double m_flywheelPower, double m_distance) {
       this.hoodAngle = m_hoodAngle;
-      this.shooterPower = m_shooterPower;
+      this.flywheelPower = m_flywheelPower;
       this.distance = m_distance;
     }
 
     @Override
     public String toString() {
       return String.format(
-          "Distance: %f, m_shooterPower: %f, m_hoodAngle: %f", distance, shooterPower, hoodAngle);
+          "Distance: %f, flywheelPower: %f, hoodAngle: %f", distance, flywheelPower, hoodAngle);
     }
   }
 
   private static final java.util.List<LauncherDistanceDataPoint> distanceData = new ArrayList<>();
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
+  private static InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
 
   static {
     // add in data here
@@ -45,18 +47,30 @@ public class LauncherConstants {
     distanceData.add(new LauncherDistanceDataPoint(0.1, 4300, 4.0));
 
     for (var point : distanceData) {
-      flywheelMap.put(point.distance, point.shooterPower);
+      flywheelMap.put(point.distance, point.flywheelPower);
+      hoodMap.put(point.distance, point.hoodAngle);
     }
   }
 
-  public static double getLauncherSpeedFromDistance(double distance) {
+  public static double getFlywheelSpeedFromDistance(double distance) {
     return flywheelMap.get(distance);
   }
 
-  public static double getlauncherspeedfromPose2d(Translation2d hub, Pose2d robot) {
+  public static double getFlywheelSpeedFromPose2d(Translation2d hub, Pose2d robot) {
     Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, robot.getRotation());
     robot = robot.plus(fieldRelativeLauncherOffset);
     double distance = robot.getTranslation().getDistance(hub);
-    return getLauncherSpeedFromDistance(distance);
+    return getFlywheelSpeedFromDistance(distance);
+  }
+
+  public static double getHoodAngleFromDistance(double distance) {
+    return hoodMap.get(distance);
+  }
+
+  public static double getHoodAngleFromPose2d(Translation2d hub, Pose2d robot) {
+    Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, robot.getRotation());
+    robot = robot.plus(fieldRelativeLauncherOffset);
+    double distance = robot.getTranslation().getDistance(hub);
+    return getHoodAngleFromDistance(distance);
   }
 }
