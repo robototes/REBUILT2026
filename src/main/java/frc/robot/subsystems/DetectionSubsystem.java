@@ -9,7 +9,7 @@ import frc.robot.util.LimelightHelpers.RawDetection;
 public class DetectionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
-  private static RawDetection[] detections;
+  private RawDetection[] detections;
   public Pose3d fuelPose3d = null;
 
   public void update() {

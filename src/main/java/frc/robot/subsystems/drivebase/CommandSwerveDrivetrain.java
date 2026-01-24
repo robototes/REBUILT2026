@@ -9,11 +9,13 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -261,5 +263,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   // method for braking the motors after coasting
   public void brakeMotors() {
     configNeutralMode(NeutralModeValue.Brake);
+  }
+
+  public boolean isStationary() {
+    var speeds = getState().Speeds;
+    return MathUtil.isNear(0, speeds.vxMetersPerSecond, 0.01)
+        && MathUtil.isNear(0, speeds.vyMetersPerSecond, 0.01)
+        && MathUtil.isNear(0, speeds.omegaRadiansPerSecond, Units.degreesToRadians(2));
   }
 }

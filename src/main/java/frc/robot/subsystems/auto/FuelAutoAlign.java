@@ -7,34 +7,20 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Controls;
-import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class FuelAutoAlign {
-  public static Robot r = Robot.getInstance();
-  public static final Subsystems s = r.subsystems;
-  public static final Controls controls = r.controls;
+  public static Subsystems s = null;
+  public static final Controls controls = null;
+  private static final double closenessTolerance = 0.05;
+  private static final double finishedTolerance = 0.1;
 
-  public static Command autoAlign(CommandSwerveDrivetrain drivebaseSubsystem, Controls controls) {
-    return new AutoAlignCommand(drivebaseSubsystem, controls).withName("Auto Align");
-  }
-
-  public static boolean isStationary() {
-    var speeds = s.drivebaseSubsystem.getState().Speeds;
-    return MathUtil.isNear(0, speeds.vxMetersPerSecond, 0.01)
-        && MathUtil.isNear(0, speeds.vyMetersPerSecond, 0.01)
-        && MathUtil.isNear(0, speeds.omegaRadiansPerSecond, Units.degreesToRadians(2));
-  }
-
-  public static boolean isLevel() {
-    var rotation = s.drivebaseSubsystem.getRotation3d();
-    return MathUtil.isNear(0, rotation.getX(), Units.degreesToRadians(2))
-        && MathUtil.isNear(0, rotation.getY(), Units.degreesToRadians(2));
+  public static Command autoAlign(Controls controls, Subsystems s) {
+    return new AutoAlignCommand(controls, s).withName("Fuel Auto Align");
   }
 
   public static boolean isCloseEnough() {
@@ -43,39 +29,38 @@ public class FuelAutoAlign {
     }
     var currentPose = s.drivebaseSubsystem.getState().Pose;
     var targetPose = s.detectionSubsystem.fuelPose3d.toPose2d();
-    return currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.05;
+    return currentPose.getTranslation().getDistance(targetPose.getTranslation())
+        < closenessTolerance;
   }
 
-  public static boolean poseInPlace() {
-    return isStationary() && isCloseEnough();
-  }
-
-  public static boolean
-      oneSecondLeft() { // THIS WILL ONLY WORK ON THE REAL FIELD AND IN PRACTICE MODE!
+  // THIS WILL ONLY WORK ON THE REAL FIELD AND IN PRACTICE MODE!
+  public static boolean oneSecondLeft() {
     return DriverStation.getMatchTime() <= 1;
   }
 
   private static class AutoAlignCommand extends Command {
 
-    protected final PIDController pidX = new PIDController(4, 0, 0);
-    protected final PIDController pidY = new PIDController(4, 0, 0);
-    protected final PIDController pidRotate = new PIDController(8, 0, 0);
+    protected final PIDController pidX = new PIDController(1, 0, 0);
+    protected final PIDController pidY = new PIDController(1, 0, 0);
+    protected final PIDController pidRotate = new PIDController(1, 0, 0);
 
     protected final CommandSwerveDrivetrain drive;
     protected final Controls controls;
     protected Pose2d targetPose;
 
+    // TODO: Add a 10% deadband
     private final SwerveRequest.FieldCentric driveRequest =
-        new SwerveRequest.FieldCentric() // Add a 10% deadband
+        new SwerveRequest.FieldCentric()
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
     ;
 
-    public AutoAlignCommand(CommandSwerveDrivetrain drive, Controls controls) {
-      this.drive = drive;
+    public AutoAlignCommand(Controls controls, Subsystems subsystems) {
+      this.drive = s.drivebaseSubsystem;
+      s = subsystems;
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       this.controls = controls;
-      setName("Auto Align");
+      setName("Fuel Auto Align");
     }
 
     @Override
@@ -84,9 +69,7 @@ public class FuelAutoAlign {
     @Override
     public void execute() {
       if (s.detectionSubsystem.fuelPose3d == null) {
-        pidX.setSetpoint(0);
-        pidY.setSetpoint(0);
-        pidRotate.setSetpoint(0);
+        return;
       } else {
         targetPose = s.detectionSubsystem.fuelPose3d.toPose2d();
         pidX.setSetpoint(targetPose.getX());
@@ -94,7 +77,7 @@ public class FuelAutoAlign {
         pidRotate.setSetpoint(targetPose.getRotation().getRadians());
       }
       Pose2d currentPose = drive.getState().Pose;
-      // Calculate the power for X direction and clamp it between -1 and 1
+      // Calculate the power for X direction and clamp it between -2 and 2
       double powerX = pidX.calculate(currentPose.getX());
       double powerY = pidY.calculate(currentPose.getY());
       powerX = MathUtil.clamp(powerX, -2, 2);
@@ -113,7 +96,7 @@ public class FuelAutoAlign {
     public boolean isFinished() {
       Pose2d currentPose = drive.getState().Pose;
       Transform2d robotToTarget = targetPose.minus(currentPose);
-      if (robotToTarget.getTranslation().getNorm() < 0.01
+      if (robotToTarget.getTranslation().getNorm() < finishedTolerance
           && Math.abs(robotToTarget.getRotation().getDegrees()) < 1) {
         controls.vibrateDriveController(0.5);
         return true;

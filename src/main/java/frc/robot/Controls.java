@@ -139,7 +139,7 @@ public class Controls {
   }
 
   private void configureAutoAlignBindings() {
-    driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(s.drivebaseSubsystem, this));
+    driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   /**
