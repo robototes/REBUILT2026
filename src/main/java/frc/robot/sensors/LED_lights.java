@@ -12,7 +12,7 @@ import frc.robot.util.LEDMode;
 import java.util.function.Supplier;
 
 public class LED_lights extends SubsystemBase {
-  public CANdle candle;
+  private CANdle candle;
   private CANdleConfigurator candleConfigurator;
 
   public RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
