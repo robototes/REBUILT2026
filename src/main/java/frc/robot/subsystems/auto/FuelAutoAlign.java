@@ -84,7 +84,7 @@ public class FuelAutoAlign {
       powerX += .05 * Math.signum(powerX);
       powerY += .05 * Math.signum(powerY);
       double powerRotate = pidRotate.calculate(currentPose.getRotation().getRadians());
-      powerRotate = MathUtil.clamp(powerRotate, -4, 4);
+      powerRotate = MathUtil.clamp(powerRotate, -2, 2);
       SwerveRequest request =
           driveRequest.withVelocityX(powerX).withVelocityY(powerY).withRotationalRate(powerRotate);
       // Set the drive control with the created request
