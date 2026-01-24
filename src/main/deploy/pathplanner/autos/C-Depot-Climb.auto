@@ -13,13 +13,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "DEPOT DEPT"
+            "pathName": "CENTER DEPOT"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": null
+            "pathName": "DEPOT DEPT"
           }
         },
         {
