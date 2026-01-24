@@ -25,12 +25,6 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Depot-Pre-Shoot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
             "pathName": "Depot-Shoot"
           }
         },
