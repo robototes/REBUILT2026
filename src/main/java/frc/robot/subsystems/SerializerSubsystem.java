@@ -1,18 +1,16 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.TuningConstants;
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -22,46 +20,42 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class SerializerSubsystem extends SubsystemBase {
-  private final double ARMPIVOT_KP = 38.5;
-  private final double ARMPIVOT_KI = 0;
-  private final double ARMPIVOT_KD = 0;
-  private final double ARMPIVOT_KS = 0;
-  private final double ARMPIVOT_KV = 0;
-  private final double ARMPIVOT_KG = 0;
-  private final double ARMPIVOT_KA = 0;
+  private static final double SERIALMOTOR_KP = 38.5;
+  private static final double SERIALMOTOR_KI = 0;
+  private static final double SERIALMOTOR_KD = 0;
+  private static final double SERIALMOTOR_KS = 0;
+  private static final double SERIALMOTOR_KV = 0;
+  private static final double SERIALMOTOR_KG = 0;
+  private static final double SERIALMOTOR_KA = 0;
 
-  private final TalonFX feedMotor;
+  private final TalonFX serialMotor;
 
-  //MechanismRoot2d motorRoot = Robot.getInstance().getRobotMechanism2d().getRoot("motorRoot", 0, 0.0);
-  //MechanismLigament2d flywheelmotor1 = motorRoot.append(new MechanismLigament2d("flywheelMotor1", 0, 0));
-  //MechanismLigament2d flywheelmotor2 = motorRoot.append(new MechanismLigament2d("flywheelMotor2", 0, 0));
+  private final FlywheelSim motorSim;
 
-  private final SingleJointedArmSim motorSim;
+  LinearSystem serialMotorSystem = LinearSystemId.createFlywheelSystem(
+    DCMotor.getKrakenX60(1),
+    0.0,0.0
+  );
 
   public SerializerSubsystem() {
-    feedMotor = new TalonFX(Constants.HardwareConstants.feedMotorID);
-    serializerConfig();
+    serialMotor = new TalonFX(Constants.HardwareConstants.serializerMotorID);
+    feederConfig();
 
     if (RobotBase.isSimulation()) {
-      motorSim = new SingleJointedArmSim(
+      motorSim = new FlywheelSim(
+        serialMotorSystem, 
         DCMotor.getKrakenX60(1),
-        1,
-        SingleJointedArmSim.estimateMOI(0, 0),
-        0, // Arm length (meters)
-        -Math.PI, // Min angle (rad)
-        Math.PI, // Max angle (rad)
-        true, // Has gravity
-        0.0 // Initial angle (rad)
+        0.0
       );
     } else {
       motorSim = null;
     }
   }
 
-  public void serializerConfig() {
+  public void feederConfig() {
     //DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
-    TalonFXConfigurator cfg = feedMotor.getConfigurator();
+    TalonFXConfigurator cfg = serialMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
@@ -77,26 +71,26 @@ public class SerializerSubsystem extends SubsystemBase {
 
     // PID
     // set slot 0 gains
-    talonFXConfiguration.Slot0.kS = ARMPIVOT_KS;
-    talonFXConfiguration.Slot0.kV = ARMPIVOT_KV;
-    talonFXConfiguration.Slot0.kA = ARMPIVOT_KA;
-    talonFXConfiguration.Slot0.kP = ARMPIVOT_KP;
-    talonFXConfiguration.Slot0.kI = ARMPIVOT_KI;
-    talonFXConfiguration.Slot0.kD = ARMPIVOT_KD;
-    talonFXConfiguration.Slot0.kG = ARMPIVOT_KG;
+    talonFXConfiguration.Slot0.kS = SERIALMOTOR_KS;
+    talonFXConfiguration.Slot0.kV = SERIALMOTOR_KV;
+    talonFXConfiguration.Slot0.kA = SERIALMOTOR_KA;
+    talonFXConfiguration.Slot0.kP = SERIALMOTOR_KP;
+    talonFXConfiguration.Slot0.kI = SERIALMOTOR_KI;
+    talonFXConfiguration.Slot0.kD = SERIALMOTOR_KD;
+    talonFXConfiguration.Slot0.kG = SERIALMOTOR_KG;
     talonFXConfiguration.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     cfg.apply(talonFXConfiguration);
   }
 
   public void setSpeed(double speed) {
-    feedMotor.set(speed);
+    serialMotor.set(speed);
   }
 
   public Command startMotor() {
     return runOnce(
         () -> {
-          setSpeed(TuningConstants.feederSpeed);
+          setSpeed(TuningConstants.serializerSpeed);
         });
   }
 
@@ -114,23 +108,19 @@ public class SerializerSubsystem extends SubsystemBase {
         });
   }
 
-  /**
-   * An example method querying a boolean state of the subsystem (for example, a digital sensor).
-   *
-   * @return value of some boolean subsystem state, such as a digital sensor.
-   */
-  public boolean exampleCondition() {
-    // Query some boolean state, such as a digital sensor.
-    return false;
-  }
-
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
+
   }
 
   @Override
   public void simulationPeriodic() {
-    // This method will be called once per scheduler run during simulation
+    motorSim.setInput(serialMotor.getSimState().getMotorVoltage());
+    motorSim.update(0.020); //every 20 ms
+    RoboRioSim.setVInVoltage(
+      BatterySim.calculateDefaultBatteryLoadedVoltage(
+        motorSim.getCurrentDrawAmps()
+      )
+    );
   }
 }
