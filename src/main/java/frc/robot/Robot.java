@@ -33,7 +33,6 @@ public class Robot extends TimedRobot {
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
   private final int GAMEPIECE_PIPELINE = 2;
-  private static Robot instance;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -42,7 +41,6 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    instance = this;
     subsystems = new Subsystems();
     controls = new Controls(subsystems);
 
