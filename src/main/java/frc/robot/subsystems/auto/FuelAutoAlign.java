@@ -23,6 +23,9 @@ public class FuelAutoAlign {
   }
 
   public static boolean isCloseEnough() {
+    if (s == null) {
+      return false;
+    }
     if (s.detectionSubsystem.fieldFuelPose2d() == null) {
       return false;
     }
