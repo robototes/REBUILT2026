@@ -60,6 +60,9 @@ public class Controls {
     // Configure the trigger bindings
     s = subsystems;
     configureDrivebaseBindings();
+    if (s.detectionSubsystem != null) {
+      configureAutoAlignBindings();
+    }
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {

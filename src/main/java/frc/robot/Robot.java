@@ -65,6 +65,10 @@ public class Robot extends TimedRobot {
       // ViewFinder Pipeline Switch to reduce Limelight heat
       subsystems.visionSubsystem.update();
     }
+    if (subsystems.detectionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      subsystems.detectionSubsystem.update();
+    }
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
