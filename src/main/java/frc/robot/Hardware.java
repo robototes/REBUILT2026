@@ -10,4 +10,5 @@ public class Hardware {
   public static final String LIMELIGHT_A = "limelight-a";
   public static final String LIMELIGHT_B = "limelight-b";
   public static final String LIMELIGHT_C = "limelight-c";
+  public static final int feederMotorID = 13;
 }

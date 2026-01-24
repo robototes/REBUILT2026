@@ -7,8 +7,7 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
-import frc.robot.Constants.TuningConstants;
+import frc.robot.Hardware;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 
@@ -21,6 +20,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballNum = 0;
+  public static final double feederSpeed = 1.0;
+  public static final int feederRumbleThreshold = 67;
 
   private static final double FEEDMOTOR_KP = 38.5;
   private static final double FEEDMOTOR_KI = 0;
@@ -40,12 +41,12 @@ public class FeederSubsystem extends SubsystemBase {
   );
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Constants.HardwareConstants.feederMotorID);
+    feedMotor = new TalonFX(Hardware.feederMotorID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
       motorSim = new FlywheelSim(
-        feedMotorSystem, 
+        feedMotorSystem,
         DCMotor.getKrakenX60(1),
         0.0
       );
@@ -66,9 +67,9 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 20; 
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 10; 
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 10;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     // PID
@@ -92,7 +93,7 @@ public class FeederSubsystem extends SubsystemBase {
   public Command startMotor() {
     return runOnce(
         () -> {
-          setSpeed(TuningConstants.feederSpeed);
+          setSpeed(feederSpeed);
         });
   }
 
