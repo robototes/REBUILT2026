@@ -23,11 +23,11 @@ public class FuelAutoAlign {
   }
 
   public static boolean isCloseEnough() {
-    if (s.detectionSubsystem.fuelPose3d == null) {
+    if (s.detectionSubsystem.fieldFuelPose2d() == null) {
       return false;
     }
     var currentPose = s.drivebaseSubsystem.getState().Pose;
-    var targetPose = s.detectionSubsystem.fuelPose3d.toPose2d();
+    var targetPose = s.detectionSubsystem.fieldFuelPose2d();
     return currentPose.getTranslation().getDistance(targetPose.getTranslation())
         < closenessTolerance;
   }
@@ -67,10 +67,10 @@ public class FuelAutoAlign {
 
     @Override
     public void execute() {
-      if (s.detectionSubsystem.fuelPose3d == null) {
+      if (s.detectionSubsystem.fieldFuelPose2d() == null) {
         return;
       } else {
-        targetPose = s.detectionSubsystem.fuelPose3d.toPose2d();
+        targetPose = s.detectionSubsystem.fieldFuelPose2d();
         pidX.setSetpoint(targetPose.getX());
         pidY.setSetpoint(targetPose.getY());
         pidRotate.setSetpoint(targetPose.getRotation().getRadians());
