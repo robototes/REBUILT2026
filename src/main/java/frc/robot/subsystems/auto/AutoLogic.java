@@ -53,7 +53,7 @@ public class AutoLogic {
       List.of(
           new AutoPath("LB-NeutralLeft-Climb", "LB-NeutralLeft-Climb"),
           new AutoPath("C-Climb", "C-Climb"),
-                   new AutoPath("Drive", "Default"),
+                   new AutoPath("Default", "Default"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
