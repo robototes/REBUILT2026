@@ -6,17 +6,19 @@ import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.RGBWColor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.LEDMode;
 import java.util.function.Supplier;
 
-public class LED_lights {
-  private CANdle candle;
+public class LED_lights extends SubsystemBase {
+  public CANdle candle;
   private CANdleConfigurator candleConfigurator;
 
-  public RGBWColor defaultColor = new RGBWColor(255, 0, 0);
-  public RGBWColor intakeColor = new RGBWColor(255, 255, 0);
-  public RGBWColor outtakeColor = new RGBWColor(0, 255, 0);
-  public RGBWColor climbColor = new RGBWColor(0, 0, 255);
+  public RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
+  public RGBWColor intakeColor = new RGBWColor(255, 255, 0); // yellow
+  public RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
+  public RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
 
   public LED_lights() {
     candle = new CANdle(15); // replace id with actual id
@@ -73,21 +75,17 @@ public class LED_lights {
         });
   }
 
-  public Command alternateColors(RGBWColor colorA, RGBWColor colorB){
-    return Commands.repeatingSequence(
-            Commands.run(
-                () -> {
-                updateLEDs(colorA);
-                }
-            ),
-            Commands.waitSeconds(1),
-            Commands.run(
-                () -> {
-                updateLEDs(colorB);
-                }
-            ),
-            Commands.waitSeconds(1)
-        );
-    };
+  public Command alternateColors(RGBWColor colorA, RGBWColor colorB) {
+    return new RunCommand(
+        () -> {
+          // Divide system time by 1000 to get seconds, % 2 to alternate
+          long seconds = System.currentTimeMillis() / 1000;
+          if (seconds % 2 == 0) {
+            updateLEDs(colorA); // colorA shows on even seconds
+          } else {
+            updateLEDs(colorB); // colorB shows on odd seconds
+          }
+        },
+        this);
+  }
 }
-
