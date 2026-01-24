@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.util.Units;
-
 import java.util.ArrayList;
 
 public class ShooterConstants {
@@ -48,11 +47,12 @@ public class ShooterConstants {
   public static double getlauncherspeedfromDistance(double ty) {
     return flywheelMap.get(ty);
   }
-  public static double getlauncherspeedfromPose2d(Pose2d hub, Pose2d robot) {
-    Translation2d offset = new Translation2d(Units.inchesToMeters(12),Rotation2d.fromDegrees(135));
-    Transform2d offset2 = new Transform2d(offset,robot.getRotation());
+
+  public static double getlauncherspeedfromPose2d(Translation2d hub, Pose2d robot) {
+    Translation2d offset = new Translation2d(Units.inchesToMeters(12), Rotation2d.fromDegrees(135));
+    Transform2d offset2 = new Transform2d(offset, robot.getRotation());
     robot = robot.plus(offset2);
-    double distance=robot.getTranslation().getDistance(hub.getTranslation());
+    double distance = robot.getTranslation().getDistance(hub);
     return getlauncherspeedfromDistance(distance);
   }
 }
