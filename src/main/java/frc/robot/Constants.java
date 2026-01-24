@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 /**
@@ -17,10 +13,11 @@ public final class Constants {
     public static final int kDriverControllerPort = 0;
   }
   public static class HardwareConstants {
-    public static final int feedMotorID = 1;
-    public static final int digitalInputChannel = 0;
+    public static final int feederMotorID = 1;
+    public static final int feederDigitalInputChannel = 0;
   }
   public static class TuningConstants {
     public static final double feederSpeed = 1.0;
+    public static final int feederRumbleThreshold = 67;
   }
 }

@@ -1,13 +1,9 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
-import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.FeederSubsystem;
+import frc.robot.subsystems.ExampleSubsystem;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -23,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
+  private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController =
@@ -51,19 +48,11 @@ public class Controls {
         });
    }
 
-   public Command runSensorLoop() {
-     return Commands.repeatingSequence(
-      m_feederSubsystem.checkSensor(),
-      ((m_feederSubsystem.getBallNum() > 67) ? setRumble(null, 0) : m_feederSubsystem.doNothing())
-     );
-   }
-
   private void configureFeederBindings() {
-    //run sensor check loop
-    //runSensorLoop();
-
     //start motor when robot starts
     m_feederSubsystem.startMotor();
+
+    //TODO: wait for sensor to reach threshold, and trigger rumble
 
     //start feeder motor
     m_driverController.a().onTrue(m_feederSubsystem.startMotor());
@@ -79,6 +68,6 @@ public class Controls {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Autos.exampleAuto(m_feederSubsystem);
+    return Autos.exampleAuto(m_exampleSubsystem);
   }
 }
