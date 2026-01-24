@@ -4,10 +4,12 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTableInstance;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
+
+import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -15,7 +17,11 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.subsystems.auto.AutoBuilderConfig;
+import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.LimelightHelpers;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -27,6 +33,8 @@ public class Robot extends TimedRobot {
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
+  private final int APRILTAG_PIPELINE = 0;
+  private final int VIEWFINDER_PIPELINE = 1;
 
   Mechanism2d mech;
   MechanismRoot2d root;
@@ -44,7 +52,37 @@ public class Robot extends TimedRobot {
     subsystems = new Subsystems(mech);
     controls = new Controls(subsystems);
 
-    PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
+    if (DRIVEBASE_ENABLED) {
+      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
+    }
+
+    CommandScheduler.getInstance()
+        .onCommandInitialize(
+            command -> System.out.println("Command initialized: " + command.getName()));
+    CommandScheduler.getInstance()
+        .onCommandInterrupt(
+            (command, interruptor) ->
+                System.out.println(
+                    "Command interrupted: "
+                        + command.getName()
+                        + "; Cause: "
+                        + interruptor.map(cmd -> cmd.getName()).orElse("<none>")));
+    CommandScheduler.getInstance()
+        .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
+
+    SmartDashboard.putData(CommandScheduler.getInstance());
+
+    if (SubsystemConstants.DRIVEBASE_ENABLED) {
+      AutoLogic.registerCommands();
+      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+
+      AutoLogic.initSmartDashBoard();
+      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+    }
+
+    WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
 
@@ -66,12 +104,27 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-
+    if (subsystems.visionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      subsystems.visionSubsystem.update();
+    }
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    if (subsystems.visionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
+    }
+  }
+
+  @Override
+  public void disabledExit() {
+    if (subsystems.visionSubsystem != null) {
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+    }
+  }
 
   @Override
   public void disabledPeriodic() {}

@@ -59,7 +59,7 @@
   ],
   "java.dependency.enableDependencyCheckup": false,
   "[java]": {
-    "editor.defualtFormatter": "josevseb.google-java-format-for-vs-code"
+    "editor.defaultFormatter": "josevseb.google-java-format-for-vs-code"
   },
   "java.format.enabled": false,
   "files.trimTrailingWhitespace": true,
