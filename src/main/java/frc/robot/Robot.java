@@ -27,7 +27,7 @@ import frc.robot.util.LimelightHelpers;
  */
 public class Robot extends TimedRobot {
 
-  public final Controls controls;
+  private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
