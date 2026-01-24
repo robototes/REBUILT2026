@@ -38,6 +38,9 @@ public class FuelAutoAlign {
   }
 
   public static boolean isCloseEnough() {
+    if (s.detectionSubsystem.fuelPose3d == null) {
+      return false;
+    }
     var currentPose = s.drivebaseSubsystem.getState().Pose;
     var targetPose = s.detectionSubsystem.fuelPose3d.toPose2d();
     return currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.05;
@@ -66,6 +69,7 @@ public class FuelAutoAlign {
         new SwerveRequest.FieldCentric() // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+    ;
 
     public AutoAlignCommand(CommandSwerveDrivetrain drive, Controls controls) {
       this.drive = drive;
@@ -75,15 +79,20 @@ public class FuelAutoAlign {
     }
 
     @Override
-    public void initialize() {
-      targetPose = s.detectionSubsystem.fuelPose3d.toPose2d();
-      pidX.setSetpoint(targetPose.getX());
-      pidY.setSetpoint(targetPose.getY());
-      pidRotate.setSetpoint(targetPose.getRotation().getRadians());
-    }
+    public void initialize() {}
 
     @Override
     public void execute() {
+      if (s.detectionSubsystem.fuelPose3d == null) {
+        pidX.setSetpoint(0);
+        pidY.setSetpoint(0);
+        pidRotate.setSetpoint(0);
+      } else {
+        targetPose = s.detectionSubsystem.fuelPose3d.toPose2d();
+        pidX.setSetpoint(targetPose.getX());
+        pidY.setSetpoint(targetPose.getY());
+        pidRotate.setSetpoint(targetPose.getRotation().getRadians());
+      }
       Pose2d currentPose = drive.getState().Pose;
       // Calculate the power for X direction and clamp it between -1 and 1
       double powerX = pidX.calculate(currentPose.getX());

@@ -24,6 +24,7 @@ public class Robot extends TimedRobot {
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
   private final int GAMEPIECE_PIPELINE = 2;
+  private static Robot instance;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -32,19 +33,13 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
+    instance = this;
     subsystems = new Subsystems();
     controls = new Controls(subsystems);
 
     PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
-  }
-
-  private static Robot instance = null;
-
-  public static Robot getInstance() {
-    if (instance == null) instance = new Robot();
-    return instance;
   }
 
   /**
@@ -135,4 +130,8 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
+
+  public static Robot getInstance() {
+    return instance;
+  }
 }
