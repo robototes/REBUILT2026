@@ -8,15 +8,18 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -30,15 +33,15 @@ public class IntakeSubsystem extends SubsystemBase {
     final MotionMagicVoltage m_request1 = new MotionMagicVoltage(0);
     double speed;
 
-    Mechanism2d mech1;
-    Mechanism2d mech2;
-    MechanismRoot2d root1;
-    MechanismRoot2d root2;
+
     private DoublePublisher pivotPub;
     private final DoubleTopic pivotTopic;
     private DoubleSubscriber pivotSub;
     private final BooleanTopic rollerTopic;
     private final BooleanPublisher rollerPub;
+
+    private final FlywheelSim rollerSim;
+    LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0, 0);
 
 
     double pivotAngle;
@@ -49,16 +52,23 @@ public class IntakeSubsystem extends SubsystemBase {
         speed = 0;
         pivotAngle = 0;
         if (intakepivotEnabled) {
-            pivotMotor = new TalonFX(Hardware.IntakeConstants.kPivotMotorID);
+            pivotMotor = new TalonFX(Hardware.PIVOT_MOTOR_ID);
         } else {
             pivotMotor = null;
         }
         if (intakerollersEnabled) {
-            rollers = new TalonFX(Hardware.IntakeConstants.kRollersID);
+            rollers = new TalonFX(Hardware.INTAKE_MOTOR_ID);
         } else {
             rollers = null;
         }
         // intake roller sim
+
+        if (RobotBase.isSimulation()) {
+            rollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1), 0.0);
+        } else {
+            rollerSim = null;
+        }
+
         var nt = NetworkTableInstance.getDefault();
         this.rollerTopic = nt.getBooleanTopic("intake status/enabled");
         this.rollerPub = rollerTopic.publish();
