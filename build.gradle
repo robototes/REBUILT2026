@@ -1,6 +1,7 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2026.1.1"
+    id "edu.wpi.first.GradleRIO" version "2026.2.1"
+    id "com.diffplug.spotless" version "6.25.0"
 }
 
 java {
@@ -8,7 +9,16 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-def ROBOT_MAIN_CLASS = "frc.robot.Main"
+def getProjectBooleanProperty(String name, boolean defaultValue = false) {
+    if (!project.hasProperty(name)) {
+        return defaultValue
+    }
+    // Note that this is equivalent to 'true'.equalsIgnoreCase(project.getProperty(name))
+    // Values that are not "true" or "false" (including null) are treated as false
+    return Boolean.parseBoolean(project.getProperty(name))
+}
+
+def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -104,4 +114,24 @@ wpi.java.configureTestTasks(test)
 // Configure string concat to always inline compile
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
+}
+
+// Spotless
+spotless {
+    format "misc", {
+        target "*"
+        targetExclude "simgui*.json", "**/build/**", "**/build-*/**", "**/bin/**", "/.*", "WPILib-License.md", "gradlew", "networktables.json", "networktables.json.bck"
+        toggleOffOn()
+        endWithNewline()
+        trimTrailingWhitespace()
+    }
+
+    java {
+        importOrder()
+        googleJavaFormat()
+        toggleOffOn()
+        indentWithSpaces(2)
+        endWithNewline()
+        trimTrailingWhitespace()
+    }
 }
