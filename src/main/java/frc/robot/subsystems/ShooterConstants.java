@@ -10,9 +10,9 @@ import java.util.ArrayList;
 
 public class ShooterConstants {
   public static class ShooterDistanceDataPoint {
-    public double m_hoodAngle;
-    public double m_shooterPower;
-    public double m_distance;
+    public final double hoodAngle;
+    public final double shooterPower;
+    public final double distance;
 
     public ShooterDistanceDataPoint(double m_hoodAngle, double m_shooterPower, double m_distance) {
       this.m_hoodAngle = m_hoodAngle;
@@ -28,8 +28,8 @@ public class ShooterConstants {
     }
   }
 
-  public static ArrayList<ShooterDistanceDataPoint> distanceData =
-      new ArrayList<ShooterDistanceDataPoint>();
+  private static final java.util.List<ShooterDistanceDataPoint> distanceData =
+      new ArrayList<>();
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
 
@@ -44,8 +44,8 @@ public class ShooterConstants {
     }
   }
 
-  public static double getlauncherspeedfromDistance(double ty) {
-    return flywheelMap.get(ty);
+  public static double getLauncherSpeedFromDistance(double distance) {
+    return flywheelMap.get(distance);
   }
 
   public static double getlauncherspeedfromPose2d(Translation2d hub, Pose2d robot) {
