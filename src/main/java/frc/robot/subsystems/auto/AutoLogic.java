@@ -53,26 +53,18 @@ public class AutoLogic {
       List.of(
           new AutoPath("LB-NeutralLeft-Climb", "LB-NeutralLeft-Climb"),
           new AutoPath("C-Climb", "C-Climb"),
+                   new AutoPath("Drive", "Drive"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
-          new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
-          new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"),
-           new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
-          new AutoPath("Drive", "Drive"),
-          new AutoPath("LB-NeutralLeft-LB-NeutralLeft-LB", "LB-NeutralLeft-LB-NeutralLeft-LB"),
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
-          new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
-          new AutoPath("LT-NeutralLeft-LB-NeutralLeft-LB", "LT-NeutralLeft-LB-NeutralLeft-LB"),
-          new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
-          new AutoPath("RB-NeutralRight-NeutralRight-RB", "RB-NeutralRight-NeutralRight-RB"),
-          new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-NeutralRight-RB-NeutralRight", "RT-NeutralRight-RB-NeutralRight")
+          new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb")
+
+
+
          );
-  private static final List<AutoPath> choreoPaths =
-      List.of(new AutoPath("LB-Depot-Climb(CHOREO)", "LB-Depot-Climb(CHOREO)"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap =
-      Map.of(0, rebuiltPaths, 1, choreoPaths);
+      Map.of(0, rebuiltPaths);
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
 
