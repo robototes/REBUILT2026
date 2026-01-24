@@ -1,6 +1,5 @@
 package frc.robot;
 
-import frc.robot.subsystems.SerializerSubsystem;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
@@ -15,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.SerializerSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -28,8 +28,7 @@ public class Controls {
   private final Subsystems s;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController driverController =
-      new CommandXboxController(0);
+  private final CommandXboxController driverController = new CommandXboxController(0);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private final double MAX_ACCELERATION = 50;
@@ -67,15 +66,14 @@ public class Controls {
    * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
    * joysticks}.
    */
-
   private void configureFeederBindings() {
-    //start motor when robot starts
+    // start motor when robot starts
     m_serializerSubsystem.startMotor();
 
-    //start serializer motor
+    // start serializer motor
     driverController.a().onTrue(m_serializerSubsystem.startMotor());
 
-    //stop serializer motor
+    // stop serializer motor
     driverController.b().onTrue(m_serializerSubsystem.stopMotor());
   }
 
