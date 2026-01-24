@@ -1,8 +1,6 @@
 package frc.robot.subsystems;
 
-import java.net.NetworkInterface;
-import java.util.EnumSet;
-import java.util.concurrent.Flow.Subscriber;
+
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -10,29 +8,20 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.util.Units;
+
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
-import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 import frc.robot.Controls;
+import frc.robot.Hardware;
 
 public class IntakeSubsystem extends SubsystemBase {
     private TalonFX pivotMotor;
@@ -45,7 +34,6 @@ public class IntakeSubsystem extends SubsystemBase {
     Mechanism2d mech2;
     MechanismRoot2d root1;
     MechanismRoot2d root2;
-    private BooleanPublisher ter;
     private DoublePublisher pivotPub;
     private final DoubleTopic pivotTopic;
     private DoubleSubscriber pivotSub;
@@ -54,11 +42,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
 
     double pivotAngle;
-    int connListenerHandle;
-    int valueListenerHandle;
-    int topicListenerHandle;
-
-    private final double MAX_ANGULAR_RATE = Controls.MaxAngularRate;
 
 
 
@@ -66,12 +49,12 @@ public class IntakeSubsystem extends SubsystemBase {
         speed = 0;
         pivotAngle = 0;
         if (intakepivotEnabled) {
-            pivotMotor = new TalonFX(Constants.HardwareConstants.kPivotMotorID);
+            pivotMotor = new TalonFX(Hardware.IntakeConstants.kPivotMotorID);
         } else {
             pivotMotor = null;
         }
         if (intakerollersEnabled) {
-            rollers = new TalonFX(Constants.HardwareConstants.kRollersID);
+            rollers = new TalonFX(Hardware.IntakeConstants.kRollersID);
         } else {
             rollers = null;
         }
@@ -87,12 +70,11 @@ public class IntakeSubsystem extends SubsystemBase {
         this.pivotPub = pivotTopic.publish();
         this.pivotSub = pivotTopic.subscribe(getCurrentPivotPos());
     }
-    public void TalonFXConfigs() {
-        var talonFXConfigs = new TalonFXConfiguration();
-        var slot0Configs = talonFXConfigs.Slot0;
-        talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        TalonFXConfigurator rollersCfg = rollers.getConfigurator();
-        TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
+    public void TalonFXPivotConfigs() {
+        var talonFXConfigs1 = new TalonFXConfiguration();
+        var slot0Configs = talonFXConfigs1.Slot0;
+        talonFXConfigs1.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
 
         // pivot configs
 
@@ -104,29 +86,34 @@ public class IntakeSubsystem extends SubsystemBase {
         slot0Configs.kD = 0;
         slot0Configs.kG = 0.048; // change PID values during testing, these are placeholders from last year's robot
 
-        var motionMagicConfigs = talonFXConfigs.MotionMagic; // these values i also guessed
+        var motionMagicConfigs = talonFXConfigs1.MotionMagic; // these values i also guessed
         motionMagicConfigs.MotionMagicCruiseVelocity = 100;
         motionMagicConfigs.MotionMagicAcceleration = 200;
         motionMagicConfigs.MotionMagicJerk = 2000;
 
+        pivotMotor.getConfigurator().apply(talonFXConfigs1);
+        pivotMotor.getConfigurator().apply(motionMagicConfigs);
+    }
         // rollers configs
+    public void TalonFXRollerConfigs() {
+        var talonFXConfigs2 = new TalonFXConfiguration();
+        TalonFXConfigurator rollersCfg = rollers.getConfigurator();
+        talonFXConfigs2.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-        talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-
-        talonFXConfiguration.Slot0.kS = 0;
-        talonFXConfiguration.Slot0.kV = 0;
-        talonFXConfiguration.Slot0.kA = 0;
-        talonFXConfiguration.Slot0.kP = 0;
-        talonFXConfiguration.Slot0.kI = 0;
-        talonFXConfiguration.Slot0.kD = 0;
-        talonFXConfiguration.Slot0.kG = 0; // change these values during testing as well
+        talonFXConfigs2.Slot0.kS = 0;
+        talonFXConfigs2.Slot0.kV = 0;
+        talonFXConfigs2.Slot0.kA = 0;
+        talonFXConfigs2.Slot0.kP = 0;
+        talonFXConfigs2.Slot0.kI = 0;
+        talonFXConfigs2.Slot0.kD = 0;
+        talonFXConfigs2.Slot0.kG = 0; // change these values during testing as well
                                            // these values will be different from the pivot
                                            // thats why it's not reused in the same method
 
-        pivotMotor.getConfigurator().apply(talonFXConfigs);
-        rollersCfg.apply(talonFXConfiguration);
-        }
 
+        rollersCfg.apply(talonFXConfigs2);
+
+    }
         public double getCurrentPivotPos() {
             currentPivotPos = pivotMotor.getPosition().getValueAsDouble();
             return currentPivotPos;
@@ -143,7 +130,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public Command runIntake(double speed) {
         return Commands.runEnd(
             () -> {
-            pivotMotor.setControl(m_request1.withPosition(500)); // placeholder value, change during testing
+            pivotMotor.setControl(m_request1.withPosition(1000)); // placeholder value, change during testing
             rollers.set(speed);
             },
             () -> {

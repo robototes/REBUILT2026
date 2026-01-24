@@ -49,7 +49,7 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    subsystems = new Subsystems(mech);
+    subsystems = new Subsystems();
     controls = new Controls(subsystems);
 
     if (DRIVEBASE_ENABLED) {

@@ -2,7 +2,10 @@ package frc.robot;
 
 public class Hardware {
   // Add motor IDs here
-
+  public final class IntakeConstants{
+    public static final int kRollersID = 13;
+    public static final int kPivotMotorID = 14;
+  }
   public static final int PDH_ID = 1;
   // Swerve: 1-12
   // Vision
