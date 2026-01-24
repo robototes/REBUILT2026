@@ -47,7 +47,7 @@ public class AutoLogic {
 
   /* ---------------- Paths ---------------- */
 
-  private static final AutoPath defaultPath = new AutoPath("Drive", "Drive");
+  private static final AutoPath defaultPath = new AutoPath("Default", "Default");
 
   private static final List<AutoPath> rebuiltPaths =
       List.of(

@@ -8,14 +8,20 @@
       },
       "prevControl": null,
       "nextControl": {
+<<<<<<< Updated upstream
         "x": 3.6309143512282764,
         "y": 5.163198991435962
+=======
+        "x": 3.41415004292816,
+        "y": 5.4196601934851065
+>>>>>>> Stashed changes
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
+<<<<<<< Updated upstream
         "x": 3.5295974698274026,
         "y": 7.273384556424791
       },
@@ -42,6 +48,18 @@
       "nextControl": {
         "x": 7.243051474990762,
         "y": 7.531818732149533
+=======
+        "x": 5.74598376730214,
+        "y": 5.411
+      },
+      "prevControl": {
+        "x": 5.707697333513595,
+        "y": 5.163949096363203
+      },
+      "nextControl": {
+        "x": 5.831828151094741,
+        "y": 5.964928127786388
+>>>>>>> Stashed changes
       },
       "isLocked": false,
       "linkedName": null
@@ -52,8 +70,13 @@
         "y": 6.827713091937816
       },
       "prevControl": {
+<<<<<<< Updated upstream
         "x": 7.869404550335271,
         "y": 6.622901507096604
+=======
+        "x": 7.446589378320076,
+        "y": 7.019102402470538
+>>>>>>> Stashed changes
       },
       "nextControl": null,
       "isLocked": false,
