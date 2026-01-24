@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.OperatorConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.IntakeSubsystem;
 
@@ -28,13 +27,16 @@ import frc.robot.subsystems.IntakeSubsystem;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class Controls {
-  // The robot's subsystems and commands are defined here...
-  private final Subsystems s;
+  // Controller Ports
+  private static final int DRIVER_CONTROLLER_PORT = 0;
   private final IntakeSubsystem intakeSubsystem;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+      new CommandXboxController(DRIVER_CONTROLLER_PORT);
+
+  // The robot's subsystems and commands are defined here...
+  private final Subsystems s;
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private final double MAX_ACCELERATION = 50;
