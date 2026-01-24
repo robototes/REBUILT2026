@@ -33,6 +33,8 @@ public class Controls {
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  private final CommandXboxController LedTestController =
+      new CommandXboxController(OperatorConstants.kLEDControllerPort);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private final double MAX_ACCELERATION = 50;
@@ -58,6 +60,7 @@ public class Controls {
     // Configure the trigger bindings
     s = subsystems;
     configureDrivebaseBindings();
+    configureLEDBindings();
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -134,10 +137,12 @@ public class Controls {
   }
 
   private void configureLEDBindings() {
-     driverController.a().onTrue(s.led_Lights.showIntakeColor());
-     driverController.b().onTrue(s.led_Lights.showClimbColor());
-     driverController.x().onTrue(s.led_Lights.showOuttakeColor());
-     driverController.y().onTrue(s.led_Lights.showDefaultColor());
+    LedTestController.a().whileTrue(s.led_Lights.showIntakeColor()); // yellow
+    LedTestController.b().whileTrue(s.led_Lights.showClimbColor()); // blue
+    LedTestController.x().whileTrue(s.led_Lights.showOuttakeColor()); // green
+    LedTestController.y().whileTrue(s.led_Lights.showDefaultColor()); // red
+    LedTestController.leftBumper()
+        .whileTrue(s.led_Lights.alternateColors(s.led_Lights.climbColor, s.led_Lights.intakeColor));
   }
 
   /**

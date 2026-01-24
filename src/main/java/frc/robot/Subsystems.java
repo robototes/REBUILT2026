@@ -46,8 +46,7 @@ public class Subsystems {
     }
     if (LEDS_ENABLED) {
       led_Lights = new LED_lights();
-    }
-    else {
+    } else {
       led_Lights = null;
     }
   }
