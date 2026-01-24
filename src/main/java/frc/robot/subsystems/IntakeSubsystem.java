@@ -16,9 +16,12 @@ import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -41,7 +44,8 @@ public class IntakeSubsystem extends SubsystemBase {
     private final BooleanPublisher rollerPub;
 
     private final FlywheelSim rollerSim;
-    LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0, 0);
+    private final NetworkTable table;
+    LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
 
 
     double pivotAngle;
@@ -69,6 +73,8 @@ public class IntakeSubsystem extends SubsystemBase {
             rollerSim = null;
         }
 
+        table = NetworkTableInstance.getDefault().getTable("Flywheel");
+
         var nt = NetworkTableInstance.getDefault();
         this.rollerTopic = nt.getBooleanTopic("intake status/enabled");
         this.rollerPub = rollerTopic.publish();
@@ -80,6 +86,11 @@ public class IntakeSubsystem extends SubsystemBase {
         this.pivotPub = pivotTopic.publish();
         this.pivotSub = pivotTopic.subscribe(getCurrentPivotPos());
     }
+
+    public void updateNetworkTables() {
+        table.getEntry("CurrentVelocity").setDouble(speed);
+    }
+
     public void TalonFXPivotConfigs() {
         var talonFXConfigs1 = new TalonFXConfiguration();
         var slot0Configs = talonFXConfigs1.Slot0;
@@ -116,9 +127,9 @@ public class IntakeSubsystem extends SubsystemBase {
         talonFXConfigs2.Slot0.kP = 0;
         talonFXConfigs2.Slot0.kI = 0;
         talonFXConfigs2.Slot0.kD = 0;
-        talonFXConfigs2.Slot0.kG = 0; // change these values during testing as well
-                                           // these values will be different from the pivot
-                                           // thats why it's not reused in the same method
+        talonFXConfigs2.Slot0.kG = 0; /* change these values during testing as well
+                                         these values will be different from the pivot
+                                         thats why it's not reused in the same method */
 
 
         rollersCfg.apply(talonFXConfigs2);
@@ -152,8 +163,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
 
         @Override
-        public void periodic() {
-           rollerPub.set(intakeRunning());
-           pivotPub.set(getCurrentPivotPos());
+        public void simulationPeriodic() {
+            rollerSim.setInput(rollers.getSimState().getMotorVoltage());
+            rollerSim.update(0.020);
+            RoboRioSim.setVInVoltage(
+            BatterySim.calculateDefaultBatteryLoadedVoltage(rollerSim.getCurrentDrawAmps())
+            );
         }
 }
+
+// max was here
+
+
+// no he wasn't i did most of the work (pete)
