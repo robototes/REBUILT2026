@@ -1,8 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-
 public class Hardware {
   // Add motor IDs here
   public static final int FLYWHEEL_ONE_ID = 13;

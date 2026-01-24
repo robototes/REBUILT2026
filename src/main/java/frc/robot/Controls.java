@@ -30,8 +30,7 @@ public class Controls {
   private final Subsystems s;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController driverController =
-      new CommandXboxController(0);
+  private final CommandXboxController driverController = new CommandXboxController(0);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private final double MAX_ACCELERATION = 50;
