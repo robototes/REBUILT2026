@@ -14,6 +14,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -30,8 +31,7 @@ import frc.robot.subsystems.IntakeSubsystem;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
-  private final IntakeSubsystem intakePivot = new IntakeSubsystem();
-  private final IntakeSubsystem intakeRollers = new IntakeSubsystem();
+  private final IntakeSubsystem intakeSubsystem;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -60,6 +60,7 @@ public class Controls {
   public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
     s = subsystems;
+    intakeSubsystem = new IntakeSubsystem(null, true, true);
     configureDrivebaseBindings();
   }
 
@@ -134,7 +135,7 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-    driverController.b().onTrue(intakePivot.runIntake(1));
+    driverController.b().whileTrue(intakeSubsystem.runIntake(1));
   }
 
   /**

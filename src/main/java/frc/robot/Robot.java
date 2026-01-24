@@ -4,11 +4,18 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.IntakeSubsystem;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -21,6 +28,12 @@ public class Robot extends TimedRobot {
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
 
+  Mechanism2d mech;
+  MechanismRoot2d root;
+  MechanismLigament2d m_pivot;
+
+
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -28,12 +41,15 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    subsystems = new Subsystems();
+    subsystems = new Subsystems(mech);
     controls = new Controls(subsystems);
 
     PDH = new PowerDistribution(Hardware.PDH_ID, ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
+
+
+
   }
 
   /**
@@ -50,6 +66,7 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
