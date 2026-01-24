@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -42,7 +43,7 @@ public class Hood extends SubsystemBase {
 
   private static final double TARGET_TOLERANCE = 0.1;
   public static final double VOLTAGE_CONTROL = 1;
-  private static final double STATOR_CURRENT_LIMIT = 20;
+  private static final double STATOR_CURRENT_LIMIT = 10;
   private static final double GEAR_RATIO = 2.90909;
   private static final double FORWARD_SOFT_LIMIT = 1.72;
   private static final double BACKWARD_SOFT_LIMIT = -0.02;
@@ -70,7 +71,7 @@ public class Hood extends SubsystemBase {
     TalonFXConfigurator hood_Configurator = hood.getConfigurator();
 
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 10;
+    config.CurrentLimits.SupplyCurrentLimit = 5;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -85,17 +86,17 @@ public class Hood extends SubsystemBase {
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     // create PID gains
-    config.Slot0.kP = 0.01;
+    config.Slot0.kP = 45;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
     config.Slot0.kV = 0;
-    config.Slot0.kS = 0.0;
+    config.Slot0.kS = 0.155;
     config.Slot0.kG = 0.0;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 1;
-    config.MotionMagic.MotionMagicAcceleration = 2;
+    config.MotionMagic.MotionMagicCruiseVelocity = 32;
+    config.MotionMagic.MotionMagicAcceleration = 64;
 
     hood_Configurator.apply(config);
   }
@@ -152,7 +153,8 @@ public class Hood extends SubsystemBase {
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
     return runEnd(
         () -> {
-          hood.setVoltage(voltageSupplier.get().in(Units.Volts));
+          //hood.setVoltage(voltageSupplier.get().in(Units.Volts));
+          hood.setControl(new VoltageOut(voltageSupplier.get()).withIgnoreSoftwareLimits(true));
         },
         () -> {
           hood.stopMotor();
@@ -160,7 +162,7 @@ public class Hood extends SubsystemBase {
   }
 
   public Command autoZeroCommand() {
-    return Commands.parallel(voltageControl(() -> Volts.of(-0.1)))
+    return Commands.parallel(voltageControl(() -> Volts.of(-0.5)))
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .andThen(zeroHoodCommand());
   }

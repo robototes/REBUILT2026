@@ -169,8 +169,8 @@ public class Controls {
             Commands.parallel(
                 Commands.sequence(
                     Commands.parallel(
-                        s.Flywheels.setVelocityCommand(70), s.Hood.hoodPositionCommand(0.5)),
-                    Commands.waitUntil(() -> s.Flywheels.atTargetVelocity(70, 10)),
+                        s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(1.7)),
+                    Commands.waitUntil(() -> s.Flywheels.atTargetVelocity(40, 10)),
                     Commands.parallel(s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
                 AutoRotate.autoRotate(
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
@@ -194,7 +194,7 @@ public class Controls {
       return;
     }
 
-    driverController.start().onTrue(s.Hood.zeroHoodCommand());
+    driverController.start().onTrue(s.Hood.autoZeroCommand());
     driverController
         .leftStick()
         .whileTrue(

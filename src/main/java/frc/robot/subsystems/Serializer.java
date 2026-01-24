@@ -35,7 +35,7 @@ public class Serializer extends SubsystemBase {
     // create brake mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     SerializererConfigurator.apply(config);
   }
