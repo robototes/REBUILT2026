@@ -26,7 +26,7 @@ import java.util.function.DoubleSupplier;
 
 public class TurretSubsystem extends SubsystemBase {
   // ------ VARIABLES ------//
-  private final TalonFX motor1;
+  private final TalonFX m_turretMotor;
   private MotionMagicVoltage request;
 
   private final int GEAR_RATIO = 9000; // It's over 9000
@@ -73,7 +73,7 @@ public class TurretSubsystem extends SubsystemBase {
   // --- CONSTRUCTOR --- //
   public TurretSubsystem(SwerveDrivetrain drivetrain) {
     // --- MOTOR SETUP ---//
-    motor1 = new TalonFX(Hardware.TURRET_MOTOR_ID_1);
+    m_turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID_1);
     request = new MotionMagicVoltage(0);
     configureMotors();
     // --- SET DRIVETRAIN --- //
@@ -92,7 +92,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private void moveMotor(double targetDegrees) {
-    motor1.setControl(request.withPosition(Units.degreesToRotations(targetDegrees)));
+    m_turretMotor.setControl(request.withPosition(Units.degreesToRotations(targetDegrees)));
   }
 
   private double calculateTargetDegrees() {
@@ -104,7 +104,7 @@ public class TurretSubsystem extends SubsystemBase {
     Rotation2d rotation = currentPose.getRotation();
 
     double robotRotation = rotation.getDegrees();
-    double TurretRotation = motor1.getPosition().getValueAsDouble() * 360;
+    double TurretRotation = m_turretMotor.getPosition().getValueAsDouble() * 360;
     double TurretRotationsRad =
         MathUtil.angleModulus(Units.degreesToRadians(robotRotation + TurretRotation));
     double TurretRotationFieldRelative = Units.radiansToDegrees(TurretRotationsRad);
@@ -135,27 +135,28 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command autoZeroCommand(boolean runAutoZeroRoutine) {
     if (runAutoZeroRoutine) {
+      // THESE ARE FINAL only because i had to find a way to get immutable objects into lambdas
       final double[] previousTimeStamp = new double[1];
       final double[] previousCurrent = new double[1];
       final int[] hits = new int[1];
       return new FunctionalCommand(
           () -> {
             previousTimeStamp[0] = Timer.getTimestamp();
-            previousCurrent[0] = motor1.getTorqueCurrent(true).getValueAsDouble();
+            previousCurrent[0] = m_turretMotor.getTorqueCurrent(true).getValueAsDouble();
             hits[0] = 0;
-            motor1.setControl(new VoltageOut(0.3));
+            m_turretMotor.setControl(new VoltageOut(0.3));
           },
           () -> {
             double now = Timer.getTimestamp();
-            double currentNow = motor1.getTorqueCurrent(true).getValueAsDouble();
+            double currentNow = m_turretMotor.getTorqueCurrent(true).getValueAsDouble();
             double currentDT = now - previousTimeStamp[0];
             if (currentDT < MIN_DT) {
               return;
             }
             boolean isDerivativeHigh =
-                (currentNow - previousCurrent[0]) / (now - previousTimeStamp[0])
-                    >= MAXIMUM_DERIVATIVE;
-            boolean stopped = Math.abs(motor1.getVelocity().getValueAsDouble()) <= MIN_VELOCITY;
+                (currentNow - previousCurrent[0]) / currentDT >= MAXIMUM_DERIVATIVE;
+            boolean stopped =
+                Math.abs(m_turretMotor.getVelocity().getValueAsDouble()) <= MIN_VELOCITY;
             if (isDerivativeHigh && stopped) {
               hits[0]++;
             } else {
@@ -165,17 +166,17 @@ public class TurretSubsystem extends SubsystemBase {
             previousCurrent[0] = currentNow;
           },
           (Boolean interrupted) -> {
-            motor1.setControl(new VoltageOut(0));
+            m_turretMotor.setControl(new VoltageOut(0));
             if (!interrupted) {
-              motor1.setPosition(Units.degreesToRotations(TURRET_MAX + 0.5));
-              motor1.setControl(request.withPosition(Units.degreesToRotations(TURRET_MAX)));
+              m_turretMotor.setPosition(Units.degreesToRotations(TURRET_MAX + 0.5));
+              m_turretMotor.setControl(request.withPosition(Units.degreesToRotations(TURRET_MAX)));
               readyToShoot = true;
             }
           },
           () -> (hits[0] >= MIN_HITS),
           TurretSubsystem.this);
     }
-    motor1.setPosition(Units.degreesToRotations(TURRET_MAX + 0.5));
+    m_turretMotor.setPosition(Units.degreesToRotations(TURRET_MAX + 0.5));
     readyToShoot = true;
     return Commands.none();
   }
@@ -203,7 +204,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void manualMove(DoubleSupplier joystick) {
-    double deg = motor1.getPosition().getValueAsDouble() * 360.0;
+    double deg = m_turretMotor.getPosition().getValueAsDouble() * 360.0;
     double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
     double volts = cmd * 2.0;
 
@@ -215,11 +216,11 @@ public class TurretSubsystem extends SubsystemBase {
       stop();
       return;
     } // trying to go further -
-    motor1.setControl(new VoltageOut(volts));
+    m_turretMotor.setControl(new VoltageOut(volts));
   }
 
   public void stop() {
-    motor1.setControl(new VoltageOut(0));
+    m_turretMotor.setControl(new VoltageOut(0));
   }
 
   public void switchState() {
@@ -252,13 +253,13 @@ public class TurretSubsystem extends SubsystemBase {
 
     // set to coast
     configs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    motor1.getConfigurator().apply(configs);
+    m_turretMotor.getConfigurator().apply(configs);
   }
 
   // PERIODIC FUNCTIONS
   @Override
   public void periodic() {
-    current.set(motor1.getStatorCurrent().getValueAsDouble());
+    current.set(m_turretMotor.getStatorCurrent().getValueAsDouble());
     super.periodic();
   }
 
