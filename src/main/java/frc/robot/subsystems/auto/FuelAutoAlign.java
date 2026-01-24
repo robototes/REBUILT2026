@@ -15,7 +15,6 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class FuelAutoAlign {
   public static Subsystems s = null;
-  public static final Controls controls = null;
   private static final double closenessTolerance = 0.05;
   private static final double finishedTolerance = 0.1;
 
