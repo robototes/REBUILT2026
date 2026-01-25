@@ -28,8 +28,8 @@ import frc.robot.Robot;
 import frc.robot.util.NtTunableDouble;
 
 public class Flywheels extends SubsystemBase {
-  private final TalonFX Flywheel_One;
-  private final TalonFX Flywheel_Two;
+  private final TalonFX FlywheelOne; // left
+  private final TalonFX FlywheelTwo;
   private final DoubleTopic currentTopic;
   private final DoubleTopic velocityTopic;
   private final DoublePublisher currentPub;
@@ -51,8 +51,8 @@ public class Flywheels extends SubsystemBase {
 
   // Constructor
   public Flywheels() {
-    Flywheel_One = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
-    Flywheel_Two = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
+    FlywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
+    FlywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
     targetVelocity = new NtTunableDouble("/launcher/targetVelocity", 0.0);
     configureMotors();
@@ -69,7 +69,7 @@ public class Flywheels extends SubsystemBase {
 
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
-    TalonFXConfigurator flConfigurator = Flywheel_One.getConfigurator();
+    TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
     // set current limits
     config.CurrentLimits.SupplyCurrentLimit = 20;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -98,24 +98,25 @@ public class Flywheels extends SubsystemBase {
     return runOnce(
             () -> {
               request.Velocity = rps;
-              Flywheel_One.setControl(request);
+              FlywheelOne.setControl(request);
               System.out.println("setting control to " + rps);
-              Flywheel_Two.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
+              FlywheelTwo.setControl(
+                  new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
             })
         .withName("Set Flywheel Velocity");
   }
 
   public void setVelocityRPM(double rpm) {
     request.Velocity = rpm / 60;
-    Flywheel_One.setControl(request);
-    Flywheel_Two.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
+    FlywheelOne.setControl(request);
+    FlywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
   }
 
   public Command stopCommand() {
     return runOnce(
             () -> {
-              Flywheel_One.stopMotor();
-              Flywheel_Two.stopMotor();
+              FlywheelOne.stopMotor();
+              FlywheelTwo.stopMotor();
             })
         .withName("Stop Flywheels");
   }
@@ -124,7 +125,7 @@ public class Flywheels extends SubsystemBase {
     if (Robot.isSimulation()) {
       return true;
     }
-    double velocity = (Flywheel_One.getVelocity().getValueAsDouble());
+    double velocity = (FlywheelOne.getVelocity().getValueAsDouble());
 
     boolean atTarget = Math.abs(velocity - targetRPS) <= toleranceRPS;
     return atTarget;
@@ -135,7 +136,7 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void simulationInit() {
-    var SimState = Flywheel_One.getSimState();
+    var SimState = FlywheelOne.getSimState();
     SimState.Orientation = ChassisReference.Clockwise_Positive;
     SimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
   }
@@ -143,7 +144,7 @@ public class Flywheels extends SubsystemBase {
   public void simulationPeriodic() {
 
     // Get the sim states
-    var simState = Flywheel_One.getSimState();
+    var simState = FlywheelOne.getSimState();
 
     // Set the supply voltage for the sims
     simState.setSupplyVoltage(RobotController.getBatteryVoltage());
@@ -169,7 +170,7 @@ public class Flywheels extends SubsystemBase {
       lastVelocityUpdateTime = currentTarget.timestamp;
     }
 
-    velocityPub.set(Flywheel_One.getVelocity().getValueAsDouble());
-    currentPub.set(Flywheel_One.getSupplyCurrent().getValueAsDouble());
+    velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
+    currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
   }
 }

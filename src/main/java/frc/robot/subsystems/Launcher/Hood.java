@@ -7,7 +7,6 @@ import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -22,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.NtTunableDouble;
 import java.util.function.Supplier;
+import lombok.Getter;
 
 public class Hood extends SubsystemBase {
   // Hood subsystem implementation goes here
@@ -29,7 +29,7 @@ public class Hood extends SubsystemBase {
   private DoubleTopic positionTopic;
   private DoublePublisher positionPub;
 
-  public boolean hoodZeroed = false;
+  @Getter private boolean hoodZeroed = false;
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
 
@@ -37,7 +37,7 @@ public class Hood extends SubsystemBase {
   private NtTunableDouble targetPosition;
 
   private static final double TARGET_TOLERANCE = 0.1;
-  public static final double VOLTAGE_CONTROL = 1;
+  public static final double VOLTAGE_MANUAL_CONTROL = 1;
   private static final double STATOR_CURRENT_LIMIT = 10;
   private static final double GEAR_RATIO = 2.90909;
   private static final double FORWARD_SOFT_LIMIT = 1.72;
@@ -89,7 +89,6 @@ public class Hood extends SubsystemBase {
     config.Slot0.kV = 0;
     config.Slot0.kS = 0.155;
     config.Slot0.kG = 0.0;
-    config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 32;
     config.MotionMagic.MotionMagicAcceleration = 64;
