@@ -139,19 +139,9 @@ public class Controls {
   }
 
   private void configureLauncherBindings() {
-    if (s.flywheels == null && s.hood == null) {
+    if (s.flywheels == null || s.hood == null) {
       // Stop running this method
-      System.out.println("Flywheels & Hood are disabled");
-      return;
-    }
-    if (s.flywheels == null) {
-      // Stop running this method
-      System.out.println("Flywheels are disabled");
-      return;
-    }
-    if (s.hood == null) {
-      // Stop running this method
-      System.out.println("Hood is disabled");
+      System.out.println("Flywheels and/or Hood are disabled");
       return;
     }
 
