@@ -170,6 +170,6 @@ public class Flywheels extends SubsystemBase {
     }
 
     velocityPub.set(Flywheel_One.getVelocity().getValueAsDouble());
-    currentPub.set(Flywheel_One.getVelocity().getValueAsDouble());
+    currentPub.set(Flywheel_One.getSupplyCurrent().getValueAsDouble());
   }
 }
