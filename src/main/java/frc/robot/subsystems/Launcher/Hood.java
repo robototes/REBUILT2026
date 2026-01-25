@@ -39,7 +39,7 @@ public class Hood extends SubsystemBase {
   private static final double TARGET_TOLERANCE = 0.1;
   public static final double VOLTAGE_MANUAL_CONTROL = 1;
   private static final double STATOR_CURRENT_LIMIT = 10;
-  private static final double GEAR_RATIO = 2.90909;
+  // GEAR_RATIO = 2.90909;
   private static final double FORWARD_SOFT_LIMIT = 1.72;
   private static final double BACKWARD_SOFT_LIMIT = -0.02;
 
