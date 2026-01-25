@@ -108,7 +108,7 @@ public class Flywheels extends SubsystemBase {
   public void setVelocityRPM(double rpm) {
     request.Velocity = rpm / 60;
     Flywheel_One.setControl(request);
-    Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
+    Flywheel_Two.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
   }
 
   public Command stopCommand() {
