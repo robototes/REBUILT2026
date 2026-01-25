@@ -69,7 +69,7 @@ public class TurretSubsystem extends SubsystemBase {
   // --- CONSTRUCTOR --- //
   public TurretSubsystem(SwerveDrivetrain drivetrain) {
     // --- MOTOR SETUP ---//
-    m_turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID_1);
+    m_turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
     request = new MotionMagicVoltage(0);
     configureMotors();
     // --- Hardware --- //

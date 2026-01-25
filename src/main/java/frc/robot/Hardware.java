@@ -8,7 +8,7 @@ public class Hardware {
   public static final int INDEX_MOTOR_ID = 15;
   public static final int SERIALIZER_MOTOR_ID = 17;
   public static final int HOOD_MOTOR_ID = 18;
-
+  public static final int TURRET_MOTOR_ID = 9999;
   public static final int PDH_ID = 1;
   // Swerve: 1-12
   // Check CompTunerConstants
