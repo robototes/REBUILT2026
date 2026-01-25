@@ -47,12 +47,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralLeft-Shoot-Third"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"

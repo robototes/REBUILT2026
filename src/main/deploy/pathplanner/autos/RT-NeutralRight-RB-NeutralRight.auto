@@ -45,18 +45,6 @@
           "data": {
             "pathName": "NeutralRight-Second-Intake"
           }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-Second-Shoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
         }
       ]
     }

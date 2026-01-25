@@ -29,12 +29,12 @@ public class AutoLogic {
 
   public enum StartPosition {
     LEFT_TRENCH(
-        "Left Trench", new Pose2d(3.680, 7.250, new Rotation2d(Units.degreesToRadians(-90)))),
-    LEFT_BUMP("Left Bump", new Pose2d(3.530, 6.134, new Rotation2d(Units.degreesToRadians(-90)))),
-    CENTER("Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(0)))),
-    RIGHT_BUMP("Right Bump", new Pose2d(3.633, 2.692, new Rotation2d(Units.degreesToRadians(90)))),
+        "Left Trench", new Pose2d(4.014, 7.382, new Rotation2d(Units.degreesToRadians(90)))),
+    LEFT_BUMP("Left Bump", new Pose2d(3.664, 5.411, new Rotation2d(Units.degreesToRadians(90)))),
+    CENTER("Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(180)))),
+    RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(-90)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(3.640, 0.673, new Rotation2d(Units.degreesToRadians(90)))),
+        "Right Trench", new Pose2d(3.641, 0.576, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
@@ -56,6 +56,8 @@ public class AutoLogic {
           new AutoPath("C-Climb", "C-Climb"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
           new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
+          new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"),
+           new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
           new AutoPath("Drive", "Drive"),
           new AutoPath("LB-NeutralLeft-LB-NeutralLeft-LB", "LB-NeutralLeft-LB-NeutralLeft-LB"),
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
@@ -64,12 +66,9 @@ public class AutoLogic {
           new AutoPath("LT-NeutralLeft-LB-NeutralLeft-LB", "LT-NeutralLeft-LB-NeutralLeft-LB"),
           new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
           new AutoPath("RB-NeutralRight-NeutralRight-RB", "RB-NeutralRight-NeutralRight-RB"),
-          new AutoPath("RB-OutPost-Climb", "RB-OutPost-Climb"),
-          new AutoPath("RB-OutPost", "RB-OutPost"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-NeutralRight-RB-NeutralRight", "RT-NeutralRight-RB-NeutralRight"),
-          new AutoPath("RT-OutPost-Climb", "RT-OutPost-Climb"),
-          new AutoPath("RT-OutPost", "RT-OutPost"));
+          new AutoPath("RT-NeutralRight-RB-NeutralRight", "RT-NeutralRight-RB-NeutralRight")
+         );
   private static final List<AutoPath> choreoPaths =
       List.of(new AutoPath("LB-Depot-Climb(CHOREO)", "LB-Depot-Climb(CHOREO)"));
 
