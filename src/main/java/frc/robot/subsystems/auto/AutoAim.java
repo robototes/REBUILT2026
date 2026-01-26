@@ -16,8 +16,6 @@ public class AutoAim {
     return new AutoAimCommand(drive, hood, flywheels).withName("Auto Align");
   }
 
-
-
   private static class AutoAimCommand extends Command {
     protected Translation2d targetPose;
     protected CommandSwerveDrivetrain drive;
@@ -30,7 +28,6 @@ public class AutoAim {
     private final DoubleTopic flywheelGoalTopic;
     private final DoublePublisher flywheelGoalPub;
     private final DoublePublisher hoodGoalPub;
-
 
     AutoAimCommand(CommandSwerveDrivetrain drive, Hood hood, Flywheels flywheels) {
       this.drive = drive;

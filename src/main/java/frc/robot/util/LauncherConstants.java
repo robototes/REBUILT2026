@@ -9,7 +9,7 @@ import edu.wpi.first.math.util.Units;
 import java.util.ArrayList;
 
 public class LauncherConstants {
-  //distance from any edge of the hub to center = 0.5969m, add to any measured distance
+  // distance from any edge of the hub to center = 0.5969m, add to any measured distance
   private static final double LAUNCHER_OFFSET_INCHES = 12;
   private static final double LAUNCHER_OFFSET_DEGREES = 135;
 

@@ -169,12 +169,14 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-                Commands.parallel(
-                    Commands.sequence(AutoAim.AutoAim(s.drivebaseSubsystem, s.Hood, s.Flywheels),
-                    Commands.parallel(
-                        s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
+            Commands.parallel(
+                    Commands.sequence(
+                        AutoAim.AutoAim(s.drivebaseSubsystem, s.Hood, s.Flywheels),
+                        Commands.parallel(
+                            s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
                     AutoRotate.autoRotate(
-                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())).repeatedly());
+                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()))
+                .repeatedly());
 
     driverController
         .x()

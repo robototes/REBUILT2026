@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -187,10 +186,11 @@ public class AutoLogic {
 
   public static Command launcherCommand() {
     return Commands.sequence(
-        Commands.parallel(
-            AutoAim.AutoAim(s.drivebaseSubsystem, s.Hood, s.Flywheels),
-            AutoRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0)),
-        s.Index.setPowerCommand(0.3)).withTimeout(3);
+            Commands.parallel(
+                AutoAim.AutoAim(s.drivebaseSubsystem, s.Hood, s.Flywheels),
+                AutoRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0)),
+            s.Index.setPowerCommand(0.3))
+        .withTimeout(3);
   }
 
   public static Command intakeCommand() {
