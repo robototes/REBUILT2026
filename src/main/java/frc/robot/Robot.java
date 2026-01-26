@@ -32,6 +32,7 @@ public class Robot extends TimedRobot {
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
+  private final int THROTTLE_AMOUNT = 100;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -94,6 +95,14 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
+      LimelightHelpers.SetRobotOrientation(
+          Hardware.LIMELIGHT_C,
+          subsystems.drivebaseWrapper.getEstimatedPosition().getRotation().getDegrees(),
+          0,
+          0,
+          0,
+          0,
+          0);
       // ViewFinder Pipeline Switch to reduce Limelight heat
       subsystems.visionSubsystem.update();
     }
@@ -103,6 +112,9 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_AMOUNT);
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
@@ -121,6 +133,10 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
     if (AutoLogic.getSelectedAuto() != null) {
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
     }
@@ -136,6 +152,11 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    // not this
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
   }
 
   /** This function is called periodically during operator control. */
