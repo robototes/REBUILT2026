@@ -17,6 +17,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -221,15 +222,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
               });
     }
-    if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+    if (RobotBase.isSimulation()) {
       DriverStation.getAlliance()
           .ifPresent(
-              allianceColor -> {
-                setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? kRedAlliancePerspectiveRotation
-                        : kBlueAlliancePerspectiveRotation);
-                m_hasAppliedOperatorPerspective = true;
+              alliance -> {
+                this.setOperatorPerspectiveForward(
+                    alliance == DriverStation.Alliance.Blue
+                        ? Rotation2d.fromDegrees(0)
+                        : Rotation2d.fromDegrees(180));
               });
     }
   }
