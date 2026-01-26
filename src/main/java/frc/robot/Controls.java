@@ -18,12 +18,11 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.AutoRotate;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.auto.AutoAim;
+import frc.robot.subsystems.auto.AutoRotate;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
