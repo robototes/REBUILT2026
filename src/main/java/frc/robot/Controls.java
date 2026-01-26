@@ -18,10 +18,12 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.AutoRotate;
 import frc.robot.subsystems.Hood;
+import frc.robot.subsystems.auto.AutoAim;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -168,14 +170,12 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-            Commands.parallel(
-                Commands.sequence(
+                Commands.parallel(
+                    Commands.sequence(AutoAim.AutoAim(s.drivebaseSubsystem, s.Hood, s.Flywheels),
                     Commands.parallel(
-                        s.Flywheels.setVelocityCommand(40), s.Hood.hoodPositionCommand(1.7)),
-                    Commands.waitUntil(() -> s.Flywheels.atTargetVelocity(40, 10)),
-                    Commands.parallel(s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
-                AutoRotate.autoRotate(
-                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())));
+                        s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
+                    AutoRotate.autoRotate(
+                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())).repeatedly());
 
     driverController
         .x()

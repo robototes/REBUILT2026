@@ -67,7 +67,7 @@ public class AutoRotate {
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
       var nt = NetworkTableInstance.getDefault();
-      targetAngle = nt.getDoubleTopic("/launcher/targetAngle");
+      targetAngle = nt.getDoubleTopic("/drivebase/targetAngle");
       anglePub = targetAngle.publish();
       anglePub.set(0.0);
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
@@ -83,7 +83,8 @@ public class AutoRotate {
     public void execute() {
       Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
-      Rotation2d targetRotate = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
+      Rotation2d targetRotate =
+          new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
       double rotationOutput =
           pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
 
@@ -101,7 +102,8 @@ public class AutoRotate {
     private boolean isAtGoal() {
       Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetPose.getTranslation().minus(currentPose.getTranslation());
-      Rotation2d wantedRotation = new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
+      Rotation2d wantedRotation =
+          new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
       return Math.abs(wantedRotation.minus(currentPose.getRotation()).getDegrees()) < TOLERANCE;
     }
 

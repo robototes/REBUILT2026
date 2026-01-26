@@ -15,7 +15,6 @@ import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedBoolean;
 import edu.wpi.first.networktables.TimestampedDouble;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -128,6 +127,8 @@ public class Hood extends SubsystemBase {
     if (!hoodZeroed) {
       return;
     }
+    System.out.println("setting hood  to " + positionRotations);
+
     hood.setControl(request.withPosition(positionRotations));
   }
 
@@ -153,7 +154,7 @@ public class Hood extends SubsystemBase {
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
     return runEnd(
         () -> {
-          //hood.setVoltage(voltageSupplier.get().in(Units.Volts));
+          // hood.setVoltage(voltageSupplier.get().in(Units.Volts));
           hood.setControl(new VoltageOut(voltageSupplier.get()).withIgnoreSoftwareLimits(true));
         },
         () -> {

@@ -94,17 +94,20 @@ public class Flywheels extends SubsystemBase {
   }
 
   public Command setVelocityCommand(double rps) {
-    return runOnce(() -> {
-          request.Velocity = rps;
-          Flywheel_One.setControl(request);
-          System.out.println("setting control to "+ rps);
-          Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
-        })
+    return runOnce(
+            () -> {
+              request.Velocity = rps;
+              Flywheel_One.setControl(request);
+              System.out.println("setting control to " + rps);
+              Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
+            })
         .withName("Set Flywheel Velocity");
   }
 
-  public void setVelocityRPM(double rpm) {
-    request.Velocity = rpm / 60;
+  public void setVelocityRPS(double rps) {
+    request.Velocity = rps;
+    System.out.println("setting flywheels to " + rps);
+
     Flywheel_One.setControl(request);
     Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
   }
@@ -126,6 +129,11 @@ public class Flywheels extends SubsystemBase {
 
     boolean atTarget = Math.abs(velocity - targetRPS) <= toleranceRPS;
     return atTarget;
+  }
+
+  public boolean atVelocity(double toleranceRPS) {
+    double velocity = (Flywheel_One.getVelocity().getValueAsDouble());
+    return Math.abs(velocity - request.Velocity) <= toleranceRPS;
   }
 
   public Trigger atTargetVelocityTrigger(double targetRPM, double toleranceRPM) {

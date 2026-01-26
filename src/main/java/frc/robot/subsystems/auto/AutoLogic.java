@@ -57,7 +57,7 @@ public class AutoLogic {
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
           new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
           new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"),
-           new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
+          new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
           new AutoPath("Drive", "Drive"),
           new AutoPath("LB-NeutralLeft-LB-NeutralLeft-LB", "LB-NeutralLeft-LB-NeutralLeft-LB"),
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
@@ -67,8 +67,7 @@ public class AutoLogic {
           new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
           new AutoPath("RB-NeutralRight-NeutralRight-RB", "RB-NeutralRight-NeutralRight-RB"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-NeutralRight-RB-NeutralRight", "RT-NeutralRight-RB-NeutralRight")
-         );
+          new AutoPath("RT-NeutralRight-RB-NeutralRight", "RT-NeutralRight-RB-NeutralRight"));
   private static final List<AutoPath> choreoPaths =
       List.of(new AutoPath("LB-Depot-Climb(CHOREO)", "LB-Depot-Climb(CHOREO)"));
 
@@ -189,8 +188,7 @@ public class AutoLogic {
   public static Command launcherCommand() {
     return Commands.sequence(
         Commands.parallel(
-            s.Flywheels.setVelocityCommand(100),
-            s.Hood.hoodPositionCommand(0.5),
+            AutoAim.AutoAim(s.drivebaseSubsystem, s.Hood, s.Flywheels),
             AutoRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0)),
         s.Index.setPowerCommand(0.3).withTimeout(2));
   }

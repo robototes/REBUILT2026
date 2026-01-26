@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -9,8 +9,10 @@ import edu.wpi.first.math.util.Units;
 import java.util.ArrayList;
 
 public class LauncherConstants {
+  //distance from any edge of the hub to center = 0.5969m, add to any measured distance
   private static final double LAUNCHER_OFFSET_INCHES = 12;
   private static final double LAUNCHER_OFFSET_DEGREES = 135;
+
   private static final Translation2d LAUNCHER_OFFSET =
       new Translation2d(
           Units.inchesToMeters(LAUNCHER_OFFSET_INCHES),
@@ -42,9 +44,9 @@ public class LauncherConstants {
 
   static {
     // add in data here
-    distanceData.add(new LauncherDistanceDataPoint(0.1, 2300, 2.0));
-    distanceData.add(new LauncherDistanceDataPoint(0.1, 3300, 3.0));
-    distanceData.add(new LauncherDistanceDataPoint(0.1, 4300, 4.0));
+    distanceData.add(new LauncherDistanceDataPoint(0, 55, 1.1429));
+    distanceData.add(new LauncherDistanceDataPoint(1.5, 60, 3.0569));
+    distanceData.add(new LauncherDistanceDataPoint(1.8, 69, 4.5589));
 
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);

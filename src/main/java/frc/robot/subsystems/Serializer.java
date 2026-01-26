@@ -43,6 +43,7 @@ public class Serializer extends SubsystemBase {
   public Command setPowerCommand(double power) {
     return runEnd(
         () -> {
+          System.out.println("shooting");
           Serializer.set(power);
         },
         () -> {
