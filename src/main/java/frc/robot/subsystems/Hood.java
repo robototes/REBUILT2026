@@ -127,7 +127,6 @@ public class Hood extends SubsystemBase {
     if (!hoodZeroed) {
       return;
     }
-    System.out.println("setting hood  to " + positionRotations);
 
     hood.setControl(request.withPosition(positionRotations));
   }

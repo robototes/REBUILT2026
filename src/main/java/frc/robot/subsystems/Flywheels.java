@@ -98,7 +98,6 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps;
               Flywheel_One.setControl(request);
-              System.out.println("setting control to " + rps);
               Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
             })
         .withName("Set Flywheel Velocity");
@@ -106,7 +105,6 @@ public class Flywheels extends SubsystemBase {
 
   public void setVelocityRPS(double rps) {
     request.Velocity = rps;
-    System.out.println("setting flywheels to " + rps);
 
     Flywheel_One.setControl(request);
     Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
