@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.util.Units;
-
 import java.util.ArrayList;
 
 public class ShooterConstants {
@@ -48,21 +47,22 @@ public class ShooterConstants {
   public static double getlauncherspeedfromDistance(double ty) {
     return flywheelMap.get(ty);
   }
+
   public static double getlauncherspeedfromPose2d(Pose2d hub, Pose2d robot) {
 
-    //Calculating Distance of launcher from the center of the Robot in Robot realaticve coordanents
-    Translation2d offset = new Translation2d(Units.inchesToMeters(12),Rotation2d.fromDegrees(135));
+    // Calculating Distance of launcher from the center of the Robot in Robot realaticve coordanents
+    Translation2d offset = new Translation2d(Units.inchesToMeters(12), Rotation2d.fromDegrees(135));
 
-    //Offset in feild coordanents
+    // Offset in feild coordanents
     Transform2d offset2 = new Transform2d(offset, robot.getRotation());
 
-    //Calculting launcher location relative to the field
+    // Calculting launcher location relative to the field
     robot = robot.plus(offset2);
 
-    //Distance from turret to hub
-    double distance=robot.getTranslation().getDistance(hub.getTranslation());
+    // Distance from turret to hub
+    double distance = robot.getTranslation().getDistance(hub.getTranslation());
 
-    //Getting the distance of the turrent from the hub
+    // Getting the distance of the turrent from the hub
     return getlauncherspeedfromDistance(distance);
   }
 }

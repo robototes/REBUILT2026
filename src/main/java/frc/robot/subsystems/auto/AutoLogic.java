@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +23,7 @@ import org.json.simple.parser.ParseException;
 public class AutoLogic {
 
   private static Subsystems s;
+
   /* ---------------- Start positions ---------------- */
 
   public enum StartPosition {
@@ -51,27 +51,24 @@ public class AutoLogic {
 
   private static final List<AutoPath> rebuiltPaths =
       List.of(
-          new AutoPath("LB-NeutralLeft-Climb", "LB-NeutralLeft-Climb"),
           new AutoPath("C-Climb", "C-Climb"),
-                   new AutoPath("Default", "Default"),
+          new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
+          new AutoPath("Default", "Default"),
+          new AutoPath("LB-NeutralLeft-right", "LB-NeutralLeft"),
+          new AutoPath("LB-NeutralLeft-Climb", "LB-NeutralLeft-Climb"),
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
-          new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
+          new AutoPath("LT-NeutralLeft-right", "LT-NeutralLeft"),
           new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
-            new AutoPath("RB-NeutralRight-NeutralLeft", "RB-NeutralRight-NeutralLeft"),
+          new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
           new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
+          new AutoPath("RB-NeutralRight-NeutralLeft", "RB-NeutralRight-NeutralLeft"),
           new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
-          new AutoPath("RT-NeutralRight-NeutralLeft", "RT-NeutralRight-NeutralLeft"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"),
-          new AutoPath("C-Outpost-Climb", "C-Outpost-Climb")
+          new AutoPath("RT-NeutralRight-NeutralLeft", "RT-NeutralRight-NeutralLeft"),
+          new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
 
-
-
-         );
-
-  private static final Map<Integer, List<AutoPath>> commandsMap =
-      Map.of(0, rebuiltPaths);
+  private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
 
@@ -99,7 +96,7 @@ public class AutoLogic {
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
   /* ---------------- Init ---------------- */
-  public static void init(Subsystems subsystems){
+  public static void init(Subsystems subsystems) {
     s = subsystems;
   }
 
