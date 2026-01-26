@@ -39,6 +39,12 @@
           "data": {
             "pathName": "NeutralRight-NeutralLeft"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": " NeutralRight-NeutralLeftTWO"
+          }
         }
       ]
     }

@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RB-NeutralRight"
+            "pathName": "RT-NeutralRight"
           }
         },
         {
@@ -38,6 +38,12 @@
           "type": "path",
           "data": {
             "pathName": "NeutralRight-NeutralLeft"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": " NeutralRight-NeutralLeftTWO"
           }
         }
       ]
