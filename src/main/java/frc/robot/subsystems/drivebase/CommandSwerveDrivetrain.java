@@ -211,7 +211,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
-    if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+    if (RobotBase.isSimulation()) {
+      DriverStation.getAlliance()
+          .ifPresent(
+              alliance -> {
+                this.setOperatorPerspectiveForward(
+                    alliance == DriverStation.Alliance.Blue
+                        ? kBlueAlliancePerspectiveRotation
+                        : kRedAlliancePerspectiveRotation);
+              });
+    } else if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
           .ifPresent(
               allianceColor -> {
@@ -220,16 +229,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         ? kRedAlliancePerspectiveRotation
                         : kBlueAlliancePerspectiveRotation);
                 m_hasAppliedOperatorPerspective = true;
-              });
-    }
-    if (RobotBase.isSimulation()) {
-      DriverStation.getAlliance()
-          .ifPresent(
-              alliance -> {
-                this.setOperatorPerspectiveForward(
-                    alliance == DriverStation.Alliance.Blue
-                        ? Rotation2d.fromDegrees(0)
-                        : Rotation2d.fromDegrees(180));
               });
     }
   }
