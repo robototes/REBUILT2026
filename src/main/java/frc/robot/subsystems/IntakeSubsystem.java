@@ -8,6 +8,8 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -17,9 +19,11 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -44,9 +48,11 @@ public class IntakeSubsystem extends SubsystemBase {
     private final BooleanPublisher rollerPub;
 
     private final FlywheelSim rollerSim;
-    private final NetworkTable table;
+    private final ElevatorSim pivotSim;
+    private final NetworkTableEntry table1;
+    private final NetworkTableEntry table2;
     LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
-
+    LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40, 1, 1);
 
     double pivotAngle;
 
@@ -69,11 +75,14 @@ public class IntakeSubsystem extends SubsystemBase {
 
         if (RobotBase.isSimulation()) {
             rollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1), 0.0);
+            pivotSim = new ElevatorSim(pivotSystem, DCMotor.getKrakenX60(1), 0, 5, intakepivotEnabled, 1, 0.0);
         } else {
             rollerSim = null;
+            pivotSim = null;
         }
 
-        table = NetworkTableInstance.getDefault().getTable("Flywheel");
+        table1 = NetworkTableInstance.getDefault().getTable("Flywheel").getEntry("SimRPM");
+        table2 = NetworkTableInstance.getDefault().getTable("Pivot").getEntry("SimRPM");
 
         var nt = NetworkTableInstance.getDefault();
         this.rollerTopic = nt.getBooleanTopic("intake status/enabled");
@@ -87,9 +96,7 @@ public class IntakeSubsystem extends SubsystemBase {
         this.pivotSub = pivotTopic.subscribe(getCurrentPivotPos());
     }
 
-    public void updateNetworkTables() {
-        table.getEntry("CurrentVelocity").setDouble(speed);
-    }
+
 
     public void TalonFXPivotConfigs() {
         var talonFXConfigs1 = new TalonFXConfiguration();
@@ -164,11 +171,22 @@ public class IntakeSubsystem extends SubsystemBase {
 
         @Override
         public void simulationPeriodic() {
+            rollerPub.set(intakeRunning());
+            pivotPub.set(getCurrentPivotPos());
+
             rollerSim.setInput(rollers.getSimState().getMotorVoltage());
             rollerSim.update(0.020);
-            RoboRioSim.setVInVoltage(
-            BatterySim.calculateDefaultBatteryLoadedVoltage(rollerSim.getCurrentDrawAmps())
-            );
+            pivotSim.setInput(pivotMotor.getSimState().getMotorVoltage());
+            pivotSim.update(0.020);
+            double rpm1 = rollerSim.getAngularVelocityRPM();
+            table1.setDouble(rpm1);
+            double rpm2 = pivotSim.getCurrentDrawAmps();
+            table2.setDouble(rpm2);
+
+
+            // RoboRioSim.setVInVoltage(
+            // BatterySim.calculateDefaultBatteryLoadedVoltage(rollerSim.getCurrentDrawAmps())
+            // );
         }
 }
 
