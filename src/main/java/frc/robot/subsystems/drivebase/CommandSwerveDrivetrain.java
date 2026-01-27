@@ -228,8 +228,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               alliance -> {
                 this.setOperatorPerspectiveForward(
                     alliance == DriverStation.Alliance.Blue
-                        ? Rotation2d.fromDegrees(0)
-                        : Rotation2d.fromDegrees(180));
+                        ? kBlueAlliancePerspectiveRotation
+                        : kRedAlliancePerspectiveRotation);
               });
     }
   }
