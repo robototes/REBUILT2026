@@ -4,9 +4,8 @@
 
 package frc.robot;
 
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
-
 import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -15,6 +14,7 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -32,6 +32,7 @@ public class Robot extends TimedRobot {
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
+  private final int THROTTLE_AMOUNT = 100;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -93,6 +94,14 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
+      LimelightHelpers.SetRobotOrientation(
+          Hardware.LIMELIGHT_C,
+          subsystems.drivebaseWrapper.getEstimatedPosition().getRotation().getDegrees(),
+          subsystems.drivebaseSubsystem.getState().Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+          0,
+          0,
+          0,
+          0);
       // ViewFinder Pipeline Switch to reduce Limelight heat
       subsystems.visionSubsystem.update();
     }
@@ -102,15 +111,18 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_AMOUNT);
       // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
     }
   }
 
@@ -119,11 +131,20 @@ public class Robot extends TimedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    if (AutoLogic.getSelectedAuto() != null) {
+      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+    }
+  }
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
+  }
 
   @Override
   public void teleopInit() {
@@ -135,7 +156,12 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
+  }
 
   @Override
   public void testInit() {
