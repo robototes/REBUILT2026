@@ -165,6 +165,7 @@ public class Controls {
       // Stop running this method
       return;
     }
+
     // Add subsystem bindings here
     driverController
         .rightTrigger()
@@ -176,12 +177,12 @@ public class Controls {
                             s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
                     AutoRotate.autoRotate(
                         s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()))
-                .repeatedly());
+                .repeatedly()).onFalse(Commands.parallel(s.Flywheels.stopCommand(), s.Hood.hoodPositionCommand(0)));
 
     driverController
         .x()
         .whileTrue(s.Index.setTunerPowerCommand().alongWith(s.Serializer.setTunerPowerCommand()));
-    driverController.y().onTrue(s.Flywheels.setVelocityCommand(66.667));
+    driverController.y().onTrue(s.Flywheels.setVelocityCommand( 66.667));
     driverController.a().whileTrue(s.Flywheels.stopCommand());
     // Test Auto rotate contorl
     driverController
@@ -200,9 +201,8 @@ public class Controls {
     driverController.start().onTrue(s.Hood.autoZeroCommand());
     driverController
         .leftStick()
-        .whileTrue(
-            s.Hood.voltageControl(
-                () -> Volts.of(Hood.VOLTAGE_CONTROL * -driverController.getLeftX())));
+        .whileTrue(s.Hood.zeroHoodCommand());
+
   }
 
   /**

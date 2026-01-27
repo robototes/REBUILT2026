@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
@@ -44,7 +46,7 @@ public class Flywheels extends SubsystemBase {
           0);
 
   private long lastVelocityUpdateTime = 0;
-  private NtTunableDouble targetVelocity;
+  public NtTunableDouble targetVelocity;
 
   public final double FLYWHEEL_TOLERANCE = 5;
 
@@ -70,9 +72,9 @@ public class Flywheels extends SubsystemBase {
     TalonFXConfiguration config = new TalonFXConfiguration();
     TalonFXConfigurator flConfigurator = Flywheel_One.getConfigurator();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 20;
+    config.CurrentLimits.SupplyCurrentLimit = 40;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.StatorCurrentLimit = 40;
+    config.CurrentLimits.StatorCurrentLimit = 60;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create brake mode for motors
@@ -80,15 +82,15 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.1;
+    config.Slot0.kP = 0.8;
     config.Slot0.kI = 0.0;
-    config.Slot0.kD = 0.0;
+    config.Slot0.kD = 0.08;
     config.Slot0.kA = 0.0;
     config.Slot0.kV = 11.825 / 99;
-    config.Slot0.kS = 0.0;
-    config.Slot0.kG = 0.0;
+    config.Slot0.kS = 0.166;
+    config.Slot0.kG = 0;
 
-    config.MotionMagic.MotionMagicAcceleration = 40; // RPS^2
+    config.MotionMagic.MotionMagicAcceleration = 80; // RPS^2
 
     flConfigurator.apply(config);
   }
