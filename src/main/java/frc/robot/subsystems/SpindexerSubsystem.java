@@ -37,7 +37,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     if (RobotBase.isSimulation()) {
       LinearSystem serialMotorSystem =
-        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1.0, 1.0);
+          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1.0, 1.0);
       motorSim = new FlywheelSim(serialMotorSystem, DCMotor.getKrakenX60(1), 0.0);
     } else {
       motorSim = null;
