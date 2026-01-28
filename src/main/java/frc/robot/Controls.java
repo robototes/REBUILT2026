@@ -27,8 +27,12 @@ public class Controls {
   private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
   private final Subsystems s;
 
+  // Controller Ports
+  private static final int DRIVER_CONTROLLER_PORT = 0;
+
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController driverController = new CommandXboxController(DRIVER_CONTROLLER_PORT);
+  private final CommandXboxController driverController =
+      new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
