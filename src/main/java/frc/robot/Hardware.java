@@ -15,7 +15,7 @@ public class Hardware {
   public static final int INDEX_MOTOR_ID = 19;
   public static final int SPINDEXER_MOTOR_ID = 20;
 
-  //Climb Motor
+  // Climb Motor
   public static final int CLIMB_MOTOR_ID = 21;
 
   public static final int PDH_ID = 1;
