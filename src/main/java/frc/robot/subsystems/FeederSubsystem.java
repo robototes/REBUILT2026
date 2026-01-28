@@ -10,9 +10,7 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
@@ -35,12 +33,12 @@ public class FeederSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Hardware.feederMotorID);
+    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
       LinearSystem feedMotorSystem =
-        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.0, 0.0);
+          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.0, 0.0);
       motorSim = new FlywheelSim(feedMotorSystem, DCMotor.getKrakenX60(1), 0.0);
     } else {
       motorSim = null;
@@ -73,7 +71,7 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.Slot0.kI = FEEDMOTOR_KI;
     talonFXConfiguration.Slot0.kD = FEEDMOTOR_KD;
     talonFXConfiguration.Slot0.kG = FEEDMOTOR_KG;
-    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.None;
+    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.Elevator_Static;
 
     cfg.apply(talonFXConfiguration);
   }
@@ -120,7 +118,5 @@ public class FeederSubsystem extends SubsystemBase {
   public void simulationPeriodic() {
     motorSim.setInput(feedMotor.getSimState().getMotorVoltage());
     motorSim.update(0.020); // every 20 ms
-    RoboRioSim.setVInVoltage(
-        BatterySim.calculateDefaultBatteryLoadedVoltage(motorSim.getCurrentDrawAmps()));
   }
 }
