@@ -136,7 +136,7 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-    driverController.b().whileTrue(intakeSubsystem.runIntake(1));
+    driverController.b().whileTrue(intakeSubsystem.runIntake());
   }
 
   /**
