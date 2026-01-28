@@ -18,8 +18,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class FeederSubsystem extends SubsystemBase {
-  private int ballNum = 0;
-  public static final double feederSpeed = 1.0;
+  private int ballsDetectedNum = 0;
+  public static final double feederSpeed = 0.4;
   public static final int feederRumbleThreshold = 67;
 
   private static final double FEEDMOTOR_KP = 38.5;
@@ -34,14 +34,13 @@ public class FeederSubsystem extends SubsystemBase {
 
   private final FlywheelSim motorSim;
 
-  LinearSystem feedMotorSystem =
-      LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.0, 0.0);
-
   public FeederSubsystem() {
     feedMotor = new TalonFX(Hardware.feederMotorID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
+      LinearSystem feedMotorSystem =
+        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.0, 0.0);
       motorSim = new FlywheelSim(feedMotorSystem, DCMotor.getKrakenX60(1), 0.0);
     } else {
       motorSim = null;
@@ -60,9 +59,9 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 20;
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 10;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     // PID
@@ -74,7 +73,7 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.Slot0.kI = FEEDMOTOR_KI;
     talonFXConfiguration.Slot0.kD = FEEDMOTOR_KD;
     talonFXConfiguration.Slot0.kG = FEEDMOTOR_KG;
-    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.None;
 
     cfg.apply(talonFXConfiguration);
   }
@@ -110,8 +109,8 @@ public class FeederSubsystem extends SubsystemBase {
         });
   }
 
-  public int getBallNum() {
-    return ballNum;
+  public int getBallsDetectedNum() {
+    return ballsDetectedNum;
   }
 
   @Override
