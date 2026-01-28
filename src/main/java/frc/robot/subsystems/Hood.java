@@ -31,7 +31,7 @@ public class Hood extends SubsystemBase {
   private DoubleTopic positionTopic;
   private DoublePublisher positionPub;
 
-  public boolean hoodZeroed = false;
+  private boolean hoodZeroed = false;
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
 
@@ -44,8 +44,8 @@ public class Hood extends SubsystemBase {
   public static final double VOLTAGE_CONTROL = 1;
   private static final double STATOR_CURRENT_LIMIT = 10;
   private static final double GEAR_RATIO = 2.90909;
-  private static final double FORWARD_SOFT_LIMIT = 1.72;
-  private static final double BACKWARD_SOFT_LIMIT = -0.02;
+  private static final double FORWARD_SOFT_LIMIT = 2.45;
+  private static final double BACKWARD_SOFT_LIMIT = -0.05;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -162,7 +162,7 @@ public class Hood extends SubsystemBase {
   }
 
   public Command autoZeroCommand() {
-    return Commands.parallel(voltageControl(() -> Volts.of(-0.5)))
+    return Commands.sequence(voltageControl(() -> Volts.of(-1)))
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .andThen(zeroHoodCommand());
   }

@@ -2,8 +2,6 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import java.util.function.DoubleSupplier;
-
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
@@ -28,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.util.NtTunableDouble;
+import java.util.function.DoubleSupplier;
 
 public class Flywheels extends SubsystemBase {
   private final TalonFX Flywheel_One;
@@ -99,6 +98,16 @@ public class Flywheels extends SubsystemBase {
     return runOnce(
             () -> {
               request.Velocity = rps;
+              Flywheel_One.setControl(request);
+              Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
+            })
+        .withName("Set Flywheel Velocity");
+  }
+
+  public Command supplyVelocityCommand(DoubleSupplier rps) {
+    return runOnce(
+            () -> {
+              request.Velocity = rps.getAsDouble();
               Flywheel_One.setControl(request);
               Flywheel_Two.setControl(new Follower(13, MotorAlignmentValue.Opposed));
             })

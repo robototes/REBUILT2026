@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -20,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoRotate;
 
@@ -177,13 +175,16 @@ public class Controls {
                             s.Index.setPowerCommand(0.3), s.Serializer.setTunerPowerCommand())),
                     AutoRotate.autoRotate(
                         s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()))
-                .repeatedly()).onFalse(Commands.parallel(s.Flywheels.stopCommand(), s.Hood.hoodPositionCommand(0)));
+                .repeatedly());
+    // .onFalse(Commands.parallel(s.Flywheels.stopCommand(), s.Hood.hoodPositionCommand(0)));
 
     driverController
         .x()
         .whileTrue(s.Index.setTunerPowerCommand().alongWith(s.Serializer.setTunerPowerCommand()));
-    driverController.y().onTrue(s.Flywheels.setVelocityCommand( 66.667));
-    driverController.a().whileTrue(s.Flywheels.stopCommand());
+    driverController
+        .y()
+        .onTrue(s.Flywheels.supplyVelocityCommand(() -> s.Flywheels.targetVelocity.get()));
+    driverController.a().onTrue((s.Flywheels.stopCommand()));
     // Test Auto rotate contorl
     driverController
         .b()
@@ -199,10 +200,7 @@ public class Controls {
     }
 
     driverController.start().onTrue(s.Hood.autoZeroCommand());
-    driverController
-        .leftStick()
-        .whileTrue(s.Hood.zeroHoodCommand());
-
+    driverController.leftStick().onTrue(s.Hood.zeroHoodCommand().ignoringDisable(true));
   }
 
   /**

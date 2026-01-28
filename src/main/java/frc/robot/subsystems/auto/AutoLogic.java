@@ -188,8 +188,8 @@ public class AutoLogic {
     return Commands.sequence(
             Commands.parallel(
                 AutoAim.AutoAim(s.drivebaseSubsystem, s.Hood, s.Flywheels),
-                AutoRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0)),
-            s.Index.setPowerCommand(0.3))
+                AutoRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0),
+                Commands.parallel(s.Serializer.setPowerCommand(0.3), s.Index.setPowerCommand(0.3))))
         .withTimeout(3);
   }
 

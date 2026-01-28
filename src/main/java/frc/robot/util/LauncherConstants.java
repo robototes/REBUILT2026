@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public class LauncherConstants {
   // distance from any edge of the hub to center = 0.5969m, add to any measured distance
 
-  //changed to represent front of bumper
+  // changed to represent front of bumper
   private static final double LAUNCHER_OFFSET_INCHES = 18.375;
   private static final double LAUNCHER_OFFSET_DEGREES = 0;
 
