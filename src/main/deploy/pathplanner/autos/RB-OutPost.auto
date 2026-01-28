@@ -23,12 +23,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "OutPost-Shoot"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"

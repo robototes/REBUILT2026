@@ -19,13 +19,7 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 0.750
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "OutPost-Shoot"
+            "waitTime": 0.75
           }
         },
         {
