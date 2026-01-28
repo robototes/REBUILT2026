@@ -59,6 +59,10 @@ public class LLCamera {
     return LimelightHelpers.getCurrentPipelineType(name);
   }
 
+  public Pose3d getTargetPose3dRobotSpace() {
+    return LimelightHelpers.getTargetPose3d_RobotSpace(name);
+  }
+
   public Pose3d getPose3d() {
     return LimelightHelpers.getBotPose3d_wpiBlue(name);
   }
