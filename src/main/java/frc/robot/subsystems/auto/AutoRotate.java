@@ -24,7 +24,7 @@ public class AutoRotate {
   }
 
   // Tunable:
-  private static final double SPEED_LIMIT = 10.0; // Radians / second
+  private static final double SPEED_LIMIT = 2 * Math.PI; // Radians / second
   private static final double TOLERANCE = 3; // Degrees
   private static final double kP = 8.0;
   private static final double kI = 0.0;
