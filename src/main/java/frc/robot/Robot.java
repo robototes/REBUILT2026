@@ -34,6 +34,7 @@ public class Robot extends TimedRobot {
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
   private FuelSim fuelSimulation;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -48,17 +49,6 @@ public class Robot extends TimedRobot {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
     AutoLogic.init(subsystems);
-    fuelSimulation = FuelSim.getInstance();
-    fuelSimulation.spawnStartingFuel();
-
-    fuelSimulation.registerRobot(
-            0.2,
-          0.6,
-           0.7,
-          () -> subsystems.drivebaseSubsystem.getState().Pose,
-            () -> subsystems.drivebaseSubsystem.getState().Speeds);
-
-             fuelSimulation.start();
 
     CommandScheduler.getInstance()
         .onCommandInitialize(
@@ -134,8 +124,22 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     if (AutoLogic.getSelectedAuto() != null) {
-      fuelSimulation.clearFuel();
-      fuelSimulation.spawnStartingFuel();
+      if (Robot.isSimulation()) {
+        fuelSimulation = FuelSim.getInstance();
+        fuelSimulation.spawnStartingFuel();
+
+        fuelSimulation.registerRobot(
+            0.2,
+            0.6,
+            0.7,
+            () -> subsystems.drivebaseSubsystem.getState().Pose,
+            () -> subsystems.drivebaseSubsystem.getState().Speeds);
+
+        fuelSimulation.start();
+
+        fuelSimulation.clearFuel();
+        fuelSimulation.spawnStartingFuel();
+      }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
     }
@@ -172,8 +176,8 @@ public class Robot extends TimedRobot {
   public void simulationInit() {}
 
   /** This function is called periodically whilst in simulation. */
-@Override
-public void simulationPeriodic() {
+  @Override
+  public void simulationPeriodic() {
     FuelSim.getInstance().updateSim();
-}
+  }
 }
