@@ -15,7 +15,7 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.util.function.DoubleSupplier;
 
-public class AutoRotate {
+public class AutoDriveRotate {
   public static Command autoRotate(
       CommandSwerveDrivetrain drivebaseSubsystem,
       DoubleSupplier xSupplier,
@@ -25,7 +25,8 @@ public class AutoRotate {
 
   // Tunable:
   private static final double SPEED_LIMIT = 2 * Math.PI; // Radians / second
-  private static final double TOLERANCE = 3; // Degrees
+  private static final double TOLERANCE = Math.toRadians(3);
+  private static final double VELOCITY_TOLERANCE = Math.toRadians(5);
   private static final double kP = 8.0;
   private static final double kI = 0.0;
   private static final double kD = 0.0;
@@ -50,10 +51,11 @@ public class AutoRotate {
       anglePub =
           NetworkTableInstance.getDefault().getDoubleTopic("/drivebase/targetRotation").publish();
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
-      pidRotate.setTolerance(Math.toRadians(TOLERANCE));
+      pidRotate.setTolerance(TOLERANCE, VELOCITY_TOLERANCE);
       setName("Auto Align");
     }
 
+    // TODO: Add auto rotate for launching game pieces to corners + climnb alignment
     @Override
     public void initialize() {
       targetTranslation = AllianceUtils.getHubTranslation2d();
