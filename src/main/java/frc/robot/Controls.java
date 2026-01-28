@@ -140,19 +140,24 @@ public class Controls {
   }
 
   private void configureLEDBindings() {
-    LedTestController.a()
-        .whileTrue(s.led_Lights.showIntakeColor().withName("Show intake color")); // yellow
-    LedTestController.b()
-        .whileTrue(s.led_Lights.showClimbColor().withName("Show climb color")); // blue
-    LedTestController.x()
-        .whileTrue(s.led_Lights.showOuttakeColor().withName("Show outtake color")); // green
-    LedTestController.y()
-        .whileTrue(s.led_Lights.showDefaultColor().withName("Show default color")); // red
-    LedTestController.leftBumper()
-        .whileTrue(
-            s.led_Lights
-                .alternateColors(s.led_Lights.climbColor, s.led_Lights.intakeColor)
-                .withName("Alternate between climb and intake color"));
+
+    // A = Intake (yellow)
+    LedTestController.a().whileTrue(s.led_Lights.showIntakeColor);
+
+    // B = Climb (blue)
+    LedTestController.b().whileTrue(s.led_Lights.showClimbColor);
+
+    // X = Outtake (green)
+    LedTestController.x().whileTrue(s.led_Lights.showOuttakeColor);
+
+    // Y = Default (red)
+    LedTestController.y().whileTrue(s.led_Lights.showDefaultColor);
+
+    // LEFT BUMPER = Alternate climb/intake
+    LedTestController.leftBumper().whileTrue(s.led_Lights.alternateClimbIntake);
+
+    // RIGHT BUMPER = Rainbow
+    LedTestController.rightBumper().whileTrue(s.led_Lights.doRainbowAnimation);
   }
 
   /**
