@@ -23,7 +23,6 @@ public class LED_lights extends SubsystemBase {
   public final RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
   public final RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
 
-  // Cached LED controls (NO runtime allocation)
   private final SolidColor solidColor = new SolidColor(0, END_LED_INDEX);
 
   private final RainbowAnimation rainbowAnimation =
@@ -38,8 +37,6 @@ public class LED_lights extends SubsystemBase {
     solidColor.withColor(color);
     candle.setControl(solidColor);
   }
-
-  // ---------------- COMMAND FACTORIES ----------------
 
   private Command showColor(RGBWColor color) {
     return Commands.run(() -> updateLEDs(color), this).beforeStarting(dontDoRainbowAnimation);
