@@ -63,9 +63,6 @@ public class Controls {
   }
 
   private void configureFeederBindings() {
-    // start motor when robot starts
-    m_feederSubsystem.startMotor();
-
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
