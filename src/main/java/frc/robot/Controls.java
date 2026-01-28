@@ -157,7 +157,7 @@ public class Controls {
       return;
     }
     // Add subsystem bindings here
-    driverController.leftTrigger().whileTrue(s.Intake.setPowerCommand(0.5));
+    driverController.leftTrigger().whileTrue(s.Intake.setPowerCommand(0.75));
   }
 
   private void configureLaunchingBindings() {
