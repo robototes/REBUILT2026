@@ -21,6 +21,7 @@ public class Subsystems {
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;
+  public final FeederSubsystem feederSubsystem;
 
   public Subsystems() {
     // Initialize subsystems here (don't forget to check if they're enabled!)

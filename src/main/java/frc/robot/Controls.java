@@ -24,7 +24,6 @@ import frc.robot.subsystems.FeederSubsystem;
  */
 public class Controls {
   // The robot's subsystems and commands are defined here...
-  private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
   private final Subsystems s;
 
   // Controller Ports
@@ -70,10 +69,10 @@ public class Controls {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
-    driverController.a().onTrue(m_feederSubsystem.startMotor());
+    driverController.a().onTrue(s.feederSubsystem.startMotor());
 
     // stop feeder motor
-    driverController.b().onTrue(m_feederSubsystem.stopMotor());
+    driverController.b().onTrue(s.feederSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {

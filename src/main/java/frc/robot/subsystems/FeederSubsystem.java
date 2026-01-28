@@ -94,11 +94,6 @@ public class FeederSubsystem extends SubsystemBase {
         });
   }
 
-  // remove in final, only here to stop Autos.java from throwing errors while also doing nothing
-  public Command doNothing() {
-    return runOnce(() -> {});
-  }
-
   // PLACEHOLDER FOR SENSOR CHECK
   public Command checkSensor() {
     return runOnce(
