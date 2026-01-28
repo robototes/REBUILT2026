@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
-public class SerializerSubsystem extends SubsystemBase {
+public class SpindexerSubsystem extends SubsystemBase {
   private static final double SERIALMOTOR_KP = 1;
   private static final double SERIALMOTOR_KI = 0;
   private static final double SERIALMOTOR_KD = 0;
@@ -33,8 +33,8 @@ public class SerializerSubsystem extends SubsystemBase {
   LinearSystem serialMotorSystem =
       LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1.0, 1.0);
 
-  public SerializerSubsystem() {
-    serialMotor = new TalonFX(Hardware.SERIALIZER_MOTOR_ID);
+  public SpindexerSubsystem() {
+    serialMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {

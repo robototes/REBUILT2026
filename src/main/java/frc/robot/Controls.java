@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.SerializerSubsystem;
+import frc.robot.subsystems.SpindexerSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -24,7 +24,7 @@ import frc.robot.subsystems.SerializerSubsystem;
  */
 public class Controls {
   // The robot's subsystems and commands are defined here...
-  private final SerializerSubsystem m_serializerSubsystem = new SerializerSubsystem();
+  private final SpindexerSubsystem m_spindexerSubsystem = new SpindexerSubsystem();
   private final Subsystems s;
 
   // Controller Ports
@@ -63,10 +63,10 @@ public class Controls {
 
   private void configureFeederBindings() {
     // start serializer motor
-    driverController.a().onTrue(m_serializerSubsystem.startMotor());
+    driverController.a().onTrue(m_spindexerSubsystem.startMotor());
 
     // stop serializer motor
-    driverController.b().onTrue(m_serializerSubsystem.stopMotor());
+    driverController.b().onTrue(m_spindexerSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
