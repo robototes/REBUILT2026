@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -26,6 +22,9 @@ import frc.robot.generated.CompTunerConstants;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class Controls {
+  // The robot's subsystems and commands are defined here...
+  private final Subsystems s;
+
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
 
@@ -33,12 +32,7 @@ public class Controls {
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
-  // The robot's subsystems and commands are defined here...
-  private final Subsystems s;
-
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-  private final double MAX_ACCELERATION = 50;
-  private final double MAX_ROTATION_ACCELERATION = 50;
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)
@@ -58,8 +52,26 @@ public class Controls {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
+    configureFeederBindings();
     s = subsystems;
     configureDrivebaseBindings();
+  }
+
+  public Command setRumble(RumbleType type, double value) {
+    return Commands.runOnce(
+        () -> {
+          driverController.setRumble(type, value);
+        });
+  }
+
+  private void configureFeederBindings() {
+    // TODO: wait for sensor to reach threshold, and trigger rumble
+
+    // start feeder motor
+    driverController.a().onTrue(s.feederSubsystem.startMotor());
+
+    // stop feeder motor
+    driverController.b().onTrue(s.feederSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
