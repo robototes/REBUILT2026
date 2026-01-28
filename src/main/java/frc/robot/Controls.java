@@ -65,9 +65,6 @@ public class Controls {
   private void configureFeederBindings() {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
-    // set default command to start feeder
-    m_feederSubsystem.setDefaultCommand(m_feederSubsystem.startMotor());
-
     // start feeder motor
     driverController.a().onTrue(m_feederSubsystem.startMotor());
 
