@@ -14,25 +14,11 @@ import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class FuelAutoAlign {
-  public static Subsystems s = null;
-  private static final double closenessTolerance = 0.05;
-  private static final double finishedTolerance = 0.1;
+  private static final double CLOSENESS_TOLERANCE = 0.05;
+  private static final double FINISHED_TOLERANCE = 0.1;
 
   public static Command autoAlign(Controls controls, Subsystems s) {
-    return new AutoAlignCommand(controls, s).withName("Fuel Auto Align");
-  }
-
-  public static boolean isCloseEnough() {
-    if (s == null) {
-      return false;
-    }
-    if (s.detectionSubsystem.fieldFuelPose2d() == null) {
-      return false;
-    }
-    var currentPose = s.drivebaseSubsystem.getState().Pose;
-    var targetPose = s.detectionSubsystem.fieldFuelPose2d();
-    return currentPose.getTranslation().getDistance(targetPose.getTranslation())
-        < closenessTolerance;
+    return new AutoAlignCommand(controls, s);
   }
 
   // THIS WILL ONLY WORK ON THE REAL FIELD AND IN PRACTICE MODE!
@@ -41,7 +27,8 @@ public class FuelAutoAlign {
   }
 
   private static class AutoAlignCommand extends Command {
-
+    private Subsystems s = null;
+    private Pose2d fieldFuelPose2d = new Pose2d();
     protected final PIDController pidX = new PIDController(1, 0, 0);
     protected final PIDController pidY = new PIDController(1, 0, 0);
     protected final PIDController pidRotate = new PIDController(1, 0, 0);
@@ -63,6 +50,7 @@ public class FuelAutoAlign {
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       this.controls = controls;
       setName("Fuel Auto Align");
+      addRequirements(s.drivebaseSubsystem);
     }
 
     @Override
@@ -70,7 +58,8 @@ public class FuelAutoAlign {
 
     @Override
     public void execute() {
-      if (s.detectionSubsystem.fieldFuelPose2d() == null) {
+      fieldFuelPose2d = s.detectionSubsystem.fieldFuelPose2d();
+      if (fieldFuelPose2d == null) {
         SwerveRequest request =
             driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
         drive.setControl(request);
@@ -101,7 +90,7 @@ public class FuelAutoAlign {
     public boolean isFinished() {
       Pose2d currentPose = drive.getState().Pose;
       Transform2d robotToTarget = targetPose.minus(currentPose);
-      if (robotToTarget.getTranslation().getNorm() < finishedTolerance
+      if (robotToTarget.getTranslation().getNorm() < FINISHED_TOLERANCE
           && Math.abs(robotToTarget.getRotation().getDegrees()) < 1) {
         controls.vibrateDriveController(0.5);
         return true;
