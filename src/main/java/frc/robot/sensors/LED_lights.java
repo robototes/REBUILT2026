@@ -52,7 +52,7 @@ public class LED_lights extends SubsystemBase {
         .beforeStarting(dontDoRainbowAnimation);
   }
 
-  public final Command showIntakeColor = showColor(intakeColor);
+  public final Command showIntakeColor = showColor();
   public final Command showOuttakeColor = showColor(outtakeColor);
   public final Command showClimbColor = showColor(climbColor);
   public final Command showDefaultColor = showColor(defaultColor);
