@@ -180,4 +180,8 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean getDisableVision() {
     return disableVision;
   }
+
+  public boolean isViewFinder() {
+    return "viewfinder".equals(CCamera.getPipeline());
+  }
 }

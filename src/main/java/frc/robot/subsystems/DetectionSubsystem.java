@@ -35,4 +35,8 @@ public class DetectionSubsystem extends SubsystemBase {
     // Convert to field-relative
     return drivetrain.getState().Pose.transformBy(targetTransform);
   }
+
+  public boolean isViewFinder() {
+    return "viewfinder".equals(ACamera.getPipeline());
+  }
 }

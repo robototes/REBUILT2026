@@ -4,9 +4,8 @@
 
 package frc.robot;
 
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
-
 import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -15,6 +14,7 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -94,12 +94,14 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      subsystems.visionSubsystem.update();
+      if (!subsystems.visionSubsystem.isViewFinder()) {
+        subsystems.visionSubsystem.update();
+      }
     }
     if (subsystems.detectionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      subsystems.detectionSubsystem.update();
+      if (!subsystems.detectionSubsystem.isViewFinder()) {
+        subsystems.detectionSubsystem.update();
+      }
     }
   }
 
@@ -108,7 +110,7 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
     if (subsystems.detectionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat
@@ -119,7 +121,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
     }
     if (subsystems.detectionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat
