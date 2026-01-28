@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class SerializerSubsystem extends SubsystemBase {
-  private static final double SERIALMOTOR_KP = 38.5;
+  private static final double SERIALMOTOR_KP = 1;
   private static final double SERIALMOTOR_KI = 0;
   private static final double SERIALMOTOR_KD = 0;
   private static final double SERIALMOTOR_KS = 0;
@@ -33,7 +33,7 @@ public class SerializerSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   LinearSystem serialMotorSystem =
-      LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.0, 0.0);
+      LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1.0, 1.0);
 
   public SerializerSubsystem() {
     serialMotor = new TalonFX(Hardware.serializerMotorID);
@@ -58,9 +58,9 @@ public class SerializerSubsystem extends SubsystemBase {
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 20;
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 10;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     // PID
@@ -72,7 +72,7 @@ public class SerializerSubsystem extends SubsystemBase {
     talonFXConfiguration.Slot0.kI = SERIALMOTOR_KI;
     talonFXConfiguration.Slot0.kD = SERIALMOTOR_KD;
     talonFXConfiguration.Slot0.kG = SERIALMOTOR_KG;
-    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.None;
 
     cfg.apply(talonFXConfiguration);
   }
@@ -107,7 +107,5 @@ public class SerializerSubsystem extends SubsystemBase {
   public void simulationPeriodic() {
     motorSim.setInput(serialMotor.getSimState().getMotorVoltage());
     motorSim.update(0.020); // every 20 ms
-    RoboRioSim.setVInVoltage(
-        BatterySim.calculateDefaultBatteryLoadedVoltage(motorSim.getCurrentDrawAmps()));
   }
 }
