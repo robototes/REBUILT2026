@@ -19,13 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-HorseShoe"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-Shoot"
+            "pathName": "NeutralRight-RT"
           }
         },
         {
@@ -37,7 +31,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-Climb"
+            "pathName": "RT-Climb"
           }
         },
         {

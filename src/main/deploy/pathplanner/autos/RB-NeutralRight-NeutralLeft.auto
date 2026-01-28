@@ -13,19 +13,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LB-NeutralLeft-Intake"
+            "pathName": "RB-NeutralRight"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "LT-NeutralLeft-Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LB-NeutralLeft-Back"
+            "pathName": "NeutralRight-RT"
           }
         },
         {
@@ -37,13 +31,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-Climb"
+            "pathName": "RT-NeutralRight"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "climb"
+            "pathName": "NeutralRight-NeutralLeft"
           }
         }
       ]

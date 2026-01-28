@@ -13,19 +13,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "C-Depot"
+            "pathName": "CENTER DEPOT"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Depot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Depot-Pre-Shoot"
+            "pathName": "DEPOT DEPT"
           }
         },
         {

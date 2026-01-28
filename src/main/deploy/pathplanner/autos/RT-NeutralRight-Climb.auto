@@ -5,12 +5,6 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "RT-NeutralRight"
@@ -19,13 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-HorseShoe"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-Shoot"
+            "pathName": "NeutralRight-RT"
           }
         },
         {
@@ -37,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-Climb"
+            "pathName": "RT-Climb"
           }
         },
         {

@@ -5,21 +5,15 @@
     "data": {
       "commands": [
         {
-          "type": "path",
-          "data": {
-            "pathName": "C-Climb"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "climb"
+            "pathName": "Drive"
           }
         }
       ]
