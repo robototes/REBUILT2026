@@ -24,7 +24,6 @@ import frc.robot.subsystems.SpindexerSubsystem;
  */
 public class Controls {
   // The robot's subsystems and commands are defined here...
-  private final SpindexerSubsystem m_spindexerSubsystem = new SpindexerSubsystem();
   private final Subsystems s;
 
   // Controller Ports
@@ -63,10 +62,10 @@ public class Controls {
 
   private void configureFeederBindings() {
     // start serializer motor
-    driverController.a().onTrue(m_spindexerSubsystem.startMotor());
+    driverController.a().onTrue(s.spindexerSubsystem.startMotor());
 
     // stop serializer motor
-    driverController.b().onTrue(m_spindexerSubsystem.stopMotor());
+    driverController.b().onTrue(s.spindexerSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {

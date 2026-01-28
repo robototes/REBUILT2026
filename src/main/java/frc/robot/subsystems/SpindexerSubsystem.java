@@ -10,6 +10,7 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -30,14 +31,13 @@ public class SpindexerSubsystem extends SubsystemBase {
 
   private final FlywheelSim motorSim;
 
-  LinearSystem serialMotorSystem =
-      LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1.0, 1.0);
-
   public SpindexerSubsystem() {
     serialMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
+      LinearSystem serialMotorSystem =
+        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1.0, 1.0);
       motorSim = new FlywheelSim(serialMotorSystem, DCMotor.getKrakenX60(1), 0.0);
     } else {
       motorSim = null;
@@ -93,17 +93,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         });
   }
 
-  // remove in final, only here to stop Autos.java from throwing errors while also doing nothing
-  public Command doNothing() {
-    return runOnce(() -> {});
-  }
-
-  @Override
-  public void periodic() {}
-
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(serialMotor.getSimState().getMotorVoltage());
-    motorSim.update(0.020); // every 20 ms
+    motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
   }
 }
