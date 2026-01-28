@@ -26,7 +26,7 @@ public class Controls {
   // The robot's subsystems and commands are defined here...
   private final SerializerSubsystem m_serializerSubsystem = new SerializerSubsystem();
   private final Subsystems s;
-  
+
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
 
