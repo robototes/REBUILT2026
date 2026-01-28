@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -26,15 +22,15 @@ import frc.robot.generated.CompTunerConstants;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class Controls {
+  // The robot's subsystems and commands are defined here...
+  private final Subsystems s;
+
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
-
-  // The robot's subsystems and commands are defined here...
-  private final Subsystems s;
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private final double MAX_ACCELERATION = 50;
@@ -57,9 +53,18 @@ public class Controls {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems) {
-    // Configure the trigger bindings
     s = subsystems;
+    // Configure the trigger bindings
     configureDrivebaseBindings();
+    configureFeederBindings();
+  }
+
+  private void configureFeederBindings() {
+    // start serializer motor
+    driverController.a().onTrue(s.spindexerSubsystem.startMotor());
+
+    // stop serializer motor
+    driverController.b().onTrue(s.spindexerSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
