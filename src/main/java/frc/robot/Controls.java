@@ -26,9 +26,13 @@ public class Controls {
   // The robot's subsystems and commands are defined here...
   private final SerializerSubsystem m_serializerSubsystem = new SerializerSubsystem();
   private final Subsystems s;
+  
+  // Controller Ports
+  private static final int DRIVER_CONTROLLER_PORT = 0;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController driverController = new CommandXboxController(0);
+  private final CommandXboxController driverController =
+      new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private final double MAX_ACCELERATION = 50;
