@@ -172,11 +172,52 @@ public class FuelSim {
     b.addImpulse(normal.times(-impulse));
   }
 
-  private static void handleFuelCollisions(ArrayList<Fuel> fuels) {
-    for (int i = 0; i < fuels.size() - 1; i++) {
-      for (int j = i + 1; j < fuels.size(); j++) {
-        if (fuels.get(i).pos.getDistance(fuels.get(j).pos) < FUEL_RADIUS * 2) {
-          handleFuelCollision(fuels.get(i), fuels.get(j));
+  private static final double CELL_SIZE = 0.25;
+  private static final int GRID_COLS = (int) Math.ceil(FIELD_LENGTH / CELL_SIZE);
+  private static final int GRID_ROWS = (int) Math.ceil(FIELD_WIDTH / CELL_SIZE);
+  private final ArrayList<Fuel>[][] grid;
+
+  private void handleFuelCollisions(ArrayList<Fuel> fuels) {
+    // Clear grid
+    for (int i = 0; i < GRID_COLS; i++) {
+      for (int j = 0; j < GRID_ROWS; j++) {
+        grid[i][j].clear();
+      }
+    }
+
+    // Populate grid
+    for (Fuel fuel : fuels) {
+      int col = (int) (fuel.pos.getX() / CELL_SIZE);
+      int row = (int) (fuel.pos.getY() / CELL_SIZE);
+
+      if (col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS) {
+        grid[col][row].add(fuel);
+      }
+    }
+
+    // Check collisions
+    for (Fuel fuel : fuels) {
+      int col = (int) (fuel.pos.getX() / CELL_SIZE);
+      int row = (int) (fuel.pos.getY() / CELL_SIZE);
+
+      // Check 3x3 neighbor cells
+      for (int i = col - 1; i <= col + 1; i++) {
+        for (int j = row - 1; j <= row + 1; j++) {
+          if (i >= 0 && i < GRID_COLS && j >= 0 && j < GRID_ROWS) {
+            for (Fuel other : grid[i][j]) {
+              if (fuel != other && fuel.pos.getDistance(other.pos) < FUEL_RADIUS * 2) {
+                // To avoid double checking, we can enforce an order (e.g. by ID or hash),
+                // or just check all and let the math handle it (but that applies force twice).
+                // The original code iterated i=0..n, j=i+1..n, so it handled each pair once.
+                // Here, we will encounter (A, B) and (B, A).
+                // We should only handle it if System.identityHashCode(fuel) < System.identityHashCode(other)
+                // or similar tie-breaker.
+                if (fuel.hashCode() < other.hashCode()) {
+                   handleFuelCollision(fuel, other);
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -619,5 +660,12 @@ public class FuelSim {
     }
   }
 
-  private FuelSim() {}
+  private FuelSim() {
+    grid = new ArrayList[GRID_COLS][GRID_ROWS];
+    for (int i = 0; i < GRID_COLS; i++) {
+      for (int j = 0; j < GRID_ROWS; j++) {
+        grid[i][j] = new ArrayList<>();
+      }
+    }
+  }
 }
