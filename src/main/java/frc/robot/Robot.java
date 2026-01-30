@@ -4,10 +4,20 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.util.PathPlannerLogging;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -15,6 +25,7 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -44,6 +55,7 @@ public class Robot extends TimedRobot {
     // autonomous chooser on the dashboard.
     subsystems = new Subsystems();
     controls = new Controls(subsystems);
+    double test = Units.radiansToDegrees(1.3);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
@@ -59,7 +71,17 @@ public class Robot extends TimedRobot {
           0.7,
           () -> subsystems.drivebaseSubsystem.getState().Pose,
           () -> subsystems.drivebaseSubsystem.getState().Speeds);
-      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
+    fuelSimulation.registerIntake(
+    0.4, 0.8,
+    0.4, 0.8,
+    () -> FuelSim.CanIntake(),
+    () -> FuelSim.launchFuel(
+    MetersPerSecond.of(12.0),
+   Degrees.of(45)
+)
+
+);
+
 
       fuelSimulation.start();
     }
