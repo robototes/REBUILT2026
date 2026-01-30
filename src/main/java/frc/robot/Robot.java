@@ -62,8 +62,6 @@ public class Robot extends TimedRobot {
       fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
 
       fuelSimulation.start();
-
-
     }
     CommandScheduler.getInstance()
         .onCommandInitialize(
