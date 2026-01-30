@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.auto.AutoDriveRotate;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -133,6 +134,14 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+
+    // Auto rotate
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            AutoDriveRotate.autoRotate(
+                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
+                .withName("Drivebase rotation towards the hub"));
   }
 
   /**

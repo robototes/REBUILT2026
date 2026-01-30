@@ -53,9 +53,10 @@ public class AutoDriveRotate {
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       pidRotate.setTolerance(TOLERANCE, VELOCITY_TOLERANCE);
       setName("Auto Align");
+      addRequirements(drive);
     }
 
-    // TODO: Add auto rotate for launching game pieces to corners + climnb alignment
+    // TODO: Add auto rotate for launching game pieces to corners + climb alignment
     @Override
     public void initialize() {
       targetTranslation = AllianceUtils.getHubTranslation2d();
@@ -66,12 +67,16 @@ public class AutoDriveRotate {
       Pose2d currentPose = drive.getState().Pose;
       Translation2d toTarget = targetTranslation.minus(currentPose.getTranslation());
       Rotation2d targetRotate =
-          new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
+          new Rotation2d(
+              Math.atan2(toTarget.getY(), toTarget.getX())
+                  + Math
+                      .PI); // The launcher faces the back of the robot so Math.PI is added to align
+      // the back of the robot
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
-      anglePub.set(rotationOutput);
+      anglePub.set(targetRotate.getDegrees());
       SwerveRequest request =
           driveRequest
               .withVelocityX(xSupplier.getAsDouble())
