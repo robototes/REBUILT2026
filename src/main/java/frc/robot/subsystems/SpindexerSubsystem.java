@@ -26,7 +26,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
   public SpindexerSubsystem() {
     serialMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
-    feederConfig();
+    spindexerConfig();
 
     if (RobotBase.isSimulation()) {
       LinearSystem serialMotorSystem =
