@@ -66,14 +66,13 @@ public class IntakeSubsystem extends SubsystemBase {
     private final FlywheelSim rightRollerSim;
     private final ElevatorSim pivotSim;
     private final SingleJointedArmSim pivotSimV2;
+    private final Mechanism2d mech;
     LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
     LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40, 1, 1);
 
 
     double pivotAngle;
-    private final double PIVOT_GEAR_RATIO = (16.0/60.0) * (34.0/68.0) * (18.0/40.0);
-    // this is a complete guess that i took from the demo branch
-
+    private final double PIVOT_GEAR_RATIO = (16.0/60.0) * (34.0/68.0) * (18.0/40.0); // this is a complete guess that i took from the demo branch
 
     public IntakeSubsystem(boolean intakepivotEnabled, boolean intakerollersEnabled) {
         speed = 0;
@@ -116,9 +115,7 @@ public class IntakeSubsystem extends SubsystemBase {
             pivotSim = null;
             pivotSimV2 = null;
         }
-        // the pivot is 10.919 inches, use units class to convert to meters
-        MechanismRoot2d pivotShoulder = Robot.getInstance().getRobotMechanism2d().getRoot("Shoulder", 0.178/2.0, 0.0);
-        MechanismLigament2d pivotArm = pivotShoulder.append(new MechanismLigament2d("pivot", 10.919, 2));// angle is a guess cuz idk how to use cad tools
+
 
         var nt = NetworkTableInstance.getDefault();
         this.leftRollerTopic = nt.getDoubleTopic("left intake status/speed in RPM");
@@ -134,8 +131,13 @@ public class IntakeSubsystem extends SubsystemBase {
         this.pivotPub = pivotTopic.publish();
         this.pivotSub = pivotTopic.subscribe(getCurrentPivotPos());
 
+        mech = new Mechanism2d(1, 1);
+        MechanismRoot2d pivotShoulder = mech.getRoot("Shoulder", 0.178/2.0, 0.0);
+        MechanismLigament2d pivotArm = pivotShoulder.append(new MechanismLigament2d("pivot", Units.inchesToMeters(10.919), 2));// angle is a guess cuz idk how to use cad tools
+
 
     }
+
     // configs
     public void TalonFXPivotConfigs() {
         var talonFXConfigs1 = new TalonFXConfiguration();
