@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.LinearSystem;
@@ -39,8 +38,13 @@ public class FeederSubsystem extends SubsystemBase {
 
     if (RobotBase.isSimulation()) {
       LinearSystem feedMotorSystem =
-          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.001, 1.0); //TODO: Update to final moment of intertia and gear ratio
-      motorSim = new FlywheelSim(feedMotorSystem, DCMotor.getKrakenX60(1), 1.0); //TODO Update to final gear ratio
+          LinearSystemId.createFlywheelSystem(
+              DCMotor.getKrakenX60(1),
+              0.001,
+              1.0); // TODO: Update to final moment of intertia and gear ratio
+      motorSim =
+          new FlywheelSim(
+              feedMotorSystem, DCMotor.getKrakenX60(1), 1.0); // TODO Update to final gear ratio
     } else {
       motorSim = null;
     }
