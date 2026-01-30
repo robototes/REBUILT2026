@@ -27,10 +27,14 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
+  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
+
+  private final CommandXboxController feederTestController =
+      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT;
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -68,10 +72,10 @@ public class Controls {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
-    driverController.a().onTrue(s.feederSubsystem.startMotor());
+    feederTestController.a().onTrue(s.feederSubsystem.startMotor());
 
     // stop feeder motor
-    driverController.b().onTrue(s.feederSubsystem.stopMotor());
+    feederTestController.b().onTrue(s.feederSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
