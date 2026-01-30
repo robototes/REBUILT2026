@@ -119,7 +119,9 @@ public class Robot extends TimedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    CommandScheduler.getInstance().schedule(subsystems.led_Lights.startRainbow());
+  }
 
   /** This function is called periodically during autonomous. */
   @Override
@@ -131,6 +133,8 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    CommandScheduler.getInstance().schedule(subsystems.led_Lights.stopRainbow());
+    CommandScheduler.getInstance().schedule(subsystems.led_Lights.showDefaultColor());
   }
 
   /** This function is called periodically during operator control. */

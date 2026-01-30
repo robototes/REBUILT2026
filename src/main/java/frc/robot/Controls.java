@@ -30,6 +30,8 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int LED_CONTROLLER_PORT = 1;
 
+  private static final boolean IS_AUTONOMOUS = true;
+
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -153,6 +155,8 @@ public class Controls {
             s.led_Lights
                 .alternateColors(s.led_Lights.climbColor, s.led_Lights.intakeColor)
                 .withName("Alternate between climb and intake color"));
+
+    LedTestController.rightBumper().onTrue(s.led_Lights.toggleRainbow());
   }
 
   /**
