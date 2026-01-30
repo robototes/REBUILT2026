@@ -210,10 +210,11 @@ public class FuelSim {
                 // or just check all and let the math handle it (but that applies force twice).
                 // The original code iterated i=0..n, j=i+1..n, so it handled each pair once.
                 // Here, we will encounter (A, B) and (B, A).
-                // We should only handle it if System.identityHashCode(fuel) < System.identityHashCode(other)
+                // We should only handle it if System.identityHashCode(fuel) <
+                // System.identityHashCode(other)
                 // or similar tie-breaker.
                 if (fuel.hashCode() < other.hashCode()) {
-                   handleFuelCollision(fuel, other);
+                  handleFuelCollision(fuel, other);
                 }
               }
             }

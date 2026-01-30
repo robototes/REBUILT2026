@@ -49,23 +49,23 @@ public class Robot extends TimedRobot {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
     AutoLogic.init(subsystems);
- if (Robot.isSimulation()) {
-        fuelSimulation = FuelSim.getInstance();
-        fuelSimulation.spawnStartingFuel();
+    if (Robot.isSimulation()) {
+      fuelSimulation = FuelSim.getInstance();
+      fuelSimulation.spawnStartingFuel();
 
-        fuelSimulation.registerRobot(
-            0.8,
-            0.8,
-            0.7,
-            () -> subsystems.drivebaseSubsystem.getState().Pose,
-            () -> subsystems.drivebaseSubsystem.getState().Speeds);
-        fuelSimulation.registerIntake(0.8, 0.8, 0.8, 0.8, () -> true);
+      fuelSimulation.registerRobot(
+          0.8,
+          0.8,
+          0.7,
+          () -> subsystems.drivebaseSubsystem.getState().Pose,
+          () -> subsystems.drivebaseSubsystem.getState().Speeds);
+      fuelSimulation.registerIntake(0.8, 0.8, 0.8, 0.8, () -> true);
 
-        fuelSimulation.start();
+      fuelSimulation.start();
 
-        fuelSimulation.clearFuel();
-        fuelSimulation.spawnStartingFuel();
-      }
+      fuelSimulation.clearFuel();
+      fuelSimulation.spawnStartingFuel();
+    }
     CommandScheduler.getInstance()
         .onCommandInitialize(
             command -> System.out.println("Command initialized: " + command.getName()));
@@ -141,7 +141,6 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
-
 
         fuelSimulation.clearFuel();
         fuelSimulation.spawnStartingFuel();
