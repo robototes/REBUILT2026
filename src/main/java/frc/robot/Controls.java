@@ -53,12 +53,13 @@ public class Controls {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems) {
-    s = subsystems;
     // Configure the trigger bindings
+    s = subsystems;
     configureDrivebaseBindings();
+    configureSpindexerBindings();
   }
 
-  private void configureFeederBindings() {
+  private void configureSpindexerBindings() {
     // start serializer motor
     driverController.a().onTrue(s.spindexerSubsystem.startMotor());
 
