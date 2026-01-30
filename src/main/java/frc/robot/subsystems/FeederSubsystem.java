@@ -39,8 +39,8 @@ public class FeederSubsystem extends SubsystemBase {
 
     if (RobotBase.isSimulation()) {
       LinearSystem feedMotorSystem =
-          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.0, 0.0);
-      motorSim = new FlywheelSim(feedMotorSystem, DCMotor.getKrakenX60(1), 0.0);
+          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.001, 1.0); //TODO: Update to final moment of intertia and gear ratio
+      motorSim = new FlywheelSim(feedMotorSystem, DCMotor.getKrakenX60(1), 1.0); //TODO Update to final gear ratio
     } else {
       motorSim = null;
     }
@@ -62,17 +62,6 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-
-    // PID
-    // set slot 0 gains
-    talonFXConfiguration.Slot0.kS = FEEDMOTOR_KS;
-    talonFXConfiguration.Slot0.kV = FEEDMOTOR_KV;
-    talonFXConfiguration.Slot0.kA = FEEDMOTOR_KA;
-    talonFXConfiguration.Slot0.kP = FEEDMOTOR_KP;
-    talonFXConfiguration.Slot0.kI = FEEDMOTOR_KI;
-    talonFXConfiguration.Slot0.kD = FEEDMOTOR_KD;
-    talonFXConfiguration.Slot0.kG = FEEDMOTOR_KG;
-    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.Elevator_Static;
 
     cfg.apply(talonFXConfiguration);
   }
