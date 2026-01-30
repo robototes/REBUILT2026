@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -19,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
@@ -34,10 +33,6 @@ public class VisionSubsystem extends SubsystemBase {
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
-
-  // AprilTag field layout for this year
-  private static final AprilTagFieldLayout fieldLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
   private final DrivebaseWrapper drivebaseWrapper;
 
@@ -115,7 +110,7 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = fieldLayout.getTagPose(rf.id);
+      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
       if (tagPose.isEmpty()) {
         DriverStation.reportWarning(
             "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
@@ -181,7 +176,7 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = fieldLayout.getTagPose(rf.id);
+      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
       if (tagPose.isEmpty()) {
         DriverStation.reportWarning(
             "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",

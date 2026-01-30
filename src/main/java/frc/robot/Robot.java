@@ -4,8 +4,9 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -14,7 +15,6 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -32,7 +32,6 @@ public class Robot extends TimedRobot {
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
-  private final int THROTTLE_AMOUNT = 100;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -113,7 +112,6 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null) {
       // seed internal limelight imu for mt2
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_AMOUNT);
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
