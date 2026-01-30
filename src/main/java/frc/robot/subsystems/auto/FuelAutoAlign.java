@@ -16,6 +16,7 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 public class FuelAutoAlign {
   private static final double CLOSENESS_TOLERANCE = 0.05;
   private static final double FINISHED_TOLERANCE = 0.1;
+  private static final double kStaticFrictionFeedForward = 0.05;
 
   public static Command autoAlign(Controls controls, Subsystems s) {
     return new AutoAlignCommand(controls, s);
@@ -23,7 +24,8 @@ public class FuelAutoAlign {
 
   // THIS WILL ONLY WORK ON THE REAL FIELD AND IN PRACTICE MODE!
   public static boolean oneSecondLeft() {
-    return DriverStation.getMatchTime() <= 1;
+    double matchTime = DriverStation.getMatchTime();
+    return matchTime >= 0 && matchTime <= 1;
   }
 
   private static class AutoAlignCommand extends Command {
@@ -58,14 +60,13 @@ public class FuelAutoAlign {
 
     @Override
     public void execute() {
-      fieldFuelPose2d = s.detectionSubsystem.fieldFuelPose2d();
-      if (fieldFuelPose2d == null) {
+      targetPose = s.detectionSubsystem.fieldFuelPose2d();
+      if (targetPose == null) {
         SwerveRequest request =
             driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
         drive.setControl(request);
         return;
       } else {
-        targetPose = s.detectionSubsystem.fieldFuelPose2d();
         pidX.setSetpoint(targetPose.getX());
         pidY.setSetpoint(targetPose.getY());
         pidRotate.setSetpoint(targetPose.getRotation().getRadians());
@@ -76,8 +77,8 @@ public class FuelAutoAlign {
       double powerY = pidY.calculate(currentPose.getY());
       powerX = MathUtil.clamp(powerX, -2, 2);
       powerY = MathUtil.clamp(powerY, -2, 2);
-      powerX += .05 * Math.signum(powerX);
-      powerY += .05 * Math.signum(powerY);
+      powerX += kStaticFrictionFeedForward * Math.signum(powerX);
+      powerY += kStaticFrictionFeedForward * Math.signum(powerY);
       double powerRotate = pidRotate.calculate(currentPose.getRotation().getRadians());
       powerRotate = MathUtil.clamp(powerRotate, -2, 2);
       SwerveRequest request =
@@ -88,6 +89,9 @@ public class FuelAutoAlign {
 
     @Override
     public boolean isFinished() {
+      if (targetPose == null) {
+        return false;
+      }
       Pose2d currentPose = drive.getState().Pose;
       Transform2d robotToTarget = targetPose.minus(currentPose);
       if (robotToTarget.getTranslation().getNorm() < FINISHED_TOLERANCE

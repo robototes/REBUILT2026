@@ -23,12 +23,14 @@ public class DetectionSubsystem {
     detections = ACamera.getRawDetections();
     if (detections != null && detections.length > 0) {
       fuelPose3d = ACamera.getTargetPose3dRobotSpace();
+    } else {
+      fuelPose3d = null;
     }
   }
 
   public Pose2d fieldFuelPose2d() {
     if (fuelPose3d == null) {
-      return new Pose2d();
+      return null;
     }
 
     Transform2d targetTransform = new Transform2d(new Pose2d(), fuelPose3d.toPose2d());
