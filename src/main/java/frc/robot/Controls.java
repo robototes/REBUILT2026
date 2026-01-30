@@ -27,10 +27,14 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
+  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
+
+  private final CommandXboxController spindexerTestController =
+      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private final double MAX_ACCELERATION = 50;
@@ -61,10 +65,10 @@ public class Controls {
 
   private void configureSpindexerBindings() {
     // start serializer motor
-    driverController.a().onTrue(s.spindexerSubsystem.startMotor());
+    spindexerTestController.a().onTrue(s.spindexerSubsystem.startMotor());
 
     // stop serializer motor
-    driverController.b().onTrue(s.spindexerSubsystem.stopMotor());
+    spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
