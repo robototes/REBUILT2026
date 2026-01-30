@@ -14,8 +14,7 @@ import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class FuelAutoAlign {
-  private static final double CLOSENESS_TOLERANCE = 0.05;
-  private static final double FINISHED_TOLERANCE = 0.1;
+  private static final double FINISHED_TOLERANCE_METERS = 0.1;
   private static final double kStaticFrictionFeedForward = 0.05;
 
   public static Command autoAlign(Controls controls, Subsystems s) {
@@ -30,7 +29,6 @@ public class FuelAutoAlign {
 
   private static class AutoAlignCommand extends Command {
     private Subsystems s = null;
-    private Pose2d fieldFuelPose2d = new Pose2d();
     protected final PIDController pidX = new PIDController(1, 0, 0);
     protected final PIDController pidY = new PIDController(1, 0, 0);
     protected final PIDController pidRotate = new PIDController(1, 0, 0);
@@ -94,7 +92,7 @@ public class FuelAutoAlign {
       }
       Pose2d currentPose = drive.getState().Pose;
       Transform2d robotToTarget = targetPose.minus(currentPose);
-      if (robotToTarget.getTranslation().getNorm() < FINISHED_TOLERANCE
+      if (robotToTarget.getTranslation().getNorm() < FINISHED_TOLERANCE_METERS
           && Math.abs(robotToTarget.getRotation().getDegrees()) < 1) {
         controls.vibrateDriveController(0.5);
         return true;

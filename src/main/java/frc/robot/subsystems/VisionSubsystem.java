@@ -72,6 +72,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void update() {
+    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
     // System.out.println("updating");
     RawFiducial[] rawFiducialsB = CCamera.getRawFiducials();
     // System.out.println("got raw fiducials");
@@ -85,8 +86,6 @@ public class VisionSubsystem extends SubsystemBase {
 
   private void processLimelight(
       LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
-
-    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
     if (disableVision) {
       return;
     }
