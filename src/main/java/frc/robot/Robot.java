@@ -63,8 +63,7 @@ public class Robot extends TimedRobot {
 
       fuelSimulation.start();
 
-      fuelSimulation.clearFuel();
-      fuelSimulation.spawnStartingFuel();
+
     }
     CommandScheduler.getInstance()
         .onCommandInitialize(
