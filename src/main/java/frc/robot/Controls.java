@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -18,7 +14,6 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.OperatorConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 
@@ -32,13 +27,22 @@ public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
 
+  // Controller Ports
+  private static final int DRIVER_CONTROLLER_PORT = 0;
+  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
+  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+      new CommandXboxController(DRIVER_CONTROLLER_PORT);
+
+  private final CommandXboxController feederTestController =
+      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController spindexerTestController =
+      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-  private final double MAX_ACCELERATION = 50;
-  private final double MAX_ROTATION_ACCELERATION = 50;
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)
@@ -63,6 +67,33 @@ public class Controls {
     if (s.detectionSubsystem != null) {
       configureAutoAlignBindings();
     }
+    configureSpindexerBindings();
+    configureFeederBindings();
+  }
+
+  private void configureSpindexerBindings() {
+    // start serializer motor
+    spindexerTestController.a().onTrue(s.spindexerSubsystem.startMotor());
+
+    // stop serializer motor
+    spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
+  }
+
+  public Command setRumble(RumbleType type, double value) {
+    return Commands.runOnce(
+        () -> {
+          driverController.setRumble(type, value);
+        });
+  }
+
+  private void configureFeederBindings() {
+    // TODO: wait for sensor to reach threshold, and trigger rumble
+
+    // start feeder motor
+    feederTestController.a().onTrue(s.feederSubsystem.startMotor());
+
+    // stop feeder motor
+    feederTestController.b().onTrue(s.feederSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
