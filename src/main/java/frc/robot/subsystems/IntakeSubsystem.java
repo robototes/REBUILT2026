@@ -56,9 +56,12 @@ public class IntakeSubsystem extends SubsystemBase {
     private DoublePublisher pivotPub;
     private final DoubleTopic pivotTopic;
     private DoubleSubscriber pivotSub;
-    private final BooleanTopic rollerTopic;
-    private final BooleanPublisher rollerPub;
-    private final FlywheelSim rollerSim;
+    private final DoubleTopic leftRollerTopic;
+    private final DoubleTopic rightRollerTopic;
+    private final DoublePublisher leftRollerPub;
+    private final DoublePublisher rightRollerPub;
+    private final FlywheelSim leftRollerSim;
+    private final FlywheelSim rightRollerSim;
     private final ElevatorSim pivotSim;
     private final SingleJointedArmSim pivotSimV2;
     private final NetworkTableEntry table1;
@@ -91,7 +94,9 @@ public class IntakeSubsystem extends SubsystemBase {
         // intake roller sim
 
         if (RobotBase.isSimulation()) {
-            rollerSim =
+            leftRollerSim =
+                new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
+            rightRollerSim =
                 new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
             pivotSim =
                 new ElevatorSim(pivotSystem, DCMotor.getKrakenX60(1), 0, 5, intakepivotEnabled, 1);
@@ -106,17 +111,21 @@ public class IntakeSubsystem extends SubsystemBase {
             , Units.degreesToRadians(0)
             );
         } else {
-            rollerSim = null;
+            leftRollerSim = null;
+            rightRollerSim = null;
             pivotSim = null;
             pivotSimV2 = null;
         }
 
-        table1 = NetworkTableInstance.getDefault().getTable("Flywheel").getEntry("SimRPM");
+        table1 = NetworkTableInstance.getDefault().getTable("Flywheel1").getEntry("SimRPM");
         table2 = NetworkTableInstance.getDefault().getTable("Pivot").getEntry("SimRPM");
 
         var nt = NetworkTableInstance.getDefault();
-        this.rollerTopic = nt.getBooleanTopic("intake status/enabled");
-        this.rollerPub = rollerTopic.publish();
+        this.leftRollerTopic = nt.getDoubleTopic("left intake status/speed in RPM");
+        this.leftRollerPub = leftRollerTopic.publish();
+
+        this.rightRollerTopic = nt.getDoubleTopic("right intake status/speed in RPM");
+        this.rightRollerPub = rightRollerTopic.publish();
 
 
         // pivot sim
@@ -180,7 +189,7 @@ public class IntakeSubsystem extends SubsystemBase {
         return Commands.runEnd(
             () -> {
             pivotMotor.setControl(pivot_request1.withPosition(1000)); // placeholder value, change during testing
-            leftRollers.setControl(roller_request1.withAcceleration(3000)); // placeholder
+            leftRollers.setControl(roller_request1.withVelocity(3000)); // placeholder
             rightRollers.setControl(new Follower(Hardware.INTAKE_ONE_MOTOR_ID, MotorAlignmentValue.Opposed)); // opposite direction as left rollers
             },
             () -> {
@@ -195,16 +204,23 @@ public class IntakeSubsystem extends SubsystemBase {
         @Override
         public void simulationPeriodic() {
             // old sim
-            rollerPub.set(intakeRunning());
+            // leftRollerPub.set(leftRollerSim);
+            // rightRollerPub.set(rightRollerSim);
             pivotPub.set(getCurrentPivotPos());
             // new sim
-            // rollerSim.setInput(leftRollers.getSimState().getMotorVoltage());
-            // rollerSim.update(0.020);
+            leftRollerSim.setInput(leftRollers.getSimState().getMotorVoltage());
+            leftRollerSim.update(0.020);
+            rightRollerSim.setInput(rightRollers.getSimState().getMotorVoltage());
+            rightRollerSim.update(0.020);
             pivotSimV2.setInput(pivotMotor.getSimState().getMotorVoltage());
             pivotSimV2.update(0.020);
             RoboRioSim.setVInVoltage(
-                BatterySim.calculateDefaultBatteryLoadedVoltage(rollerSim.getCurrentDrawAmps())
+                BatterySim.calculateDefaultBatteryLoadedVoltage(leftRollerSim.getCurrentDrawAmps())
                     );
+            leftRollers.getSimState().setRotorVelocity(
+                RadiansPerSecond.of(leftRollerSim.getAngularVelocityRPM()));
+            rightRollers.getSimState().setRotorVelocity(
+                RadiansPerSecond.of(rightRollerSim.getAngularVelocityRPM()));
             pivotMotor.getSimState().setRawRotorPosition(
                 Radians.of(pivotSimV2.getAngleRads() / PIVOT_GEAR_RATIO).in(Rotations));
             pivotMotor.getSimState().setRotorVelocity(
@@ -215,5 +231,9 @@ public class IntakeSubsystem extends SubsystemBase {
             // double rpm2 = pivotSim.getCurrentDrawAmps();
             // table2.setDouble(rpm2);
         }
+@Override
+public void periodic() {
+leftRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
+rightRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
 }
-
+}
