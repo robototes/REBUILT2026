@@ -16,9 +16,12 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 public class FuelAutoAlign {
   private static final double FINISHED_TOLERANCE_METERS = 0.1;
   private static final double kStaticFrictionFeedForward = 0.05;
+  private static final double RUMBLE_SECONDS = 2;
+  private static final double RUMBLE_AMOUNT = 0.5;
 
   public static Command autoAlign(Controls controls, Subsystems s) {
-    return new AutoAlignCommand(controls, s);
+    return new AutoAlignCommand(controls, s)
+        .andThen(controls.rumbleDriveController(RUMBLE_AMOUNT, RUMBLE_SECONDS));
   }
 
   // THIS WILL ONLY WORK ON THE REAL FIELD AND IN PRACTICE MODE!
@@ -36,6 +39,7 @@ public class FuelAutoAlign {
     protected final CommandSwerveDrivetrain drive;
     protected final Controls controls;
     protected Pose2d targetPose;
+    protected Pose2d fuelPose;
 
     // TODO: Add a 10% deadband
     private final SwerveRequest.FieldCentric driveRequest =
@@ -58,13 +62,16 @@ public class FuelAutoAlign {
 
     @Override
     public void execute() {
-      targetPose = s.detectionSubsystem.fieldFuelPose2d();
-      if (targetPose == null) {
+      fuelPose = s.detectionSubsystem.fieldFuelPose2d();
+      if (fuelPose == null) {
         SwerveRequest request =
             driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
         drive.setControl(request);
         return;
       } else {
+        targetPose =
+            fuelPose.transformBy(
+                new Transform2d(0.6, 0.0, new edu.wpi.first.math.geometry.Rotation2d()));
         pidX.setSetpoint(targetPose.getX());
         pidY.setSetpoint(targetPose.getY());
         pidRotate.setSetpoint(targetPose.getRotation().getRadians());
@@ -94,7 +101,6 @@ public class FuelAutoAlign {
       Transform2d robotToTarget = targetPose.minus(currentPose);
       if (robotToTarget.getTranslation().getNorm() < FINISHED_TOLERANCE_METERS
           && Math.abs(robotToTarget.getRotation().getDegrees()) < 1) {
-        controls.vibrateDriveController(0.5);
         return true;
       }
       return false;
@@ -106,7 +112,6 @@ public class FuelAutoAlign {
       SwerveRequest stop = driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
       // Set the drive control with the stop request to halt all movement
       drive.setControl(stop);
-      controls.vibrateDriveController(0);
     }
   }
 }

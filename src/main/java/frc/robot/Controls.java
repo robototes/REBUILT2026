@@ -157,4 +157,12 @@ public class Controls {
       driverController.getHID().setRumble(RumbleType.kBothRumble, vibration);
     }
   }
+
+  public Command rumbleDriveController(double vibration, double seconds) {
+    return Commands.startEnd(
+            () -> vibrateDriveController(vibration), // start
+            () -> vibrateDriveController(0.0) // end
+            )
+        .withTimeout(seconds);
+  }
 }
