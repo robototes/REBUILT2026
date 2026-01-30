@@ -17,14 +17,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class SpindexerSubsystem extends SubsystemBase {
-  private static final double SERIALMOTOR_KP = 1;
-  private static final double SERIALMOTOR_KI = 0;
-  private static final double SERIALMOTOR_KD = 0;
-  private static final double SERIALMOTOR_KS = 0;
-  private static final double SERIALMOTOR_KV = 0;
-  private static final double SERIALMOTOR_KG = 0;
-  private static final double SERIALMOTOR_KA = 0;
-
+  
   public static final double serializerSpeed = 1.0;
 
   private final TalonFX serialMotor;
@@ -37,14 +30,14 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     if (RobotBase.isSimulation()) {
       LinearSystem serialMotorSystem =
-          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1.0, 1.0);
-      motorSim = new FlywheelSim(serialMotorSystem, DCMotor.getKrakenX60(1), 0.0);
+          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.001, 1.0); //TODO: Update to final moment of inertia and gear ratio
+      motorSim = new FlywheelSim(serialMotorSystem, DCMotor.getKrakenX60(1), 1.0); //TODO: Update to final gear ratio
     } else {
       motorSim = null;
     }
   }
 
-  public void feederConfig() {
+  public void spindexerConfig() {
     // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = serialMotor.getConfigurator();
@@ -60,17 +53,6 @@ public class SpindexerSubsystem extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-
-    // PID
-    // set slot 0 gains
-    talonFXConfiguration.Slot0.kS = SERIALMOTOR_KS;
-    talonFXConfiguration.Slot0.kV = SERIALMOTOR_KV;
-    talonFXConfiguration.Slot0.kA = SERIALMOTOR_KA;
-    talonFXConfiguration.Slot0.kP = SERIALMOTOR_KP;
-    talonFXConfiguration.Slot0.kI = SERIALMOTOR_KI;
-    talonFXConfiguration.Slot0.kD = SERIALMOTOR_KD;
-    talonFXConfiguration.Slot0.kG = SERIALMOTOR_KG;
-    talonFXConfiguration.Slot0.GravityType = GravityTypeValue.Elevator_Static;
 
     cfg.apply(talonFXConfiguration);
   }
