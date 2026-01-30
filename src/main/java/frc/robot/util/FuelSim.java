@@ -1,5 +1,7 @@
 package frc.robot.util;
 
+/* Source: https://github.com/hammerheads5000/FuelSim */
+// Huge thanks to team 5000 for the FuelSim util class!
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
