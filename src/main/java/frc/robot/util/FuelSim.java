@@ -330,7 +330,7 @@ private static final int CAPACITY = 5;
 
   private ArrayList<Fuel> fuels = new ArrayList<Fuel>();
    private ArrayList<Fuel> intakenFuels = new ArrayList<>();
-   private static int fuelHeld = 0;
+
      private boolean running = false;
      private static Supplier<Pose2d> robotSupplier = null;
           private static Supplier<ChassisSpeeds> robotSpeedsSupplier = null;
@@ -353,9 +353,7 @@ private static final int CAPACITY = 5;
                     public void clearFuel() {
                       fuels.clear();
                     }
-                     public static boolean CanIntake() {
-                                             return fuelHeld < CAPACITY;
-                                        }
+
                                         private static Translation3d launchVel(LinearVelocity vel, Angle angle) {
     Pose2d robotPose = robotSupplier.get();
     ChassisSpeeds fieldSpeeds = robotSpeedsSupplier.get();
@@ -378,16 +376,16 @@ private static final int CAPACITY = 5;
 }
 
                                          public static  void launchFuel(LinearVelocity vel, Angle angle) {
-                                            if (CanIntake()) {
 
-                       fuelHeld--;
+
+
                        Pose3d robot = new Pose3d(robotSupplier.get());
 
                Translation3d initialPosition =
     robot.getTranslation().plus(new Translation3d(0, 0, SHOOTER_HEIGHT));
 
                   FuelSim.getInstance().spawnFuel(initialPosition, launchVel(vel, angle));
-    }
+
   }
 
   /** Spawns fuel in the neutral zone and depots */
@@ -587,13 +585,11 @@ private static final int CAPACITY = 5;
         for (int i = 0; i < fuels.size(); i++) {
             Fuel f = fuels.get(i);
 
-            if (!CanIntake()) {
-                return;
-            }
+
 
             if (intake.shouldIntake(f, robotPose)) {
                 // Intake = remove from field + increment counter
-                fuelHeld++;
+
                 fuels.remove(i);
                 i--; // adjust index after removal
             }

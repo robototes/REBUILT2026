@@ -28,6 +28,7 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.subsystems.auto.AutoRotate;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
@@ -74,8 +75,8 @@ public class Robot extends TimedRobot {
     fuelSimulation.registerIntake(
     0.4, 0.8,
     0.4, 0.8,
-    () -> FuelSim.CanIntake(),
-    () -> FuelSim.launchFuel(
+    () -> true,
+    () ->  FuelSim.launchFuel(
     MetersPerSecond.of(12.0),
    Degrees.of(45)
 )
