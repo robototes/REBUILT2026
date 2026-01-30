@@ -27,18 +27,20 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
+  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
-
+  
+  private final CommandXboxController feederTestController =
+      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+  
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-  private final double MAX_ACCELERATION = 50;
-  private final double MAX_ROTATION_ACCELERATION = 50;
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)
@@ -61,6 +63,7 @@ public class Controls {
     s = subsystems;
     configureDrivebaseBindings();
     configureSpindexerBindings();
+    configureFeederBindings();
   }
 
   private void configureSpindexerBindings() {
@@ -69,6 +72,23 @@ public class Controls {
 
     // stop serializer motor
     spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
+  }
+
+  public Command setRumble(RumbleType type, double value) {
+    return Commands.runOnce(
+        () -> {
+          driverController.setRumble(type, value);
+        });
+  }
+
+  private void configureFeederBindings() {
+    // TODO: wait for sensor to reach threshold, and trigger rumble
+
+    // start feeder motor
+    feederTestController.a().onTrue(s.feederSubsystem.startMotor());
+
+    // stop feeder motor
+    feederTestController.b().onTrue(s.feederSubsystem.stopMotor());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
