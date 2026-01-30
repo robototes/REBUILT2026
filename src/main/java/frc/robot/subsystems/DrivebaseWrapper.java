@@ -1,5 +1,9 @@
 package frc.robot.subsystems;
 
+import java.util.function.Supplier;
+
+import com.ctre.phoenix6.Utils;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -10,7 +14,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import java.util.function.Supplier;
 
 /**
  * Wrapper class around members of {@link SwerveDrive}, like the Field2d telemetry and the pose
@@ -59,7 +62,7 @@ public class DrivebaseWrapper {
     poseSupplier = () -> swerveDrive.getState().Pose;
     visionMeasurementAdder =
         (pose, fpgaTimestamp, stdDevs) ->
-            swerveDrive.addVisionMeasurement(pose, fpgaTimestamp, stdDevs);
+            swerveDrive.addVisionMeasurement(pose, Utils.fpgaToCurrentTime(fpgaTimestamp), stdDevs);
   }
 
   /**

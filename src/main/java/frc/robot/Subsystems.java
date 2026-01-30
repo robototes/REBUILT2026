@@ -1,9 +1,8 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
-
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.VisionSubsystem;
@@ -35,7 +34,7 @@ public class Subsystems {
     }
 
     if (VISION_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseWrapper);
+      visionSubsystem = new VisionSubsystem(drivebaseWrapper, drivebaseSubsystem);
       SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;
