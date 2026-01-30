@@ -56,7 +56,6 @@ public class Controls {
     s = subsystems;
     // Configure the trigger bindings
     configureDrivebaseBindings();
-    configureFeederBindings();
   }
 
   private void configureFeederBindings() {
