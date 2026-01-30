@@ -52,9 +52,9 @@ public class Controls {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
-    configureFeederBindings();
     s = subsystems;
     configureDrivebaseBindings();
+    configureFeederBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
