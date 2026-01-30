@@ -59,7 +59,7 @@ public class Robot extends TimedRobot {
           0.7,
           () -> subsystems.drivebaseSubsystem.getState().Pose,
           () -> subsystems.drivebaseSubsystem.getState().Speeds);
-      fuelSimulation.registerIntake(0.8, 0.8, 0.8, 0.8, () -> true);
+      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
 
       fuelSimulation.start();
 
