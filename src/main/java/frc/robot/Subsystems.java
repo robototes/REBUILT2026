@@ -1,6 +1,8 @@
 package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKEPIVOT_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKEROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -25,6 +27,7 @@ public class Subsystems {
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;
+  public final IntakeSubsystem intakeSubsystem;
 
   public Subsystems() {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -36,6 +39,9 @@ public class Subsystems {
     } else {
       drivebaseSubsystem = null;
       drivebaseWrapper = new DrivebaseWrapper();
+    }
+    if (INTAKEROLLERS_ENABLED && INTAKEPIVOT_ENABLED){
+      intakeSubsystem = new IntakeSubsystem(true, true);
     }
 
     if (VISION_ENABLED) {

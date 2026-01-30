@@ -61,8 +61,9 @@ public class Controls {
   public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
     s = subsystems;
-    intakeSubsystem = new IntakeSubsystem(null, true, true);
+    intakeSubsystem = new IntakeSubsystem(true, true);
     configureDrivebaseBindings();
+    configureIntakeBindings();
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -136,9 +137,14 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-    driverController.b().whileTrue(intakeSubsystem.runIntake());
   }
 
+  private void configureIntakeBindings() {
+    if (intakeSubsystem == null){
+      return;
+    }
+      driverController.b().whileTrue(intakeSubsystem.runIntake(1));
+  }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *

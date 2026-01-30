@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-
-
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -13,6 +11,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
@@ -38,11 +37,14 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Controls;
 import frc.robot.Hardware;
+import frc.robot.Robot;
 
 public class IntakeSubsystem extends SubsystemBase {
     private TalonFX pivotMotor;
@@ -64,8 +66,6 @@ public class IntakeSubsystem extends SubsystemBase {
     private final FlywheelSim rightRollerSim;
     private final ElevatorSim pivotSim;
     private final SingleJointedArmSim pivotSimV2;
-    private final NetworkTableEntry table1;
-    private final NetworkTableEntry table2;
     LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
     LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40, 1, 1);
 
@@ -75,7 +75,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // this is a complete guess that i took from the demo branch
 
 
-    public IntakeSubsystem(Mechanism2d mech, boolean intakepivotEnabled, boolean intakerollersEnabled) {
+    public IntakeSubsystem(boolean intakepivotEnabled, boolean intakerollersEnabled) {
         speed = 0;
         pivotAngle = 0;
         if (intakepivotEnabled) {
@@ -104,7 +104,7 @@ public class IntakeSubsystem extends SubsystemBase {
             pivotSimV2 = new SingleJointedArmSim(DCMotor.getKrakenX60(1)
             , 0.5
             , 0.01
-            , 0.1
+            , 1
             , Units.degreesToRadians(-90)
             , Units.degreesToRadians(90)
             , false
@@ -116,9 +116,9 @@ public class IntakeSubsystem extends SubsystemBase {
             pivotSim = null;
             pivotSimV2 = null;
         }
-
-        table1 = NetworkTableInstance.getDefault().getTable("Flywheel1").getEntry("SimRPM");
-        table2 = NetworkTableInstance.getDefault().getTable("Pivot").getEntry("SimRPM");
+        // the pivot is 10.919 inches, use units class to convert to meters
+        MechanismRoot2d pivotShoulder = Robot.getInstance().getRobotMechanism2d().getRoot("Shoulder", 0.178/2.0, 0.0);
+        MechanismLigament2d pivotArm = pivotShoulder.append(new MechanismLigament2d("pivot", 10.919, 2));// angle is a guess cuz idk how to use cad tools
 
         var nt = NetworkTableInstance.getDefault();
         this.leftRollerTopic = nt.getDoubleTopic("left intake status/speed in RPM");
@@ -133,6 +133,8 @@ public class IntakeSubsystem extends SubsystemBase {
         this.pivotTopic = nt2.getDoubleTopic("pivot position/position");
         this.pivotPub = pivotTopic.publish();
         this.pivotSub = pivotTopic.subscribe(getCurrentPivotPos());
+
+
     }
     // configs
     public void TalonFXPivotConfigs() {
@@ -163,33 +165,24 @@ public class IntakeSubsystem extends SubsystemBase {
         TalonFXConfigurator rollersCfg = leftRollers.getConfigurator();
         TalonFXConfigurator rollersCFG2 = rightRollers.getConfigurator();
         talonFXConfigs2.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        talonFXConfigs2.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talonFXConfigs2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         rollersCfg.apply(talonFXConfigs2);
         rollersCFG2.apply(talonFXConfigs2);
-
-        var intakeMotionMagicConfigs = talonFXConfigs2.MotionMagic;
-        intakeMotionMagicConfigs.MotionMagicAcceleration = 50; // man ts guesses better be right
-        rollersCfg.apply(intakeMotionMagicConfigs);
-        rollersCFG2.apply(intakeMotionMagicConfigs);
     }
         public double getCurrentPivotPos() {
             currentPivotPos = pivotMotor.getPosition().getValueAsDouble();
             return currentPivotPos;
         }
-        public boolean intakeRunning() { // for sim
-            if (Math.abs(leftRollers.get()) > 0.1) {
-                return true;
-            } else {
-                return false;
-            }
+        public double getShoulderRotations() {
+            return pivotMotor.getPosition().getValueAsDouble()*PIVOT_GEAR_RATIO;
         }
 
-    public Command runIntake() {
+    public Command runIntake(double speed) {
         return Commands.runEnd(
             () -> {
             pivotMotor.setControl(pivot_request1.withPosition(1000)); // placeholder value, change during testing
-            leftRollers.setControl(roller_request1.withVelocity(3000)); // placeholder
+            leftRollers.set(speed); // placeholder
             rightRollers.setControl(new Follower(Hardware.INTAKE_ONE_MOTOR_ID, MotorAlignmentValue.Opposed)); // opposite direction as left rollers
             },
             () -> {
@@ -203,20 +196,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
         @Override
         public void simulationPeriodic() {
-            // old sim
-            // leftRollerPub.set(leftRollerSim);
-            // rightRollerPub.set(rightRollerSim);
-            pivotPub.set(getCurrentPivotPos());
-            // new sim
             leftRollerSim.setInput(leftRollers.getSimState().getMotorVoltage());
             leftRollerSim.update(0.020);
             rightRollerSim.setInput(rightRollers.getSimState().getMotorVoltage());
             rightRollerSim.update(0.020);
             pivotSimV2.setInput(pivotMotor.getSimState().getMotorVoltage());
             pivotSimV2.update(0.020);
+
             RoboRioSim.setVInVoltage(
-                BatterySim.calculateDefaultBatteryLoadedVoltage(leftRollerSim.getCurrentDrawAmps())
-                    );
+                BatterySim.calculateDefaultBatteryLoadedVoltage(leftRollerSim.getCurrentDrawAmps()));
+
             leftRollers.getSimState().setRotorVelocity(
                 RadiansPerSecond.of(leftRollerSim.getAngularVelocityRPM()));
             rightRollers.getSimState().setRotorVelocity(
@@ -226,14 +215,13 @@ public class IntakeSubsystem extends SubsystemBase {
             pivotMotor.getSimState().setRotorVelocity(
                 RadiansPerSecond.of(pivotSimV2.getVelocityRadPerSec() / PIVOT_GEAR_RATIO).in(RotationsPerSecond));
 
-            // double rpm1 = rollerSim.getAngularVelocityRPM();
-            // table1.setDouble(rpm1);
-            // double rpm2 = pivotSim.getCurrentDrawAmps();
-            // table2.setDouble(rpm2);
+
         }
-@Override
-public void periodic() {
-leftRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
-rightRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
+        @Override
+        public void periodic() {
+            leftRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
+            rightRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
+
+            pivotArm.setAngle(Rotation2d.fromRotations(getShoulderRotations()));
 }
 }

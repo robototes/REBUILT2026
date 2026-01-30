@@ -37,7 +37,7 @@ public class Robot extends TimedRobot {
   private final int VIEWFINDER_PIPELINE = 1;
 
   Mechanism2d mech;
-  MechanismRoot2d root;
+  MechanismRoot2d pivotShoulder;
   MechanismLigament2d m_pivot;
 
 
