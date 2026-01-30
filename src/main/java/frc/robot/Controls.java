@@ -28,6 +28,7 @@ public class Controls {
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
+  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -35,6 +36,9 @@ public class Controls {
 
   private final CommandXboxController feederTestController =
       new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController spindexerTestController =
+      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -58,7 +62,16 @@ public class Controls {
     // Configure the trigger bindings
     s = subsystems;
     configureDrivebaseBindings();
+    configureSpindexerBindings();
     configureFeederBindings();
+  }
+
+  private void configureSpindexerBindings() {
+    // start serializer motor
+    spindexerTestController.a().onTrue(s.spindexerSubsystem.startMotor());
+
+    // stop serializer motor
+    spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
   }
 
   public Command setRumble(RumbleType type, double value) {
