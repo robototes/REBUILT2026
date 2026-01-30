@@ -33,10 +33,10 @@ public class Controls {
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
-  
+
   private final CommandXboxController feederTestController =
       new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
-  
+
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
