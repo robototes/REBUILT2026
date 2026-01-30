@@ -143,13 +143,19 @@ public class Controls {
 
   private void configureLEDBindings() {
     LedTestController.a()
-        .whileTrue(s.led_Lights.showIntakeColor().withName("Show intake color")); // yellow
+        .onTrue(
+            Commands.sequence(
+                // s.led_Lights.turnOffLEDS().withName("Show off color"),
+                s.led_Lights.showIntakeColor().withName("Show intake color"))); // yellow
     LedTestController.b()
-        .whileTrue(s.led_Lights.showClimbColor().withName("Show climb color")); // blue
+        .onTrue(
+            Commands.sequence(
+                // s.led_Lights.turnOffLEDS().withName("Show off color"),
+                s.led_Lights.showClimbColor().withName("Show climb color"))); // blue
     LedTestController.x()
-        .whileTrue(s.led_Lights.showOuttakeColor().withName("Show outtake color")); // green
+        .onTrue(s.led_Lights.showOuttakeColor().withName("Show outtake color")); // green
     LedTestController.y()
-        .whileTrue(s.led_Lights.showDefaultColor().withName("Show default color")); // red
+        .onTrue(s.led_Lights.showDefaultColor().withName("Show default color")); // red
     LedTestController.leftBumper()
         .whileTrue(
             s.led_Lights

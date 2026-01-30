@@ -19,19 +19,22 @@ import frc.robot.util.LEDMode;
 import java.util.function.Supplier;
 
 public class LED_lights extends SubsystemBase {
-  private CANdle candle;
+  private CANdle candle = new CANdle(15);
   private CANdleConfigurator candleConfigurator;
 
   public RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
   public RGBWColor intakeColor = new RGBWColor(255, 255, 0); // yellow
   public RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
   public RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
+  public RGBWColor offColor = new RGBWColor(0, 0, 0); // should be off? maybe?
 
   private final RainbowAnimation m_slot0Animation = new RainbowAnimation(0, 7);
 
+  private boolean rainbowOn = false;
+
   public LED_lights() {
-    candle = new CANdle(15); // replace id with actual id
     candleConfigurator = candle.getConfigurator();
+    setRainbowAnimation(0, 1, AnimationDirectionValue.Forward, Hertz.of(100));
   }
 
   public void setRainbowAnimation(
@@ -43,12 +46,7 @@ public class LED_lights extends SubsystemBase {
         .withFrameRate(frameRate);
   }
 
-  private void updateLEDs(RGBWColor color) {
-    SolidColor solid = new SolidColor(0, 71);
-    solid.withColor(color);
-    candle.setControl(solid);
-  }
-
+  /* to be used in the future */
   public Command LED_Mode(Supplier<LEDMode> mode) {
     return Commands.run(
         () -> {
@@ -65,6 +63,23 @@ public class LED_lights extends SubsystemBase {
         });
   }
 
+  /**
+   * This function is used to turn off the leds (color is 0,0,0)
+   *
+   * @return
+   */
+  public Command turnOffLEDS() {
+    return Commands.run(
+        () -> {
+          updateLEDs(offColor);
+        });
+  }
+
+  /**
+   * This function is used to show the intake color (255,255,0)
+   *
+   * @return
+   */
   public Command showIntakeColor() {
     return Commands.run(
         () -> {
@@ -72,6 +87,11 @@ public class LED_lights extends SubsystemBase {
         });
   }
 
+  /**
+   * This function is used to show the climb color (0,0,255)
+   *
+   * @return
+   */
   public Command showClimbColor() {
     return Commands.run(
         () -> {
@@ -79,6 +99,11 @@ public class LED_lights extends SubsystemBase {
         });
   }
 
+  /**
+   * This function is used to show the outtake color (0,255,0)
+   *
+   * @return
+   */
   public Command showOuttakeColor() {
     return Commands.run(
         () -> {
@@ -86,6 +111,11 @@ public class LED_lights extends SubsystemBase {
         });
   }
 
+  /**
+   * This function is ued to show the default color (255,0,0)
+   *
+   * @return
+   */
   public Command showDefaultColor() {
     return Commands.run(
         () -> {
@@ -107,7 +137,11 @@ public class LED_lights extends SubsystemBase {
         this);
   }
 
-  private boolean rainbowOn = false;
+  private void updateLEDs(RGBWColor color) {
+    SolidColor solid = new SolidColor(0, 71);
+    solid.withColor(color);
+    candle.setControl(solid);
+  }
 
   public Command toggleRainbow() {
     return new InstantCommand(
@@ -125,24 +159,10 @@ public class LED_lights extends SubsystemBase {
   }
 
   public Command startRainbow() {
-    return new InstantCommand(
-        () -> {
-          if (true) {
-            // Start rainbow
-            candle.setControl(m_slot0Animation);
-          }
-        },
-        this);
+    return new InstantCommand(() -> candle.setControl(m_slot0Animation), this);
   }
 
   public Command stopRainbow() {
-    return new InstantCommand(
-        () -> {
-          if (true) {
-            // Start rainbow
-            candle.setControl((RainbowAnimation) null);
-          }
-        },
-        this);
+    return new InstantCommand(() -> candle.setControl(new EmptyAnimation(0)), this);
   }
 }
