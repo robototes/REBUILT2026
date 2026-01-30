@@ -145,9 +145,8 @@ public class Hood extends SubsystemBase {
   }
 
   public boolean atTargetPosition() {
-    return DriverStation.isEnabled()
-        && hoodZeroed
-        && Math.abs(hood.getPosition().getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
+    return !hoodZeroed || (DriverStation.isEnabled()
+        && Math.abs(hood.getPosition().getValueAsDouble() - request.Position) < TARGET_TOLERANCE);
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
