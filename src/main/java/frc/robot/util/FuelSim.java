@@ -296,7 +296,7 @@ public class FuelSim {
    */
   private StructArrayPublisher<Translation3d> fuelPublisher =
       NetworkTableInstance.getDefault()
-          .getTable("Autos")
+          .getTable("Game Pieces")
           .getStructArrayTopic("Fuel Simulation/Fuels", Translation3d.struct)
           .publish();
 
