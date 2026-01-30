@@ -34,7 +34,7 @@ public class Controls {
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
   private final CommandXboxController feederTestController =
-      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT;
+      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
