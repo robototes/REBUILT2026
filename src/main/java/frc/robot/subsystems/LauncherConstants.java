@@ -85,7 +85,7 @@ public class LauncherConstants {
 
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
   public static Translation2d predictTargetPos(
-      Translation2d target, ChassisSpeeds fieldSpeeds, Double timeOfFlight) {
+      Translation2d target, ChassisSpeeds fieldSpeeds, double timeOfFlight) {
     double predictedX = target.getX() - fieldSpeeds.vxMetersPerSecond * timeOfFlight;
     double predictedY = target.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight;
 
