@@ -62,7 +62,6 @@ public class Subsystems {
     } else {
       led_Lights = null;
     }
-  }
 
     if (GAMEPIECE_DETECTION_ENABLED) {
       detectionSubsystem = new DetectionSubsystem(drivebaseSubsystem);
