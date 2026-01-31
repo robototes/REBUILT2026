@@ -202,10 +202,13 @@ public class Controls {
 
     launcherTuningController
         .leftBumper()
-        .onTrue(s.flywheels.setVelocityCommand(s.flywheels.targetVelocity.get()));
+        .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
     launcherTuningController
         .rightBumper()
-        .onTrue(s.hood.hoodPositionCommand(s.hood.targetPosition.get()));
+        .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
+    launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
+    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
+    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
   }
 
   /**

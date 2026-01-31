@@ -2,6 +2,7 @@ package frc.robot.subsystems.Launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -14,18 +15,22 @@ import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.util.NtTunableDouble;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
 
 public class Hood extends SubsystemBase {
   // Hood subsystem implementation goes here
   private TalonFX hood;
+  @Getter private HoodSim hoodSim;
+
   private DoubleTopic positionTopic; // hood pose in rotations
   private DoublePublisher positionPub;
 
@@ -54,6 +59,9 @@ public class Hood extends SubsystemBase {
 
     configureMotor();
     initializeNT();
+    if (RobotBase.isSimulation()) {
+      hoodSim = new HoodSim(hood);
+    }
   }
 
   public void initializeNT() {
@@ -85,23 +93,37 @@ public class Hood extends SubsystemBase {
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-    // create PID gains
-    config.Slot0.kP = 45;
-    config.Slot0.kI = 0.0;
-    config.Slot0.kD = 0.0;
-    config.Slot0.kA = 0.0;
-    config.Slot0.kV = 0;
-    config.Slot0.kS = 0.155;
-    config.Slot0.kG = 0.0;
+    // IRL PID gains
+    var irlPID = new Slot0Configs();
+    irlPID.kP = 45;
+    irlPID.kI = 0.0;
+    irlPID.kD = 0.0;
+    irlPID.kA = 0.0;
+    irlPID.kV = 0;
+    irlPID.kS = 0.155;
+    irlPID.kG = 0.0;
+
+    // SIM PID gains
+    var simPID = new Slot0Configs();
+    simPID.kP = 0.5;
+    simPID.kI = 0.0;
+    simPID.kD = 0.1;
+    simPID.kA = 0.0;
+    simPID.kV = 0;
+    simPID.kS = 0.155;
+    simPID.kG = 0.0;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 32;
     config.MotionMagic.MotionMagicAcceleration = 64;
+
+    config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 
     hood_Configurator.apply(config);
   }
 
   @Override
   public void periodic() {
+    setHoodPosition(targetPosition.get());
     positionPub.set(hood.getPosition().getValueAsDouble());
   }
 
@@ -110,14 +132,19 @@ public class Hood extends SubsystemBase {
   }
 
   public void setHoodPosition(double positionRotations) {
-    if (!hoodZeroed) {
+    if (!hoodZeroed && !Robot.isSimulation()) {
       return;
     }
     hood.setControl(request.withPosition(positionRotations));
   }
 
   public Command hoodPositionCommand(double positionRotations) {
-    return runOnce(() -> setHoodPosition(positionRotations));
+    return runOnce(() -> setHoodPosition(positionRotations)).withName("setting Hood position");
+  }
+
+  public Command suppliedHoodPositionCommand(DoubleSupplier positionRotations) {
+    return runOnce(() -> setHoodPosition(positionRotations.getAsDouble()))
+        .withName("Setting hood position - Supplied");
   }
 
   private void zero() {
@@ -126,7 +153,7 @@ public class Hood extends SubsystemBase {
   }
 
   public Command zeroHoodCommand() {
-    return runOnce(this::zero);
+    return runOnce(this::zero).withName("Zeroing Hood");
   }
 
   public boolean atTargetPosition() {
@@ -153,6 +180,14 @@ public class Hood extends SubsystemBase {
     return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .andThen(zeroHoodCommand())
-        .withTimeout(3);
+        .withTimeout(3)
+        .withName("Automatic Zero hood");
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    if (hoodSim != null) {
+      hoodSim.update();
+    }
   }
 }

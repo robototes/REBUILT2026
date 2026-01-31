@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.util.NtTunableDouble;
+import java.util.function.DoubleSupplier;
 
 public class Flywheels extends SubsystemBase {
   private final TalonFX FlywheelOne; // left
@@ -99,6 +100,16 @@ public class Flywheels extends SubsystemBase {
     return runOnce(
             () -> {
               request.Velocity = rps;
+              FlywheelOne.setControl(request);
+              FlywheelTwo.setControl(follow);
+            })
+        .withName("Set Flywheel Velocity");
+  }
+
+  public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
+    return runOnce(
+            () -> {
+              request.Velocity = rps.getAsDouble();
               FlywheelOne.setControl(request);
               FlywheelTwo.setControl(follow);
             })
