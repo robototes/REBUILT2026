@@ -18,6 +18,7 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
 
 /**
@@ -32,6 +33,7 @@ public class Robot extends TimedRobot {
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
+  private FuelSim fuelSimulation;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -46,7 +48,21 @@ public class Robot extends TimedRobot {
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
+    AutoLogic.init(subsystems);
+    if (Robot.isSimulation()) {
+      fuelSimulation = FuelSim.getInstance();
+      fuelSimulation.spawnStartingFuel();
 
+      fuelSimulation.registerRobot(
+          0.8,
+          0.8,
+          0.7,
+          () -> subsystems.drivebaseSubsystem.getState().Pose,
+          () -> subsystems.drivebaseSubsystem.getState().Speeds);
+      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
+
+      fuelSimulation.start();
+    }
     CommandScheduler.getInstance()
         .onCommandInitialize(
             command -> System.out.println("Command initialized: " + command.getName()));
@@ -119,7 +135,17 @@ public class Robot extends TimedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    if (AutoLogic.getSelectedAuto() != null) {
+      if (Robot.isSimulation()) {
+
+        fuelSimulation.clearFuel();
+        fuelSimulation.spawnStartingFuel();
+      }
+
+      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+    }
+  }
 
   /** This function is called periodically during autonomous. */
   @Override
@@ -153,5 +179,7 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    FuelSim.getInstance().updateSim();
+  }
 }

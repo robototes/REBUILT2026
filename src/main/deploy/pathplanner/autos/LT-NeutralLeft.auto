@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LB-NeutralLeft-Intake"
+            "pathName": "LT-NeutralLeft"
           }
         },
         {
@@ -37,13 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-Climb"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climb"
+            "pathName": "LT-NeutralLeft-AGAIN"
           }
         }
       ]
