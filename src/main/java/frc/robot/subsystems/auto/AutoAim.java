@@ -34,6 +34,7 @@ public class AutoAim {
       this.hood = hood;
       this.flywheels = flywheels;
 
+      addRequirements(hood, flywheels);
       var nt = NetworkTableInstance.getDefault();
       hoodGoalTopic = nt.getDoubleTopic("/AutoAim/hoodGoal");
       flywheelGoalTopic = nt.getDoubleTopic("/AutoAim/flywheelGoal");
@@ -45,6 +46,7 @@ public class AutoAim {
 
     @Override
     public void initialize() {
+
       targetPose = (AllianceUtils.getHubTranslation2d());
     }
 

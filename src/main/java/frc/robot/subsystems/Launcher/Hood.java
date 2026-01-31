@@ -27,9 +27,8 @@ import java.util.function.Supplier;
 import lombok.Getter;
 
 public class Hood extends SubsystemBase {
-  // Hood subsystem implementation goes here
   private TalonFX hood;
-  @Getter private HoodSim hoodSim;
+  private HoodSim hoodSim;
 
   private DoubleTopic positionTopic; // hood pose in rotations
   private DoublePublisher positionPub;

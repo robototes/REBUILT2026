@@ -39,7 +39,7 @@ public class Flywheels extends SubsystemBase {
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
-  private final FlywheelSim Sim =
+  private final FlywheelSim sim =
       new FlywheelSim(
           LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.6194175216, 1),
           DCMotor.getKrakenX60(1),
@@ -78,7 +78,7 @@ public class Flywheels extends SubsystemBase {
     config.CurrentLimits.StatorCurrentLimit = 40;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
-    // create brake mode for motors
+    // create coast mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
@@ -146,9 +146,9 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void simulationInit() {
-    var SimState = FlywheelOne.getSimState();
-    SimState.Orientation = ChassisReference.Clockwise_Positive;
-    SimState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
+    var simState = FlywheelOne.getSimState();
+    simState.Orientation = ChassisReference.Clockwise_Positive;
+    simState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
   }
 
   public void simulationPeriodic() {
@@ -163,13 +163,13 @@ public class Flywheels extends SubsystemBase {
     var voltageSim = simState.getMotorVoltageMeasure();
 
     // Set the inputs to the flywheel sims
-    Sim.setInputVoltage(voltageSim.in(Volts));
+    sim.setInputVoltage(voltageSim.in(Volts));
 
     // Update the sims
-    Sim.update(0.02);
+    sim.update(0.02);
 
     // Update the simulated sensor readings
-    simState.setRotorVelocity(Sim.getAngularVelocity());
+    simState.setRotorVelocity(sim.getAngularVelocity());
   }
 
   @Override
