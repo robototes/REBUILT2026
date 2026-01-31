@@ -26,24 +26,30 @@ import lombok.Getter;
 public class Hood extends SubsystemBase {
   // Hood subsystem implementation goes here
   private TalonFX hood;
-  private DoubleTopic positionTopic;
+  private DoubleTopic positionTopic; // hood pose in rotations
   private DoublePublisher positionPub;
 
-  @Getter private boolean hoodZeroed = false;
+  @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
+  private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
 
-  private long lastPositionUpdateTime = 0;
+  private long lastPositionUpdateTime = 0; // seconds
   private NtTunableDouble targetPosition;
 
-  private static final double TARGET_TOLERANCE = 0.1;
-  public static final double VOLTAGE_MANUAL_CONTROL = 1;
-  private static final double STATOR_CURRENT_LIMIT = 10;
+  private static final double TARGET_TOLERANCE = 0.1; // tolerance in motor rotations
+  public static final double VOLTAGE_MANUAL_CONTROL = 1; // voltage/speed to control the motor for manual control
+  private static final double STATOR_CURRENT_LIMIT = 10; // stator limit in amps
   // GEAR_RATIO = 2.90909;
-  private static final double FORWARD_SOFT_LIMIT = 1.72;
-  private static final double BACKWARD_SOFT_LIMIT = -0.02;
+  private static final double FORWARD_SOFT_LIMIT = 1.72; //1.72 rotations
+  private static final double BACKWARD_SOFT_LIMIT = -0.02; // -0.02 rotations, past zeroing point
 
-  public final boolean TUNER_CONTROLLED = false;
+  public final boolean TUNER_CONTROLLED = false; // boolean to check if tuner control is being used
+
+
+  //Mechanism tuning required !!
+  private static final double AUTO_ZERO_VOLTAGE = -0.5;
+
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -144,7 +150,7 @@ public class Hood extends SubsystemBase {
     return runEnd(
         () -> {
           // hood.setVoltage(voltageSupplier.get().in(Units.Volts));
-          hood.setControl(new VoltageOut(voltageSupplier.get()).withIgnoreSoftwareLimits(true));
+          hood.setControl(voltageRequest.withOutput(voltageSupplier.get()));
         },
         () -> {
           hood.stopMotor();
@@ -152,8 +158,8 @@ public class Hood extends SubsystemBase {
   }
 
   public Command autoZeroCommand() {
-    return Commands.parallel(voltageControl(() -> Volts.of(-0.5)))
+    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
-        .andThen(zeroHoodCommand());
+        .andThen(zeroHoodCommand()).withTimeout(3);
   }
 }

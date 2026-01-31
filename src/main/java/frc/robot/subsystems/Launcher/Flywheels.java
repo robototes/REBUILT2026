@@ -29,13 +29,14 @@ import frc.robot.util.NtTunableDouble;
 
 public class Flywheels extends SubsystemBase {
   private final TalonFX FlywheelOne; // left
-  private final TalonFX FlywheelTwo;
-  private final DoubleTopic currentTopic;
-  private final DoubleTopic velocityTopic;
+  private final TalonFX FlywheelTwo; // right
+  private final DoubleTopic currentTopic; // supply current in amps
+  private final DoubleTopic velocityTopic; // velocity in rps
   private final DoublePublisher currentPub;
   private final DoublePublisher velocityPub;
 
   private final MotionMagicVelocityVoltage request = new MotionMagicVelocityVoltage(0);
+  private final Follower follow = new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
   private final FlywheelSim Sim =
       new FlywheelSim(
@@ -43,11 +44,11 @@ public class Flywheels extends SubsystemBase {
           DCMotor.getKrakenX60(1),
           0);
 
-  private long lastVelocityUpdateTime = 0;
+  private long lastVelocityUpdateTime = 0; // seconds
   public NtTunableDouble targetVelocity;
 
-  public final double FLYWHEEL_TOLERANCE = 5;
-  public final boolean TUNER_CONTROLLED = false;
+  public final double FLYWHEEL_TOLERANCE = 5; // RPS
+  public final boolean TUNER_CONTROLLED = false; // boolean to decide if it should be controlled using the NtTunableDouble
 
   // Constructor
   public Flywheels() {
@@ -99,9 +100,8 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps;
               FlywheelOne.setControl(request);
-              System.out.println("setting control to " + rps);
-              FlywheelTwo.setControl(
-                  new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
+              FlywheelTwo.setControl(follow
+                  );
             })
         .withName("Set Flywheel Velocity");
   }
@@ -109,7 +109,7 @@ public class Flywheels extends SubsystemBase {
   public void setVelocityRPM(double rpm) {
     request.Velocity = rpm / 60;
     FlywheelOne.setControl(request);
-    FlywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
+    FlywheelTwo.setControl(follow);
   }
 
   public Command stopCommand() {
