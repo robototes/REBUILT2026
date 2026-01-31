@@ -13,7 +13,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -42,7 +41,8 @@ public class IntakeSubsystem extends SubsystemBase {
   final MotionMagicVoltage pivot_request1 = new MotionMagicVoltage(0);
   double speed;
   private static final double PIVOT_DEPLOYED_POS = 0;
-  private static final double PIVOT_RETRACTED_POS = 1000; // change this value and ln 44 if u wanna change position
+  private static final double PIVOT_RETRACTED_POS =
+      1000; // change this value and ln 44 if u wanna change position
   private final DoubleTopic leftRollerTopic;
   private final DoubleTopic rightRollerTopic;
   private final DoublePublisher leftRollerPub;
@@ -51,7 +51,8 @@ public class IntakeSubsystem extends SubsystemBase {
   private final FlywheelSim rightRollerSim;
   private final SingleJointedArmSim pivotSimV2;
   LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
-//   LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40, 1, 1);
+  //   LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40,
+  // 1, 1);
 
   private final double PIVOT_GEAR_RATIO =
       (16.0 / 60.0)
@@ -67,8 +68,8 @@ public class IntakeSubsystem extends SubsystemBase {
     speed = 0;
 
     if (intakepivotEnabled) {
-        pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
-        TalonFXPivotConfigs();
+      pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
+      TalonFXPivotConfigs();
     } else {
       pivotMotor = null;
     }
@@ -95,7 +96,8 @@ public class IntakeSubsystem extends SubsystemBase {
               Units.degreesToRadians(0), // minimum arm angle
               Units.degreesToRadians(120), // maximum arm angle
               false,
-              Units.degreesToRadians(120)); // starting arm angle, keep this the same value as max arm angle.
+              Units.degreesToRadians(
+                  120)); // starting arm angle, keep this the same value as max arm angle.
     } else {
       leftRollerSim = null;
       rightRollerSim = null;
@@ -125,7 +127,8 @@ public class IntakeSubsystem extends SubsystemBase {
     slot0Configs.kP = 40;
     slot0Configs.kI = 5;
     slot0Configs.kD = 0;
-    slot0Configs.kG = 0.048; // change PID values during testing, these are placeholders from last year's robot
+    slot0Configs.kG =
+        0.048; // change PID values during testing, these are placeholders from last year's robot
 
     var pivotMotionMagicConfigs = talonFXConfigs1.MotionMagic;
     pivotMotionMagicConfigs.MotionMagicAcceleration = 3000;
@@ -161,7 +164,8 @@ public class IntakeSubsystem extends SubsystemBase {
               new Follower(
                   Hardware.INTAKE_MOTOR_ONE_ID,
                   MotorAlignmentValue.Opposed)); // opposite direction as left rollers
-                  System.out.println("Pivot motor position: " + pivotMotor.getPosition().getValueAsDouble());
+          System.out.println(
+              "Pivot motor position: " + pivotMotor.getPosition().getValueAsDouble());
         },
         () -> {
           leftRollers.stopMotor();

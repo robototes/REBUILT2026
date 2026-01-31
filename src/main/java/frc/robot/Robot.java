@@ -35,9 +35,6 @@ public class Robot extends TimedRobot {
   private final int VIEWFINDER_PIPELINE = 1;
   private FuelSim fuelSimulation;
 
-
-
-
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -95,9 +92,6 @@ public class Robot extends TimedRobot {
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
-
-
-
   }
 
   /**

@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.IntakeSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -170,8 +169,9 @@ public class Controls {
     if (s.intakeSubsystem == null) {
       return;
     }
-      driverController.b().whileTrue(s.intakeSubsystem.runIntake(1));
+    driverController.b().whileTrue(s.intakeSubsystem.runIntake(1));
   }
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
