@@ -67,16 +67,18 @@ public class SpindexerSubsystem extends SubsystemBase {
 
   public Command startMotor() {
     return runOnce(
-        () -> {
-          setSpeed(serializerSpeed);
-        }).withName("Start Spindexer Motor");
+            () -> {
+              setSpeed(serializerSpeed);
+            })
+        .withName("Start Spindexer Motor");
   }
 
   public Command stopMotor() {
     return runOnce(
-        () -> {
-          setSpeed(0);
-        }).withName("Stop Spindexer Motor");
+            () -> {
+              setSpeed(0);
+            })
+        .withName("Stop Spindexer Motor");
   }
 
   @Override
