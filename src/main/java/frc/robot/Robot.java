@@ -18,6 +18,7 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
 
 /**
@@ -32,6 +33,8 @@ public class Robot extends TimedRobot {
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
+  private final int GAMEPIECE_PIPELINE = 2;
+  private FuelSim fuelSimulation;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -46,7 +49,21 @@ public class Robot extends TimedRobot {
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
+    AutoLogic.init(subsystems);
+    if (Robot.isSimulation()) {
+      fuelSimulation = FuelSim.getInstance();
+      fuelSimulation.spawnStartingFuel();
 
+      fuelSimulation.registerRobot(
+          0.8,
+          0.8,
+          0.7,
+          () -> subsystems.drivebaseSubsystem.getState().Pose,
+          () -> subsystems.drivebaseSubsystem.getState().Speeds);
+      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
+
+      fuelSimulation.start();
+    }
     CommandScheduler.getInstance()
         .onCommandInitialize(
             command -> System.out.println("Command initialized: " + command.getName()));
@@ -93,8 +110,14 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      subsystems.visionSubsystem.update();
+      if (!subsystems.visionSubsystem.isViewFinder()) {
+        subsystems.visionSubsystem.update();
+      }
+    }
+    if (subsystems.detectionSubsystem != null) {
+      if (!subsystems.detectionSubsystem.isViewFinder()) {
+        subsystems.detectionSubsystem.update();
+      }
     }
   }
 
@@ -103,14 +126,23 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
+    }
+    if (subsystems.detectionSubsystem != null) {
+      subsystems.detectionSubsystem.fuelPose3d = null;
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
     }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+    }
+    if (subsystems.detectionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
@@ -119,7 +151,17 @@ public class Robot extends TimedRobot {
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    if (AutoLogic.getSelectedAuto() != null) {
+      if (Robot.isSimulation()) {
+
+        fuelSimulation.clearFuel();
+        fuelSimulation.spawnStartingFuel();
+      }
+
+      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+    }
+  }
 
   /** This function is called periodically during autonomous. */
   @Override
@@ -153,5 +195,7 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    FuelSim.getInstance().updateSim();
+  }
 }

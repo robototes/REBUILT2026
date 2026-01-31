@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -16,6 +17,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
+import frc.robot.subsystems.auto.AutoDriveRotate;
+import frc.robot.subsystems.auto.FuelAutoAlign;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -168,6 +171,59 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+
+    // Auto rotate
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            AutoDriveRotate.autoRotate(
+                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
+                .withName("Drivebase rotation towards the hub"));
+  }
+
+  private void configureAutoAlignBindings() {
+    driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+  }
+
+  private void configureLauncherBindings() {
+    if (s.flywheels == null || s.hood == null) {
+      // Stop running this method
+      System.out.println("Flywheels and/or Hood are disabled");
+      return;
+    }
+
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            Commands.sequence(
+                Commands.parallel(
+                    s.flywheels.setVelocityCommand(
+                        LauncherConstants.getFlywheelSpeedFromPose2d(
+                            AllianceUtils.getHubTranslation2d(),
+                            s.drivebaseSubsystem.getState().Pose)),
+                    s.hood.hoodPositionCommand(
+                        LauncherConstants.getHoodAngleFromPose2d(
+                            AllianceUtils.getHubTranslation2d(),
+                            s.drivebaseSubsystem.getState().Pose)),
+                    Commands.waitUntil(
+                        () ->
+                            s.flywheels.atTargetVelocity(
+                                LauncherConstants.getFlywheelSpeedFromPose2d(
+                                    AllianceUtils.getHubTranslation2d(),
+                                    s.drivebaseSubsystem.getState().Pose),
+                                s.flywheels.FLYWHEEL_TOLERANCE)))
+                // add feeding command here!
+                ));
+
+    launcherTuningController
+        .leftBumper()
+        .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
+    launcherTuningController
+        .rightBumper()
+        .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
+    launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
+    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
+    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
   }
 
   private void configureLauncherBindings() {
@@ -219,5 +275,19 @@ public class Controls {
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     return Commands.none();
+  }
+
+  public void vibrateDriveController(double vibration) {
+    if (!DriverStation.isAutonomous()) {
+      driverController.getHID().setRumble(RumbleType.kBothRumble, vibration);
+    }
+  }
+
+  public Command rumbleDriveController(double vibration, double seconds) {
+    return Commands.startEnd(
+            () -> vibrateDriveController(vibration), // start
+            () -> vibrateDriveController(0.0) // end
+            )
+        .withTimeout(seconds);
   }
 }

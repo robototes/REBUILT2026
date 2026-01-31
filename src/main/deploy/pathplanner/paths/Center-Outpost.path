@@ -8,20 +8,20 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.6504732828930773,
-        "y": 2.908217935646742
+        "x": 3.385714264612214,
+        "y": 2.665182240330537
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 0.567,
+        "x": 0.457,
         "y": 0.54
       },
       "prevControl": {
-        "x": 1.6021020871682556,
-        "y": 1.704470992983886
+        "x": 1.6198086973735488,
+        "y": 1.4321477550535455
       },
       "nextControl": null,
       "isLocked": false,
@@ -41,14 +41,14 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0.0,
+    "velocity": 0,
     "rotation": 0.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }
