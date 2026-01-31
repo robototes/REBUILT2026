@@ -68,10 +68,7 @@ public class AutoDriveRotate {
       Translation2d toTarget = targetTranslation.minus(currentPose.getTranslation());
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
       Rotation2d targetRotate =
-          new Rotation2d(
-              Math.atan2(toTarget.getY(), toTarget.getX())
-                  + Math
-                      .PI);
+          new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
