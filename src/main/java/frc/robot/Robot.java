@@ -27,6 +27,8 @@ import frc.robot.util.LimelightHelpers;
  */
 public class Robot extends TimedRobot {
 
+  //TODO: Do something about this plssss
+  @SuppressWarnings("unused")
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
@@ -134,7 +136,7 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
     CommandScheduler.getInstance().schedule(subsystems.led_Lights.stopRainbow());
-    CommandScheduler.getInstance().schedule(subsystems.led_Lights.showDefaultColor());
+    CommandScheduler.getInstance().schedule(subsystems.led_Lights.updateLEDs(subsystems.led_Lights.defaultColor));
   }
 
   /** This function is called periodically during operator control. */

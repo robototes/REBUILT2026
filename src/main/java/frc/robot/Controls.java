@@ -9,6 +9,8 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
+import javax.annotation.processing.SupportedAnnotationTypes;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
@@ -18,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.sensors.LED_lights;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -25,12 +28,13 @@ import frc.robot.generated.CompTunerConstants;
  * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
  * subsystems, commands, and trigger mappings) should be declared here.
  */
+
+//TODO: do me as well!!
+@SuppressWarnings("unused")
 public class Controls {
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int LED_CONTROLLER_PORT = 1;
-
-  private static final boolean IS_AUTONOMOUS = true;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -142,27 +146,33 @@ public class Controls {
   }
 
   private void configureLEDBindings() {
+    LED_lights LEDs = s.led_Lights;
     LedTestController.a()
         .onTrue(
             Commands.sequence(
-                // s.led_Lights.turnOffLEDS().withName("Show off color"),
-                s.led_Lights.showIntakeColor().withName("Show intake color"))); // yellow
+                // LEDs.turnOffLEDS().withName("Show off color"),
+                LEDs.updateLEDs(LEDs.intakeColor).withName("Show intake color"))); // yellow
     LedTestController.b()
         .onTrue(
             Commands.sequence(
-                // s.led_Lights.turnOffLEDS().withName("Show off color"),
-                s.led_Lights.showClimbColor().withName("Show climb color"))); // blue
+                // LEDs.turnOffLEDS().withName("Show off color"),
+                LEDs.updateLEDs(LEDs.climbColor).withName("Show climb color"))); // blue
     LedTestController.x()
-        .onTrue(s.led_Lights.showOuttakeColor().withName("Show outtake color")); // green
+        .onTrue(
+            Commands.sequence(
+                // LEDs.turnOffLEDS().withName("Show off color"),
+                LEDs.updateLEDs(LEDs.outtakeColor).withName("Show outtake color"))); // green
     LedTestController.y()
-        .onTrue(s.led_Lights.showDefaultColor().withName("Show default color")); // red
+        .onTrue(
+          Commands.sequence(
+              // LEDs.turnOffLEDS().withName("Show off color"),
+              LEDs.updateLEDs(LEDs.defaultColor).withName("Show default color"))); // red
     LedTestController.leftBumper()
         .whileTrue(
-            s.led_Lights
-                .alternateColors(s.led_Lights.climbColor, s.led_Lights.intakeColor)
+            LEDs.alternateColors(LEDs.climbColor, LEDs.intakeColor)
                 .withName("Alternate between climb and intake color"));
 
-    LedTestController.rightBumper().onTrue(s.led_Lights.toggleRainbow());
+    LedTestController.rightBumper().onTrue(LEDs.toggleRainbow());
   }
 
   /**
