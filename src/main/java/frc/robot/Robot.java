@@ -203,6 +203,14 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
+    // This should go inside your simulation update loop (e.g., a periodic method or main sim loop)
+
+double g = 9.81; // gravity (m/s^2)
+double speed = 12.0; // launch speed in m/s
+
+// Loop through your fuel launchers or just launch one fuel
+
+
     FuelSim.getInstance().updateSim();
   }
 }

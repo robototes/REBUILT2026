@@ -14,6 +14,9 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.LinearVelocity;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -438,6 +441,11 @@ private static final int CAPACITY = 5;
           .getTable("Game Pieces")
           .getStructArrayTopic("Fuel Simulation/Fuels", Translation3d.struct)
           .publish();
+private final StructArrayPublisher<Translation3d> trajectoryPublisher =
+    NetworkTableInstance.getDefault()
+        .getTable("Game Pieces")
+        .getStructArrayTopic("Fuel Simulation/Trajectory", Translation3d.struct)
+        .publish();
 
 
   /** Adds array of `Translation3d`'s to NetworkTables at "/Fuel Simulation/Fuels" */
@@ -445,6 +453,156 @@ private static final int CAPACITY = 5;
     fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
 
   }
+ private void logHubArc() {
+    if (robotSupplier == null) return;
+
+    Pose2d robot = robotSupplier.get();
+
+    // Pick nearest hub
+    Hub hub =
+        robot.getTranslation().getDistance(Hub.RED_HUB.center)
+            < robot.getTranslation().getDistance(Hub.BLUE_HUB.center)
+            ? Hub.RED_HUB
+            : Hub.BLUE_HUB;
+
+    // Compute arc points
+    ArrayList<Translation3d> points = new ArrayList<>();
+
+    Translation3d start = new Translation3d(robot.getX(), robot.getY(), SHOOTER_HEIGHT);
+    Translation3d target = hub.exit;
+
+    // Horizontal vector & direction
+    Translation3d horizontal = new Translation3d(target.getX() - start.getX(), target.getY() - start.getY(), 0);
+    double horizontalDist = horizontal.getNorm();
+    Translation3d horizontalDir = horizontal.div(horizontalDist);
+
+    // Max height above shooter and hub for full parabola
+    double maxHeight = Math.max(start.getZ(), target.getZ()) + 1.0; // 1 meter above
+
+    int steps = 100; // number of points along arc
+    for (int i = 0; i <= steps; i++) {
+        double t = (double)i / steps;
+
+        // Linear interpolation for X/Y
+        Translation3d posXY = start.plus(horizontalDir.times(horizontalDist * t));
+
+        // Parabolic interpolation for Z
+        double z = start.getZ() * (1 - t) + target.getZ() * t + 4 * (maxHeight - start.getZ()) * t * (1 - t);
+
+        points.add(new Translation3d(posXY.getX(), posXY.getY(), z));
+    }
+
+    // Publish the arc for visualization
+    trajectoryPublisher.set(points.toArray(new Translation3d[0]));
+}
+public static void launchFuelAlongArc() {
+    FuelSim sim = FuelSim.getInstance();
+    Pose2d robotPose = sim.robotSupplier.get();
+
+    // Choose nearest hub
+    FuelSim.Hub hub =
+        robotPose.getTranslation().getDistance(FuelSim.Hub.RED_HUB.center)
+            < robotPose.getTranslation().getDistance(FuelSim.Hub.BLUE_HUB.center)
+            ? FuelSim.Hub.RED_HUB
+            : FuelSim.Hub.BLUE_HUB;
+
+    // Compute arc points
+    ArrayList<Translation3d> arcPoints = sim.computeHubArc(robotPose, hub);
+
+    // Pick a point along the arc (middle for example)
+    Translation3d target = arcPoints.get(arcPoints.size() / 2);
+
+    // Start at robot’s shooter height
+    Translation3d start = new Translation3d(robotPose.getX(), robotPose.getY(), FuelSim.SHOOTER_HEIGHT);
+
+    // Compute horizontal distance along robot's heading
+    double heading = robotPose.getRotation().getRadians(); // robot heading in radians
+    double horizontalDist = Math.sqrt(Math.pow(target.getX() - start.getX(), 2)
+                                    + Math.pow(target.getY() - start.getY(), 2));
+
+    double dz = target.getZ() - start.getZ();
+    double g = 9.81;
+    double speed = 12.0; // adjust as needed
+
+    // Projectile angle solution
+    double discriminant = speed*speed*speed*speed - g*(g*horizontalDist*horizontalDist + 2*dz*speed*speed);
+    if (discriminant < 0) return;
+
+    double angleRad1 = Math.atan((speed*speed + Math.sqrt(discriminant)) / (g*horizontalDist));
+    double angleRad2 = Math.atan((speed*speed - Math.sqrt(discriminant)) / (g*horizontalDist));
+    double angleRad = Math.min(angleRad1, angleRad2);
+
+    // Use robot heading instead of target direction
+    double vx = speed * Math.cos(angleRad) * Math.cos(heading);
+    double vy = speed * Math.cos(angleRad) * Math.sin(heading);
+    double vz = speed * Math.sin(angleRad);
+
+    Translation3d velocity = new Translation3d(vx, vy, vz);
+
+    LinearVelocity vel = MetersPerSecond.of(velocity.getNorm());
+    Angle angle = Degrees.of(Math.toDegrees(angleRad));
+
+    FuelSim.launchFuel(vel, angle);
+}
+
+
+
+
+private ArrayList<Translation3d> computeHubArc(Pose2d robotPose, Hub hub) {
+    ArrayList<Translation3d> points = new ArrayList<>();
+
+    Translation3d start = new Translation3d(robotPose.getX(), robotPose.getY(), SHOOTER_HEIGHT);
+    Translation3d target = hub.exit;
+
+    // Compute horizontal distance & direction
+    Translation3d horizontal = new Translation3d(target.getX() - start.getX(), target.getY() - start.getY(), 0);
+    double horizontalDist = horizontal.getNorm();
+    Translation3d horizontalDir = horizontal.div(horizontalDist);
+
+    double maxHeight = Math.max(start.getZ(), target.getZ()) + 1.0; // 1m above highest point for full arc
+
+    int steps = 100; // how many points to generate
+    for (int i = 0; i <= steps; i++) {
+        double t = (double)i / steps;
+        // Linear interpolation X/Y
+        Translation3d posXY = start.plus(horizontalDir.times(horizontalDist * t));
+
+        // Parabolic interpolation Z
+        double z = start.getZ() * (1 - t) + target.getZ() * t + 4 * (maxHeight - start.getZ()) * t * (1 - t);
+        points.add(new Translation3d(posXY.getX(), posXY.getY(), z));
+    }
+
+    return points;
+}
+
+
+private void logTrajectory(Translation3d start, Translation3d velocity) {
+  ArrayList<Translation3d> points = new ArrayList<>();
+
+  Translation3d pos = start;
+  Translation3d vel = velocity;
+
+  double dt = PERIOD / subticks;
+
+  for (int i = 0; i < 120; i++) {
+    points.add(pos);
+
+    // Integrate position
+    pos = pos.plus(vel.times(dt));
+
+    // Integrate velocity (gravity only)
+    vel = vel.plus(GRAVITY.times(dt));
+
+    // Stop when we hit the floor
+    if (pos.getZ() <= FUEL_RADIUS) {
+      break;
+    }
+  }
+
+  trajectoryPublisher.set(points.toArray(new Translation3d[0]));
+}
+
+
 
   /** Start the simulation. `updateSim` must still be called every loop */
   public void start() {
@@ -492,6 +650,7 @@ private static final int CAPACITY = 5;
     if (!running) return;
 
     stepSim();
+    launchFuelAlongArc();
   }
 
   /** Run the simulation forward 1 time step (0.02s) */
@@ -510,6 +669,7 @@ private static final int CAPACITY = 5;
     }
 
     logFuels();
+    logHubArc();
   }
 
   /**
