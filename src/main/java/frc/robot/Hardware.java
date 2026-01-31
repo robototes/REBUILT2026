@@ -12,7 +12,7 @@ public class Hardware {
   public static final int HOOD_MOTOR_ID = 18;
 
   // Indexing Motors
-  public static final int INDEX_MOTOR_ID = 19;
+  public static final int INDEX_MOTOR_ID = 19; // Also called feeder
   public static final int SPINDEXER_MOTOR_ID = 20;
 
   // Climb Motor

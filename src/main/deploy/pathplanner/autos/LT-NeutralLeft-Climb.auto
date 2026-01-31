@@ -19,13 +19,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Intake"
+            "pathName": "LT-NeutralLeft-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Shoot"
+            "pathName": "LB-NeutralLeft-Back"
           }
         },
         {
@@ -37,31 +37,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Shoot-Second"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralLeft-Shoot-Second-Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralLeft-Shoot-Third"
+            "pathName": "LT-Climb"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "climb"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "BumpLeft-Climb"
           }
         }
       ]
