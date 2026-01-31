@@ -39,7 +39,6 @@ public class VisionSubsystem extends SubsystemBase {
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
-  private boolean visionIsAlwaysRight;
 
   private boolean disableVision;
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
@@ -55,7 +54,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   // state
   private double lastTimestampSeconds = 0;
-  private Pose2d lastFieldPose = new Pose2d(-1, -1, new Rotation2d());
+  public Pose2d lastFieldPose = new Pose2d(-1, -1, new Rotation2d());
   private double distance = 0;
   private double tagAmbiguity = 0;
   private CommandSwerveDrivetrain drivetrain;
@@ -73,7 +72,6 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("time since last reading", getTimeSinceLastReading());
     SmartDashboard.putNumber("tag ambiguity", getTagAmbiguity());
     disableVision = SmartDashboard.getBoolean("Disable Vision", false);
-    visionIsAlwaysRight = SmartDashboard.getBoolean("VisionIsAlwaysRight", true);
   }
 
   public void update() {
@@ -99,7 +97,6 @@ public class VisionSubsystem extends SubsystemBase {
       LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
 
     disableVision = SmartDashboard.getBoolean("Disable Vision", false);
-    visionIsAlwaysRight = SmartDashboard.getBoolean("VisionIsAlwaysRight", true);
     if (disableVision) {
       return;
     }
@@ -138,9 +135,6 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       if (!pose_bad) {
-        if (visionIsAlwaysRight) {
-          drivetrain.resetPose(fieldPose3d.toPose2d());
-        }
         drivebaseWrapper.addVisionMeasurement(
             fieldPose3d.toPose2d(),
             timestampSeconds,
@@ -168,7 +162,6 @@ public class VisionSubsystem extends SubsystemBase {
       LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
 
     disableVision = SmartDashboard.getBoolean("Disable Vision", false);
-    visionIsAlwaysRight = SmartDashboard.getBoolean("VisionIsAlwaysRight", true);
     if (disableVision) {
       return;
     }
@@ -207,9 +200,6 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       if (!pose_bad) {
-        if (visionIsAlwaysRight) {
-          drivetrain.resetPose(fieldPose3d.toPose2d());
-        }
         drivebaseWrapper.addVisionMeasurement(
             fieldPose3d.toPose2d(),
             timestampSeconds,

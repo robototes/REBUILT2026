@@ -131,6 +131,13 @@ public class Controls {
                 .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
                 .withName("Reset gyro"));
 
+    driverController
+        .a()
+        .onTrue(
+            s.drivebaseSubsystem
+                .runOnce(() -> s.drivebaseSubsystem.resetPose(s.visionSubsystem.lastFieldPose))
+                .withName("Now Drive Pose is Vision Pose"));
+
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
   }
