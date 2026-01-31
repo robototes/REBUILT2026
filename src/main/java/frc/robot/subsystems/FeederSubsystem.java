@@ -78,14 +78,14 @@ public class FeederSubsystem extends SubsystemBase {
     return runOnce(
         () -> {
           setSpeed(feederSpeed);
-        });
+        }).withName("Start Feeder Motor");
   }
 
   public Command stopMotor() {
     return runOnce(
         () -> {
           setSpeed(0);
-        });
+        }).withName("Stop Feeder Motor");
   }
 
   // PLACEHOLDER FOR SENSOR CHECK
@@ -93,7 +93,7 @@ public class FeederSubsystem extends SubsystemBase {
     return runOnce(
         () -> {
           // TODO: add logic for ballNum going up after sensor triggers
-        });
+        }).withName("Check Feeder Sensor");
   }
 
   public int getBallsDetectedNum() {
