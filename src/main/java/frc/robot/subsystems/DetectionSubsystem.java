@@ -12,7 +12,7 @@ public class DetectionSubsystem {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private RawDetection[] detections;
-  private Pose3d fuelPose3d = null;
+  public Pose3d fuelPose3d = null;
   private CommandSwerveDrivetrain drivetrain;
 
   public DetectionSubsystem(CommandSwerveDrivetrain drivetrain) {

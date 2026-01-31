@@ -129,6 +129,7 @@ public class Robot extends TimedRobot {
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
     if (subsystems.detectionSubsystem != null) {
+      subsystems.detectionSubsystem.fuelPose3d = null;
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
     }
