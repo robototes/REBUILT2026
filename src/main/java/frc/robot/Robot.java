@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
@@ -35,6 +36,7 @@ public class Robot extends TimedRobot {
   private final int VIEWFINDER_PIPELINE = 1;
   private final int GAMEPIECE_PIPELINE = 2;
   private FuelSim fuelSimulation;
+  private final Mechanism2d mechanismRobot;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -93,6 +95,9 @@ public class Robot extends TimedRobot {
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
+
+    mechanismRobot = new Mechanism2d(30, 24);
+    SmartDashboard.putData("Mechanism2d", mechanismRobot);
   }
 
   /**
