@@ -35,7 +35,7 @@ public class LauncherConstants {
       public final double time;
 
       public LauncherDistanceDataPoint(
-          double m_hoodAngle, double m_flywheelPower, double m_distance, double m_time) {
+          double m_distance, double m_hoodAngle, double m_flywheelPower, double m_time) {
         this.hoodAngle = m_hoodAngle;
         this.flywheelPower = m_flywheelPower;
         this.distance = m_distance;
@@ -49,18 +49,17 @@ public class LauncherConstants {
       }
     }
 
-    private static final java.util.List<LauncherDistanceDataPoint> distanceData = new ArrayList<>();
+    private static final LauncherDistanceDataPoint[] distanceData = {
+      new LauncherDistanceDataPoint(2.0, 2300, 0.1, 0.7),
+      new LauncherDistanceDataPoint(3.0, 3300, 0.1, 1),
+      new LauncherDistanceDataPoint(4.0, 4300, 0.1, 1.3),
+    };
 
     private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
     private static InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
     private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
     static {
-      // add in data here
-      distanceData.add(new LauncherDistanceDataPoint(0.1, 2300, 2.0, 0.7));
-      distanceData.add(new LauncherDistanceDataPoint(0.1, 3300, 3.0, 1));
-      distanceData.add(new LauncherDistanceDataPoint(0.1, 4300, 4.0, 1.3));
-
       for (var point : distanceData) {
         flywheelMap.put(point.distance, point.flywheelPower);
         hoodMap.put(point.distance, point.hoodAngle);
