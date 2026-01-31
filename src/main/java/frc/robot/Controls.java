@@ -5,8 +5,6 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
-import javax.annotation.processing.SupportedAnnotationTypes;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
@@ -28,7 +26,7 @@ import frc.robot.subsystems.auto.FuelAutoAlign;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 
-//TODO: do me as well!!
+// TODO: do me as well!!
 @SuppressWarnings("unused")
 public class Controls {
   // The robot's subsystems and commands are defined here...
@@ -211,9 +209,9 @@ public class Controls {
                 LEDs.updateLEDs(LEDs.outtakeColor).withName("Show outtake color"))); // green
     LedTestController.y()
         .onTrue(
-          Commands.sequence(
-              // LEDs.turnOffLEDS().withName("Show off color"),
-              LEDs.updateLEDs(LEDs.defaultColor).withName("Show default color"))); // red
+            Commands.sequence(
+                // LEDs.turnOffLEDS().withName("Show off color"),
+                LEDs.updateLEDs(LEDs.defaultColor).withName("Show default color"))); // red
     LedTestController.leftBumper()
         .whileTrue(
             LEDs.alternateColors(LEDs.climbColor, LEDs.intakeColor)
