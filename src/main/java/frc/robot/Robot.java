@@ -12,9 +12,6 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
@@ -38,9 +35,6 @@ public class Robot extends TimedRobot {
   private final int VIEWFINDER_PIPELINE = 1;
   private FuelSim fuelSimulation;
 
-  Mechanism2d mech;
-  MechanismRoot2d pivotShoulder;
-  MechanismLigament2d m_pivot;
 
 
 

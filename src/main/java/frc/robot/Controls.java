@@ -28,7 +28,6 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
-  private final IntakeSubsystem intakeSubsystem;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
 
@@ -63,7 +62,6 @@ public class Controls {
   public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
     s = subsystems;
-    intakeSubsystem = new IntakeSubsystem(true, true);
     configureDrivebaseBindings();
     configureSpindexerBindings();
     configureFeederBindings();
@@ -169,10 +167,10 @@ public class Controls {
   }
 
   private void configureIntakeBindings() {
-    if (intakeSubsystem == null){
+    if (s.intakeSubsystem == null) {
       return;
     }
-      driverController.b().whileTrue(intakeSubsystem.runIntake(1));
+      driverController.b().whileTrue(s.intakeSubsystem.runIntake(1));
   }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

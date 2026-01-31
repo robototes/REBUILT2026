@@ -49,7 +49,9 @@ public class Subsystems {
       drivebaseWrapper = new DrivebaseWrapper();
     }
     if (INTAKEROLLERS_ENABLED && INTAKEPIVOT_ENABLED){
-      intakeSubsystem = new IntakeSubsystem(true, true);
+      intakeSubsystem = new IntakeSubsystem(INTAKEPIVOT_ENABLED, INTAKEROLLERS_ENABLED);
+    } else {
+      intakeSubsystem = null;
     }
 
     if (VISION_ENABLED) {
