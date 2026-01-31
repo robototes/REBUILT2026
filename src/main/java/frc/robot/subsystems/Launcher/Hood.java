@@ -33,7 +33,8 @@ public class Hood extends SubsystemBase {
 
   private DoubleTopic positionTopic; // hood pose in rotations
   private DoublePublisher positionPub;
-
+  private DoubleTopic goalTopic; // hood pose in rotations
+  private DoublePublisher goalPub;
   @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
@@ -69,6 +70,9 @@ public class Hood extends SubsystemBase {
     positionTopic = nt.getDoubleTopic("/hood/position");
     positionPub = positionTopic.publish();
     positionPub.set(0);
+    goalTopic = nt.getDoubleTopic("/hood/goal");
+    goalPub = goalTopic.publish();
+    goalPub.set(request.Position);
 
     targetPosition = new NtTunableDouble("/hood/targetPosition", 0.0);
   }
@@ -125,6 +129,7 @@ public class Hood extends SubsystemBase {
   public void periodic() {
     setHoodPosition(targetPosition.get());
     positionPub.set(hood.getPosition().getValueAsDouble());
+    goalPub.set(request.Position);
   }
 
   public double getHoodPosition() {

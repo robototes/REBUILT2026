@@ -1,7 +1,10 @@
 package frc.robot.subsystems.Launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -21,7 +24,7 @@ public class HoodSim {
   private final Mechanism2d mechanism;
   private final MechanismLigament2d hoodLigament;
 
-  private static final double GEAR_RATIO = 2.90909;
+  private static final double GEAR_RATIO = 23.2727;
   private static final double ARM_LENGTH_METERS = Units.inchesToMeters(7);
 
   public HoodSim(TalonFX hoodMotor) {
@@ -30,17 +33,19 @@ public class HoodSim {
     }
 
     simState = hoodMotor.getSimState();
+    simState.setMotorType(MotorType.KrakenX44);
+    simState.Orientation = ChassisReference.Clockwise_Positive;
 
     armSim =
         new SingleJointedArmSim(
             DCMotor.getKrakenX44(1),
             GEAR_RATIO,
-            SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, .5),
+            SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, 1),
             ARM_LENGTH_METERS,
-            Units.degreesToRadians(12),
-            Units.degreesToRadians(60),
+            Units.degreesToRadians(-540),
+            Units.degreesToRadians(540),
             false,
-            Units.degreesToRadians(12));
+            Units.degreesToRadians(0));
 
     mechanism = new Mechanism2d(60, 60);
     MechanismRoot2d root = mechanism.getRoot("hoodRoot", 30, 10);
@@ -53,7 +58,7 @@ public class HoodSim {
 
   public void update() {
     // Run physics
-    armSim.setInput(-simState.getMotorVoltage());
+    armSim.setInput(simState.getMotorVoltage());
     armSim.update(0.02);
 
     // Convert arm into motor units
