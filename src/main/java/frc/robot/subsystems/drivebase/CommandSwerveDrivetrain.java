@@ -9,14 +9,16 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -210,15 +212,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
-    if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+    if (RobotBase.isSimulation()
+        || !m_hasAppliedOperatorPerspective
+        || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
           .ifPresent(
-              allianceColor -> {
-                setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? kRedAlliancePerspectiveRotation
-                        : kBlueAlliancePerspectiveRotation);
-                m_hasAppliedOperatorPerspective = true;
+              alliance -> {
+                this.setOperatorPerspectiveForward(
+                    alliance == DriverStation.Alliance.Blue
+                        ? kBlueAlliancePerspectiveRotation
+                        : kRedAlliancePerspectiveRotation);
               });
     }
   }
@@ -261,5 +264,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   // method for braking the motors after coasting
   public void brakeMotors() {
     configNeutralMode(NeutralModeValue.Brake);
+  }
+
+  public boolean isStationary() {
+    var speeds = getState().Speeds;
+    return MathUtil.isNear(0, speeds.vxMetersPerSecond, 0.01)
+        && MathUtil.isNear(0, speeds.vyMetersPerSecond, 0.01)
+        && MathUtil.isNear(0, speeds.omegaRadiansPerSecond, Units.degreesToRadians(2));
   }
 }

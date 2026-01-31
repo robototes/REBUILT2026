@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
@@ -33,7 +34,12 @@ public class Robot extends TimedRobot {
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
+  private final int GAMEPIECE_PIPELINE = 2;
   private FuelSim fuelSimulation;
+  private final Mechanism2d mechanismRobot;
+
+
+
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -92,6 +98,9 @@ public class Robot extends TimedRobot {
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
+
+    mechanismRobot = new Mechanism2d(30, 24);
+    SmartDashboard.putData("Mechanism2d", mechanismRobot);
   }
 
   /**
@@ -109,8 +118,14 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      subsystems.visionSubsystem.update();
+      if (!subsystems.visionSubsystem.isViewFinder()) {
+        subsystems.visionSubsystem.update();
+      }
+    }
+    if (subsystems.detectionSubsystem != null) {
+      if (!subsystems.detectionSubsystem.isViewFinder()) {
+        subsystems.detectionSubsystem.update();
+      }
     }
   }
 
@@ -119,14 +134,23 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, VIEWFINDER_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
+    }
+    if (subsystems.detectionSubsystem != null) {
+      subsystems.detectionSubsystem.fuelPose3d = null;
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
     }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+    }
+    if (subsystems.detectionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
