@@ -39,6 +39,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -66,14 +67,18 @@ public class IntakeSubsystem extends SubsystemBase {
     private final FlywheelSim rightRollerSim;
     private final ElevatorSim pivotSim;
     private final SingleJointedArmSim pivotSimV2;
-    private final Mechanism2d mech;
     LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
     LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40, 1, 1);
 
 
     double pivotAngle;
-    private final double PIVOT_GEAR_RATIO = (16.0/60.0) * (34.0/68.0) * (18.0/40.0); // this is a complete guess that i took from the demo branch
+    private final double PIVOT_GEAR_RATIO =
+    (16.0/60.0) * (34.0/68.0) * (18.0/40.0); // this is a complete guess that i took from the demo branch
 
+    Mechanism2d mech = new Mechanism2d(1, 1);
+    MechanismRoot2d pivotShoulder = mech.getRoot("Shoulder", 0.178/2.0, 0.0);
+    MechanismLigament2d pivotArm = pivotShoulder.append(
+        new MechanismLigament2d("pivot", Units.inchesToMeters(10.919), 2));
 
 
     public IntakeSubsystem(boolean intakepivotEnabled, boolean intakerollersEnabled) {
@@ -128,21 +133,18 @@ public class IntakeSubsystem extends SubsystemBase {
         this.rightRollerPub = rightRollerTopic.publish();
 
 
-
-
-        // pivot sim
+        // old pivot sim
+        // TODO: remove this later
         var nt2 = NetworkTableInstance.getDefault();
         this.pivotTopic = nt2.getDoubleTopic("pivot position/position");
         this.pivotPub = pivotTopic.publish();
-        this.pivotSub = pivotTopic.subscribe(getCurrentPivotPos());
+        this.pivotSub = pivotTopic.subscribe(0);
 
-        mech = new Mechanism2d(1, 1);
-        MechanismRoot2d pivotShoulder = mech.getRoot("Shoulder", 0.178/2.0, 0.0);
-        MechanismLigament2d pivotArm = pivotShoulder.append(new MechanismLigament2d("pivot", Units.inchesToMeters(10.919), 2));// angle is a guess cuz idk how to use cad tools
+        // new pivot sim
+            SmartDashboard.putData("Intake Arm", mech);
+            // angle is a guess cuz idk how to use cad tools
 
     }
-
-
     // configs
     public void TalonFXPivotConfigs() {
         var talonFXConfigs1 = new TalonFXConfiguration();
@@ -177,12 +179,12 @@ public class IntakeSubsystem extends SubsystemBase {
         rollersCfg.apply(talonFXConfigs2);
         rollersCFG2.apply(talonFXConfigs2);
     }
-        public double getCurrentPivotPos() {
-            currentPivotPos = pivotMotor.getPosition().getValueAsDouble();
-            return currentPivotPos;
-        }
+        // public double getCurrentPivotPos() {
+        //     currentPivotPos = pivotMotor.getPosition().getValueAsDouble();
+        //     return currentPivotPos;
+        // }
         public double getShoulderRotations() {
-            return pivotMotor.getPosition().getValueAsDouble()*PIVOT_GEAR_RATIO;
+            return pivotMotor.getPosition().getValueAsDouble() * PIVOT_GEAR_RATIO;
         }
 
     public Command runIntake(double speed) {
