@@ -74,9 +74,12 @@ public class IntakeSubsystem extends SubsystemBase {
     double pivotAngle;
     private final double PIVOT_GEAR_RATIO = (16.0/60.0) * (34.0/68.0) * (18.0/40.0); // this is a complete guess that i took from the demo branch
 
+
+
     public IntakeSubsystem(boolean intakepivotEnabled, boolean intakerollersEnabled) {
         speed = 0;
         pivotAngle = 0;
+
         if (intakepivotEnabled) {
             pivotMotor = new TalonFX(Hardware.PIVOT_MOTOR_ID);
 
@@ -125,6 +128,8 @@ public class IntakeSubsystem extends SubsystemBase {
         this.rightRollerPub = rightRollerTopic.publish();
 
 
+
+
         // pivot sim
         var nt2 = NetworkTableInstance.getDefault();
         this.pivotTopic = nt2.getDoubleTopic("pivot position/position");
@@ -135,8 +140,8 @@ public class IntakeSubsystem extends SubsystemBase {
         MechanismRoot2d pivotShoulder = mech.getRoot("Shoulder", 0.178/2.0, 0.0);
         MechanismLigament2d pivotArm = pivotShoulder.append(new MechanismLigament2d("pivot", Units.inchesToMeters(10.919), 2));// angle is a guess cuz idk how to use cad tools
 
-
     }
+
 
     // configs
     public void TalonFXPivotConfigs() {
