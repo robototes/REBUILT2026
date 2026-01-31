@@ -76,24 +76,27 @@ public class FeederSubsystem extends SubsystemBase {
 
   public Command startMotor() {
     return runOnce(
-        () -> {
-          setSpeed(feederSpeed);
-        });
+            () -> {
+              setSpeed(feederSpeed);
+            })
+        .withName("Start Feeder Motor");
   }
 
   public Command stopMotor() {
     return runOnce(
-        () -> {
-          setSpeed(0);
-        });
+            () -> {
+              setSpeed(0);
+            })
+        .withName("Stop Feeder Motor");
   }
 
   // PLACEHOLDER FOR SENSOR CHECK
   public Command checkSensor() {
     return runOnce(
-        () -> {
-          // TODO: add logic for ballNum going up after sensor triggers
-        });
+            () -> {
+              // TODO: add logic for ballNum going up after sensor triggers
+            })
+        .withName("Check Feeder Sensor");
   }
 
   public int getBallsDetectedNum() {

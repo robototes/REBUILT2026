@@ -8,6 +8,7 @@ import static frc.robot.Subsystems.SubsystemConstants.INTAKEROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
@@ -40,7 +41,7 @@ public class Subsystems {
   public final FeederSubsystem feederSubsystem;
   public final IntakeSubsystem intakeSubsystem;
 
-  public Subsystems() {
+  public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
     if (DRIVEBASE_ENABLED) {
