@@ -13,19 +13,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LB-NeutralLeft"
+            "pathName": "LB-NeutralLeft-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Intake"
+            "pathName": "LT-NeutralLeft-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-Shoot"
+            "pathName": "LB-NeutralLeft-Back"
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BumpLeft-Climb"
+            "pathName": "LT-Climb"
           }
         },
         {
