@@ -5,8 +5,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import java.util.ArrayList;
 
 public class LauncherConstants {
   private static final double LAUNCHER_OFFSET_INCHES = 12;
@@ -20,35 +20,39 @@ public class LauncherConstants {
     public final double hoodAngle;
     public final double flywheelPower;
     public final double distance;
+    public final double time;
 
     public LauncherDistanceDataPoint(
-        double m_hoodAngle, double m_flywheelPower, double m_distance) {
+        double m_distance, double m_hoodAngle, double m_flywheelPower, double m_time) {
       this.hoodAngle = m_hoodAngle;
       this.flywheelPower = m_flywheelPower;
       this.distance = m_distance;
+      this.time = m_time;
     }
 
     @Override
     public String toString() {
       return String.format(
-          "Distance: %f, flywheelPower: %f, hoodAngle: %f", distance, flywheelPower, hoodAngle);
+          "Distance: %f, flywheelPower: %f, hoodAngle: %f, time: %f",
+          distance, flywheelPower, hoodAngle, time);
     }
   }
 
-  private static final java.util.List<LauncherDistanceDataPoint> distanceData = new ArrayList<>();
+  private static final LauncherDistanceDataPoint[] distanceData = {
+    new LauncherDistanceDataPoint(2.0, 0.1, 2300, 0.7),
+    new LauncherDistanceDataPoint(3.0, 0.1, 3300, 1),
+    new LauncherDistanceDataPoint(4.0, 0.1, 4300, 1.3),
+  };
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
   private static InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
+  private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
-    // add in data here
-    distanceData.add(new LauncherDistanceDataPoint(0.1, 2300, 2.0));
-    distanceData.add(new LauncherDistanceDataPoint(0.1, 3300, 3.0));
-    distanceData.add(new LauncherDistanceDataPoint(0.1, 4300, 4.0));
-
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
+      timeMap.put(point.distance, point.time);
     }
   }
 
@@ -56,10 +60,13 @@ public class LauncherConstants {
     return flywheelMap.get(distance);
   }
 
-  public static double getFlywheelSpeedFromPose2d(Translation2d hub, Pose2d robot) {
+  public static Translation2d launcherFromRobot(Pose2d robot) {
     Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, robot.getRotation());
-    robot = robot.plus(fieldRelativeLauncherOffset);
-    double distance = robot.getTranslation().getDistance(hub);
+    return robot.plus(fieldRelativeLauncherOffset).getTranslation();
+  }
+
+  public static double getFlywheelSpeedFromPose2d(Translation2d hub, Pose2d robot) {
+    double distance = launcherFromRobot(robot).getDistance(hub);
     return getFlywheelSpeedFromDistance(distance);
   }
 
@@ -68,9 +75,38 @@ public class LauncherConstants {
   }
 
   public static double getHoodAngleFromPose2d(Translation2d hub, Pose2d robot) {
-    Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, robot.getRotation());
-    robot = robot.plus(fieldRelativeLauncherOffset);
-    double distance = robot.getTranslation().getDistance(hub);
+    double distance = launcherFromRobot(robot).getDistance(hub);
     return getHoodAngleFromDistance(distance);
+  }
+
+  public static double getTimeFromDistance(double distance) {
+    return timeMap.get(distance);
+  }
+
+  // Move a target a set time in the future along a velocity defined by fieldSpeeds
+  public static Translation2d predictTargetPos(
+      Translation2d target, ChassisSpeeds fieldSpeeds, double timeOfFlight) {
+    double predictedX = target.getX() - fieldSpeeds.vxMetersPerSecond * timeOfFlight;
+    double predictedY = target.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight;
+
+    return new Translation2d(predictedX, predictedY);
+  }
+
+  public static Translation2d iterativeMovingShotFromFunnelClearance(
+      Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target, int iterations) {
+    // Perform initial estimation (assuming unmoving robot) to get time of flight estimate
+    double distance = launcherFromRobot(robot).getDistance(target);
+    double timeOfFlight = getTimeFromDistance(distance);
+    Translation2d predictedTarget = target;
+
+    // Iterate the process, getting better time of flight estimations and updating the predicted
+    // target accordingly
+    for (int i = 0; i < iterations; i++) {
+      predictedTarget = predictTargetPos(target, fieldSpeeds, timeOfFlight);
+      distance = launcherFromRobot(robot).getDistance(predictedTarget);
+      timeOfFlight = getTimeFromDistance(distance);
+    }
+
+    return predictedTarget;
   }
 }
