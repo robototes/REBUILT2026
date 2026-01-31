@@ -32,6 +32,7 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int INTAKE_TEST_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -42,6 +43,8 @@ public class Controls {
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+  private final CommandXboxController intakeTestController =
+      new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -187,7 +190,7 @@ public class Controls {
     if (s.intakeSubsystem == null) {
       return;
     }
-    driverController.b().whileTrue(s.intakeSubsystem.runIntake(1));
+    intakeTestController.b().whileTrue(s.intakeSubsystem.runIntake(1));
   }
 
   /**

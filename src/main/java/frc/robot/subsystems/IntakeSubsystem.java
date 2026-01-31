@@ -37,7 +37,7 @@ public class IntakeSubsystem extends SubsystemBase {
   private TalonFX pivotMotor;
   private final TalonFX leftRollers; // one
   private final TalonFX rightRollers; // two
-  final MotionMagicVoltage pivot_request1 = new MotionMagicVoltage(0);
+  private final MotionMagicVoltage pivot_request1 = new MotionMagicVoltage(0);
   double speed;
   private static final double PIVOT_DEPLOYED_POS = 0;
   private static final double PIVOT_RETRACTED_POS =
@@ -53,10 +53,8 @@ public class IntakeSubsystem extends SubsystemBase {
   //   LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40,
   // 1, 1);
 
-  private final double PIVOT_GEAR_RATIO =
-      (16.0 / 60.0)
-          * (34.0 / 68.0)
-          * (18.0 / 40.0); // this is a complete guess that i took from the demo/training repo
+  private static final double PIVOT_GEAR_RATIO = (54.0 / 12.0) * (54.0 / 18.0) * (48.0 / 18.0);
+  private static final double ARM_LENGTH_METERS = Units.inchesToMeters(10.919);
 
   private final MechanismRoot2d pivotShoulder;
   private final MechanismLigament2d pivotArm;
@@ -65,8 +63,7 @@ public class IntakeSubsystem extends SubsystemBase {
       boolean intakepivotEnabled, boolean intakerollersEnabled, Mechanism2d mechanism2d) {
     speed = 0;
     pivotShoulder = mechanism2d.getRoot("Shoulder", 0.178 / 2.0, 0.2);
-    pivotArm =
-        pivotShoulder.append(new MechanismLigament2d("arm", Units.inchesToMeters(10.919), 90));
+    pivotArm = pivotShoulder.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
     if (intakepivotEnabled) {
       pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
       TalonFXPivotConfigs();
@@ -90,9 +87,9 @@ public class IntakeSubsystem extends SubsystemBase {
       pivotSimV2 =
           new SingleJointedArmSim(
               DCMotor.getKrakenX60(1),
-              5,
-              0.01,
-              8,
+              PIVOT_GEAR_RATIO,
+              SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, 2),
+              Units.inchesToMeters(10.919),
               Units.degreesToRadians(0), // minimum arm angle
               Units.degreesToRadians(120), // maximum arm angle
               false,
@@ -148,7 +145,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public double getShoulderRotations() {
-    return pivotMotor.getPosition().getValueAsDouble() * PIVOT_GEAR_RATIO;
+    return pivotMotor.getPosition().getValueAsDouble() / PIVOT_GEAR_RATIO;
   }
 
   public Command runIntake(double speed) {

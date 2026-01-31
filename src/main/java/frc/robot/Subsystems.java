@@ -52,7 +52,7 @@ public class Subsystems {
       drivebaseSubsystem = null;
       drivebaseWrapper = new DrivebaseWrapper();
     }
-    if (INTAKEROLLERS_ENABLED && INTAKEPIVOT_ENABLED) {
+    if (INTAKEROLLERS_ENABLED || INTAKEPIVOT_ENABLED) {
       intakeSubsystem =
           new IntakeSubsystem(INTAKEPIVOT_ENABLED, INTAKEROLLERS_ENABLED, mechanism2d);
     } else {
