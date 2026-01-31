@@ -15,7 +15,7 @@ public class Index extends SubsystemBase {
   private NtTunableDouble speed;
 
   public Index() {
-    Index = new TalonFX(Hardware.INDEX_MOTOR_ID);
+    Index = new TalonFX(Hardware.FEEDER_MOTOR_ID);
     configureMotors();
 
     speed = new NtTunableDouble("/index/speed", 0.4);

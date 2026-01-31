@@ -16,7 +16,7 @@ public class Serializer extends SubsystemBase {
   private NtTunableDouble speed;
 
   public Serializer() {
-    Serializer = new TalonFX(Hardware.SERIALIZER_MOTOR_ID);
+    Serializer = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     configureMotors();
 
     speed = new NtTunableDouble("Serializer/speed", 0.4);
