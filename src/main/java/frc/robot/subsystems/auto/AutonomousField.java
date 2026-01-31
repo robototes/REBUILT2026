@@ -27,7 +27,7 @@ public class AutonomousField {
       ObjDoubleConsumer<Runnable> addPeriodic) {
 
     NetworkTableEntry speedMultiplier =
-        NetworkTableInstance.getDefault().getTable("Auto").getEntry("DisplaySpeed");
+        NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
 
     speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
 
