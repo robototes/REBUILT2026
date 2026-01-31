@@ -9,11 +9,13 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.auto.FuelAutoAlign;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -62,6 +64,9 @@ public class Controls {
     // Configure the trigger bindings
     s = subsystems;
     configureDrivebaseBindings();
+    if (s.detectionSubsystem != null) {
+      configureAutoAlignBindings();
+    }
     configureSpindexerBindings();
     configureFeederBindings();
   }
@@ -164,6 +169,10 @@ public class Controls {
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
   }
 
+  private void configureAutoAlignBindings() {
+    driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+  }
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
@@ -172,5 +181,19 @@ public class Controls {
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     return Commands.none();
+  }
+
+  public void vibrateDriveController(double vibration) {
+    if (!DriverStation.isAutonomous()) {
+      driverController.getHID().setRumble(RumbleType.kBothRumble, vibration);
+    }
+  }
+
+  public Command rumbleDriveController(double vibration, double seconds) {
+    return Commands.startEnd(
+            () -> vibrateDriveController(vibration), // start
+            () -> vibrateDriveController(0.0) // end
+            )
+        .withTimeout(seconds);
   }
 }
