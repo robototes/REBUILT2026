@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.IntakeSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -27,6 +28,7 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
+  private final IntakeSubsystem intakeSubsystem;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
 
@@ -61,9 +63,11 @@ public class Controls {
   public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
     s = subsystems;
+    intakeSubsystem = new IntakeSubsystem(true, true);
     configureDrivebaseBindings();
     configureSpindexerBindings();
     configureFeederBindings();
+    configureIntakeBindings();
   }
 
   private void configureSpindexerBindings() {
@@ -164,6 +168,12 @@ public class Controls {
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
   }
 
+  private void configureIntakeBindings() {
+    if (intakeSubsystem == null){
+      return;
+    }
+      driverController.b().whileTrue(intakeSubsystem.runIntake(1));
+  }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
