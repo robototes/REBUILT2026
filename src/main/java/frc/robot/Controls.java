@@ -31,6 +31,7 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -41,6 +42,8 @@ public class Controls {
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+  private final CommandXboxController launcherTuningController =
+      new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -196,6 +199,13 @@ public class Controls {
                                 s.flywheels.FLYWHEEL_TOLERANCE)))
                 // add feeding command here!
                 ));
+
+    launcherTuningController
+        .leftBumper()
+        .onTrue(s.flywheels.setVelocityCommand(s.flywheels.targetVelocity.get()));
+    launcherTuningController
+        .rightBumper()
+        .onTrue(s.hood.hoodPositionCommand(s.hood.targetPosition.get()));
   }
 
   /**

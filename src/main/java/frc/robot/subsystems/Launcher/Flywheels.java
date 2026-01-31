@@ -17,7 +17,6 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,7 +35,8 @@ public class Flywheels extends SubsystemBase {
   private final DoublePublisher velocityPub;
 
   private final MotionMagicVelocityVoltage request = new MotionMagicVelocityVoltage(0);
-  private final Follower follow = new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
+  private final Follower follow =
+      new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
   private final FlywheelSim Sim =
       new FlywheelSim(
@@ -44,11 +44,11 @@ public class Flywheels extends SubsystemBase {
           DCMotor.getKrakenX60(1),
           0);
 
-  private long lastVelocityUpdateTime = 0; // seconds
   public NtTunableDouble targetVelocity;
 
   public final double FLYWHEEL_TOLERANCE = 5; // RPS
-  public final boolean TUNER_CONTROLLED = false; // boolean to decide if it should be controlled using the NtTunableDouble
+  public final boolean TUNER_CONTROLLED =
+      false; // boolean to decide if it should be controlled using the NtTunableDouble
 
   // Constructor
   public Flywheels() {
@@ -100,8 +100,7 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps;
               FlywheelOne.setControl(request);
-              FlywheelTwo.setControl(follow
-                  );
+              FlywheelTwo.setControl(follow);
             })
         .withName("Set Flywheel Velocity");
   }
@@ -164,12 +163,6 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
-    if (targetVelocity.hasChangedSince(lastVelocityUpdateTime)) {
-      TimestampedDouble currentTarget = targetVelocity.getAtomic();
-      // setVelocityRPM(currentTarget.value);
-      lastVelocityUpdateTime = currentTarget.timestamp;
-    }
-
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
   }
