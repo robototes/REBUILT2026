@@ -15,10 +15,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
-import frc.robot.util.AllianceUtils;
-import frc.robot.util.LauncherConstants;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -197,22 +196,8 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.sequence(
-                Commands.parallel(
-                    s.flywheels.setVelocityCommand(
-                        LauncherConstants.getFlywheelSpeedFromPose2d(
-                            AllianceUtils.getHubTranslation2d(),
-                            s.drivebaseSubsystem.getState().Pose)),
-                    s.hood.hoodPositionCommand(
-                        LauncherConstants.getHoodAngleFromPose2d(
-                            AllianceUtils.getHubTranslation2d(),
-                            s.drivebaseSubsystem.getState().Pose)),
-                    Commands.waitUntil(
-                        () ->
-                            s.flywheels.atTargetVelocity(
-                                LauncherConstants.getFlywheelSpeedFromPose2d(
-                                    AllianceUtils.getHubTranslation2d(),
-                                    s.drivebaseSubsystem.getState().Pose),
-                                s.flywheels.FLYWHEEL_TOLERANCE)))
+                AutoAim.AutoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                Commands.parallel(s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())
                 // add feeding command here!
                 ));
 

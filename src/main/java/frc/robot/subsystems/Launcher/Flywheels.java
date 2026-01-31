@@ -116,8 +116,8 @@ public class Flywheels extends SubsystemBase {
         .withName("Set Flywheel Velocity");
   }
 
-  public void setVelocityRPM(double rpm) {
-    request.Velocity = rpm / 60;
+  public void setVelocityRPS(double rps) {
+    request.Velocity = rps;
     FlywheelOne.setControl(request);
     FlywheelTwo.setControl(follow);
   }
