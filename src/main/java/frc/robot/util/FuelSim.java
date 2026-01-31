@@ -341,7 +341,7 @@ private static final int CAPACITY = 5;
                     private double robotLength; // size along the robot's x axis
                     private double bumperHeight;
                     private ArrayList<SimIntake> intakes = new ArrayList<>();
-                    private static final double SHOOTER_HEIGHT = 1.1; // meters (adjust to taste)
+                    private static final double SHOOTER_HEIGHT = 0.1; // meters (adjust to taste)
 
                     /** Returns a singleton instance of FuelSim */
                     public static FuelSim getInstance() {
@@ -446,56 +446,58 @@ private final StructArrayPublisher<Translation3d> trajectoryPublisher =
         .getTable("Game Pieces")
         .getStructArrayTopic("Fuel Simulation/Trajectory", Translation3d.struct)
         .publish();
+        private int intakeCount = 0;
 
 
-  /** Adds array of `Translation3d`'s to NetworkTables at "/Fuel Simulation/Fuels" */
-  public void logFuels() {
-    fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
+          /** Adds array of `Translation3d`'s to NetworkTables at "/Fuel Simulation/Fuels" */
+          public void logFuels() {
+            fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
 
-  }
- private void logHubArc() {
-    if (robotSupplier == null) return;
+          }
+         private void logHubArc() {
+            if (robotSupplier == null) return;
 
-    Pose2d robot = robotSupplier.get();
+            Pose2d robot = robotSupplier.get();
 
-    // Pick nearest hub
-    Hub hub =
-        robot.getTranslation().getDistance(Hub.RED_HUB.center)
-            < robot.getTranslation().getDistance(Hub.BLUE_HUB.center)
-            ? Hub.RED_HUB
-            : Hub.BLUE_HUB;
+            // Pick nearest hub
+            Hub hub =
+                robot.getTranslation().getDistance(Hub.RED_HUB.center)
+                    < robot.getTranslation().getDistance(Hub.BLUE_HUB.center)
+                    ? Hub.RED_HUB
+                    : Hub.BLUE_HUB;
 
-    // Compute arc points
-    ArrayList<Translation3d> points = new ArrayList<>();
+            // Compute arc points
+            ArrayList<Translation3d> points = new ArrayList<>();
 
-    Translation3d start = new Translation3d(robot.getX(), robot.getY(), SHOOTER_HEIGHT);
-    Translation3d target = hub.exit;
+            Translation3d start = new Translation3d(robot.getX(), robot.getY(), SHOOTER_HEIGHT);
+            Translation3d target = hub.exit;
 
-    // Horizontal vector & direction
-    Translation3d horizontal = new Translation3d(target.getX() - start.getX(), target.getY() - start.getY(), 0);
-    double horizontalDist = horizontal.getNorm();
-    Translation3d horizontalDir = horizontal.div(horizontalDist);
+            // Horizontal vector & direction
+            Translation3d horizontal = new Translation3d(target.getX() - start.getX(), target.getY() - start.getY(), 0);
+            double horizontalDist = horizontal.getNorm();
+            Translation3d horizontalDir = horizontal.div(horizontalDist);
 
-    // Max height above shooter and hub for full parabola
-    double maxHeight = Math.max(start.getZ(), target.getZ()) + 1.0; // 1 meter above
+            // Max height above shooter and hub for full parabola
+            double maxHeight = Math.max(start.getZ(), target.getZ()) + 1.0; // 1 meter above
 
-    int steps = 100; // number of points along arc
-    for (int i = 0; i <= steps; i++) {
-        double t = (double)i / steps;
+            int steps = 100; // number of points along arc
+            for (int i = 0; i <= steps; i++) {
+                double t = (double)i / steps;
 
-        // Linear interpolation for X/Y
-        Translation3d posXY = start.plus(horizontalDir.times(horizontalDist * t));
+                // Linear interpolation for X/Y
+                Translation3d posXY = start.plus(horizontalDir.times(horizontalDist * t));
 
-        // Parabolic interpolation for Z
-        double z = start.getZ() * (1 - t) + target.getZ() * t + 4 * (maxHeight - start.getZ()) * t * (1 - t);
+                // Parabolic interpolation for Z
+                double z = start.getZ() * (1 - t) + target.getZ() * t + 4 * (maxHeight - start.getZ()) * t * (1 - t);
 
-        points.add(new Translation3d(posXY.getX(), posXY.getY(), z));
-    }
+                points.add(new Translation3d(posXY.getX(), posXY.getY(), z));
+            }
 
-    // Publish the arc for visualization
-    trajectoryPublisher.set(points.toArray(new Translation3d[0]));
-}
-public static void launchFuelAlongArc() {
+            // Publish the arc for visualization
+            trajectoryPublisher.set(points.toArray(new Translation3d[0]));
+        }
+
+  public static void launchFuelAlongArc() {
     FuelSim sim = FuelSim.getInstance();
     Pose2d robotPose = sim.robotSupplier.get();
 
@@ -506,44 +508,27 @@ public static void launchFuelAlongArc() {
             ? FuelSim.Hub.RED_HUB
             : FuelSim.Hub.BLUE_HUB;
 
-    // Compute arc points
-    ArrayList<Translation3d> arcPoints = sim.computeHubArc(robotPose, hub);
+    // Launch all intake balls along exact arcs
+    while (sim.intakeCount > 0) {
+        ArrayList<Translation3d> arcPoints = sim.computeHubArc(robotPose, hub);
 
-    // Pick a point along the arc (middle for example)
-    Translation3d target = arcPoints.get(arcPoints.size() / 2);
+        // Spawn Fuel objects along the arc at each simulation step
+        new Thread(() -> {
+            for (Translation3d point : arcPoints) {
+                sim.fuels.add(sim.new Fuel(point)); // ball moves along the exact arc
+                try {
+                    Thread.sleep((long)(FuelSim.PERIOD * 1000 / FuelSim.subticks));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }).start();
 
-    // Start at robot’s shooter height
-    Translation3d start = new Translation3d(robotPose.getX(), robotPose.getY(), FuelSim.SHOOTER_HEIGHT);
-
-    // Compute horizontal distance along robot's heading
-    double heading = robotPose.getRotation().getRadians(); // robot heading in radians
-    double horizontalDist = Math.sqrt(Math.pow(target.getX() - start.getX(), 2)
-                                    + Math.pow(target.getY() - start.getY(), 2));
-
-    double dz = target.getZ() - start.getZ();
-    double g = 9.81;
-    double speed = 12.0; // adjust as needed
-
-    // Projectile angle solution
-    double discriminant = speed*speed*speed*speed - g*(g*horizontalDist*horizontalDist + 2*dz*speed*speed);
-    if (discriminant < 0) return;
-
-    double angleRad1 = Math.atan((speed*speed + Math.sqrt(discriminant)) / (g*horizontalDist));
-    double angleRad2 = Math.atan((speed*speed - Math.sqrt(discriminant)) / (g*horizontalDist));
-    double angleRad = Math.min(angleRad1, angleRad2);
-
-    // Use robot heading instead of target direction
-    double vx = speed * Math.cos(angleRad) * Math.cos(heading);
-    double vy = speed * Math.cos(angleRad) * Math.sin(heading);
-    double vz = speed * Math.sin(angleRad);
-
-    Translation3d velocity = new Translation3d(vx, vy, vz);
-
-    LinearVelocity vel = MetersPerSecond.of(velocity.getNorm());
-    Angle angle = Degrees.of(Math.toDegrees(angleRad));
-
-    FuelSim.launchFuel(vel, angle);
+        sim.intakeCount--;
+    }
 }
+
+
 
 
 

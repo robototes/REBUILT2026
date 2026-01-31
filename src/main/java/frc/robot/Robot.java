@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
@@ -76,12 +77,13 @@ public class Robot extends TimedRobot {
     0.4, 0.8,
     0.4, 0.8,
     () -> true,
-    () ->  FuelSim.launchFuel(
-    MetersPerSecond.of(12.0),
-   Degrees.of(45)
-)
+    () ->
+            FuelSim.launchFuel(
+                MetersPerSecond.of(12.0),
+                Degrees.of(45)));
 
-);
+
+
 
 
       fuelSimulation.start();
@@ -205,8 +207,7 @@ public class Robot extends TimedRobot {
   public void simulationPeriodic() {
     // This should go inside your simulation update loop (e.g., a periodic method or main sim loop)
 
-double g = 9.81; // gravity (m/s^2)
-double speed = 12.0; // launch speed in m/s
+
 
 // Loop through your fuel launchers or just launch one fuel
 
