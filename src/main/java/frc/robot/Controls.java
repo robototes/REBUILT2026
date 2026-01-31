@@ -197,9 +197,8 @@ public class Controls {
         .whileTrue(
             Commands.sequence(
                 AutoAim.AutoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                Commands.parallel(s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())
-                // add feeding command here!
-                ));
+                Commands.parallel(
+                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())));
 
     launcherTuningController
         .leftBumper()
@@ -209,7 +208,7 @@ public class Controls {
         .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
     launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
     launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
-    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
+    launcherTuningController.b().onTrue(s.hood.hoodPositionCommand(1));
   }
 
   /**

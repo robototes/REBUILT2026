@@ -136,7 +136,8 @@ public class Hood extends SubsystemBase {
   }
 
   public void setHoodPosition(double positionRotations) {
-    if (!hoodZeroed && !Robot.isSimulation()) {
+    if (!hoodZeroed) {
+      System.out.println("Hood not zero'd!");
       return;
     }
     hood.setControl(request.withPosition(positionRotations));
@@ -151,7 +152,7 @@ public class Hood extends SubsystemBase {
         .withName("Setting hood position - Supplied");
   }
 
-  private void zero() {
+  public void zero() {
     hood.setPosition(0);
     hoodZeroed = true;
   }
@@ -168,13 +169,14 @@ public class Hood extends SubsystemBase {
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
     return runEnd(
-        () -> {
-          // hood.setVoltage(voltageSupplier.get().in(Units.Volts));
-          hood.setControl(voltageRequest.withOutput(voltageSupplier.get()));
-        },
-        () -> {
-          hood.stopMotor();
-        });
+            () -> {
+              // hood.setVoltage(voltageSupplier.get().in(Units.Volts));
+              hood.setControl(voltageRequest.withOutput(voltageSupplier.get()));
+            },
+            () -> {
+              hood.stopMotor();
+            })
+        .withName("Voltage Control");
   }
 
   public Command autoZeroCommand() {
