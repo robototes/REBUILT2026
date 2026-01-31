@@ -28,7 +28,6 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -59,14 +58,15 @@ public class IntakeSubsystem extends SubsystemBase {
           * (34.0 / 68.0)
           * (18.0 / 40.0); // this is a complete guess that i took from the demo/training repo
 
-  Mechanism2d mech = new Mechanism2d(1, 1);
-  MechanismRoot2d pivotShoulder = mech.getRoot("Shoulder", 0.178 / 2.0, 0.2);
-  MechanismLigament2d pivotArm =
-      pivotShoulder.append(new MechanismLigament2d("arm", Units.inchesToMeters(10.919), 90));
+  private final MechanismRoot2d pivotShoulder;
+  private final MechanismLigament2d pivotArm;
 
-  public IntakeSubsystem(boolean intakepivotEnabled, boolean intakerollersEnabled) {
+  public IntakeSubsystem(
+      boolean intakepivotEnabled, boolean intakerollersEnabled, Mechanism2d mechanism2d) {
     speed = 0;
-
+    pivotShoulder = mechanism2d.getRoot("Shoulder", 0.178 / 2.0, 0.2);
+    pivotArm =
+        pivotShoulder.append(new MechanismLigament2d("arm", Units.inchesToMeters(10.919), 90));
     if (intakepivotEnabled) {
       pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
       TalonFXPivotConfigs();
@@ -109,8 +109,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
     this.rightRollerTopic = nt.getDoubleTopic("right intake status/speed in RPM");
     this.rightRollerPub = rightRollerTopic.publish();
-
-    SmartDashboard.putData("Intake Arm", mech);
   }
 
   // configs
