@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.sensors.LED_lights;
+import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 
@@ -34,9 +34,9 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
-  private static final int LED_CONTROLLER_PORT = 1;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int LED_CONTROLLER_PORT = 4;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -191,27 +191,21 @@ public class Controls {
   }
 
   private void configureLEDBindings() {
-    LED_lights LEDs = s.led_Lights;
+    LEDSubsystem LEDs = s.ledSubsystem;
+    if (s.ledSubsystem == null) {
+      // Stop running this method
+      return;
+    }
     LedTestController.a()
         .onTrue(
-            Commands.sequence(
-                // LEDs.turnOffLEDS().withName("Show off color"),
-                LEDs.updateLEDs(LEDs.intakeColor).withName("Show intake color"))); // yellow
+            LEDs.toggleColor(LEDs.intakeColor).withName("Toggle intake and on color")); // yellow
     LedTestController.b()
-        .onTrue(
-            Commands.sequence(
-                // LEDs.turnOffLEDS().withName("Show off color"),
-                LEDs.updateLEDs(LEDs.climbColor).withName("Show climb color"))); // blue
+        .onTrue(LEDs.toggleColor(LEDs.climbColor).withName("Toggle climb and on color")); // blue
     LedTestController.x()
         .onTrue(
-            Commands.sequence(
-                // LEDs.turnOffLEDS().withName("Show off color"),
-                LEDs.updateLEDs(LEDs.outtakeColor).withName("Show outtake color"))); // green
+            LEDs.toggleColor(LEDs.outtakeColor).withName("Toggle outtake and on color")); // green
     LedTestController.y()
-        .onTrue(
-            Commands.sequence(
-                // LEDs.turnOffLEDS().withName("Show off color"),
-                LEDs.updateLEDs(LEDs.defaultColor).withName("Show default color"))); // red
+        .onTrue(LEDs.toggleColor(LEDs.defaultColor).withName("Toggle default and on color")); // red
     LedTestController.leftBumper()
         .whileTrue(
             LEDs.alternateColors(LEDs.climbColor, LEDs.intakeColor)

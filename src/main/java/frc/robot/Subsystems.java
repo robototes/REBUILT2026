@@ -9,10 +9,10 @@ import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.sensors.LED_lights;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.FeederSubsystem;
+import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.SpindexerSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -33,7 +33,7 @@ public class Subsystems {
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;
-  public final LED_lights led_Lights;
+  public final LEDSubsystem ledSubsystem;
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
@@ -58,9 +58,9 @@ public class Subsystems {
     }
 
     if (LEDS_ENABLED) {
-      led_Lights = new LED_lights();
+      ledSubsystem = new LEDSubsystem();
     } else {
-      led_Lights = null;
+      ledSubsystem = null;
     }
 
     if (GAMEPIECE_DETECTION_ENABLED) {

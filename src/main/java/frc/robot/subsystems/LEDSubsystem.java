@@ -1,6 +1,4 @@
-package frc.robot.sensors;
-
-import static edu.wpi.first.units.Units.*;
+package frc.robot.subsystems;
 
 import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
@@ -8,8 +6,10 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -17,11 +17,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.LEDMode;
 import java.util.function.Supplier;
 
-public class LED_lights extends SubsystemBase {
+public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
   private final int CAN_ID = 15;
 
   private final int END_INDEX = 7;
+
   private final RainbowAnimation m_slot0Animation = new RainbowAnimation(0, END_INDEX);
   private CANdle candle = new CANdle(CAN_ID);
 
@@ -32,9 +33,10 @@ public class LED_lights extends SubsystemBase {
   public RGBWColor offColor = new RGBWColor(0, 0, 0); // off
 
   private boolean rainbowOn = false;
+  private boolean colorOn = false;
 
-  public LED_lights() {
-    setRainbowAnimation(0, 1, AnimationDirectionValue.Forward, Hertz.of(100));
+  public LEDSubsystem() {
+    setRainbowAnimation(0, 1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
   }
 
   /**
@@ -59,7 +61,7 @@ public class LED_lights extends SubsystemBase {
   }
 
   /**
-   * Sets Leds at specified {@link frc.robot.sensors.LED_lights#CAN_ID id} to color
+   * Sets Leds at specified {@link frc.robot.subsystems.LEDSubsystem#CAN_ID id} to color
    *
    * @param color
    */
@@ -79,13 +81,13 @@ public class LED_lights extends SubsystemBase {
         () -> {
           LEDMode currentMode = mode.get();
           if (currentMode == LEDMode.DEFAULT) {
-            updateLEDs(defaultColor);
+            CommandScheduler.getInstance().schedule(updateLEDs(defaultColor));
           } else if (currentMode == LEDMode.OUTTAKE_IN_PROGRESS) {
-            updateLEDs(outtakeColor);
+            CommandScheduler.getInstance().schedule(updateLEDs(outtakeColor));
           } else if (currentMode == LEDMode.INTAKE_IN_PROGRESS) {
-            updateLEDs(intakeColor);
+            CommandScheduler.getInstance().schedule(updateLEDs(intakeColor));
           } else if (currentMode == LEDMode.CLIMB_IN_PROGRESS) {
-            updateLEDs(climbColor);
+            CommandScheduler.getInstance().schedule(updateLEDs(climbColor));
           }
         });
   }
@@ -109,6 +111,27 @@ public class LED_lights extends SubsystemBase {
           } else {
             updateLEDs(colorB);
           }
+        },
+        this);
+  }
+
+  /**
+   * Toggles the rainbow animation on or off.
+   *
+   * <p>If the rainbow animation is not currently running, this command starts it. If it is already
+   * running, the animation is stopped.
+   *
+   * @return a {@link Command} that toggles the rainbow animation state
+   */
+  public Command toggleColor(RGBWColor A) {
+    return new InstantCommand(
+        () -> {
+          if (!colorOn) {
+            updateLEDs(A);
+          } else {
+            updateLEDs(offColor);
+          }
+          colorOn = !colorOn;
         },
         this);
   }
