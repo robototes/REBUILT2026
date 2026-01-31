@@ -2,6 +2,7 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKEPIVOT_ENABLED;
@@ -10,6 +11,7 @@ import static frc.robot.Subsystems.SubsystemConstants.INTAKEROLLERS_ENABLED;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
@@ -25,6 +27,7 @@ public class Subsystems {
     public static final boolean INTAKEPIVOT_ENABLED = true;
     public static final boolean INTAKEROLLERS_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
+    public static final boolean GAMEPIECE_DETECTION_ENABLED = false;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
   }
@@ -33,6 +36,7 @@ public class Subsystems {
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;
+  public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
   public final IntakeSubsystem intakeSubsystem;
@@ -61,6 +65,11 @@ public class Subsystems {
       visionSubsystem = null;
     }
 
+    if (GAMEPIECE_DETECTION_ENABLED) {
+      detectionSubsystem = new DetectionSubsystem(drivebaseSubsystem);
+    } else {
+      detectionSubsystem = null;
+    }
     if (SPINDEXER_ENABLED) {
       spindexerSubsystem = new SpindexerSubsystem();
     } else {
@@ -72,9 +81,5 @@ public class Subsystems {
     } else {
       feederSubsystem = null;
     }
-  }
-
-  public CommandSwerveDrivetrain getDrivetrain() {
-    return drivebaseSubsystem;
   }
 }
