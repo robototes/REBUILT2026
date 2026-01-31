@@ -41,8 +41,8 @@ public class IntakeSubsystem extends SubsystemBase {
   private final TalonFX rightRollers; // two
   final MotionMagicVoltage pivot_request1 = new MotionMagicVoltage(0);
   double speed;
-  private static final double PIVOT_DEPLOYED_POS = 1000;
-  private static final double PIVOT_RETRACTED_POS = 0;
+  private static final double PIVOT_DEPLOYED_POS = 0;
+  private static final double PIVOT_RETRACTED_POS = 1000; // change this value and ln 44 if u wanna change position
   private final DoubleTopic leftRollerTopic;
   private final DoubleTopic rightRollerTopic;
   private final DoublePublisher leftRollerPub;
@@ -51,7 +51,7 @@ public class IntakeSubsystem extends SubsystemBase {
   private final FlywheelSim rightRollerSim;
   private final SingleJointedArmSim pivotSimV2;
   LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
-  LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40, 1, 1);
+//   LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40, 1, 1);
 
   private final double PIVOT_GEAR_RATIO =
       (16.0 / 60.0)
@@ -61,20 +61,21 @@ public class IntakeSubsystem extends SubsystemBase {
   Mechanism2d mech = new Mechanism2d(1, 1);
   MechanismRoot2d pivotShoulder = mech.getRoot("Shoulder", 0.178 / 2.0, 0.2);
   MechanismLigament2d pivotArm =
-      pivotShoulder.append(new MechanismLigament2d("arm", Units.inchesToMeters(10.919), 0));
+      pivotShoulder.append(new MechanismLigament2d("arm", Units.inchesToMeters(10.919), 90));
 
   public IntakeSubsystem(boolean intakepivotEnabled, boolean intakerollersEnabled) {
     speed = 0;
 
     if (intakepivotEnabled) {
-      pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
-
+        pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
+        TalonFXPivotConfigs();
     } else {
       pivotMotor = null;
     }
     if (intakerollersEnabled) {
       leftRollers = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID);
       rightRollers = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
+      TalonFXRollerConfigs();
     } else {
       leftRollers = null;
       rightRollers = null;
@@ -88,13 +89,13 @@ public class IntakeSubsystem extends SubsystemBase {
       pivotSimV2 =
           new SingleJointedArmSim(
               DCMotor.getKrakenX60(1),
-              0.5,
+              5,
               0.01,
-              1,
-              Units.degreesToRadians(-90),
-              Units.degreesToRadians(90),
+              8,
+              Units.degreesToRadians(0), // minimum arm angle
+              Units.degreesToRadians(120), // maximum arm angle
               false,
-              Units.degreesToRadians(0));
+              Units.degreesToRadians(120)); // starting arm angle, keep this the same value as max arm angle.
     } else {
       leftRollerSim = null;
       rightRollerSim = null;
@@ -119,18 +120,18 @@ public class IntakeSubsystem extends SubsystemBase {
     // pivot configs
 
     slot0Configs.kS = 0.9;
-    slot0Configs.kV = 4;
+    slot0Configs.kV = 0;
     slot0Configs.kA = 0;
     slot0Configs.kP = 40;
-    slot0Configs.kI = 0;
+    slot0Configs.kI = 5;
     slot0Configs.kD = 0;
     slot0Configs.kG = 0.048; // change PID values during testing, these are placeholders from last year's robot
 
-    var pivotMotionMagicConfigs = talonFXConfigs1.MotionMagic; // these values i also guessed
-    pivotMotionMagicConfigs.MotionMagicAcceleration = 200;
+    var pivotMotionMagicConfigs = talonFXConfigs1.MotionMagic;
+    pivotMotionMagicConfigs.MotionMagicAcceleration = 3000;
+    pivotMotionMagicConfigs.MotionMagicJerk = 10;
 
     pivotMotor.getConfigurator().apply(talonFXConfigs1);
-    pivotMotor.getConfigurator().apply(pivotMotionMagicConfigs);
   }
 
   // rollers configs
@@ -160,6 +161,7 @@ public class IntakeSubsystem extends SubsystemBase {
               new Follower(
                   Hardware.INTAKE_MOTOR_ONE_ID,
                   MotorAlignmentValue.Opposed)); // opposite direction as left rollers
+                  System.out.println("Pivot motor position: " + pivotMotor.getPosition().getValueAsDouble());
         },
         () -> {
           leftRollers.stopMotor();
