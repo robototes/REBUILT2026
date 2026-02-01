@@ -103,6 +103,7 @@ public class Hood extends SubsystemBase {
   @Override
   public void periodic() {
 
+
     positionPub.set(hood.getPosition().getValueAsDouble());
 
     if (tunerControlled.hasChangedSince(lastTunerControlledupdateTime)) {

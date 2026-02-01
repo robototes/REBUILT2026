@@ -77,10 +77,7 @@ public class Controls {
 
   private void configureSpindexerBindings() {
     // start serializer motor
-    spindexerTestController.a().onTrue(s.spindexerSubsystem.startMotor());
 
-    // stop serializer motor
-    spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -198,7 +195,7 @@ public class Controls {
             Commands.sequence(
                 AutoAim.AutoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
                 Commands.parallel(
-                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())));
+                     s.feederSubsystem.startMotor())));
 
     launcherTuningController
         .leftBumper()

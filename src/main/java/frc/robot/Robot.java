@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
@@ -14,6 +16,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
@@ -60,7 +63,9 @@ public class Robot extends TimedRobot {
           0.7,
           () -> subsystems.drivebaseSubsystem.getState().Pose,
           () -> subsystems.drivebaseSubsystem.getState().Speeds);
-      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
+      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true, () ->
+        subsystems.hood.suppliedHoodPositionCommand(() -> subsystems.hood.targetPosition.get()).andThen(() -> FuelSim.launchFuel(MetersPerSecond.of(2.0),
+         Degrees.of(subsystems.hood.targetPosition.get()))));
 
       fuelSimulation.start();
     }

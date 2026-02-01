@@ -15,7 +15,7 @@ import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
-import frc.robot.subsystems.SpindexerSubsystem;
+
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
@@ -39,7 +39,7 @@ public class Subsystems {
   public final Flywheels flywheels;
   public final Hood hood;
   public final DetectionSubsystem detectionSubsystem;
-  public final SpindexerSubsystem spindexerSubsystem;
+
   public final FeederSubsystem feederSubsystem;
 
   public Subsystems() {
@@ -77,11 +77,7 @@ public class Subsystems {
     } else {
       detectionSubsystem = null;
     }
-    if (SPINDEXER_ENABLED) {
-      spindexerSubsystem = new SpindexerSubsystem();
-    } else {
-      spindexerSubsystem = null;
-    }
+
 
     if (FEEDER_ENABLED) {
       feederSubsystem = new FeederSubsystem();
