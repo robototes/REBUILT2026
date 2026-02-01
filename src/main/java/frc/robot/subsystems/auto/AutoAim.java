@@ -5,8 +5,8 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.Flywheels;
-import frc.robot.subsystems.Hood;
+import frc.robot.subsystems.Launcher.Flywheels;
+import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
@@ -34,6 +34,7 @@ public class AutoAim {
       this.hood = hood;
       this.flywheels = flywheels;
 
+      addRequirements(hood, flywheels);
       var nt = NetworkTableInstance.getDefault();
       hoodGoalTopic = nt.getDoubleTopic("/AutoAim/hoodGoal");
       flywheelGoalTopic = nt.getDoubleTopic("/AutoAim/flywheelGoal");
@@ -45,6 +46,7 @@ public class AutoAim {
 
     @Override
     public void initialize() {
+
       targetPose = (AllianceUtils.getHubTranslation2d());
     }
 

@@ -13,13 +13,23 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RB-NeutralRight"
+            "pathName": "LB-NeutralLeft-Intake"
           }
         },
         {
           "type": "path",
           "data": {
+<<<<<<<< HEAD:src/main/deploy/pathplanner/autos/RB-NeutralRightTWO.auto
             "pathName": "NeutralRight-RT"
+========
+            "pathName": "LT-NeutralLeft-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LB-NeutralLeft-Back"
+>>>>>>>> LauncherSubsystems:src/main/deploy/pathplanner/autos/LB-NeutralTwo.auto
           }
         },
         {
@@ -31,12 +41,17 @@
         {
           "type": "path",
           "data": {
+<<<<<<<< HEAD:src/main/deploy/pathplanner/autos/RB-NeutralRightTWO.auto
             "pathName": "RT-NeutralRight"
+========
+            "pathName": "LT-NeutralLeft-AGAIN"
+>>>>>>>> LauncherSubsystems:src/main/deploy/pathplanner/autos/LB-NeutralTwo.auto
           }
         },
         {
           "type": "path",
           "data": {
+<<<<<<<< HEAD:src/main/deploy/pathplanner/autos/RB-NeutralRightTWO.auto
             "pathName": "NeutralRight-NeutralLeft"
           }
         },
@@ -44,6 +59,9 @@
           "type": "path",
           "data": {
             "pathName": "NeutralRight-NeutralLeftTWO"
+========
+            "pathName": "LT-NeutralLeft-THREE"
+>>>>>>>> LauncherSubsystems:src/main/deploy/pathplanner/autos/LB-NeutralTwo.auto
           }
         }
       ]

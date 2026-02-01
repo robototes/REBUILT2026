@@ -33,7 +33,7 @@ public class FeederSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Hardware.INDEX_MOTOR_ID);
+    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
     feederConfig();
 
     if (RobotBase.isSimulation()) {

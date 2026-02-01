@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-NeutralRight"
+            "pathName": "RB-NeutralRight"
           }
         },
         {
@@ -37,6 +37,27 @@
         {
           "type": "path",
           "data": {
+<<<<<<<< HEAD:src/main/deploy/pathplanner/autos/RT-NeutralRightTWO.auto
+            "pathName": "NeutralRight-RT"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-NeutralRight"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+========
+>>>>>>>> LauncherSubsystems:src/main/deploy/pathplanner/autos/RB-NeutralRightTWO.auto
             "pathName": "NeutralRight-NeutralLeft"
           }
         },
