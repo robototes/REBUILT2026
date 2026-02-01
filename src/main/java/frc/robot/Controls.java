@@ -209,6 +209,9 @@ public class Controls {
     launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
     launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
     launcherTuningController.b().onTrue(s.hood.hoodPositionCommand(1));
+
+    launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
+    launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
   }
 
   /**

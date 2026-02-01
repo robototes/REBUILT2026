@@ -1,7 +1,5 @@
 package frc.robot.subsystems.Launcher;
 
-import static edu.wpi.first.units.Units.Volts;
-
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
@@ -12,13 +10,10 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -35,15 +30,11 @@ public class Flywheels extends SubsystemBase {
   private final DoublePublisher currentPub;
   private final DoublePublisher velocityPub;
 
+  private FlywheelsSim flywheelSim;
+
   private final MotionMagicVelocityVoltage request = new MotionMagicVelocityVoltage(0);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
-
-  private final FlywheelSim sim =
-      new FlywheelSim(
-          LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 0.6194175216, 1),
-          DCMotor.getKrakenX60(1),
-          0);
 
   public NtTunableDouble targetVelocity;
 
@@ -58,7 +49,6 @@ public class Flywheels extends SubsystemBase {
 
     targetVelocity = new NtTunableDouble("/launcher/targetVelocity", 0.0);
     configureMotors();
-    simulationInit();
 
     var nt = NetworkTableInstance.getDefault();
     velocityTopic = nt.getDoubleTopic("/launcher/velocity");
@@ -67,6 +57,10 @@ public class Flywheels extends SubsystemBase {
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
     currentPub.set(0.0);
+
+    if (RobotBase.isSimulation()) {
+    flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
+}
   }
 
   private void configureMotors() {
@@ -145,31 +139,12 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPM, toleranceRPM));
   }
 
-  public void simulationInit() {
-    var simState = FlywheelOne.getSimState();
-    simState.Orientation = ChassisReference.Clockwise_Positive;
-    simState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
-  }
 
+  @Override
   public void simulationPeriodic() {
-
-    // Get the sim states
-    var simState = FlywheelOne.getSimState();
-
-    // Set the supply voltage for the sims
-    simState.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-    // Get the motor voltage outputs from the Talon FXs
-    var voltageSim = simState.getMotorVoltageMeasure();
-
-    // Set the inputs to the flywheel sims
-    sim.setInputVoltage(voltageSim.in(Volts));
-
-    // Update the sims
-    sim.update(0.02);
-
-    // Update the simulated sensor readings
-    simState.setRotorVelocity(sim.getAngularVelocity());
+  if (flywheelSim != null) {
+    flywheelSim.update();
+  }
   }
 
   @Override
