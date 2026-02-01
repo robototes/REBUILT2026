@@ -68,24 +68,24 @@ public class LEDSubsystem extends SubsystemBase {
 
   /* to be used in the future */
   // public Command LED_Mode(Supplier<LEDMode> mode) {
-  // return Commands.run(
-  // () -> {
-  // LEDMode currentMode = mode.get();
-  // switch(currentMode) {
-  // case DEFAULT:
-  // updateLEDs(defaultColor);
-  // break;
-  // case OUTTAKE_IN_PROGRESS:
-  // updateLEDs(outtakeColor);
-  // break;
-  // case INTAKE_IN_PROGRESS:
-  // updateLEDs(intakeColor);
-  // break;
-  // case CLIMB_IN_PROGRESS:
-  // updateLEDs(climbColor);
-  // break;
-  // }
-  // });
+  //   return Commands.run(
+  //       () -> {
+  //         LEDMode currentMode = mode.get();
+  //         switch (currentMode) {
+  //           case DEFAULT:
+  //             updateLEDs(defaultColor);
+  //             break;
+  //           case OUTTAKE_IN_PROGRESS:
+  //             updateLEDs(outtakeColor);
+  //             break;
+  //           case INTAKE_IN_PROGRESS:
+  //             updateLEDs(intakeColor);
+  //             break;
+  //           case CLIMB_IN_PROGRESS:
+  //             updateLEDs(climbColor);
+  //             break;
+  //         }
+  //       }, this);
   // }
 
   /**
@@ -117,20 +117,16 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a {@link Command} that continuously alternates LED colors
    */
   public Command alternateColors(RGBWColor colorA, RGBWColor colorB) {
-    return new RunCommand(
-        () -> {
-          long seconds = System.currentTimeMillis() / 1000;
-          if (seconds % 2 == 0) {
-            setHardwareColor(colorA);
-          } else {
-            setHardwareColor(colorB);
-          }
-        },
-        this);
+    return Commands.sequence(
+            Commands.runOnce(() -> setHardwareColor(colorA), this),
+            Commands.waitSeconds(0.5),
+            Commands.runOnce(() -> setHardwareColor(colorB), this),
+            Commands.waitSeconds(0.5))
+        .repeatedly();
   }
 
   /**
-   * Toggles between two colors
+   * Toggles between two colors on button press
    *
    * @param otherColor the color to toggle with
    * @return a {@link Command} that toggles the rainbow animation state
