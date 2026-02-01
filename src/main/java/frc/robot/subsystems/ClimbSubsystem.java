@@ -115,15 +115,12 @@ public class ClimbSubsystem extends SubsystemBase {
   private boolean isClose() {
     Transform2d delta = TowerPose.minus(frontBumper);
 
-    delta.getX();
     double x = delta.getX(); // forward
     double y = delta.getY(); // sideways
 
     double angle = Math.abs(Math.atan2(y, x));
 
-    return x < MIN_X // within 18 inches forward
-        && Math.abs(y) < MIN_Y // within 6 inches sideways
-        && angle < MIN_ANGLE; // within 15 degrees
+    return x < MIN_X && Math.abs(y) < MIN_Y && angle < MIN_ANGLE;
   }
 
   private static class ClimbAutoAlign extends Command {
