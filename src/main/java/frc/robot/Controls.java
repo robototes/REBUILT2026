@@ -26,8 +26,6 @@ import frc.robot.subsystems.auto.FuelAutoAlign;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 
-// TODO: do me as well!!
-@SuppressWarnings("unused")
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
@@ -36,12 +34,13 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
-  private static final int LED_CONTROLLER_PORT = 4;
+  private static final int LED_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
-  private final CommandXboxController LedTestController =
+  
+      private final CommandXboxController ledTestController =
       new CommandXboxController(LED_CONTROLLER_PORT);
 
   private final CommandXboxController feederTestController =
@@ -196,22 +195,22 @@ public class Controls {
       // Stop running this method
       return;
     }
-    LedTestController.a()
+    ledTestController.a()
         .onTrue(
             LEDs.toggleColor(LEDs.intakeColor).withName("Toggle intake and on color")); // yellow
-    LedTestController.b()
+    ledTestController.b()
         .onTrue(LEDs.toggleColor(LEDs.climbColor).withName("Toggle climb and on color")); // blue
-    LedTestController.x()
+    ledTestController.x()
         .onTrue(
             LEDs.toggleColor(LEDs.outtakeColor).withName("Toggle outtake and on color")); // green
-    LedTestController.y()
+    ledTestController.y()
         .onTrue(LEDs.toggleColor(LEDs.defaultColor).withName("Toggle default and on color")); // red
-    LedTestController.leftBumper()
+    ledTestController.leftBumper()
         .whileTrue(
             LEDs.alternateColors(LEDs.climbColor, LEDs.intakeColor)
                 .withName("Alternate between climb and intake color"));
 
-    LedTestController.rightBumper().onTrue(LEDs.toggleRainbow());
+    ledTestController.rightBumper().onTrue(LEDs.toggleRainbow());
   }
 
   /**

@@ -184,7 +184,7 @@ public class Robot extends TimedRobot {
     // this line or comment it out.
     CommandScheduler.getInstance().schedule(subsystems.ledSubsystem.stopRainbow());
     CommandScheduler.getInstance()
-        .schedule(subsystems.ledSubsystem.updateLEDs(subsystems.ledSubsystem.defaultColor));
+        .schedule(subsystems.ledSubsystem.setLEDsCommand(subsystems.ledSubsystem.defaultColor));
   }
 
   /** This function is called periodically during operator control. */

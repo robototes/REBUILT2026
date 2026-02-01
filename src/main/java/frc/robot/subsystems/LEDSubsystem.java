@@ -6,22 +6,26 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
+
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.util.LEDMode;
-import java.util.function.Supplier;
+// import frc.robot.util.LEDMode;
+// import java.util.function.Supplier;
 
 public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
   private final int CAN_ID = 15;
 
   private final int END_INDEX = 7;
+
+  private final EmptyAnimation m_emptyAnimation = new EmptyAnimation(0);
+
+  private final SolidColor solid = new SolidColor(0, END_INDEX);
 
   private final RainbowAnimation m_slot0Animation = new RainbowAnimation(0, END_INDEX);
   private CANdle candle = new CANdle(CAN_ID);
@@ -42,13 +46,15 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Configures a {@link RainbowAnimation} on the specified animation slot.
    *
-   * <p>This method sets the {@code slot}, {@code brightness}, {@code direction}, and {@code frame
+   * <p>
+   * This method sets the {@code slot}, {@code brightness}, {@code direction}, and
+   * {@code frame
    * rate} for the rainbow animation.
    *
-   * @param slot the animation slot to run the rainbow animation on
+   * @param slot       the animation slot to run the rainbow animation on
    * @param brightness the brightness level of the LEDs (typically 0–255)
-   * @param direction the direction the rainbow animation moves
-   * @param frameRate the update frequency of the animation
+   * @param direction  the direction the rainbow animation moves
+   * @param frameRate  the update frequency of the animation
    */
   public void setRainbowAnimation(
       int slot, int brightness, AnimationDirectionValue direction, Frequency frameRate) {
@@ -60,42 +66,50 @@ public class LEDSubsystem extends SubsystemBase {
         .withFrameRate(frameRate);
   }
 
+  /* to be used in the future */
+  // public Command LED_Mode(Supplier<LEDMode> mode) {
+  // return Commands.run(
+  // () -> {
+  // LEDMode currentMode = mode.get();
+  // switch(currentMode) {
+  // case DEFAULT:
+  // updateLEDs(defaultColor);
+  // break;
+  // case OUTTAKE_IN_PROGRESS:
+  // updateLEDs(outtakeColor);
+  // break;
+  // case INTAKE_IN_PROGRESS:
+  // updateLEDs(intakeColor);
+  // break;
+  // case CLIMB_IN_PROGRESS:
+  // updateLEDs(climbColor);
+  // break;
+  // }
+  // });
+  // }
+
   /**
-   * Sets Leds at specified {@link frc.robot.subsystems.LEDSubsystem#CAN_ID id} to color
+   * Sets Leds at specified {@link frc.robot.subsystems.LEDSubsystem#CAN_ID id} to
+   * color
    *
    * @param color
    */
-  public Command updateLEDs(RGBWColor color) {
-    return Commands.run(
-            () -> {
-              SolidColor solid = new SolidColor(0, END_INDEX);
-              solid.withColor(color);
-              candle.setControl(solid);
-            })
-        .withName("Set leds to specified color");
+  public void setHardwareColor(RGBWColor color) {
+    solid.withColor(color);
+    candle.setControl(solid);
   }
 
-  /* to be used in the future */
-  public Command LED_Mode(Supplier<LEDMode> mode) {
-    return Commands.run(
-        () -> {
-          LEDMode currentMode = mode.get();
-          if (currentMode == LEDMode.DEFAULT) {
-            CommandScheduler.getInstance().schedule(updateLEDs(defaultColor));
-          } else if (currentMode == LEDMode.OUTTAKE_IN_PROGRESS) {
-            CommandScheduler.getInstance().schedule(updateLEDs(outtakeColor));
-          } else if (currentMode == LEDMode.INTAKE_IN_PROGRESS) {
-            CommandScheduler.getInstance().schedule(updateLEDs(intakeColor));
-          } else if (currentMode == LEDMode.CLIMB_IN_PROGRESS) {
-            CommandScheduler.getInstance().schedule(updateLEDs(climbColor));
-          }
-        });
+  public Command setLEDsCommand(RGBWColor color) {
+    return Commands.run(() -> setHardwareColor(color), this)
+        .withName("SetLEDs"); // Good practice to name commands
   }
 
   /**
    * Alternates the LED strip between two colors once per second.
    *
-   * <p>The active color is determined by the system time: {@code colorA} is shown on even-numbered
+   * <p>
+   * The active color is determined by the system time: {@code colorA} is shown on
+   * even-numbered
    * seconds and {@code colorB} is shown on odd-numbered seconds.
    *
    * @param colorA the color displayed on even seconds
@@ -107,29 +121,27 @@ public class LEDSubsystem extends SubsystemBase {
         () -> {
           long seconds = System.currentTimeMillis() / 1000;
           if (seconds % 2 == 0) {
-            updateLEDs(colorA);
+            setHardwareColor(colorA);
           } else {
-            updateLEDs(colorB);
+            setHardwareColor(colorB);
           }
         },
         this);
   }
 
   /**
-   * Toggles the rainbow animation on or off.
+   * Toggles between two colors
    *
-   * <p>If the rainbow animation is not currently running, this command starts it. If it is already
-   * running, the animation is stopped.
-   *
+   * @param otherColor the color to toggle with
    * @return a {@link Command} that toggles the rainbow animation state
    */
-  public Command toggleColor(RGBWColor A) {
+  public Command toggleColor(RGBWColor otherColor) {
     return new InstantCommand(
         () -> {
           if (!colorOn) {
-            updateLEDs(A);
+            setHardwareColor(otherColor);
           } else {
-            updateLEDs(offColor);
+            setHardwareColor(offColor);
           }
           colorOn = !colorOn;
         },
@@ -139,7 +151,9 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Toggles the rainbow animation on or off.
    *
-   * <p>If the rainbow animation is not currently running, this command starts it. If it is already
+   * <p>
+   * If the rainbow animation is not currently running, this command starts it. If
+   * it is already
    * running, the animation is stopped.
    *
    * @return a {@link Command} that toggles the rainbow animation state
@@ -150,7 +164,7 @@ public class LEDSubsystem extends SubsystemBase {
           if (!rainbowOn) {
             candle.setControl(m_slot0Animation);
           } else {
-            candle.setControl(new EmptyAnimation(0));
+            candle.setControl(m_emptyAnimation);
           }
           rainbowOn = !rainbowOn;
         },
@@ -172,6 +186,6 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a {@link Command} that stops the currently running rainbow animation
    */
   public Command stopRainbow() {
-    return new InstantCommand(() -> candle.setControl(new EmptyAnimation(0)), this);
+    return new InstantCommand(() -> candle.setControl(m_emptyAnimation), this);
   }
 }
