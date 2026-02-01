@@ -12,7 +12,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 
 public class AutoAim {
-  public static Command AutoAim(CommandSwerveDrivetrain drive, Hood hood, Flywheels flywheels) {
+  public static Command autoAim(CommandSwerveDrivetrain drive, Hood hood, Flywheels flywheels) {
     return new AutoAimCommand(drive, hood, flywheels).withName("Auto Align");
   }
 

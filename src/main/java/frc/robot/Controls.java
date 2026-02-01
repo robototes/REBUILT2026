@@ -196,7 +196,7 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.sequence(
-                AutoAim.AutoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
                 Commands.parallel(
                     s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())));
 
