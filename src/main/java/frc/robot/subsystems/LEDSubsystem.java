@@ -73,16 +73,16 @@ public class LEDSubsystem extends SubsystemBase {
   //         LEDMode currentMode = mode.get();
   //         switch (currentMode) {
   //           case DEFAULT:
-  //             updateLEDs(defaultColor);
+  //             setLEDsCommand(defaultColor);
   //             break;
   //           case OUTTAKE_IN_PROGRESS:
-  //             updateLEDs(outtakeColor);
+  //             setLEDsCommand(outtakeColor);
   //             break;
   //           case INTAKE_IN_PROGRESS:
-  //             updateLEDs(intakeColor);
+  //             setLEDsCommand(intakeColor);
   //             break;
   //           case CLIMB_IN_PROGRESS:
-  //             updateLEDs(climbColor);
+  //             setLEDsCommand(climbColor);
   //             break;
   //         }
   //       }, this);
