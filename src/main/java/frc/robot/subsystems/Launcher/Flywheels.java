@@ -8,8 +8,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.sim.ChassisReference;
-import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -59,8 +57,8 @@ public class Flywheels extends SubsystemBase {
     currentPub.set(0.0);
 
     if (RobotBase.isSimulation()) {
-    flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
-}
+      flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
+    }
   }
 
   private void configureMotors() {
@@ -139,12 +137,11 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPM, toleranceRPM));
   }
 
-
   @Override
   public void simulationPeriodic() {
-  if (flywheelSim != null) {
-    flywheelSim.update();
-  }
+    if (flywheelSim != null) {
+      flywheelSim.update();
+    }
   }
 
   @Override
