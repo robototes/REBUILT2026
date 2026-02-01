@@ -28,7 +28,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final TalonFX m_turretMotor;
   private MotionMagicVoltage request;
 
-  private static final double GEAR_RATIO = 1.0 / 10.0; // It's over 9000
+  private static final double GEAR_RATIO = 1.0 / 10.0;
   private static final double TURRET_MIN = -Math.PI / 2; // In radians
   private static final double TURRET_MAX = Math.PI / 2; // In radians
 
