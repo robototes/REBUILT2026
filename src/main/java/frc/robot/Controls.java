@@ -182,6 +182,10 @@ public class Controls {
   }
 
   private void configureAutoAlignBindings() {
+    if (s.detectionSubsystem == null) {
+      System.out.println("Game piece detection is disabled");
+      return;
+    }
     driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 

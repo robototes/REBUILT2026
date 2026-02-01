@@ -129,8 +129,8 @@ public class Flywheels extends SubsystemBase {
     return atTarget;
   }
 
-  public Trigger atTargetVelocityTrigger(double targetRPM, double toleranceRPM) {
-    return new Trigger(() -> atTargetVelocity(targetRPM, toleranceRPM));
+  public Trigger atTargetVelocityTrigger(double targetRPS, double toleranceRPS) {
+    return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
   }
 
   @Override
