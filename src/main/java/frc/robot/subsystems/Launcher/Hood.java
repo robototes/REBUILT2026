@@ -108,12 +108,12 @@ public class Hood extends SubsystemBase {
 
     // SIM PID gains
     var simPID = new Slot0Configs();
-    simPID.kP = 0.5;
+    simPID.kP = 5;
     simPID.kI = 0.0;
-    simPID.kD = 0.1;
+    simPID.kD = 0;
     simPID.kA = 0.0;
     simPID.kV = 0;
-    simPID.kS = 0.155;
+    simPID.kS = 0;
     simPID.kG = 0.0;
 
     config.MotionMagic.MotionMagicCruiseVelocity = 32;

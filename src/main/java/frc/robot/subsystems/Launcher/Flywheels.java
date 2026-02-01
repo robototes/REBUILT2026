@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
-import frc.robot.Robot;
 import frc.robot.util.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 
@@ -124,9 +123,6 @@ public class Flywheels extends SubsystemBase {
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
-    if (Robot.isSimulation()) {
-      return true;
-    }
     double velocity = (FlywheelOne.getVelocity().getValueAsDouble());
 
     boolean atTarget = Math.abs(velocity - targetRPS) <= toleranceRPS;

@@ -198,7 +198,10 @@ public class Controls {
             Commands.sequence(
                 AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
                 Commands.parallel(
-                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())));
+                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+        .toggleOnFalse(
+            Commands.parallel(
+                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
 
     launcherTuningController
         .leftBumper()
