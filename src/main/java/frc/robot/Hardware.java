@@ -19,10 +19,6 @@ public class Hardware {
   // Climb Motor (35-39)
   public static final int CLIMB_MOTOR_ID = 35;
 
-  // Turret Motor
-
-  public static final int TURRET_MOTOR_ID = 99;
-
   public static final int PDH_ID = 1;
   // Swerve: 1-12
   // Check CompTunerConstants
