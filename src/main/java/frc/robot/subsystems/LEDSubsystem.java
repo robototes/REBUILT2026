@@ -19,25 +19,27 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
-  private final int CAN_ID = 15;
+  private static final int CAN_ID = 15;
 
-  private final int END_INDEX = 7;
+  private final CANdle candle = new CANdle(CAN_ID);
+
+  private static final int END_INDEX = 7;
 
   private final EmptyAnimation m_emptyAnimation = new EmptyAnimation(0);
 
   private final SolidColor solid = new SolidColor(0, END_INDEX);
 
   private final RainbowAnimation m_slot0Animation = new RainbowAnimation(0, END_INDEX);
-  private CANdle candle = new CANdle(CAN_ID);
 
-  public RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
-  public RGBWColor intakeColor = new RGBWColor(255, 255, 0); // yellow
-  public RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
-  public RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
-  public RGBWColor offColor = new RGBWColor(0, 0, 0); // off
+  public final RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
+  public final RGBWColor intakeColor = new RGBWColor(255, 255, 0); // yellow
+  public final RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
+  public final RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
+  public final RGBWColor offColor = new RGBWColor(0, 0, 0); // off
 
   private boolean rainbowOn = false;
-  private boolean colorOn = false;
+
+  private RGBWColor activeSolidColor = offColor;
 
   public LEDSubsystem() {
     setRainbowAnimation(0, 1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
@@ -131,15 +133,18 @@ public class LEDSubsystem extends SubsystemBase {
    * @param otherColor the color to toggle with
    * @return a {@link Command} that toggles the rainbow animation state
    */
-  public Command toggleColor(RGBWColor otherColor) {
+    public Command toggleColor(RGBWColor otherColor) {
     return new InstantCommand(
         () -> {
-          if (!colorOn) {
-            setHardwareColor(otherColor);
-          } else {
+          if (activeSolidColor != null && activeSolidColor.equals(otherColor)) {
+            // If the requested color is already active, turn it off.
             setHardwareColor(offColor);
+            activeSolidColor = offColor;
+          } else {
+            // Otherwise, set the new color.
+            setHardwareColor(otherColor);
+            activeSolidColor = otherColor;
           }
-          colorOn = !colorOn;
         },
         this);
   }
