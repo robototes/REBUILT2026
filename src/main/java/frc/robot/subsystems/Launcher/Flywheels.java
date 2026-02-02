@@ -146,11 +146,12 @@ public class Flywheels extends SubsystemBase {
   public void periodic() {
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
-
-    if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
-      TimestampedDouble currentTarget = targetVelocity.getAtomic();
-      setVelocityRPS(currentTarget.value);
-      lastPositionUpdateTime = currentTarget.timestamp;
+    if (TUNER_CONTROLLED) {
+      if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
+        TimestampedDouble currentTarget = targetVelocity.getAtomic();
+        setVelocityRPS(currentTarget.value);
+        lastPositionUpdateTime = currentTarget.timestamp;
+      }
     }
   }
 }

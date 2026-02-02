@@ -130,11 +130,12 @@ public class Hood extends SubsystemBase {
   public void periodic() {
     positionPub.set(hood.getPosition().getValueAsDouble());
     goalPub.set(request.Position);
-
-    if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
-      TimestampedDouble currentTarget = targetPosition.getAtomic();
-      setHoodPosition(currentTarget.value);
-      lastPositionUpdateTime = currentTarget.timestamp;
+    if (TUNER_CONTROLLED) {
+      if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
+        TimestampedDouble currentTarget = targetPosition.getAtomic();
+        setHoodPosition(currentTarget.value);
+        lastPositionUpdateTime = currentTarget.timestamp;
+      }
     }
   }
 
