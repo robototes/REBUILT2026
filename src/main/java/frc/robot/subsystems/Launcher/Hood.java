@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -40,6 +41,7 @@ public class Hood extends SubsystemBase {
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
 
   public NtTunableDouble targetPosition;
+  private long lastPositionUpdateTime = 0;
 
   private static final double TARGET_TOLERANCE = 0.1; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
@@ -128,6 +130,12 @@ public class Hood extends SubsystemBase {
   public void periodic() {
     positionPub.set(hood.getPosition().getValueAsDouble());
     goalPub.set(request.Position);
+
+    if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
+      TimestampedDouble currentTarget = targetPosition.getAtomic();
+      setHoodPosition(currentTarget.value);
+      lastPositionUpdateTime = currentTarget.timestamp;
+    }
   }
 
   public double getHoodPosition() {

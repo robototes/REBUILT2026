@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -34,6 +35,7 @@ public class Flywheels extends SubsystemBase {
       new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
   public NtTunableDouble targetVelocity;
+  private long lastPositionUpdateTime = 0;
 
   public final double FLYWHEEL_TOLERANCE = 5; // RPS
   public final boolean TUNER_CONTROLLED =
@@ -144,5 +146,11 @@ public class Flywheels extends SubsystemBase {
   public void periodic() {
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
+
+    if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
+      TimestampedDouble currentTarget = targetVelocity.getAtomic();
+      setVelocityRPS(currentTarget.value);
+      lastPositionUpdateTime = currentTarget.timestamp;
+    }
   }
 }
