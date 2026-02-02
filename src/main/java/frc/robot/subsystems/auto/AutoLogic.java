@@ -186,10 +186,10 @@ public class AutoLogic {
   }
 
   public static Command launcherCommand() {
-    return   Commands.sequence(
-                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+    return   Commands.sequence( Commands.parallel( AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0),
+                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels)).withTimeout(3),
                 Commands.parallel(
-                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())).withTimeout(3).andThen(
+                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor(), s.flywheels.setVelocityCommand(60))).withTimeout(3).andThen(
                       s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0));
                       // Hopefully the timeout will be replaced with sensor data
 
