@@ -188,9 +188,10 @@ public class Controls {
 
   private void configureIntakeBindings() {
     if (s.intakeSubsystem == null) {
-      return;
+      throw new IllegalStateException("theres no intake subsystem");
     }
-    intakeTestController.b().whileTrue(s.intakeSubsystem.runIntake(1));
+    driverController.b().whileTrue(s.intakeSubsystem.runIntake(1));
+    intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
   }
 
   /**

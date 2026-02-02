@@ -171,6 +171,15 @@ public class IntakeSubsystem extends SubsystemBase {
         });
   }
 
+  public Command temporaryRunIntake(double speed) {
+    return Commands.runEnd(() -> {
+      leftRollers.set(speed);
+    },
+    () -> {
+      leftRollers.stopMotor();
+    });
+  }
+
   @Override
   public void simulationPeriodic() {
     leftRollerSim.setInput(leftRollers.getSimState().getMotorVoltage());
@@ -201,13 +210,12 @@ public class IntakeSubsystem extends SubsystemBase {
         .setRotorVelocity(
             RadiansPerSecond.of(pivotSimV2.getVelocityRadPerSec() * PIVOT_GEAR_RATIO)
                 .in(RotationsPerSecond));
+      pivotArm.setAngle(Units.radiansToDegrees(pivotSimV2.getAngleRads()));
   }
 
   @Override
   public void periodic() {
     leftRollerPub.set(leftRollers.getVelocity().getValueAsDouble());
     rightRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
-
-    pivotArm.setAngle(Units.radiansToDegrees(pivotSimV2.getAngleRads()));
   }
 }
