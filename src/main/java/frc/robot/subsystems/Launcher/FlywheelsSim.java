@@ -75,6 +75,8 @@ public class FlywheelsSim {
     simBottom.setRotorVelocity(-rps * GEAR_RATIO);
 
     // Spin the visualization
+
+    // idk how this math works but someone suggested it to me so
     wheelLigament.setAngle(wheelLigament.getAngle() + rpm * 6.0 * 0.02); // visual spin factor
   }
 }

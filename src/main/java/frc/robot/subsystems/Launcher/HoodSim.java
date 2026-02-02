@@ -25,6 +25,7 @@ public class HoodSim {
 
   private static final double GEAR_RATIO = 23.2727;
   private static final double ARM_LENGTH_METERS = Units.inchesToMeters(7);
+  private static final double STARTING_ANGLE_OFFSET = 12;
 
   public HoodSim(TalonFX hoodMotor) {
     if (!RobotBase.isSimulation()) {
@@ -44,7 +45,7 @@ public class HoodSim {
             Units.degreesToRadians(-540),
             Units.degreesToRadians(540),
             false,
-            Units.degreesToRadians(12));
+            Units.degreesToRadians(STARTING_ANGLE_OFFSET));
 
     mechanism = new Mechanism2d(60, 60);
     MechanismRoot2d root = mechanism.getRoot("hoodRoot", 30, 10);
@@ -68,6 +69,6 @@ public class HoodSim {
     simState.setRotorVelocity(Units.radiansToRotations(armSim.getVelocityRadPerSec()) * GEAR_RATIO);
 
     // Update visualization/sim
-    hoodLigament.setAngle(Units.radiansToDegrees(armAngleRad) + 12);
+    hoodLigament.setAngle(Units.radiansToDegrees(armAngleRad) + STARTING_ANGLE_OFFSET);
   }
 }
