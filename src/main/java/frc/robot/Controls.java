@@ -206,13 +206,16 @@ public class Controls {
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
-
-    launcherTuningController
-        .leftBumper()
-        .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
-    launcherTuningController
-        .rightBumper()
-        .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
+    if (s.flywheels.TUNER_CONTROLLED) {
+      launcherTuningController
+          .leftBumper()
+          .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
+    }
+    if (s.hood.TUNER_CONTROLLED) {
+      launcherTuningController
+          .rightBumper()
+          .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
+    }
     launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
     launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
     launcherTuningController.b().onTrue(s.hood.hoodPositionCommand(1));

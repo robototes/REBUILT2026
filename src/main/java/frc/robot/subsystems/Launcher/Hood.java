@@ -73,7 +73,7 @@ public class Hood extends SubsystemBase {
     goalPub = goalTopic.publish();
     goalPub.set(request.Position);
 
-    targetPosition = new NtTunableDouble("/hood/targetPosition", 0.0);
+    targetPosition = new NtTunableDouble("/launcher/hoodTuner", 0.0);
   }
 
   public void configureMotor() {
@@ -126,7 +126,6 @@ public class Hood extends SubsystemBase {
 
   @Override
   public void periodic() {
-    setHoodPosition(targetPosition.get());
     positionPub.set(hood.getPosition().getValueAsDouble());
     goalPub.set(request.Position);
   }

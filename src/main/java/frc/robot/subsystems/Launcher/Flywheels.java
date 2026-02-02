@@ -44,7 +44,7 @@ public class Flywheels extends SubsystemBase {
     FlywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
     FlywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
-    targetVelocity = new NtTunableDouble("/launcher/targetVelocity", 0.0);
+    targetVelocity = new NtTunableDouble("/launcher/flywheelTuner", 0.0);
     configureMotors();
 
     var nt = NetworkTableInstance.getDefault();
