@@ -37,11 +37,12 @@ public class IntakeSubsystem extends SubsystemBase {
   private TalonFX pivotMotor;
   private final TalonFX leftRollers; // one
   private final TalonFX rightRollers; // two
-  private final MotionMagicVoltage pivot_request1 = new MotionMagicVoltage(0);
-  double speed;
+  private final MotionMagicVoltage pivotRequest = new MotionMagicVoltage(0);
+  private final Follower followerRequest = new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
   private static final double PIVOT_DEPLOYED_POS = 0;
   private static final double PIVOT_RETRACTED_POS =
       1000; // change this value and ln 44 if u wanna change position
+  private static final double updateSim = 0.02;
   private final DoubleTopic leftRollerTopic;
   private final DoubleTopic rightRollerTopic;
   private final DoublePublisher leftRollerPub;
@@ -50,8 +51,6 @@ public class IntakeSubsystem extends SubsystemBase {
   private final FlywheelSim rightRollerSim;
   private final SingleJointedArmSim pivotSimV2;
   LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
-  //   LinearSystem pivotSystem = LinearSystemId.createElevatorSystem(DCMotor.getKrakenX60(1), 40,
-  // 1, 1);
 
   private static final double PIVOT_GEAR_RATIO = (54.0 / 12.0) * (54.0 / 18.0) * (48.0 / 18.0);
   private static final double ARM_LENGTH_METERS = Units.inchesToMeters(10.919);
@@ -60,8 +59,7 @@ public class IntakeSubsystem extends SubsystemBase {
   private final MechanismLigament2d pivotArm;
 
   public IntakeSubsystem(
-      boolean intakepivotEnabled, boolean intakerollersEnabled, Mechanism2d mechanism2d) {
-    speed = 0;
+    boolean intakepivotEnabled, boolean intakerollersEnabled, Mechanism2d mechanism2d) {
     pivotShoulder = mechanism2d.getRoot("Shoulder", 0.178 / 2.0, 0.2);
     pivotArm = pivotShoulder.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
     if (intakepivotEnabled) {
@@ -89,7 +87,7 @@ public class IntakeSubsystem extends SubsystemBase {
               DCMotor.getKrakenX60(1),
               PIVOT_GEAR_RATIO,
               SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, 2),
-              Units.inchesToMeters(10.919),
+              Units.inchesToMeters(ARM_LENGTH_METERS),
               Units.degreesToRadians(0), // minimum arm angle
               Units.degreesToRadians(120), // maximum arm angle
               false,
@@ -110,9 +108,9 @@ public class IntakeSubsystem extends SubsystemBase {
 
   // configs
   private void TalonFXPivotConfigs() {
-    var talonFXConfigs1 = new TalonFXConfiguration();
-    var slot0Configs = talonFXConfigs1.Slot0;
-    talonFXConfigs1.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    var talonFXConfigs = new TalonFXConfiguration();
+    var slot0Configs = talonFXConfigs.Slot0;
+    talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // pivot configs
 
@@ -125,23 +123,21 @@ public class IntakeSubsystem extends SubsystemBase {
     slot0Configs.kG =
         0.048; // change PID values during testing, these are placeholders from last year's robot
 
-    var pivotMotionMagicConfigs = talonFXConfigs1.MotionMagic;
+    var pivotMotionMagicConfigs = talonFXConfigs.MotionMagic;
     pivotMotionMagicConfigs.MotionMagicAcceleration = 3000;
     pivotMotionMagicConfigs.MotionMagicJerk = 10;
 
-    pivotMotor.getConfigurator().apply(talonFXConfigs1);
+    pivotMotor.getConfigurator().apply(talonFXConfigs);
   }
 
   // rollers configs
   private void TalonFXRollerConfigs() {
-    var talonFXConfigs2 = new TalonFXConfiguration();
-    TalonFXConfigurator rollersCfg = leftRollers.getConfigurator();
-    TalonFXConfigurator rollersCFG2 = rightRollers.getConfigurator();
-    talonFXConfigs2.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    talonFXConfigs2.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    var rollerConfigs = new TalonFXConfiguration();
+    rollerConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    rollerConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-    rollersCfg.apply(talonFXConfigs2);
-    rollersCFG2.apply(talonFXConfigs2);
+    leftRollers.getConfigurator().apply(rollerConfigs);
+    rightRollers.getConfigurator().apply(rollerConfigs);
   }
 
   public double getShoulderRotations() {
@@ -151,22 +147,25 @@ public class IntakeSubsystem extends SubsystemBase {
   public Command runIntake(double speed) {
     return Commands.runEnd(
         () -> {
-          pivotMotor.setControl(
-              pivot_request1.withPosition(
-                  PIVOT_DEPLOYED_POS)); // placeholder value, change during testing
+          if (pivotMotor == null) {
+              throw new IllegalStateException("pivot motor is null");
+          } else {
+            pivotMotor.setControl(
+              pivotRequest.withPosition(
+                  PIVOT_DEPLOYED_POS));
+          }
+          if (leftRollers == null || rightRollers == null) {
+            throw new IllegalStateException("rollers is null");
+          } else {
           leftRollers.set(speed);
-          rightRollers.setControl(
-              new Follower(
-                  Hardware.INTAKE_MOTOR_ONE_ID,
-                  MotorAlignmentValue.Opposed)); // opposite direction as left rollers
-          System.out.println(
-              "Pivot motor position: " + pivotMotor.getPosition().getValueAsDouble());
+          rightRollers.setControl(followerRequest); // opposite direction as left rollers
+          }
         },
         () -> {
           leftRollers.stopMotor();
           rightRollers.stopMotor();
           pivotMotor.setControl(
-              pivot_request1.withPosition(
+              pivotRequest.withPosition(
                   PIVOT_RETRACTED_POS)); // hopefully this retracts the intake
         });
   }
@@ -183,11 +182,11 @@ public class IntakeSubsystem extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
     leftRollerSim.setInput(leftRollers.getSimState().getMotorVoltage());
-    leftRollerSim.update(0.020);
+    leftRollerSim.update(updateSim);
     rightRollerSim.setInput(rightRollers.getSimState().getMotorVoltage());
-    rightRollerSim.update(0.020);
+    rightRollerSim.update(updateSim);
     pivotSimV2.setInput(pivotMotor.getSimState().getMotorVoltage());
-    pivotSimV2.update(0.020);
+    pivotSimV2.update(updateSim);
 
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(
