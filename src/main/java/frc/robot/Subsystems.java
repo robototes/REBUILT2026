@@ -4,6 +4,8 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKEPIVOT_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKEROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
@@ -16,6 +18,7 @@ import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
+import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.SpindexerSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -25,6 +28,8 @@ public class Subsystems {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
+    public static final boolean INTAKEPIVOT_ENABLED = true;
+    public static final boolean INTAKEROLLERS_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
@@ -42,6 +47,7 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
+  public final IntakeSubsystem intakeSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -53,6 +59,12 @@ public class Subsystems {
     } else {
       drivebaseSubsystem = null;
       drivebaseWrapper = new DrivebaseWrapper();
+    }
+    if (INTAKEROLLERS_ENABLED || INTAKEPIVOT_ENABLED) {
+      intakeSubsystem =
+          new IntakeSubsystem(INTAKEPIVOT_ENABLED, INTAKEROLLERS_ENABLED, mechanism2d);
+    } else {
+      intakeSubsystem = null;
     }
 
     if (VISION_ENABLED) {

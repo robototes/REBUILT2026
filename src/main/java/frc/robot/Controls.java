@@ -73,6 +73,7 @@ public class Controls {
     configureSpindexerBindings();
     configureFeederBindings();
     configureAutoAlignBindings();
+    configureIntakeBindings();
   }
 
   private void configureSpindexerBindings() {
@@ -187,6 +188,13 @@ public class Controls {
       return;
     }
     driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+  }
+
+  private void configureIntakeBindings() {
+    if (s.intakeSubsystem == null) {
+      return;
+    }
+    intakeTestController.b().whileTrue(s.intakeSubsystem.runIntake(1));
   }
 
   private void configureLauncherBindings() {
