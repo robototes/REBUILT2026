@@ -106,7 +106,7 @@ public class Hood extends SubsystemBase {
     irlPID.kS = 0.155;
     irlPID.kG = 0.0;
 
-    // SIM PID gains
+    // SIM PID gains, requires different gains because sim takes less things into account
     var simPID = new Slot0Configs();
     simPID.kP = 5;
     simPID.kI = 0.0;
