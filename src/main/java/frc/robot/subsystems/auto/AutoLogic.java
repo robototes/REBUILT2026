@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Controls;
+import frc.robot.Hardware;
 import frc.robot.Subsystems;
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,7 +24,8 @@ import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
 
-  private static Subsystems s;
+  private static  Subsystems s;
+  private static Controls c;
 
   /* ---------------- Start positions ---------------- */
 
@@ -96,8 +99,9 @@ public class AutoLogic {
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
   /* ---------------- Init ---------------- */
-  public static void init(Subsystems subsystems) {
+  public static void init(Subsystems subsystems, Controls controls) {
     s = subsystems;
+    c = controls;
   }
 
   public static void initSmartDashBoard() {
@@ -182,11 +186,17 @@ public class AutoLogic {
   }
 
   public static Command launcherCommand() {
-    return Commands.none();
+    return   Commands.sequence(
+                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                Commands.parallel(
+                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())).withTimeout(3).andThen(
+                      s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0));
+                      // Hopefully the timeout will be replaced with sensor data
+
   }
 
   public static Command intakeCommand() {
-    return Commands.none();
+    return s.intakeSubsystem.runIntake(1);
   }
 
   public static Command climbCommand() {

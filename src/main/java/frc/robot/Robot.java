@@ -54,7 +54,7 @@ public class Robot extends TimedRobot {
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
-    AutoLogic.init(subsystems);
+    AutoLogic.init(subsystems,controls);
     if (Robot.isSimulation()) {
       fuelSimulation = FuelSim.getInstance();
       fuelSimulation.spawnStartingFuel();
@@ -197,7 +197,7 @@ public class Robot extends TimedRobot {
   /** This function is called once when the robot is first started up. */
   @Override
   public void simulationInit() {
-    subsystems.hood.zero();
+
   }
 
   /** This function is called periodically whilst in simulation. */

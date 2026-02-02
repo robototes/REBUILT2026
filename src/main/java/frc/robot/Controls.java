@@ -194,7 +194,7 @@ public class Controls {
     if (s.intakeSubsystem == null) {
       return;
     }
-    intakeTestController.b().whileTrue(s.intakeSubsystem.runIntake(1));
+    launcherTuningController.b().whileTrue(s.intakeSubsystem.runIntake(1));
   }
 
   private void configureLauncherBindings() {
