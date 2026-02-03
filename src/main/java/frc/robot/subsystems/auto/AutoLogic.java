@@ -64,9 +64,12 @@ public class AutoLogic {
           new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
           new AutoPath("RB-NeutralRight-NeutralLeft", "RB-NeutralRight-NeutralLeft"),
           new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
+             new AutoPath("ORB-Outpost-Climb", "ORB-Outpost-Climb"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
+          new AutoPath("tRT-NeutralRight-Climb", "tRT-NeutralRight-Climb"),
           new AutoPath("RT-NeutralRight-NeutralLeft", "RT-NeutralRight-NeutralLeft"),
-          new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
+          new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"),
+             new AutoPath("oRT-Outpost-Climb", "oRT-Outpost-Climb"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
