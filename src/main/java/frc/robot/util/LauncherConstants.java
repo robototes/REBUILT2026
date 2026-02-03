@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -23,11 +23,11 @@ public class LauncherConstants {
     public final double time;
 
     public LauncherDistanceDataPoint(
-        double m_distance, double m_hoodAngle, double m_flywheelPower, double m_time) {
-      this.hoodAngle = m_hoodAngle;
-      this.flywheelPower = m_flywheelPower;
-      this.distance = m_distance;
-      this.time = m_time;
+        double m_distanceM, double hoodAngleRot, double flywheelPowerRPS, double m_timeS) {
+      this.hoodAngle = hoodAngleRot;
+      this.flywheelPower = flywheelPowerRPS;
+      this.distance = m_distanceM;
+      this.time = m_timeS;
     }
 
     @Override
@@ -39,9 +39,10 @@ public class LauncherConstants {
   }
 
   private static final LauncherDistanceDataPoint[] distanceData = {
-    new LauncherDistanceDataPoint(2.0, 0.1, 2300, 0.7),
-    new LauncherDistanceDataPoint(3.0, 0.1, 3300, 1),
-    new LauncherDistanceDataPoint(4.0, 0.1, 4300, 1.3),
+    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
+    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
+    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
+    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
   };
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
