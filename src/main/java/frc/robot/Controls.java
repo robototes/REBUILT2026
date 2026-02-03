@@ -77,7 +77,13 @@ public class Controls {
 
   private void configureSpindexerBindings() {
     // start serializer motor
-    spindexerTestController.a().onTrue(s.spindexerSubsystem.startMotor());
+    spindexerTestController
+        .a()
+        .onTrue(
+            Commands.parallel(
+                s.spindexerSubsystem.startMotor(),
+                s.feederSubsystem.startMotor(),
+                s.flywheels.setVelocityCommand(55)));
 
     // stop serializer motor
     spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
@@ -203,9 +209,11 @@ public class Controls {
                 AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
                 Commands.parallel(
                     s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
-        .toggleOnFalse(
+        .onFalse(
             Commands.parallel(
-                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
+                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0), s.spindexerSubsystem.stopMotor(), s.feederSubsystem.stopMotor()));
+
+    driverController.start().onTrue(s.hood.autoZeroCommand());
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
           .leftBumper()

@@ -17,7 +17,7 @@ import frc.robot.Hardware;
 
 public class SpindexerSubsystem extends SubsystemBase {
 
-  public static final double serializerSpeed = 1.0;
+  public static final double serializerSpeed = 1;
 
   private final TalonFX serialMotor;
 
@@ -50,7 +50,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     // Inverting motor output direction
     talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     // Setting the motor to brake when not moving
-    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;

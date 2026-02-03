@@ -17,7 +17,7 @@ import frc.robot.Hardware;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  public static final double feederSpeed = 0.4;
+  public static final double feederSpeed = 1;
   public static final int feederRumbleThreshold = 67;
 
   private static final double FEEDMOTOR_KP = 38.5;
@@ -57,9 +57,9 @@ public class FeederSubsystem extends SubsystemBase {
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
-    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
