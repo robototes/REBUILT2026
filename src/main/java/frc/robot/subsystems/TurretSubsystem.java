@@ -18,7 +18,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Controls.TurretState;
 import frc.robot.Hardware;
 import frc.robot.util.AllianceUtils;
 import java.util.function.DoubleSupplier;
@@ -28,9 +27,9 @@ public class TurretSubsystem extends SubsystemBase {
   private final TalonFX m_turretMotor;
   private MotionMagicVoltage request;
 
-  private static final double GEAR_RATIO = 1.0 / 10.0;
-  private static final double TURRET_MIN = -Math.PI / 4; // In radians
-  private static final double TURRET_MAX = Math.PI / 4; // In radians
+  private static final double GEAR_RATIO = 10;
+  private static final double TURRET_MIN = 0; // In radians
+  private static final double TURRET_MAX = Math.PI / 2; // In radians
 
   private static final double TURRET_X_OFFSET = 0.2159; // METERS
   private static final double TURRET_Y_OFFSET = 0.1397; // METERS
@@ -48,7 +47,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final Pose2d hub;
   private final Transform2d turretTransform;
 
-  private boolean readyToShoot = false;
+  private boolean zeroed = false;
 
   // NETWORKTABLES
   private final NetworkTableInstance inst;
@@ -82,8 +81,8 @@ public class TurretSubsystem extends SubsystemBase {
     current = TurretNetworkTable.getDoubleTopic("Current").publish();
   }
 
-  private void moveMotor(double targetDegrees) {
-    m_turretMotor.setControl(request.withPosition(Units.radiansToRotations(targetDegrees)));
+  private void moveMotor(double TargetRadians) {
+    m_turretMotor.setControl(request.withPosition(Units.radiansToRotations(TargetRadians)));
   }
 
   private double calculateTargetRadians() {
@@ -117,6 +116,12 @@ public class TurretSubsystem extends SubsystemBase {
     return turretRadians;
   }
 
+  private void zeroMotor() {
+    m_turretMotor.setPosition(
+        Units.radiansToRotations(TURRET_MAX + 0.00872665)); // +0.5 Degree of headroom
+    zeroed = true;
+  }
+
   // ----- PUBLIC METHODS ----- //
 
   public Command autoZeroCommand(boolean runAutoZeroRoutine) {
@@ -143,49 +148,37 @@ public class TurretSubsystem extends SubsystemBase {
     }
   }
 
-  private void zeroMotor() {
-    m_turretMotor.setPosition(
-        Units.radiansToRotations(TURRET_MAX + 0.00872665)); // +0.5 Degree of headroom
-    readyToShoot = true;
+  public Command AutoRotate() {
+    if (zeroed) {
+      return Commands.run(
+          () -> {
+            moveMotor(calculateTargetRadians());
+          });
+    } else {
+      return Commands.none();
+    }
   }
 
-  public Command turretControlCommand(DoubleSupplier xJoystick, TurretState state) {
-    return runEnd(() -> {
-          if (!readyToShoot) {
-            stop();
-            return;
-          }
-          switch (state) {
-            case AUTO:
-              //System.out.println("reached switch");
-              moveMotor(calculateTargetRadians());
-              break;
-            case MANUAL:
-              manualMove(xJoystick);
-              break;
-            case IDLE:
-            default:
+  public Command manualMove(DoubleSupplier joystick) {
+    if (zeroed) {
+      return Commands.run(
+          () -> {
+            double rad = Units.rotationsToRadians(m_turretMotor.getPosition().getValueAsDouble());
+            double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
+            double volts = cmd * 2.0;
+
+            if (rad >= TURRET_MAX && volts > 0) {
               stop();
-              break;
-          }
-        }, () -> stop());
-        //.finallyDo(interrupted -> stop());
-  }
-
-  public void manualMove(DoubleSupplier joystick) {
-    double rad = Units.rotationsToRadians(m_turretMotor.getPosition().getValueAsDouble());
-    double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
-    double volts = cmd * 2.0;
-
-    if (rad >= TURRET_MAX && volts > 0) {
-      stop();
-      return;
-    } // trying to go further +
-    if (rad <= TURRET_MIN && volts < 0) {
-      stop();
-      return;
-    } // trying to go further -
-    m_turretMotor.setControl(new VoltageOut(volts));
+            } // trying to go further +
+            if (rad <= TURRET_MIN && volts < 0) {
+              stop();
+            } // trying to go further -
+            m_turretMotor.setControl(new VoltageOut(volts));
+          },
+          TurretSubsystem.this);
+    } else {
+      return Commands.none();
+    }
   }
 
   public void stop() {

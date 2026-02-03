@@ -13,7 +13,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -33,6 +35,7 @@ public class Controls {
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
+  private static final int TURRET_TEST_CONTROLLER_PORT_2 = 4;
 
   // Cool enums
 
@@ -56,6 +59,9 @@ public class Controls {
 
   private final CommandXboxController turretTestController =
       new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
+
+  private final CommandPS5Controller turretTestController2 =
+      new CommandPS5Controller(TURRET_TEST_CONTROLLER_PORT_2);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -191,15 +197,45 @@ public class Controls {
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
                 .withName("Drivebase rotation towards the hub"));
 
-    turretTestController.a().onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
-    turretTestController.b().onTrue(Commands.runOnce(() -> currentTurretState = TurretState.IDLE));
-    turretTestController
-        .x()
-        .onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
-    turretTestController.y().onTrue(s.turretSubsystem.autoZeroCommand(false));
-    s.turretSubsystem.setDefaultCommand(
-        s.turretSubsystem.turretControlCommand(
-            () -> turretTestController.getLeftX(), currentTurretState));
+    turretTestController2
+        .square()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.AUTO;
+                }));
+    turretTestController2
+        .cross()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.IDLE;
+                }));
+    turretTestController2
+        .circle()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.MANUAL;
+                }));
+    turretTestController2
+        .triangle()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  s.turretSubsystem.autoZeroCommand(false);
+                },
+                s.turretSubsystem));
+    new Trigger(
+            () -> {
+              return currentTurretState == TurretState.AUTO;
+            })
+        .whileTrue(s.turretSubsystem.AutoRotate());
+    new Trigger(
+            () -> {
+              return currentTurretState == TurretState.MANUAL;
+            })
+        .whileTrue(s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX()));
   }
 
   private void configureAutoAlignBindings() {
