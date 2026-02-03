@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.Intake;
 
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
@@ -124,7 +124,7 @@ public class IntakeSubsystem extends SubsystemBase {
   // rollers configs
   private void TalonFXRollerConfigs() {
     var rollerConfigs = new TalonFXConfiguration();
-    rollerConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    rollerConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     rollerConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     System.out.println("configuring roller");
