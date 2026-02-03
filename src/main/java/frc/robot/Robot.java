@@ -7,6 +7,7 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -48,7 +49,9 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    subsystems = new Subsystems();
+    mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
+    SmartDashboard.putData("Mechanism2d", mechanismRobot);
+    subsystems = new Subsystems(mechanismRobot);
     controls = new Controls(subsystems);
 
     if (DRIVEBASE_ENABLED) {
@@ -98,9 +101,6 @@ public class Robot extends TimedRobot {
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
-
-    mechanismRobot = new Mechanism2d(30, 24);
-    SmartDashboard.putData("Mechanism2d", mechanismRobot);
   }
 
   /**
@@ -202,7 +202,9 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when the robot is first started up. */
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    subsystems.hood.zero();
+  }
 
   /** This function is called periodically whilst in simulation. */
   @Override
