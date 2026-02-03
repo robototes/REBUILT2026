@@ -17,6 +17,12 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "Outpost-Shoot"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "launch"
