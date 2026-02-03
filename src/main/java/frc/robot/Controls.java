@@ -232,7 +232,7 @@ public class Controls {
     if (s.intakeSubsystem == null) {
       System.out.println("line 191 Controls.java, intakeSubsystem is disabled");
     }
-    driverController.b().whileTrue(s.intakeSubsystem.runIntake(1));
+    driverController.b().whileTrue(s.intakeSubsystem.runIntake());
     intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
   }
 

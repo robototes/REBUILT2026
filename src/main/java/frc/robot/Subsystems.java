@@ -4,9 +4,8 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.INTAKEPIVOT_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.INTAKEROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
@@ -28,8 +27,7 @@ public class Subsystems {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
-    public static final boolean INTAKEPIVOT_ENABLED = true;
-    public static final boolean INTAKEROLLERS_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
@@ -60,9 +58,8 @@ public class Subsystems {
       drivebaseSubsystem = null;
       drivebaseWrapper = new DrivebaseWrapper();
     }
-    if (INTAKEROLLERS_ENABLED || INTAKEPIVOT_ENABLED) {
-      intakeSubsystem =
-          new IntakeSubsystem(INTAKEPIVOT_ENABLED, INTAKEROLLERS_ENABLED, mechanism2d);
+    if (INTAKE_ENABLED) {
+      intakeSubsystem = new IntakeSubsystem(mechanism2d);
     } else {
       intakeSubsystem = null;
     }
