@@ -150,13 +150,14 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command turretControlCommand(DoubleSupplier xJoystick, TurretState state) {
-    return run(() -> {
+    return runEnd(() -> {
           if (!readyToShoot) {
             stop();
             return;
           }
           switch (state) {
             case AUTO:
+              //System.out.println("reached switch");
               moveMotor(calculateTargetRadians());
               break;
             case MANUAL:
@@ -167,8 +168,8 @@ public class TurretSubsystem extends SubsystemBase {
               stop();
               break;
           }
-        })
-        .finallyDo(interrupted -> stop());
+        }, () -> stop());
+        //.finallyDo(interrupted -> stop());
   }
 
   public void manualMove(DoubleSupplier joystick) {
@@ -206,8 +207,8 @@ public class TurretSubsystem extends SubsystemBase {
     // -- CURRENT LIMITS -- //
     configs.CurrentLimits.StatorCurrentLimitEnable = true;
     configs.CurrentLimits.SupplyCurrentLimitEnable = true;
-    configs.CurrentLimits.StatorCurrentLimit = 20; // Standard limit
-    configs.CurrentLimits.SupplyCurrentLimit = 10; // Standard limit
+    configs.CurrentLimits.StatorCurrentLimit = 10; // Standard limit
+    configs.CurrentLimits.SupplyCurrentLimit = 5; // Standard limit
 
     configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.radiansToRotations(TURRET_MAX);
     configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.radiansToRotations(TURRET_MIN);

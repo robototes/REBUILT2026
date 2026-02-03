@@ -43,7 +43,7 @@ public class Controls {
     IDLE
   }
 
-  private TurretState currentTurretState = TurretState.IDLE;
+  private TurretState currentTurretState = TurretState.MANUAL;
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -196,6 +196,7 @@ public class Controls {
     turretTestController
         .x()
         .onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
+    turretTestController.y().onTrue(s.turretSubsystem.autoZeroCommand(false));
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.turretControlCommand(
             () -> turretTestController.getLeftX(), currentTurretState));
