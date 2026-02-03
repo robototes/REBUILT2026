@@ -188,7 +188,7 @@ public class Controls {
 
   private void configureIntakeBindings() {
     if (s.intakeSubsystem == null) {
-      throw new IllegalStateException("theres no intake subsystem");
+      System.out.println("line 191 Controls.java, intakeSubsystem is disabled");
     }
     driverController.b().whileTrue(s.intakeSubsystem.runIntake(1));
     intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));

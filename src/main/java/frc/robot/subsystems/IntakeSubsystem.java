@@ -6,7 +6,6 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -38,7 +37,8 @@ public class IntakeSubsystem extends SubsystemBase {
   private final TalonFX leftRollers; // one
   private final TalonFX rightRollers; // two
   private final MotionMagicVoltage pivotRequest = new MotionMagicVoltage(0);
-  private final Follower followerRequest = new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
+  private final Follower followerRequest =
+      new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
   private static final double PIVOT_DEPLOYED_POS = 0;
   private static final double PIVOT_RETRACTED_POS =
       1000; // change this value and ln 44 if u wanna change position
@@ -59,7 +59,7 @@ public class IntakeSubsystem extends SubsystemBase {
   private final MechanismLigament2d pivotArm;
 
   public IntakeSubsystem(
-    boolean intakepivotEnabled, boolean intakerollersEnabled, Mechanism2d mechanism2d) {
+      boolean intakepivotEnabled, boolean intakerollersEnabled, Mechanism2d mechanism2d) {
     pivotShoulder = mechanism2d.getRoot("Shoulder", 0.178 / 2.0, 0.2);
     pivotArm = pivotShoulder.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
     if (intakepivotEnabled) {
@@ -127,7 +127,9 @@ public class IntakeSubsystem extends SubsystemBase {
     pivotMotionMagicConfigs.MotionMagicAcceleration = 3000;
     pivotMotionMagicConfigs.MotionMagicJerk = 10;
 
-    pivotMotor.getConfigurator().apply(talonFXConfigs);
+    if (pivotMotor != null) {
+      pivotMotor.getConfigurator().apply(talonFXConfigs);
+    }
   }
 
   // rollers configs
@@ -136,8 +138,12 @@ public class IntakeSubsystem extends SubsystemBase {
     rollerConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     rollerConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-    leftRollers.getConfigurator().apply(rollerConfigs);
-    rightRollers.getConfigurator().apply(rollerConfigs);
+    if (leftRollers != null) {
+      leftRollers.getConfigurator().apply(rollerConfigs);
+    }
+    if (rightRollers != null) {
+      rightRollers.getConfigurator().apply(rollerConfigs);
+    }
   }
 
   public double getShoulderRotations() {
@@ -147,46 +153,62 @@ public class IntakeSubsystem extends SubsystemBase {
   public Command runIntake(double speed) {
     return Commands.runEnd(
         () -> {
-          if (pivotMotor == null) {
-              throw new IllegalStateException("pivot motor is null");
-          } else {
-            pivotMotor.setControl(
-              pivotRequest.withPosition(
-                  PIVOT_DEPLOYED_POS));
+          if (pivotMotor != null) {
+            pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
           }
-          if (leftRollers == null || rightRollers == null) {
-            throw new IllegalStateException("rollers is null");
-          } else {
-          leftRollers.set(speed);
+          if (leftRollers != null) {
+            leftRollers.set(speed);
+          }
           rightRollers.setControl(followerRequest); // opposite direction as left rollers
+        },
+        () -> {
+          if (leftRollers != null) {
+            leftRollers.stopMotor();
+          }
+          rightRollers.stopMotor();
+          if (pivotMotor != null) {
+            pivotMotor.setControl(
+                pivotRequest.withPosition(
+                    PIVOT_RETRACTED_POS)); // hopefully this retracts the intake
+          }
+        });
+  }
+  ;
+
+  public Command temporaryRunIntake(double speed) {
+    return Commands.runEnd(
+        () -> {
+          if (leftRollers != null) {
+            leftRollers.set(speed);
           }
         },
         () -> {
-          leftRollers.stopMotor();
-          rightRollers.stopMotor();
-          pivotMotor.setControl(
-              pivotRequest.withPosition(
-                  PIVOT_RETRACTED_POS)); // hopefully this retracts the intake
+          if (leftRollers != null) {
+            leftRollers.stopMotor();
+          }
         });
-  }
-
-  public Command temporaryRunIntake(double speed) {
-    return Commands.runEnd(() -> {
-      leftRollers.set(speed);
-    },
-    () -> {
-      leftRollers.stopMotor();
-    });
   }
 
   @Override
   public void simulationPeriodic() {
-    leftRollerSim.setInput(leftRollers.getSimState().getMotorVoltage());
-    leftRollerSim.update(updateSim);
-    rightRollerSim.setInput(rightRollers.getSimState().getMotorVoltage());
-    rightRollerSim.update(updateSim);
-    pivotSimV2.setInput(pivotMotor.getSimState().getMotorVoltage());
-    pivotSimV2.update(updateSim);
+    if (leftRollerSim == null) {
+      return;
+    } else {
+      leftRollerSim.setInput(leftRollers.getSimState().getMotorVoltage());
+      leftRollerSim.update(updateSim);
+    }
+    if (rightRollerSim == null) {
+      return;
+    } else {
+      rightRollerSim.setInput(rightRollers.getSimState().getMotorVoltage());
+      rightRollerSim.update(updateSim);
+    }
+    if (pivotSimV2 == null) {
+      return;
+    } else {
+      pivotSimV2.setInput(pivotMotor.getSimState().getMotorVoltage());
+      pivotSimV2.update(updateSim);
+    }
 
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(
@@ -194,27 +216,46 @@ public class IntakeSubsystem extends SubsystemBase {
                 + rightRollerSim.getCurrentDrawAmps()
                 + pivotSimV2.getCurrentDrawAmps()));
 
-    leftRollers
-        .getSimState()
-        .setRotorVelocity(RadiansPerSecond.of(leftRollerSim.getAngularVelocityRPM()));
-    rightRollers
-        .getSimState()
-        .setRotorVelocity(RadiansPerSecond.of(rightRollerSim.getAngularVelocityRPM()));
-    pivotMotor
-        .getSimState()
-        .setRawRotorPosition(
-            Radians.of(pivotSimV2.getAngleRads() * PIVOT_GEAR_RATIO).in(Rotations));
-    pivotMotor
-        .getSimState()
-        .setRotorVelocity(
-            RadiansPerSecond.of(pivotSimV2.getVelocityRadPerSec() * PIVOT_GEAR_RATIO)
-                .in(RotationsPerSecond));
+    if (leftRollers != null) {
+      leftRollers
+          .getSimState()
+          .setRotorVelocity(RadiansPerSecond.of(leftRollerSim.getAngularVelocityRPM()));
+    }
+    if (rightRollers != null) {
+      rightRollers
+          .getSimState()
+          .setRotorVelocity(RadiansPerSecond.of(rightRollerSim.getAngularVelocityRPM()));
+    }
+    if (pivotMotor != null) {
+      pivotMotor
+          .getSimState()
+          .setRawRotorPosition(
+              Radians.of(pivotSimV2.getAngleRads() * PIVOT_GEAR_RATIO).in(Rotations));
+      pivotMotor
+          .getSimState()
+          .setRotorVelocity(
+              RadiansPerSecond.of(pivotSimV2.getVelocityRadPerSec() * PIVOT_GEAR_RATIO)
+                  .in(RotationsPerSecond));
       pivotArm.setAngle(Units.radiansToDegrees(pivotSimV2.getAngleRads()));
+    }
   }
 
   @Override
   public void periodic() {
-    leftRollerPub.set(leftRollers.getVelocity().getValueAsDouble());
-    rightRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
+    if (leftRollers != null) {
+      leftRollerPub.set(leftRollers.getVelocity().getValueAsDouble());
+    }
+    if (rightRollers != null) {
+      rightRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
+    }
+
+    if (pivotMotor != null) {
+      if (RobotBase.isSimulation() && pivotSimV2 != null) {
+        pivotArm.setAngle(Units.radiansToDegrees(pivotSimV2.getAngleRads()));
+      } else if (!RobotBase.isSimulation()) {
+        // Update arm angle from the actual motor position on the real robot.
+        pivotArm.setAngle(getShoulderRotations() * 360);
+      }
+    }
   }
 }
