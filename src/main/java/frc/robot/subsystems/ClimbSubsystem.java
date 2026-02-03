@@ -35,16 +35,17 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // STATES
   public enum ClimbState {
-    L0,
-    L1,
-    L2,
-    L3
+    notClimbing,
+    Climbing
   }
 
-  private ClimbState currentState = ClimbState.L0;
+  // Was told to make an "isClimbing" variable, so i made this. Static makes the most sense right?
+  private static ClimbState currentState = ClimbState.notClimbing;
 
   // POSES
   private final CommandSwerveDrivetrain driveTrain;
+  private final Pose2d frontBumper;
+
   private final Pose2d TowerPose =
       (AllianceUtils.isBlue())
           ? AllianceUtils.FIELD_LAYOUT
@@ -57,17 +58,11 @@ public class ClimbSubsystem extends SubsystemBase {
               .get()
               .toPose2d()
               .transformBy(new Transform2d(0, -0.6985, Rotation2d.kZero));
-  private final Pose2d frontBumper;
 
   public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
     m_climb_motor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
-    frontBumper =
-        driveTrain
-            .getStateCopy()
-            .Pose
-            .transformBy(
-                new Transform2d(new Translation2d(ROBOT_LENGTH_METERS / 2, 0), Rotation2d.kZero));
+
     configureMotors();
   }
 
@@ -104,7 +99,7 @@ public class ClimbSubsystem extends SubsystemBase {
   public Command autoAlignRoutine(ClimbState state) {
     return Commands.run(
             () -> {
-              if (currentState == ClimbState.L0 && isClose()) {
+              if (currentState != ClimbState.Climbing && isClose()) {
                 CommandScheduler.getInstance().schedule(new ClimbAutoAlign());
               }
             },
@@ -124,9 +119,8 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   private static class ClimbAutoAlign extends Command {
-    // Tunables
-    // private final double MaxSpeed = ;
-    // private final double MaxAngularRate = ;
+    // Poses
+
     // PID CONTROLLERS
     private final PIDController pidX = new PIDController(0, 0, 4);
     private final PIDController pidY = new PIDController(0, 0, 4);
@@ -138,11 +132,20 @@ public class ClimbSubsystem extends SubsystemBase {
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
     public ClimbAutoAlign() {
+      // Any rotational calculations are automatically clampd to the nearest target
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
+      setName("Climb auto align"); // Sets name of command
     }
 
     @Override
-    public void initialize() {}
+    public void initialize() {
+      frontBumper =
+          driveTrain
+              .getStateCopy()
+              .Pose
+              .transformBy(
+                  new Transform2d(new Translation2d(ROBOT_LENGTH_METERS / 2, 0), Rotation2d.kZero));
+    }
 
     @Override
     public void execute() {}
