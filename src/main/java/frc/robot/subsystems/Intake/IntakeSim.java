@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IntakeSim extends SubsystemBase {
@@ -30,8 +31,8 @@ public class IntakeSim extends SubsystemBase {
     private final FlywheelSim rightRollerSim;
     private final SingleJointedArmSim pivotSimV2;
 
-      private final TalonFXSimState leftRollerSimState;
-      private final TalonFXSimState rightRollerSimState;
+    private final TalonFXSimState leftRollerSimState;
+    private final TalonFXSimState rightRollerSimState;
 
     private final MechanismRoot2d pivotShoulder;
     private final MechanismLigament2d pivotArm;
@@ -54,7 +55,6 @@ public class IntakeSim extends SubsystemBase {
         rightRollerSimState = rightRollers.getSimState();
         rightRollerSimState.setMotorType(MotorType.KrakenX60);
 
-
         pivotSimV2 =
           new SingleJointedArmSim(
               DCMotor.getKrakenX60(1),
@@ -76,9 +76,34 @@ public class IntakeSim extends SubsystemBase {
 
         this.rightRollerTopic = nt.getDoubleTopic("right intake status/speed in RPM");
         this.rightRollerPub = rightRollerTopic.publish();
+
+        SmartDashboard.putData("Rollers", mechanism2d);
     }
 
     public void update() {
-        leftRollerSim.setInput(leftRollerSimState.getMotorVoltage());
+        double rpm = leftRollerSim.getAngularVelocityRPM();
+        double rps = rpm / 60.0;
+        // rollers
+        if (leftRollerSim != null) {
+            leftRollerSim.setInput(leftRollerSimState.getMotorVoltage());
+            leftRollerSim.update(updateSim);
+
+
+        } else {
+            return;
+        }
+        if (rightRollerSim != null) {
+            rightRollerSim.setInput(rightRollerSimState.getMotorVoltage());
+            rightRollerSim.update(updateSim);
+        } else {
+            return;
+        }
+
+
+
+        // pivot arm
+
+
+
     }
 }
