@@ -32,7 +32,18 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int TURRET_TEST_CONTROLLER_PORT = 3;
 
+  // Cool enums
+
+  // --- Turret STATES ---- //
+  public static enum TurretState {
+    MANUAL,
+    AUTO,
+    IDLE
+  }
+
+  private TurretState currentTurretState = TurretState.IDLE;
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -42,6 +53,9 @@ public class Controls {
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController turretTestController =
+      new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -176,6 +190,15 @@ public class Controls {
             AutoDriveRotate.autoRotate(
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
                 .withName("Drivebase rotation towards the hub"));
+
+    turretTestController.a().onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
+    turretTestController.b().onTrue(Commands.runOnce(() -> currentTurretState = TurretState.IDLE));
+    turretTestController
+        .x()
+        .onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
+    s.turretSubsystem.setDefaultCommand(
+        s.turretSubsystem.turretControlCommand(
+            () -> turretTestController.getLeftX(), currentTurretState));
   }
 
   private void configureAutoAlignBindings() {

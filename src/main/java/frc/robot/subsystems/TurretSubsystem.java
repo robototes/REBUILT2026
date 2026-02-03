@@ -11,7 +11,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -19,6 +18,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Controls.TurretState;
 import frc.robot.Hardware;
 import frc.robot.util.AllianceUtils;
 import java.util.function.DoubleSupplier;
@@ -29,34 +29,26 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private static final double GEAR_RATIO = 1.0 / 10.0;
-  private static final double TURRET_MIN = -Math.PI / 2; // In radians
-  private static final double TURRET_MAX = Math.PI / 2; // In radians
+  private static final double TURRET_MIN = -Math.PI / 4; // In radians
+  private static final double TURRET_MAX = Math.PI / 4; // In radians
 
-  private static final double TURRET_X_OFFSET = 0.1; // METERS
-  private static final double TURRET_Y_OFFSET = 0.1; // METERS
+  private static final double TURRET_X_OFFSET = 0.2159; // METERS
+  private static final double TURRET_Y_OFFSET = 0.1397; // METERS
 
-  private static final double STALL_CURRENT = 30; // Amps
+  private static final double STALL_CURRENT = 5; // Amps
 
   private static final VoltageOut zeroVolts = new VoltageOut(0);
   private static final VoltageOut _0_5volts = new VoltageOut(0.5);
   // ------- AUTOZERO ------ //
   private static final double MIN_VELOCITY = 0.3;
-  private static final double MIN_HITS = 10;
+  private static final double MIN_HITS = 5;
 
   // ----- HARDWARE OBJECTS ----- //
   private final SwerveDrivetrain m_driveTrain;
-  private final Translation2d hub;
+  private final Pose2d hub;
   private final Transform2d turretTransform;
 
-  // --- STATES ---- //
-  public static enum TurretState {
-    MANUAL,
-    AUTO,
-    IDLE
-  }
-
   private boolean readyToShoot = false;
-  private TurretState currentState = TurretState.IDLE;
 
   // NETWORKTABLES
   private final NetworkTableInstance inst;
@@ -75,7 +67,7 @@ public class TurretSubsystem extends SubsystemBase {
     request = new MotionMagicVoltage(0);
     configureMotors();
     // --- Hardware --- //
-    hub = AllianceUtils.getHubTranslation2d();
+    hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
     m_driveTrain = drivetrain;
     turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.kZero);
     // --- NETWORK TABLES --- //
@@ -106,8 +98,8 @@ public class TurretSubsystem extends SubsystemBase {
                 + turretRotation); // Get the -pi -> pi equivalent of the field relative angle of
     // the turret
 
-    Translation2d difference =
-        hub.minus(turretPose.getTranslation()); // get X and Y distance from the turret to the hub
+    Transform2d difference =
+        hub.minus(turretPose); // get X and Y distance from the turret to the hub
     double requiredAngles = Math.atan2(difference.getY(), difference.getX());
 
     // Results
@@ -157,13 +149,13 @@ public class TurretSubsystem extends SubsystemBase {
     readyToShoot = true;
   }
 
-  public Command turretControlCommand(DoubleSupplier xJoystick) {
+  public Command turretControlCommand(DoubleSupplier xJoystick, TurretState state) {
     return run(() -> {
           if (!readyToShoot) {
             stop();
             return;
           }
-          switch (currentState) {
+          switch (state) {
             case AUTO:
               moveMotor(calculateTargetRadians());
               break;
@@ -197,19 +189,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   public void stop() {
     m_turretMotor.setControl(zeroVolts);
-  }
-
-  // --- STATE SETTERS --- //
-  public void setIdle() {
-    currentState = TurretState.IDLE;
-  }
-
-  public void setAuto() {
-    currentState = TurretState.AUTO;
-  }
-
-  public void setManual() {
-    currentState = TurretState.MANUAL;
   }
 
   // --- MOTOR CONFIGS --- //
