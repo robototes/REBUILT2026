@@ -223,6 +223,7 @@ public class Controls {
                 .withName("Alternate between climb and intake color"));
 
     ledTestController.rightBumper().onTrue(LEDs.toggleRainbow());
+  }
   private void configureLauncherBindings() {
     if (s.flywheels == null || s.hood == null) {
       // Stop running this method
