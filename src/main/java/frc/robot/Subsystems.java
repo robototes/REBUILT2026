@@ -29,7 +29,6 @@ public class Subsystems {
     public static final boolean DRIVEBASE_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
     public static final boolean LEDS_ENABLED = true;
-    public static final boolean GAMEPIECE_DETECTION_ENABLED = false;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
