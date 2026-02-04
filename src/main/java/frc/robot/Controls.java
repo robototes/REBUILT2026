@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -46,7 +45,7 @@ public class Controls {
     IDLE
   }
 
-  private TurretState currentTurretState = TurretState.MANUAL;
+  private TurretState currentTurretState = TurretState.IDLE;
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -197,45 +196,36 @@ public class Controls {
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
                 .withName("Drivebase rotation towards the hub"));
 
-    turretTestController2
-        .square()
+    turretTestController
+        .x()
         .onTrue(
             Commands.runOnce(
                 () -> {
                   currentTurretState = TurretState.AUTO;
                 }));
-    turretTestController2
-        .cross()
+    turretTestController
+        .b()
         .onTrue(
             Commands.runOnce(
                 () -> {
                   currentTurretState = TurretState.IDLE;
                 }));
-    turretTestController2
-        .circle()
+    turretTestController
+        .a()
         .onTrue(
             Commands.runOnce(
                 () -> {
                   currentTurretState = TurretState.MANUAL;
                 }));
-    turretTestController2
-        .triangle()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  s.turretSubsystem.autoZeroCommand(false);
-                },
-                s.turretSubsystem));
-    new Trigger(
-            () -> {
-              return currentTurretState == TurretState.AUTO;
-            })
-        .whileTrue(s.turretSubsystem.AutoRotate());
-    new Trigger(
-            () -> {
-              return currentTurretState == TurretState.MANUAL;
-            })
-        .whileTrue(s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX()));
+    turretTestController
+    .y()
+    .onTrue(
+        s.turretSubsystem.autoZeroCommand(false)
+        .withName("Auto Zero"));
+    s.turretSubsystem.AutoRotateTrigger(currentTurretState).onTrue(s.turretSubsystem.AutoRotate());
+    s.turretSubsystem
+        .ManualRotateTrigger(currentTurretState)
+        .onTrue(s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX()));
   }
 
   private void configureAutoAlignBindings() {

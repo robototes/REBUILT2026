@@ -18,6 +18,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Controls.TurretState;
 import frc.robot.Hardware;
 import frc.robot.util.AllianceUtils;
 import java.util.function.DoubleSupplier;
@@ -141,19 +143,37 @@ public class TurretSubsystem extends SubsystemBase {
               .until(
                   () -> {
                     double motorVelocity = m_turretMotor.getVelocity().getValueAsDouble();
+                    System.out.println("ZERO");
                     return hits[0] > MIN_HITS && motorVelocity <= MIN_VELOCITY;
                   }));
     } else {
-      return Commands.runOnce(this::zeroMotor);
+      System.out.println("ZERO");
+      return Commands.runOnce(() -> zeroMotor());
     }
   }
 
+  public Trigger AutoRotateTrigger(TurretState state) {
+    return new Trigger(
+        () -> {
+          return state == TurretState.AUTO;
+        });
+  }
+
+  public Trigger ManualRotateTrigger(TurretState state) {
+    return new Trigger(
+        () -> {
+          return state == TurretState.MANUAL;
+        });
+  }
+
   public Command AutoRotate() {
+    System.out.println("auto");
     if (zeroed) {
       return Commands.run(
           () -> {
             moveMotor(calculateTargetRadians());
-          });
+          },
+          TurretSubsystem.this);
     } else {
       return Commands.none();
     }
@@ -163,6 +183,7 @@ public class TurretSubsystem extends SubsystemBase {
     if (zeroed) {
       return Commands.run(
           () -> {
+            System.out.println("manual");
             double rad = Units.rotationsToRadians(m_turretMotor.getPosition().getValueAsDouble());
             double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
             double volts = cmd * 2.0;
@@ -177,7 +198,7 @@ public class TurretSubsystem extends SubsystemBase {
           },
           TurretSubsystem.this);
     } else {
-      return Commands.none();
+      return Commands.run(() -> System.out.println("manual"), TurretSubsystem.this);
     }
   }
 
