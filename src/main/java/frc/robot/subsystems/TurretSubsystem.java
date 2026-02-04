@@ -5,6 +5,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import edu.wpi.first.math.MathUtil;
@@ -31,8 +32,8 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private static final double GEAR_RATIO = 10;
-  private static final double TURRET_MIN = 0; // In radians
-  private static final double TURRET_MAX = Math.PI / 2; // In radians
+  private static final double TURRET_MIN = Units.degreesToRadians(-50); // In radians
+  private static final double TURRET_MAX = Units.degreesToRadians(40); // In radians
 
   private static final double TURRET_X_OFFSET = 0.2159; // METERS
   private static final double TURRET_Y_OFFSET = 0.1397; // METERS
@@ -120,8 +121,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private void zeroMotor() {
-    m_turretMotor.setPosition(
-        Units.radiansToRotations(TURRET_MAX + 0.00872665)); // +0.5 Degree of headroom
+    m_turretMotor.setPosition(Units.radiansToRotations(TURRET_MIN)); // +0.5 Degree of headroom
     zeroed = true;
   }
 
@@ -190,10 +190,10 @@ public class TurretSubsystem extends SubsystemBase {
           double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
           double volts = cmd * 2.0;
 
-          if ((rad >= TURRET_MAX && volts > 0) || (rad <= TURRET_MIN && volts < 0)) {
-            stop();
-            return;
-          }
+          // if ((rad >= TURRET_MAX && volts > 0) || (rad <= TURRET_MIN && volts < 0)) {
+          //  stop();
+          //  return;
+          //
           m_turretMotor.setControl(new VoltageOut(volts));
         },
         this);
@@ -223,8 +223,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.radiansToRotations(TURRET_MAX);
     configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.radiansToRotations(TURRET_MIN);
-    configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+    configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
 
     var motionMagicConfig = configs.MotionMagic;
     motionMagicConfig.MotionMagicCruiseVelocity = 1.5;
@@ -232,7 +232,7 @@ public class TurretSubsystem extends SubsystemBase {
     motionMagicConfig.MotionMagicJerk = 1000;
 
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
-
+    configs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     // set to coast
     configs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     m_turretMotor.getConfigurator().apply(configs);
