@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "RT-NeutralRight"

@@ -45,6 +45,12 @@
           "data": {
             "pathName": "NeutralRight-NeutralLeftTWO"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
         }
       ]
     }

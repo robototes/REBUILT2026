@@ -45,6 +45,12 @@
           "data": {
             "pathName": "LT-NeutralLeft-THREE"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
         }
       ]
     }
