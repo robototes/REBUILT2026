@@ -94,8 +94,14 @@ public class Controls {
     indexingTestController.y().onTrue(s.spindexerSubsystem.stopMotor());
 
     // run both while left trigger is held
-    indexingTestController.leftTrigger().onTrue(Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
-    indexingTestController.leftTrigger().onFalse(Commands.parallel(s.feederSubsystem.stopMotor(), s.spindexerSubsystem.stopMotor()));
+    indexingTestController
+        .leftTrigger()
+        .onTrue(
+            Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
+    indexingTestController
+        .leftTrigger()
+        .onFalse(
+            Commands.parallel(s.feederSubsystem.stopMotor(), s.spindexerSubsystem.stopMotor()));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
