@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -183,7 +184,7 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
     CommandScheduler.getInstance()
-        .schedule(subsystems.ledSubsystem.setLEDsCommand(subsystems.ledSubsystem.defaultColor));
+        .schedule(subsystems.ledSubsystem.setLEDsCommand(LEDSubsystem.defaultColor));
   }
 
   /** This function is called periodically during operator control. */

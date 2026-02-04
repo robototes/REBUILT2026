@@ -26,7 +26,6 @@ import frc.robot.subsystems.auto.FuelAutoAlign;
  * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
  * subsystems, commands, and trigger mappings) should be declared here.
  */
-
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
@@ -41,8 +40,8 @@ public class Controls {
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
-  
-      private final CommandXboxController ledTestController =
+
+  private final CommandXboxController ledTestController =
       new CommandXboxController(LED_CONTROLLER_PORT);
 
   private final CommandXboxController feederTestController =
@@ -205,25 +204,35 @@ public class Controls {
       // Stop running this method
       return;
     }
-    ledTestController.a()
+    ledTestController
+        .a()
         .onTrue(
-            LEDs.toggleColor(LEDs.intakeColor).withName("Toggle intake and on color")); // yellow
-    ledTestController.b()
+            LEDs.toggleColor(LEDSubsystem.intakeColor)
+                .withName("Toggle intake and on color")); // yellow
+    ledTestController
+        .b()
         .onTrue(
-            LEDs.toggleColor(LEDs.climbColor).withName("Toggle climb and on color")); // blue
-    ledTestController.x()
+            LEDs.toggleColor(LEDSubsystem.climbColor)
+                .withName("Toggle climb and on color")); // blue
+    ledTestController
+        .x()
         .onTrue(
-            LEDs.toggleColor(LEDs.outtakeColor).withName("Toggle outtake and on color")); // green
-    ledTestController.y()
+            LEDs.toggleColor(LEDSubsystem.outtakeColor)
+                .withName("Toggle outtake and on color")); // green
+    ledTestController
+        .y()
         .onTrue(
-            LEDs.toggleColor(LEDs.defaultColor).withName("Toggle default and on color")); // red
-    ledTestController.leftBumper()
+            LEDs.toggleColor(LEDSubsystem.defaultColor)
+                .withName("Toggle default and on color")); // red
+    ledTestController
+        .leftBumper()
         .whileTrue(
-            LEDs.alternateColors(LEDs.climbColor, LEDs.intakeColor)
+            LEDs.alternateColors(LEDSubsystem.climbColor, LEDSubsystem.intakeColor)
                 .withName("Alternate between climb and intake color"));
 
     ledTestController.rightBumper().onTrue(LEDs.toggleRainbow());
   }
+
   private void configureLauncherBindings() {
     if (s.flywheels == null || s.hood == null) {
       // Stop running this method

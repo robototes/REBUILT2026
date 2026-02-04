@@ -6,35 +6,32 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
-
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 // import frc.robot.util.LEDMode;
 // import java.util.function.Supplier;
 
 public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
-  private static final int CAN_ID = 15;
-
-  private final CANdle candle = new CANdle(CAN_ID);
+  private static final int CAN_ID = 22;
 
   private static final int END_INDEX = 7;
 
-  private final EmptyAnimation m_emptyAnimation = new EmptyAnimation(0);
-
+  private final CANdle candle = new CANdle(CAN_ID);
+  private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
   private final SolidColor solid = new SolidColor(0, END_INDEX);
+  private final RainbowAnimation slot0Animation = new RainbowAnimation(0, END_INDEX);
 
-  private final RainbowAnimation m_slot0Animation = new RainbowAnimation(0, END_INDEX);
-
-  public final RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
-  public final RGBWColor intakeColor = new RGBWColor(255, 255, 0); // yellow
-  public final RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
-  public final RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
-  public final RGBWColor offColor = new RGBWColor(0, 0, 0); // off
+  public static final RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
+  public static final RGBWColor intakeColor = new RGBWColor(255, 255, 0); // yellow
+  public static final RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
+  public static final RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
+  public static final RGBWColor offColor = new RGBWColor(0, 0, 0); // off
 
   private boolean rainbowOn = false;
 
@@ -47,20 +44,18 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Configures a {@link RainbowAnimation} on the specified animation slot.
    *
-   * <p>
-   * This method sets the {@code slot}, {@code brightness}, {@code direction}, and
-   * {@code frame
+   * <p>This method sets the {@code slot}, {@code brightness}, {@code direction}, and {@code frame
    * rate} for the rainbow animation.
    *
-   * @param slot       the animation slot to run the rainbow animation on
+   * @param slot the animation slot to run the rainbow animation on
    * @param brightness the brightness level of the LEDs (typically 0–255)
-   * @param direction  the direction the rainbow animation moves
-   * @param frameRate  the update frequency of the animation
+   * @param direction the direction the rainbow animation moves
+   * @param frameRate the update frequency of the animation
    */
   public void setRainbowAnimation(
       int slot, int brightness, AnimationDirectionValue direction, Frequency frameRate) {
 
-    m_slot0Animation
+    slot0Animation
         .withSlot(slot)
         .withBrightness(brightness)
         .withDirection(direction)
@@ -90,8 +85,7 @@ public class LEDSubsystem extends SubsystemBase {
   // }
 
   /**
-   * Sets Leds at specified {@link frc.robot.subsystems.LEDSubsystem#CAN_ID id} to
-   * color
+   * Sets Leds at specified {@link frc.robot.subsystems.LEDSubsystem#CAN_ID id} to color
    *
    * @param color
    */
@@ -108,9 +102,7 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Alternates the LED strip between two colors once per second.
    *
-   * <p>
-   * The active color is determined by the system time: {@code colorA} is shown on
-   * even-numbered
+   * <p>The active color is determined by the system time: {@code colorA} is shown on even-numbered
    * seconds and {@code colorB} is shown on odd-numbered seconds.
    *
    * @param colorA the color displayed on even seconds
@@ -132,7 +124,7 @@ public class LEDSubsystem extends SubsystemBase {
    * @param otherColor the color to toggle with
    * @return a {@link Command} that toggles the rainbow animation state
    */
-    public Command toggleColor(RGBWColor otherColor) {
+  public Command toggleColor(RGBWColor otherColor) {
     return new InstantCommand(
         () -> {
           if (activeSolidColor != null && activeSolidColor.equals(otherColor)) {
@@ -151,9 +143,7 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Toggles the rainbow animation on or off.
    *
-   * <p>
-   * If the rainbow animation is not currently running, this command starts it. If
-   * it is already
+   * <p>If the rainbow animation is not currently running, this command starts it. If it is already
    * running, the animation is stopped.
    *
    * @return a {@link Command} that toggles the rainbow animation state
@@ -162,9 +152,9 @@ public class LEDSubsystem extends SubsystemBase {
     return new InstantCommand(
         () -> {
           if (!rainbowOn) {
-            candle.setControl(m_slot0Animation);
+            candle.setControl(slot0Animation);
           } else {
-            candle.setControl(m_emptyAnimation);
+            candle.setControl(emptyAnimation);
           }
           rainbowOn = !rainbowOn;
         },
@@ -177,7 +167,7 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a {@link Command} that starts the rainbow animation
    */
   public Command startRainbow() {
-    return new InstantCommand(() -> candle.setControl(m_slot0Animation), this);
+    return new InstantCommand(() -> candle.setControl(slot0Animation), this);
   }
 
   /**
@@ -186,6 +176,6 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a {@link Command} that stops the currently running rainbow animation
    */
   public Command stopRainbow() {
-    return new InstantCommand(() -> candle.setControl(m_emptyAnimation), this);
+    return new InstantCommand(() -> candle.setControl(emptyAnimation), this);
   }
 }

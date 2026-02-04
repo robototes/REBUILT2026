@@ -4,8 +4,8 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
