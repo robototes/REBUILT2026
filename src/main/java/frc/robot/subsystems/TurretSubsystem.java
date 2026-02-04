@@ -199,7 +199,7 @@ public class TurretSubsystem extends SubsystemBase {
           },
           TurretSubsystem.this);
     } else {
-      return Commands.run(() -> System.out.println("manual"), TurretSubsystem.this);
+      return Commands.none();
     }
   }
 
