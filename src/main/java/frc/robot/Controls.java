@@ -211,7 +211,10 @@ public class Controls {
                     s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
         .onFalse(
             Commands.parallel(
-                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0), s.spindexerSubsystem.stopMotor(), s.feederSubsystem.stopMotor()));
+                s.hood.hoodPositionCommand(0.0),
+                s.flywheels.setVelocityCommand(0.0),
+                s.spindexerSubsystem.stopMotor(),
+                s.feederSubsystem.stopMotor()));
 
     driverController.start().onTrue(s.hood.autoZeroCommand());
     if (s.flywheels.TUNER_CONTROLLED) {
