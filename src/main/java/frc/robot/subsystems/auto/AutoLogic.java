@@ -51,24 +51,24 @@ public class AutoLogic {
 
   private static final List<AutoPath> rebuiltPaths =
       List.of(
-         // new AutoPath("C-Climb", "C-Climb"),
-         // new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
+          // new AutoPath("C-Climb", "C-Climb"),
+          // new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
           new AutoPath("Default", "Default"),
-          //new AutoPath("LB-NeutralLeft-right", "LB-NeutralLeft"),
-        //  new AutoPath("LB-NeutralLeft-Climb", "LB-NeutralLeft-Climb"),
-        //  new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
-         // new AutoPath("LT-NeutralLeft-right", "LT-NeutralLeft"),
+          // new AutoPath("LB-NeutralLeft-right", "LB-NeutralLeft"),
+          //  new AutoPath("LB-NeutralLeft-Climb", "LB-NeutralLeft-Climb"),
+          //  new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
+          // new AutoPath("LT-NeutralLeft-right", "LT-NeutralLeft"),
           new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
-             new AutoPath("LT-NeutralLeftTWO", "LT-NeutralLeftTWO"),
-        //  new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
-        //  new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
-        //  new AutoPath("RB-NeutralRight-NeutralLeft", "RB-NeutralRight-NeutralLeft"),
-      //    new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
+          new AutoPath("LT-NeutralLeftTWO", "LT-NeutralLeftTWO"),
+          //  new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
+          //  new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
+          //  new AutoPath("RB-NeutralRight-NeutralLeft", "RB-NeutralRight-NeutralLeft"),
+          //    new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-            new AutoPath("RT-NeutralRightTWO", "RT-NeutralRightTWO"));
-        //  new AutoPath("RT-NeutralRight-NeutralLeft", "RT-NeutralRight-NeutralLeft"),
-       //   new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
+          new AutoPath("RT-NeutralRightTWO", "RT-NeutralRightTWO"));
+  //  new AutoPath("RT-NeutralRight-NeutralLeft", "RT-NeutralRight-NeutralLeft"),
+  //   new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
@@ -184,7 +184,10 @@ public class AutoLogic {
   }
 
   public static Command launcherCommand() {
-    return Commands.none();
+    return Commands.sequence(
+            AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+            Commands.parallel(s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
+        .andThen(s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0));
   }
 
   public static Command intakeCommand() {
