@@ -23,6 +23,7 @@ import frc.robot.Controls.TurretState;
 import frc.robot.Hardware;
 import frc.robot.util.AllianceUtils;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
   // ------ VARIABLES ------//
@@ -152,17 +153,17 @@ public class TurretSubsystem extends SubsystemBase {
     }
   }
 
-  public Trigger AutoRotateTrigger(TurretState state) {
+  public Trigger AutoRotateTrigger(Supplier<TurretState> state) {
     return new Trigger(
         () -> {
-          return state == TurretState.AUTO;
+          return state.get() == TurretState.AUTO;
         });
   }
 
-  public Trigger ManualRotateTrigger(TurretState state) {
+  public Trigger ManualRotateTrigger(Supplier<TurretState> state) {
     return new Trigger(
         () -> {
-          return state == TurretState.MANUAL;
+          return state.get() == TurretState.MANUAL;
         });
   }
 
