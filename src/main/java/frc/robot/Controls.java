@@ -196,34 +196,36 @@ public class Controls {
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
                 .withName("Drivebase rotation towards the hub"));
 
-    turretTestController
-        .x()
+    turretTestController2
+        .cross()
         .onTrue(
             Commands.runOnce(
                 () -> {
                   currentTurretState = TurretState.AUTO;
                 }));
-    turretTestController
-        .b()
+    turretTestController2
+        .circle()
         .onTrue(
             Commands.runOnce(
                 () -> {
                   currentTurretState = TurretState.IDLE;
                 }));
-    turretTestController
-        .a()
+    turretTestController2
+        .square()
         .onTrue(
             Commands.runOnce(
                 () -> {
                   currentTurretState = TurretState.MANUAL;
                 }));
-    turretTestController.y().onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
+    turretTestController2
+        .triangle()
+        .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
     s.turretSubsystem
         .AutoRotateTrigger(() -> currentTurretState)
-        .onTrue(s.turretSubsystem.AutoRotate());
+        .whileTrue((s.turretSubsystem.AutoRotate()));
     s.turretSubsystem
         .ManualRotateTrigger(() -> currentTurretState)
-        .onTrue(s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX()));
+        .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX())));
   }
 
   private void configureAutoAlignBindings() {

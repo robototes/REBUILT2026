@@ -170,36 +170,33 @@ public class TurretSubsystem extends SubsystemBase {
   public Command AutoRotate() {
     return Commands.run(
         () -> {
-          if (zeroed) {
-            moveMotor(calculateTargetRadians());
-          } else {
-            stop();
-          }
+          System.out.println("AUTO tick zerooed=" + zeroed);
+          if (zeroed) moveMotor(calculateTargetRadians());
+          else stop();
         },
         this);
   }
 
   public Command manualMove(DoubleSupplier joystick) {
-    if (zeroed) {
-      return Commands.run(
-          () -> {
-            System.out.println("manual");
-            double rad = Units.rotationsToRadians(m_turretMotor.getPosition().getValueAsDouble());
-            double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
-            double volts = cmd * 2.0;
+    return Commands.run(
+        () -> {
+          System.out.println("MANUAL tick zeroed=" + zeroed);
+          if (!zeroed) {
+            stop();
+            return;
+          }
 
-            if (rad >= TURRET_MAX && volts > 0) {
-              stop();
-            } // trying to go further +
-            if (rad <= TURRET_MIN && volts < 0) {
-              stop();
-            } // trying to go further -
-            m_turretMotor.setControl(new VoltageOut(volts));
-          },
-          TurretSubsystem.this);
-    } else {
-      return Commands.none();
-    }
+          double rad = Units.rotationsToRadians(m_turretMotor.getPosition().getValueAsDouble());
+          double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
+          double volts = cmd * 2.0;
+
+          if ((rad >= TURRET_MAX && volts > 0) || (rad <= TURRET_MIN && volts < 0)) {
+            stop();
+            return;
+          }
+          m_turretMotor.setControl(new VoltageOut(volts));
+        },
+        this);
   }
 
   public void stop() {
