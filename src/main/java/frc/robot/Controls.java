@@ -35,7 +35,7 @@ public class Controls {
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 3;
-  private static final int LED_CONTROLLER_PORT = 4;
+  private static final int LED_CONTROLLER_PORT = 5;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -49,6 +49,7 @@ public class Controls {
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+  
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
 
