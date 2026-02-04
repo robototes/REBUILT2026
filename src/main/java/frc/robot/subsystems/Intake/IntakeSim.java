@@ -1,19 +1,17 @@
 package frc.robot.subsystems.Intake;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.hardware.TalonFXS;
+import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -22,88 +20,93 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IntakeSim extends SubsystemBase {
-    private static final double updateSim = 0.02;
-    private final DoubleTopic leftRollerTopic;
-    private final DoubleTopic rightRollerTopic;
-    private final DoublePublisher leftRollerPub;
-    private final DoublePublisher rightRollerPub;
-    private final FlywheelSim leftRollerSim;
-    private final FlywheelSim rightRollerSim;
-    private final SingleJointedArmSim pivotSimV2;
+  private static final double updateSim = 0.02;
+  private final FlywheelSim leftRollerSim;
+  private final FlywheelSim rightRollerSim;
+  private final SingleJointedArmSim pivotSimV2;
 
-    private final TalonFXSimState leftRollerSimState;
-    private final TalonFXSimState rightRollerSimState;
+  private final TalonFXSimState leftRollerSimState;
+  private final TalonFXSimState rightRollerSimState;
+  private final TalonFXSimState pivotSimState;
 
-    private final MechanismRoot2d pivotShoulder;
-    private final MechanismLigament2d pivotArm;
+  private final MechanismRoot2d pivotRoot;
+  private final MechanismLigament2d pivotArm;
 
-    private static final double PIVOT_GEAR_RATIO = (54.0 / 12.0) * (54.0 / 18.0) * (48.0 / 18.0);
-    private static final double ARM_LENGTH_METERS = Units.inchesToMeters(10.919);
+  private static final double PIVOT_GEAR_RATIO = 36.0;
+  private static final double ROLLERS_GEAR_RATIO = 1.0;
+  private static final double ARM_LENGTH_METERS = Units.inchesToMeters(10.919);
+  private static final double ARM_START_POS = 15;
 
-    LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
+  LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
 
-    public IntakeSim(Mechanism2d mechanism2d, TalonFX leftRollers, TalonFX rightRollers) {
-        pivotShoulder = mechanism2d.getRoot("Shoulder", 0.178 / 2.0, 0.2);
-        pivotArm = pivotShoulder.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
+  public IntakeSim(TalonFX leftRollers, TalonFX rightRollers, TalonFX pivotMotor) {
 
-        if (RobotBase.isSimulation()) {
-        leftRollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
-        rightRollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
-
-        leftRollerSimState = leftRollers.getSimState();
-        leftRollerSimState.setMotorType(MotorType.KrakenX60);
-        rightRollerSimState = rightRollers.getSimState();
-        rightRollerSimState.setMotorType(MotorType.KrakenX60);
-
-        pivotSimV2 =
-          new SingleJointedArmSim(
-              DCMotor.getKrakenX60(1),
-              PIVOT_GEAR_RATIO,
-              SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, 2),
-              Units.inchesToMeters(ARM_LENGTH_METERS),
-              Units.degreesToRadians(0), // minimum arm angle
-              Units.degreesToRadians(120), // maximum arm angle
-              false,
-              Units.degreesToRadians(
-                  120)); // starting arm angle, keep this the same value as max arm angle.
-        } else {
-            throw new IllegalStateException("this is not sim what are you doing");
-        }
-
-        var nt = NetworkTableInstance.getDefault();
-        this.leftRollerTopic = nt.getDoubleTopic("left intake status/speed in RPM");
-        this.leftRollerPub = leftRollerTopic.publish();
-
-        this.rightRollerTopic = nt.getDoubleTopic("right intake status/speed in RPM");
-        this.rightRollerPub = rightRollerTopic.publish();
-
-        SmartDashboard.putData("Rollers", mechanism2d);
+    if (!RobotBase.isSimulation()) {
+      throw new IllegalStateException("This is not sim what are you doing");
     }
 
-    public void update() {
-        double rpm = leftRollerSim.getAngularVelocityRPM();
-        double rps = rpm / 60.0;
-        // rollers
-        if (leftRollerSim != null) {
-            leftRollerSim.setInput(leftRollerSimState.getMotorVoltage());
-            leftRollerSim.update(updateSim);
+    Mechanism2d mech = new Mechanism2d(40, 40);
+    pivotRoot = mech.getRoot("Shoulder", 20, 20);
+    pivotArm = pivotRoot.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
 
+    leftRollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
+    rightRollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
 
-        } else {
-            return;
-        }
-        if (rightRollerSim != null) {
-            rightRollerSim.setInput(rightRollerSimState.getMotorVoltage());
-            rightRollerSim.update(updateSim);
-        } else {
-            return;
-        }
+    leftRollerSimState = leftRollers.getSimState();
+    leftRollerSimState.setMotorType(MotorType.KrakenX60);
+    rightRollerSimState = rightRollers.getSimState();
+    rightRollerSimState.setMotorType(MotorType.KrakenX60);
 
+    pivotSimV2 =
+        new SingleJointedArmSim(
+            DCMotor.getKrakenX44(1),
+            PIVOT_GEAR_RATIO,
+            SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, 2),
+            Units.inchesToMeters(ARM_LENGTH_METERS),
+            Units.degreesToRadians(-120), // minimum arm angle
+            Units.degreesToRadians(120), // maximum arm angle
+            false,
+            Units.degreesToRadians(
+                ARM_START_POS)); // starting arm angle, keep this the same value as max arm angle.
 
+    pivotSimState = pivotMotor.getSimState();
+    pivotSimState.setMotorType(MotorType.KrakenX44);
+    pivotSimState.Orientation = ChassisReference.Clockwise_Positive;
 
-        // pivot arm
+    SmartDashboard.putData("Pivot", mech);
+  }
 
+  public void update() {
+    double leftRPM = leftRollerSim.getAngularVelocityRPM();
+    double leftRPS = leftRPM / 60.0;
+    double rightRPM = rightRollerSim.getAngularVelocityRPM();
+    double rightRPS = rightRPM / 60.0;
+    // rollers
+    leftRollerSim.setInput(leftRollerSimState.getMotorVoltage());
+    leftRollerSim.update(updateSim);
+    leftRollerSimState.setRotorVelocity(leftRPS * ROLLERS_GEAR_RATIO);
 
+    rightRollerSim.setInput(rightRollerSimState.getMotorVoltage());
+    rightRollerSim.update(updateSim);
+    leftRollerSimState.setRotorVelocity(rightRPS * ROLLERS_GEAR_RATIO);
+    // pivot arm
+    pivotSimV2.setInput(pivotSimState.getMotorVoltage());
+    pivotSimV2.update(updateSim);
 
-    }
+    double angleRads = pivotSimV2.getAngleRads();
+    double motorRotations = Units.radiansToRotations(angleRads) * PIVOT_GEAR_RATIO;
+
+    pivotSimState.setRotorVelocity(
+        Units.radiansToDegrees(pivotSimV2.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
+    pivotSimState.setRawRotorPosition(motorRotations);
+
+    pivotArm.setAngle(
+        Units.radiansToDegrees(angleRads + ARM_START_POS)); // ill replace the number later
+
+    RoboRioSim.setVInVoltage(
+        BatterySim.calculateDefaultBatteryLoadedVoltage(
+            leftRollerSim.getCurrentDrawAmps()
+                + rightRollerSim.getCurrentDrawAmps()
+                + pivotSimV2.getCurrentDrawAmps()));
+  }
 }
