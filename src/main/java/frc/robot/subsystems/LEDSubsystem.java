@@ -20,7 +20,7 @@ public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
   private static final int CAN_ID = 22;
 
-  private static final int END_INDEX = 7;
+  private static final int END_INDEX = 7; // temporary for testing (only using 1 module which is 8 leds)
 
   private final CANdle candle = new CANdle(CAN_ID);
   private final SolidColor solid = new SolidColor(0, END_INDEX);
@@ -164,11 +164,6 @@ public class LEDSubsystem extends SubsystemBase {
         this);
   }
 
-  /**
-   * Starts the rainbow animation.
-   *
-   * @return a {@link Command} that starts the rainbow animation
-   */
   // Start rainbow animation
   public void startRainbow() {
     if (!CommandScheduler.getInstance().isScheduled(rainbowCommand)) {
@@ -176,11 +171,7 @@ public class LEDSubsystem extends SubsystemBase {
     }
   }
 
-  /**
-   * Stops the rainbow animation.
-   *
-   * @return a {@link Command} that stops the currently running rainbow animation
-   */
+// Stop rainbow animation
   public void stopRainbow() {
     rainbowCommand.cancel();
     candle.setControl(new SolidColor(0, END_INDEX).withColor(DEFAULT_COLOR));
