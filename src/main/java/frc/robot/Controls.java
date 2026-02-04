@@ -217,12 +217,10 @@ public class Controls {
                 () -> {
                   currentTurretState = TurretState.MANUAL;
                 }));
-    turretTestController
-    .y()
-    .onTrue(
-        s.turretSubsystem.autoZeroCommand(false)
-        .withName("Auto Zero"));
-    s.turretSubsystem.AutoRotateTrigger(() -> currentTurretState).onTrue(s.turretSubsystem.AutoRotate());
+    turretTestController.y().onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
+    s.turretSubsystem
+        .AutoRotateTrigger(() -> currentTurretState)
+        .onTrue(s.turretSubsystem.AutoRotate());
     s.turretSubsystem
         .ManualRotateTrigger(() -> currentTurretState)
         .onTrue(s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX()));

@@ -168,16 +168,15 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command AutoRotate() {
-    System.out.println("auto");
-    if (zeroed) {
-      return Commands.run(
-          () -> {
+    return Commands.run(
+        () -> {
+          if (zeroed) {
             moveMotor(calculateTargetRadians());
-          },
-          TurretSubsystem.this);
-    } else {
-      return Commands.none();
-    }
+          } else {
+            stop();
+          }
+        },
+        this);
   }
 
   public Command manualMove(DoubleSupplier joystick) {
