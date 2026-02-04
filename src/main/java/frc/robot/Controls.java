@@ -222,9 +222,9 @@ public class Controls {
     .onTrue(
         s.turretSubsystem.autoZeroCommand(false)
         .withName("Auto Zero"));
-    s.turretSubsystem.AutoRotateTrigger(currentTurretState).onTrue(s.turretSubsystem.AutoRotate());
+    s.turretSubsystem.AutoRotateTrigger(() -> currentTurretState).onTrue(s.turretSubsystem.AutoRotate());
     s.turretSubsystem
-        .ManualRotateTrigger(currentTurretState)
+        .ManualRotateTrigger(() -> currentTurretState)
         .onTrue(s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX()));
   }
 
