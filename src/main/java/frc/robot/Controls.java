@@ -207,27 +207,27 @@ public class Controls {
     ledTestController
         .a()
         .onTrue(
-            LEDs.toggleColor(LEDSubsystem.intakeColor)
+            LEDs.toggleColor(LEDSubsystem.INTAKE_COLOR)
                 .withName("Toggle intake and on color")); // yellow
     ledTestController
         .b()
         .onTrue(
-            LEDs.toggleColor(LEDSubsystem.climbColor)
+            LEDs.toggleColor(LEDSubsystem.CLIMB_COLOR)
                 .withName("Toggle climb and on color")); // blue
     ledTestController
         .x()
         .onTrue(
-            LEDs.toggleColor(LEDSubsystem.outtakeColor)
+            LEDs.toggleColor(LEDSubsystem.OUTTAKE_COLOR)
                 .withName("Toggle outtake and on color")); // green
     ledTestController
         .y()
         .onTrue(
-            LEDs.toggleColor(LEDSubsystem.defaultColor)
+            LEDs.toggleColor(LEDSubsystem.DEFAULT_COLOR)
                 .withName("Toggle default and on color")); // red
     ledTestController
         .leftBumper()
         .whileTrue(
-            LEDs.alternateColors(LEDSubsystem.climbColor, LEDSubsystem.intakeColor)
+            LEDs.alternateColors(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.INTAKE_COLOR)
                 .withName("Alternate between climb and intake color"));
 
     ledTestController.rightBumper().onTrue(LEDs.toggleRainbow());

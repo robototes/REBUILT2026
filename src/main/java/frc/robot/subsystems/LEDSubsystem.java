@@ -27,15 +27,15 @@ public class LEDSubsystem extends SubsystemBase {
   private final SolidColor solid = new SolidColor(0, END_INDEX);
   private final RainbowAnimation slot0Animation = new RainbowAnimation(0, END_INDEX);
 
-  public static final RGBWColor defaultColor = new RGBWColor(255, 0, 0); // red
-  public static final RGBWColor intakeColor = new RGBWColor(255, 255, 0); // yellow
-  public static final RGBWColor outtakeColor = new RGBWColor(0, 255, 0); // green
-  public static final RGBWColor climbColor = new RGBWColor(0, 0, 255); // blue
-  public static final RGBWColor offColor = new RGBWColor(0, 0, 0); // off
+  public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0); // red
+  public static final RGBWColor INTAKE_COLOR = new RGBWColor(255, 255, 0); // yellow
+  public static final RGBWColor OUTTAKE_COLOR = new RGBWColor(0, 255, 0); // green
+  public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 0, 255); // blue
+  public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0); // off
 
   private boolean rainbowOn = false;
 
-  private RGBWColor activeSolidColor = offColor;
+  private RGBWColor activeSolidColor = OFF_COLOR;
 
   public LEDSubsystem() {
     setRainbowAnimation(0, 1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
@@ -129,8 +129,8 @@ public class LEDSubsystem extends SubsystemBase {
         () -> {
           if (activeSolidColor != null && activeSolidColor.equals(otherColor)) {
             // If the requested color is already active, turn it off.
-            setHardwareColor(offColor);
-            activeSolidColor = offColor;
+            setHardwareColor(OFF_COLOR);
+            activeSolidColor = OFF_COLOR;
           } else {
             // Otherwise, set the new color.
             setHardwareColor(otherColor);
