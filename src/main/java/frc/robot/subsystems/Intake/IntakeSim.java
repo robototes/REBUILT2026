@@ -100,8 +100,7 @@ public class IntakeSim extends SubsystemBase {
         Units.radiansToDegrees(pivotSimV2.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
     pivotSimState.setRawRotorPosition(motorRotations);
 
-    pivotArm.setAngle(
-         Units.radiansToDegrees(angleRads) + ARM_START_POS);
+    pivotArm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);
 
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(

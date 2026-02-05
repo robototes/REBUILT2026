@@ -230,7 +230,7 @@ public class Controls {
 
   private void configureIntakeBindings() {
     if (s.intakeSubsystem == null) {
-      System.out.println("line 191 Controls.java, intakeSubsystem is disabled");
+      System.out.println("Controls.java: intakeSubsystem is disabled, bindings skipped");
       return;
     }
     driverController.b().whileTrue(s.intakeSubsystem.runIntake());
