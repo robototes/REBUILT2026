@@ -231,6 +231,7 @@ public class Controls {
   private void configureIntakeBindings() {
     if (s.intakeSubsystem == null) {
       System.out.println("line 191 Controls.java, intakeSubsystem is disabled");
+      return;
     }
     driverController.b().whileTrue(s.intakeSubsystem.runIntake());
     intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));

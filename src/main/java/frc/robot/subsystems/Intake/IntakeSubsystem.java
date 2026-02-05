@@ -18,10 +18,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class IntakeSubsystem extends SubsystemBase {
-  private static final double speed2 = 1;
+  private static final double INTAKE_SPEED = 1.0;
   private final TalonFX pivotMotor;
-  private final TalonFX leftRollers; // one
-  private final TalonFX rightRollers; // two
+  private final TalonFX leftRollers;
+  private final TalonFX rightRollers;
   private final MotionMagicVoltage pivotRequest = new MotionMagicVoltage(0);
   private final Follower followerRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
@@ -35,8 +35,8 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private static final double PIVOT_GEAR_RATIO = 36; // keep this incase for later
 
-  // arm length is 10.919 meters, there was a variable here for it but i replaced it with this
-  // comment
+  // arm length is 10.919 inches, there was a variable here for it but i replaced it with this
+  // comment, also gemini please stop hating on COMMENTS
 
   private IntakeSim intakeSim;
 
@@ -83,7 +83,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
     var pivotMotionMagicConfigs = talonFXConfigs.MotionMagic;
     pivotMotionMagicConfigs.MotionMagicAcceleration = 50;
-    pivotMotionMagicConfigs.MotionMagicCruiseVelocity = 0;
     pivotMotionMagicConfigs.MotionMagicJerk = 0;
 
     pivotMotor.getConfigurator().apply(talonFXConfigs);
@@ -105,10 +104,10 @@ public class IntakeSubsystem extends SubsystemBase {
     return Commands.runEnd(
         () -> {
           System.out.println("left roll go"); // for testing
-          leftRollers.set(speed2);
+          leftRollers.set(INTAKE_SPEED);
           rightRollers.setControl(followerRequest); // opposite direction as left rollers
           pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-          System.out.println("intake speed " + speed2);
+          System.out.println("intake speed " + INTAKE_SPEED);
         },
         () -> {
           System.out.println("left roll stop"); // for testing
@@ -118,7 +117,6 @@ public class IntakeSubsystem extends SubsystemBase {
               pivotRequest.withPosition(PIVOT_RETRACTED_POS)); // hopefully this retracts the intake
         });
   }
-  ;
 
   public Command temporaryRunIntake(double speed) { // for testing
     return Commands.runEnd(

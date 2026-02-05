@@ -88,7 +88,7 @@ public class IntakeSim extends SubsystemBase {
 
     rightRollerSim.setInput(rightRollerSimState.getMotorVoltage());
     rightRollerSim.update(updateSim);
-    leftRollerSimState.setRotorVelocity(rightRPS * ROLLERS_GEAR_RATIO);
+    rightRollerSimState.setRotorVelocity(rightRPS * ROLLERS_GEAR_RATIO);
     // pivot arm
     pivotSimV2.setInput(pivotSimState.getMotorVoltage());
     pivotSimV2.update(updateSim);
@@ -101,7 +101,7 @@ public class IntakeSim extends SubsystemBase {
     pivotSimState.setRawRotorPosition(motorRotations);
 
     pivotArm.setAngle(
-        Units.radiansToDegrees(angleRads + ARM_START_POS)); // ill replace the number later
+         Units.radiansToDegrees(angleRads) + ARM_START_POS);
 
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(
