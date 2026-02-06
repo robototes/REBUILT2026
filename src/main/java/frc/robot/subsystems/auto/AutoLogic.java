@@ -96,6 +96,14 @@ public class AutoLogic {
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
+  public static List<AutoPath> getAutos() {
+    if (rebuiltPaths != null) {
+return rebuiltPaths;
+    }
+    System.out.println("fail");
+    return List.of();
+
+  }
 
   /* ---------------- Init ---------------- */
   public static void init(Subsystems subsystems) {
