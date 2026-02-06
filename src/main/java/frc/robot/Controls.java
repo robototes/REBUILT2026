@@ -33,6 +33,7 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
+  private static final int INTAKE_TEST_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -43,6 +44,8 @@ public class Controls {
 
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
+  private final CommandXboxController intakeTestController =
+      new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -68,6 +71,7 @@ public class Controls {
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
+    configureIntakeBindings();
     configureAutoAlignBindings();
   }
 
@@ -232,6 +236,16 @@ public class Controls {
 
     launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
     launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private void configureIntakeBindings() {
+    if (s.intakeSubsystem == null) {
+      System.out.println("Controls.java: intakeSubsystem is disabled, bindings skipped");
+      return;
+    }
+    driverController.b().whileTrue(s.intakeSubsystem.runIntake());
+    // driverController.x().onTrue(s.intakeSubsystem.deployIntake());
+    intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
   }
 
   /**

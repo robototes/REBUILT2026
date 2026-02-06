@@ -5,6 +5,7 @@ import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
@@ -14,6 +15,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.FeederSubsystem;
+import frc.robot.subsystems.Intake.IntakeSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.SpindexerSubsystem;
@@ -25,6 +27,7 @@ public class Subsystems {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
@@ -42,6 +45,7 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
+  public final IntakeSubsystem intakeSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -53,6 +57,11 @@ public class Subsystems {
     } else {
       drivebaseSubsystem = null;
       drivebaseWrapper = new DrivebaseWrapper();
+    }
+    if (INTAKE_ENABLED) {
+      intakeSubsystem = new IntakeSubsystem();
+    } else {
+      intakeSubsystem = null;
     }
 
     if (VISION_ENABLED) {
