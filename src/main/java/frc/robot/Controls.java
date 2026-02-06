@@ -170,20 +170,18 @@ public class Controls {
 
                   // $VISIONSIM - Wrapper for sim features
                   if (Robot.isSimulation()) {
-                      JoystickInputsRecord newJoystickInputs = SimWrapper.transformJoystickOrientation(
-                          s.drivebaseSubsystem.getOperatorForwardDirection().getDegrees(),
-                          leftX,
-                          leftY,
-                          rightX);
-                      leftX = -newJoystickInputs.driveX();
-                      leftY = -newJoystickInputs.driveY();
-                      rightX = newJoystickInputs.rotatetX();
+                    JoystickInputsRecord newJoystickInputs =
+                        SimWrapper.transformJoystickOrientation(
+                            s.drivebaseSubsystem.getOperatorForwardDirection().getDegrees(),
+                            leftX,
+                            leftY,
+                            rightX);
+                    leftX = -newJoystickInputs.driveX();
+                    leftY = -newJoystickInputs.driveY();
+                    rightX = newJoystickInputs.rotatetX();
                   }
 
-                  return drive
-                      .withVelocityX(leftX)
-                      .withVelocityY(leftY)
-                      .withRotationalRate(rightX);
+                  return drive.withVelocityX(leftX).withVelocityY(leftY).withRotationalRate(rightX);
                 })
             .withName("Drive"));
 
