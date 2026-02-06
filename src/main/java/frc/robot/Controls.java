@@ -15,6 +15,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.sim.JoystickInputsRecord;
+import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -158,11 +160,28 @@ public class Controls {
         // applying the request to drive with the inputs
         s.drivebaseSubsystem
             .applyRequest(
-                () ->
-                    drive
-                        .withVelocityX(getDriveX())
-                        .withVelocityY(getDriveY())
-                        .withRotationalRate(getDriveRotate()))
+                () -> {
+                  double leftX = getDriveX();
+                  double leftY = getDriveY();
+                  double rightX = getDriveRotate();
+
+                  // $VISIONSIM - Wrapper for sim features
+                  if (Robot.isSimulation()) {
+                      JoystickInputsRecord newJoystickInputs = SimWrapper.transformJoystickOrientation(
+                          s.drivebaseSubsystem.getOperatorForwardDirection().getDegrees(),
+                          leftX,
+                          leftY,
+                          rightX);
+                      leftX = -newJoystickInputs.driveX();
+                      leftY = -newJoystickInputs.driveY();
+                      rightX = newJoystickInputs.rotatetX();
+                  }
+
+                  return drive
+                      .withVelocityX(leftX)
+                      .withVelocityY(leftY)
+                      .withRotationalRate(rightX);
+                })
             .withName("Drive"));
 
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
