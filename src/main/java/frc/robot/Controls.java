@@ -104,7 +104,7 @@ public class Controls {
                 },
                 () -> {
                   s.feederSubsystem.stopMotor();
-                 s.spindexerSubsystem.stopMotor();
+                  s.spindexerSubsystem.stopMotor();
                 },
                 s.feederSubsystem,
                 s.spindexerSubsystem));
