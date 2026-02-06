@@ -52,7 +52,6 @@ public class Robot extends TimedRobot {
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
-    controls = new Controls(subsystems);
 
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation()) {
@@ -60,6 +59,8 @@ public class Robot extends TimedRobot {
     } else {
       m_simWrapper = null;
     }
+
+    controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);

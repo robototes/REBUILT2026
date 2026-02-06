@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -30,6 +31,7 @@ import frc.robot.subsystems.auto.FuelAutoAlign;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
+  private final SimWrapper m_simWrapper;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
@@ -64,9 +66,10 @@ public class Controls {
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls(Subsystems subsystems) {
+  public Controls(Subsystems subsystems, SimWrapper simWrapper) {
     // Configure the trigger bindings
     s = subsystems;
+    m_simWrapper = simWrapper;
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
@@ -197,6 +200,20 @@ public class Controls {
                 .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
                 .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
                 .withName("Reset gyro"));
+
+    // $VISIONSIM - Bumper buttons
+    if (Robot.isSimulation()) {
+      // In simulation, inject drift with POV-left to test vision correction
+      driverController
+          .povRight()
+          .onTrue(s.drivebaseSubsystem.runOnce(() -> m_simWrapper.injectDrift(0.5, 15.0)));
+
+      // POV-right resets robot to the starting pose of the selected auto
+      driverController
+          .povLeft()
+          .onTrue(
+              s.drivebaseSubsystem.runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero)));
+    }
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
