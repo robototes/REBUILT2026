@@ -214,7 +214,6 @@ public class TurretSubsystem extends SubsystemBase {
   public Command manualMove(DoubleSupplier joystick) {
     return Commands.run(
         () -> {
-          System.out.println("MANUAL tick zeroed=" + zeroed);
           if (!zeroed) {
             m_turretMotor.setControl(zeroVolts);
             return;
