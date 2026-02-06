@@ -18,12 +18,15 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.visutils.LimelightOdometry;
+import java.util.Optional;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -41,6 +44,8 @@ public class Robot extends TimedRobot {
   private FuelSim fuelSimulation;
   private final Mechanism2d mechanismRobot;
   public final SimWrapper m_simWrapper;
+  private ShowVisionOnField m_showVisionOnField;
+  public final LimelightOdometry m_limelightOdometry;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -58,6 +63,20 @@ public class Robot extends TimedRobot {
       m_simWrapper = new SimWrapper(subsystems.drivebaseSubsystem, this::resetRobotPose);
     } else {
       m_simWrapper = null;
+    }
+
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation() && m_simWrapper != null) {
+      m_showVisionOnField = new ShowVisionOnField(null, m_simWrapper.getSimDebugField());
+    }
+
+    // For now, we do vision odemetry only in simulation.  Eventually, this will
+    // be replaced by our real Vision Subsystem.
+    if (Robot.isSimulation()) {
+      m_limelightOdometry =
+          new LimelightOdometry(subsystems.drivebaseSubsystem::addVisionMeasurement);
+    } else {
+      m_limelightOdometry = null;
     }
 
     controls = new Controls(subsystems, m_simWrapper);
@@ -120,6 +139,26 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation() && m_simWrapper != null) {
+      // NOTE: We run the vision period FIRST in robotPeriodic, since it updates
+      // NetworkTables with the limelight data, in-case any code in this loop
+      // needs that info and doesnt want it delayed 20ms.
+      m_simWrapper.robotPeriodic();
+    }
+
+    // For now, we do vision odemetry only in simulation.  Eventually, this will
+    // be replaced by our real Vision Subsystem.
+    if (Robot.isSimulation()) {
+      m_limelightOdometry.periodic();
+    }
+
+    if (Robot.isSimulation() && m_showVisionOnField != null) {
+      Optional<Pose2d> showVisPose = m_limelightOdometry.getLatestVisPose();
+      m_showVisionOnField.showPointInTimeVisionEstimate(
+          ShowVisionOnField.FieldType.SIMULATION_FIELD, showVisPose);
+    }
+
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -214,6 +253,11 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
+    // $VISIONSIM - Wrapper for sim features
+    if (m_simWrapper != null) {
+      m_simWrapper.simulationPeriodic();
+    }
+
     FuelSim.getInstance().updateSim();
   }
 
