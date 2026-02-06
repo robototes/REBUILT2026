@@ -66,8 +66,7 @@ public class IntakeSim extends SubsystemBase {
             Units.degreesToRadians(-120), // minimum arm angle
             Units.degreesToRadians(120), // maximum arm angle
             false,
-            Units.degreesToRadians(
-                ARM_START_POS)); // starting arm angle
+            Units.degreesToRadians(ARM_START_POS)); // starting arm angle
 
     pivotSimState = pivotMotor.getSimState();
     pivotSimState.setMotorType(MotorType.KrakenX44);

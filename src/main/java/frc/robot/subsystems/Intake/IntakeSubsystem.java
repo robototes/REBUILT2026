@@ -19,6 +19,7 @@ import frc.robot.generated.CompTunerConstants;
 
 public class IntakeSubsystem extends SubsystemBase {
   private static final double INTAKE_SPEED = 1.0;
+  public double pivotPos;
   private final TalonFX pivotMotor;
   private final TalonFX leftRollers;
   private final TalonFX rightRollers;
@@ -26,14 +27,13 @@ public class IntakeSubsystem extends SubsystemBase {
   private final Follower followerRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
   private static final double PIVOT_DEPLOYED_POS = 0;
+  private static final double PIVOT_GEAR_RATIO = 36; // keep this incase for later
   private static final double PIVOT_RETRACTED_POS =
-      1000; // change this value and ln 44 if u wanna change position
+      200 * PIVOT_GEAR_RATIO; // change this value and ln 44 if u wanna change position
   private final DoubleTopic leftRollerTopic;
   private final DoubleTopic rightRollerTopic;
   private final DoublePublisher leftRollerPub;
   private final DoublePublisher rightRollerPub;
-
-  private static final double PIVOT_GEAR_RATIO = 36; // keep this incase for later
 
   private IntakeSim intakeSim;
 
@@ -83,7 +83,6 @@ public class IntakeSubsystem extends SubsystemBase {
     pivotMotionMagicConfigs.MotionMagicJerk = 0;
 
     pivotMotor.getConfigurator().apply(talonFXConfigs);
-    System.out.println("configure pivot");
   }
 
   // rollers configs
@@ -115,6 +114,23 @@ public class IntakeSubsystem extends SubsystemBase {
               pivotRequest.withPosition(PIVOT_RETRACTED_POS)); // hopefully this retracts the intake
         });
   }
+
+  // public double getPivotPos() {
+  //   pivotPos = pivotMotor.getPosition().getValueAsDouble();
+  //   return pivotPos;
+  // }
+
+  // public Command deployIntake() {
+  //   return Commands.runOnce(
+  //     () -> {
+  //       if (pivotPos == PIVOT_RETRACTED_POS) {
+  //         pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
+  //       } else {
+  //         pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
+  //       }
+  //     }
+  //     );
+  // }
 
   public Command temporaryRunIntake(double speed) { // for testing
     return Commands.runEnd(
