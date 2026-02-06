@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 
@@ -31,8 +32,8 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
-  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
-  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
+  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
   private static final int TURRET_TEST_CONTROLLER_PORT_2 = 4;
 
@@ -50,11 +51,11 @@ public class Controls {
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
-  private final CommandXboxController feederTestController =
-      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+  private final CommandXboxController indexingTestController =
+      new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
 
-  private final CommandXboxController spindexerTestController =
-      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+  private final CommandXboxController launcherTuningController =
+      new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
 
   private final CommandXboxController turretTestController =
       new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
@@ -84,19 +85,9 @@ public class Controls {
     // Configure the trigger bindings
     s = subsystems;
     configureDrivebaseBindings();
-    if (s.detectionSubsystem != null) {
-      configureAutoAlignBindings();
-    }
-    configureSpindexerBindings();
-    configureFeederBindings();
-  }
-
-  private void configureSpindexerBindings() {
-    // start serializer motor
-    spindexerTestController.a().onTrue(s.spindexerSubsystem.startMotor());
-
-    // stop serializer motor
-    spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
+    configureLauncherBindings();
+    configureIndexingBindings();
+    configureAutoAlignBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -106,14 +97,36 @@ public class Controls {
         });
   }
 
-  private void configureFeederBindings() {
+  private void configureIndexingBindings() {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
-    feederTestController.a().onTrue(s.feederSubsystem.startMotor());
+    indexingTestController.a().onTrue(s.feederSubsystem.startMotor());
 
     // stop feeder motor
-    feederTestController.b().onTrue(s.feederSubsystem.stopMotor());
+    indexingTestController.b().onTrue(s.feederSubsystem.stopMotor());
+
+    // start spindexer motor
+    indexingTestController.x().onTrue(s.spindexerSubsystem.startMotor());
+
+    // stop spindexer motor
+    indexingTestController.y().onTrue(s.spindexerSubsystem.stopMotor());
+
+    // run both while left trigger is held
+    indexingTestController
+        .leftTrigger()
+        .whileTrue(
+            Commands.startEnd(
+                () -> {
+                  s.feederSubsystem.startMotor();
+                  s.spindexerSubsystem.startMotor();
+                },
+                () -> {
+                  s.feederSubsystem.stopMotor();
+                  s.spindexerSubsystem.stopMotor();
+                },
+                s.feederSubsystem,
+                s.spindexerSubsystem));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -229,7 +242,46 @@ public class Controls {
   }
 
   private void configureAutoAlignBindings() {
+    if (s.detectionSubsystem == null) {
+      System.out.println("Game piece detection is disabled");
+      return;
+    }
     driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+  }
+
+  private void configureLauncherBindings() {
+    if (s.flywheels == null || s.hood == null) {
+      // Stop running this method
+      System.out.println("Flywheels and/or Hood are disabled");
+      return;
+    }
+
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            Commands.sequence(
+                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                Commands.parallel(
+                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+        .toggleOnFalse(
+            Commands.parallel(
+                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
+    if (s.flywheels.TUNER_CONTROLLED) {
+      launcherTuningController
+          .leftBumper()
+          .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
+    }
+    if (s.hood.TUNER_CONTROLLED) {
+      launcherTuningController
+          .rightBumper()
+          .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
+    }
+    launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
+    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
+    launcherTuningController.b().onTrue(s.hood.hoodPositionCommand(1));
+
+    launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
+    launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
   }
 
   /**
