@@ -9,7 +9,6 @@ import com.ctre.phoenix6.signals.RGBWColor;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -35,22 +34,10 @@ public class LEDSubsystem extends SubsystemBase {
   public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 0, 255); // blue
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0); // off
 
-  public final Command rainbowCommand;
-  public final Command emptyRainbowCommand;
-
   private RGBWColor activeSolidColor = OFF_COLOR;
 
   public LEDSubsystem() {
     setRainbowAnimation(0, 1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
-    // Create persistent rainbow command
-    rainbowCommand =
-        Commands.run(() -> candle.setControl(slot0Animation), this)
-            .repeatedly()
-            .withName("Rainbow");
-    emptyRainbowCommand =
-        Commands.run(() -> candle.setControl(emptyAnimation), this)
-            .repeatedly()
-            .withName("Empty rainow animation");
   }
 
   /**
@@ -152,37 +139,13 @@ public class LEDSubsystem extends SubsystemBase {
         this);
   }
 
-  /**
-   * Toggles the rainbow animation on or off.
-   *
-   * <p>If the rainbow animation is not currently running, this command starts it. If it is already
-   * running, the animation is stopped.
-   *
-   * @return a {@link Command} that toggles the rainbow animation state
-   */
-  public Command toggleRainbow() {
-    return new InstantCommand(
-        () -> {
-          if (CommandScheduler.getInstance().isScheduled(rainbowCommand)) {
-            stopRainbow();
-          } else {
-            startRainbow();
-          }
-        },
-        this);
-  }
-
   // Start rainbow animation
   public void startRainbow() {
-    if (!CommandScheduler.getInstance().isScheduled(rainbowCommand)) {
-      CommandScheduler.getInstance().schedule(rainbowCommand);
-    }
+   candle.setControl(slot0Animation);
   }
 
   // Stop rainbow animation
   public void stopRainbow() {
-    if (!CommandScheduler.getInstance().isScheduled(rainbowCommand)) {
-      CommandScheduler.getInstance().schedule(emptyRainbowCommand);
-    }
+   candle.setControl(emptyAnimation);
   }
 }

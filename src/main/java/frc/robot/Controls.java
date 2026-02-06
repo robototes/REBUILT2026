@@ -54,7 +54,6 @@ public class Controls {
   private final CommandXboxController indexingTestController =
       new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
 
-
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
 
@@ -248,8 +247,6 @@ public class Controls {
         .whileTrue(
             LEDs.alternateColors(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.INTAKE_COLOR)
                 .withName("Alternate between climb and intake color"));
-
-    ledTestController.rightBumper().onTrue(LEDs.toggleRainbow());
   }
 
   private void configureLauncherBindings() {
