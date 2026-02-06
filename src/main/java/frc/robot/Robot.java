@@ -182,7 +182,6 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
     subsystems.ledSubsystem.stopRainbow();
-    // Schedule a persistent default color command
     subsystems.ledSubsystem.setHardwareColor(LEDSubsystem.DEFAULT_COLOR);
   }
 

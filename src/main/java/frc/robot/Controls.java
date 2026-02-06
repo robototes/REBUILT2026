@@ -49,7 +49,7 @@ public class Controls {
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
-  
+
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
 

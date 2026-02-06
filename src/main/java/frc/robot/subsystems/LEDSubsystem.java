@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
@@ -20,11 +21,13 @@ public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
   private static final int CAN_ID = 22;
 
-  private static final int END_INDEX = 7; // temporary for testing (only using 1 module which is 8 leds)
+  private static final int END_INDEX =
+      7; // temporary for testing (only using 1 module which is 8 leds)
 
   private final CANdle candle = new CANdle(CAN_ID);
   private final SolidColor solid = new SolidColor(0, END_INDEX);
   private final RainbowAnimation slot0Animation = new RainbowAnimation(0, END_INDEX);
+  private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
 
   public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0); // red
   public static final RGBWColor INTAKE_COLOR = new RGBWColor(255, 255, 0); // yellow
@@ -33,6 +36,7 @@ public class LEDSubsystem extends SubsystemBase {
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0); // off
 
   public final Command rainbowCommand;
+  public final Command emptyRainbowCommand;
 
   private RGBWColor activeSolidColor = OFF_COLOR;
 
@@ -43,6 +47,10 @@ public class LEDSubsystem extends SubsystemBase {
         Commands.run(() -> candle.setControl(slot0Animation), this)
             .repeatedly()
             .withName("Rainbow");
+    emptyRainbowCommand =
+        Commands.run(() -> candle.setControl(emptyAnimation), this)
+            .repeatedly()
+            .withName("Empty rainow animation");
   }
 
   /**
@@ -171,9 +179,10 @@ public class LEDSubsystem extends SubsystemBase {
     }
   }
 
-// Stop rainbow animation
+  // Stop rainbow animation
   public void stopRainbow() {
-    rainbowCommand.cancel();
-    candle.setControl(new SolidColor(0, END_INDEX).withColor(DEFAULT_COLOR));
+    if (!CommandScheduler.getInstance().isScheduled(rainbowCommand)) {
+      CommandScheduler.getInstance().schedule(emptyRainbowCommand);
+    }
   }
 }
