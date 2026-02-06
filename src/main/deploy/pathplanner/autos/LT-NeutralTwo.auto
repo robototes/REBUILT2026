@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-NeutralRight"
+            "pathName": "LT-NeutralLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-RT"
+            "pathName": "LT-NeutralLeft-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LB-NeutralLeft-Back"
           }
         },
         {
@@ -25,19 +31,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-NeutralRight"
+            "pathName": "LT-NeutralLeft-AGAIN"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-NeutralLeft"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-NeutralLeftTWO"
+            "pathName": "LT-NeutralLeft-THREE"
           }
         },
         {
