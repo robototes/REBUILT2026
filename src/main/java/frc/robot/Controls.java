@@ -34,8 +34,9 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
-  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 3;
   private static final int LED_CONTROLLER_PORT = 5;
+  private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
+  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -49,6 +50,10 @@ public class Controls {
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController indexingTestController =
+      new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
+
 
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
@@ -80,17 +85,8 @@ public class Controls {
       configureAutoAlignBindings();
     }
     configureLauncherBindings();
-    configureSpindexerBindings();
-    configureFeederBindings();
+    configureIndexingBindings();
     configureAutoAlignBindings();
-  }
-
-  private void configureSpindexerBindings() {
-    // start serializer motor
-    spindexerTestController.a().onTrue(s.spindexerSubsystem.startMotor());
-
-    // stop serializer motor
-    spindexerTestController.b().onTrue(s.spindexerSubsystem.stopMotor());
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -100,14 +96,36 @@ public class Controls {
         });
   }
 
-  private void configureFeederBindings() {
+  private void configureIndexingBindings() {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
-    feederTestController.a().onTrue(s.feederSubsystem.startMotor());
+    indexingTestController.a().onTrue(s.feederSubsystem.startMotor());
 
     // stop feeder motor
-    feederTestController.b().onTrue(s.feederSubsystem.stopMotor());
+    indexingTestController.b().onTrue(s.feederSubsystem.stopMotor());
+
+    // start spindexer motor
+    indexingTestController.x().onTrue(s.spindexerSubsystem.startMotor());
+
+    // stop spindexer motor
+    indexingTestController.y().onTrue(s.spindexerSubsystem.stopMotor());
+
+    // run both while left trigger is held
+    indexingTestController
+        .leftTrigger()
+        .whileTrue(
+            Commands.startEnd(
+                () -> {
+                  s.feederSubsystem.startMotor();
+                  s.spindexerSubsystem.startMotor();
+                },
+                () -> {
+                  s.feederSubsystem.stopMotor();
+                  s.spindexerSubsystem.stopMotor();
+                },
+                s.feederSubsystem,
+                s.spindexerSubsystem));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
