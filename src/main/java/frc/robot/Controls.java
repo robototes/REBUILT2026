@@ -98,16 +98,16 @@ public class Controls {
         .leftTrigger()
         .whileTrue(
             Commands.startEnd(
-               () -> {
-                 s.feederSubsystem.startMotor();
-                 s.spindexerSubsystem.startMotor();
-               },
-               () -> {
-                 s.feederSubsystem.stopMotor();
+                () -> {
+                  s.feederSubsystem.startMotor();
+                  s.spindexerSubsystem.startMotor();
+                },
+                () -> {
+                  s.feederSubsystem.stopMotor();
                  s.spindexerSubsystem.stopMotor();
-               },
-               s.feederSubsystem,
-               s.spindexerSubsystem));
+                },
+                s.feederSubsystem,
+                s.spindexerSubsystem));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
