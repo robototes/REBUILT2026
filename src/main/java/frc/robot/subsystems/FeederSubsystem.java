@@ -57,9 +57,9 @@ public class FeederSubsystem extends SubsystemBase {
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
-    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
