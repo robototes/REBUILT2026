@@ -7,6 +7,7 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -38,6 +40,7 @@ public class Robot extends TimedRobot {
   private final int GAMEPIECE_PIPELINE = 2;
   private FuelSim fuelSimulation;
   private final Mechanism2d mechanismRobot;
+  public final SimWrapper m_simWrapper;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -50,6 +53,13 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
     controls = new Controls(subsystems);
+
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation()) {
+      m_simWrapper = new SimWrapper(subsystems.drivebaseSubsystem, this::resetRobotPose);
+    } else {
+      m_simWrapper = null;
+    }
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
@@ -204,5 +214,17 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     FuelSim.getInstance().updateSim();
+  }
+
+  /** Only used in simulation to reset robot pose */
+  private void resetRobotPose(Pose2d pose) {
+    if (Robot.isSimulation()) {
+      System.out.println("Robot pose reset to: " + pose);
+
+      subsystems.drivebaseSubsystem.resetPose(pose);
+
+      // $VISIONSIM - Clean reset
+      m_simWrapper.resetSimPose(pose);
+    }
   }
 }
