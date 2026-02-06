@@ -33,7 +33,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final TalonFX m_turretMotor;
   private MotionMagicVoltage request;
 
-  private static final double GEAR_RATIO = 10;
+  private static final double GEAR_RATIO = 20;
   private static final double TURRET_MIN = Units.degreesToRadians(-90); // In radians
   private static final double TURRET_MAX = Units.degreesToRadians(90); // In radians
 
@@ -41,6 +41,14 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double TURRET_Y_OFFSET = 0.1397; // METERS
 
   private static final double STALL_CURRENT = 5; // Amps
+
+  private final double k_S = 0.41;
+  private final double k_V = 0.9;
+  private final double k_A = 0.12;
+
+  private final double k_P = 2.97;
+  private final double k_I = 0;
+  private final double k_D = 1.5;
 
   private static final VoltageOut zeroVolts = new VoltageOut(0);
   private static final VoltageOut _2_volts = new VoltageOut(2);
@@ -75,7 +83,7 @@ public class TurretSubsystem extends SubsystemBase {
     // --- Hardware --- //
     hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
     m_driveTrain = drivetrain;
-    turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.kZero);
+    turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
     // --- NETWORK TABLES --- //
     if (RobotBase.isSimulation()) {
       m_sim = new TurretSubsystemSim(m_turretMotor, GEAR_RATIO, TURRET_MIN, TURRET_MAX);
@@ -138,7 +146,7 @@ public class TurretSubsystem extends SubsystemBase {
     private final DoublePublisher ntErrorRad;
     private final DoublePublisher ntTargetRad;
 
-    private static final double TRACK_THRESHOLD_RAD = 0.1;
+    private static final double TRACK_THRESHOLD_RAD = 0.01;
     private double lastCmdRad = 0.0;
 
     public AutoRotate(
@@ -165,7 +173,7 @@ public class TurretSubsystem extends SubsystemBase {
       lastCmdRad = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
       error = Double.POSITIVE_INFINITY;
       turretPose = driveTrain.getState().Pose.transformBy(turretTransform);
-      robotRotation = turretPose.getRotation().getRadians(); // Robot Rotation in radians
+      robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
       turretRotation =
           Units.rotationsToRadians(
               turretMotor.getPosition().getValueAsDouble()); // Turret rotation in radians
@@ -246,13 +254,13 @@ public class TurretSubsystem extends SubsystemBase {
     TalonFXConfiguration configs = new TalonFXConfiguration();
     Slot0Configs slot0 = configs.Slot0;
 
-    slot0.kP = 35.0;
-    slot0.kI = 0.0;
-    slot0.kD = 1;
+    slot0.kP = k_P;
+    slot0.kI = k_I;
+    slot0.kD = k_D;
 
-    slot0.kS = 1;
-    slot0.kV = 0.9;
-    slot0.kA = 0.12;
+    slot0.kS = k_S;
+    slot0.kV = k_V;
+    slot0.kA = k_A;
 
     // ---------------- CURRENT LIMITS ----------------
     configs.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -268,12 +276,12 @@ public class TurretSubsystem extends SubsystemBase {
 
     // ---------------- MOTION MAGIC----------------
     var mm = configs.MotionMagic;
-    mm.MotionMagicCruiseVelocity = 3;
-    mm.MotionMagicAcceleration = 18.0;
-    mm.MotionMagicJerk = 120.0;
+    mm.MotionMagicCruiseVelocity = 4.0;
+    mm.MotionMagicAcceleration = 27;
+    mm.MotionMagicJerk = 300;
 
     // ---------------- FEEDBACK / OUTPUT ----------------
-    configs.Feedback.SensorToMechanismRatio = 10.0;
+    configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     configs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     configs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
