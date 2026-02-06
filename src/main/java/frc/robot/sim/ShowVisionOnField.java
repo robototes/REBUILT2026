@@ -6,7 +6,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import frc.robot.generated.TunerConstants;
+import frc.robot.generated.CompTunerConstants;
 import java.util.Optional;
 
 /**
@@ -18,12 +18,12 @@ public class ShowVisionOnField {
         SIMULATION_FIELD
     }
 
-    /** Module locations relative to robot center (from TunerConstants). */
+    /** Module locations relative to robot center (from CompTunerConstants). */
     private static final Translation2d[] MODULE_LOCATIONS = {
-        new Translation2d(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-        new Translation2d(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY),
-        new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-        new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
+        new Translation2d(CompTunerConstants.FrontLeft.LocationX, CompTunerConstants.FrontLeft.LocationY),
+        new Translation2d(CompTunerConstants.FrontRight.LocationX, CompTunerConstants.FrontRight.LocationY),
+        new Translation2d(CompTunerConstants.BackLeft.LocationX, CompTunerConstants.BackLeft.LocationY),
+        new Translation2d(CompTunerConstants.BackRight.LocationX, CompTunerConstants.BackRight.LocationY)
     };
 
     private final Optional<Field2d> m_realField;
