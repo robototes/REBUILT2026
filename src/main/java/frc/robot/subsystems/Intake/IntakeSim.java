@@ -46,8 +46,6 @@ public class IntakeSim extends SubsystemBase {
     }
 
     Mechanism2d mech = new Mechanism2d(40, 40);
-    pivotRoot = mech.getRoot("Shoulder", 20, 20);
-    pivotArm = pivotRoot.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
 
     leftRollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
     rightRollerSim = new FlywheelSim(rollerSystem, DCMotor.getKrakenX60(1));
@@ -71,6 +69,9 @@ public class IntakeSim extends SubsystemBase {
     pivotSimState = pivotMotor.getSimState();
     pivotSimState.setMotorType(MotorType.KrakenX44);
     pivotSimState.Orientation = ChassisReference.Clockwise_Positive;
+
+    pivotRoot = mech.getRoot("Shoulder", 20, 20);
+    pivotArm = pivotRoot.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
 
     SmartDashboard.putData("Pivot", mech);
   }
