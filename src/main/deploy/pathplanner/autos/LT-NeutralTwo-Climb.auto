@@ -1,0 +1,67 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-NeutralLeft"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-NeutralLeft-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LB-NeutralLeft-Back"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-NeutralLeft-AGAIN"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-NeutralLeft-THREE-shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-Climb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
