@@ -141,11 +141,11 @@ public class LEDSubsystem extends SubsystemBase {
 
   // Start rainbow animation
   public void startRainbow() {
-   candle.setControl(slot0Animation);
+    candle.setControl(slot0Animation);
   }
 
   // Stop rainbow animation
   public void stopRainbow() {
-   candle.setControl(emptyAnimation);
+    candle.setControl(emptyAnimation);
   }
 }
