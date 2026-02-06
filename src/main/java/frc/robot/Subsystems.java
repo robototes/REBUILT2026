@@ -59,7 +59,7 @@ public class Subsystems {
       drivebaseWrapper = new DrivebaseWrapper();
     }
     if (INTAKE_ENABLED) {
-      intakeSubsystem = new IntakeSubsystem(mechanism2d);
+      intakeSubsystem = new IntakeSubsystem();
     } else {
       intakeSubsystem = null;
     }

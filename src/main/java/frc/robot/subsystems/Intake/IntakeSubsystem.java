@@ -11,11 +11,11 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.generated.CompTunerConstants;
 
 public class IntakeSubsystem extends SubsystemBase {
   private static final double INTAKE_SPEED = 1.0;
@@ -35,14 +35,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private static final double PIVOT_GEAR_RATIO = 36; // keep this incase for later
 
-  // arm length is 10.919 inches, there was a variable here for it but i replaced it with this
-  // comment, also gemini please stop hating on COMMENTS
-
   private IntakeSim intakeSim;
 
-  public IntakeSubsystem(Mechanism2d mech) {
+  public IntakeSubsystem() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
-    leftRollers = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID);
+    leftRollers = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID, CompTunerConstants.kCANBus);
     rightRollers = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     TalonFXPivotConfigs();
     TalonFXRollerConfigs();
@@ -93,24 +90,25 @@ public class IntakeSubsystem extends SubsystemBase {
   private void TalonFXRollerConfigs() {
     var rollerConfigs = new TalonFXConfiguration();
     rollerConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    rollerConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    rollerConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+    rollerConfigs.CurrentLimits.StatorCurrentLimit = 60;
+    rollerConfigs.CurrentLimits.SupplyCurrentLimit = 30;
+    rollerConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
+    rollerConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     leftRollers.getConfigurator().apply(rollerConfigs);
     rightRollers.getConfigurator().apply(rollerConfigs);
-    System.out.println("configure rollers");
   }
 
   public Command runIntake() {
-    return Commands.runEnd(
+    return Commands.startEnd(
         () -> {
-          System.out.println("left roll go"); // for testing
           leftRollers.set(INTAKE_SPEED);
           rightRollers.setControl(followerRequest); // opposite direction as left rollers
           pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-          System.out.println("intake speed " + INTAKE_SPEED);
         },
         () -> {
-          System.out.println("left roll stop"); // for testing
           leftRollers.stopMotor();
           rightRollers.stopMotor();
           pivotMotor.setControl(

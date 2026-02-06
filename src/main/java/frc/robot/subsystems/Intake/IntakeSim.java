@@ -35,7 +35,7 @@ public class IntakeSim extends SubsystemBase {
   private static final double PIVOT_GEAR_RATIO = 36.0;
   private static final double ROLLERS_GEAR_RATIO = 1.0;
   private static final double ARM_LENGTH_METERS = Units.inchesToMeters(10.919);
-  private static final double ARM_START_POS = 15;
+  private static final double ARM_START_POS = 15.0;
 
   LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
 
@@ -62,12 +62,12 @@ public class IntakeSim extends SubsystemBase {
             DCMotor.getKrakenX44(1),
             PIVOT_GEAR_RATIO,
             SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, 2),
-            Units.inchesToMeters(ARM_LENGTH_METERS),
+            Units.inchesToMeters(ARM_LENGTH_METERS), // length
             Units.degreesToRadians(-120), // minimum arm angle
             Units.degreesToRadians(120), // maximum arm angle
             false,
             Units.degreesToRadians(
-                ARM_START_POS)); // starting arm angle, keep this the same value as max arm angle.
+                ARM_START_POS)); // starting arm angle
 
     pivotSimState = pivotMotor.getSimState();
     pivotSimState.setMotorType(MotorType.KrakenX44);
