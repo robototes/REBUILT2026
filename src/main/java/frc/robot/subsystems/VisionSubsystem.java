@@ -189,9 +189,9 @@ public class VisionSubsystem extends SubsystemBase {
       rawFieldPoseEntry.set(fieldPose3d);
       //   System.out.println("got new data");
 
-      if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.10)
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(8))
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(8))) {
+      if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.15)
+          || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(12))
+          || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(12))) {
         pose_bad = true;
         // System.out.println("pose bad");
       }
