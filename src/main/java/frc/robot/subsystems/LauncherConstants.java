@@ -83,14 +83,22 @@ public class LauncherConstants {
     return timeMap.get(distance);
   }
 
-  // Move a target a set time in the future along a velocity defined by fieldSpeeds
-  public static Translation2d predictTargetPos(
-      Translation2d target, ChassisSpeeds fieldSpeeds, double timeOfFlight) {
-    double predictedX = target.getX() - fieldSpeeds.vxMetersPerSecond * timeOfFlight;
-    double predictedY = target.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight;
+    public static Translation2d angularVelocity(Pose2d robot, ChassisSpeeds fieldSpeeds) {
+      Translation2d angle = LAUNCHER_OFFSET.rotateBy(robot.getRotation());
+      double vx = -angle.getX() + (fieldSpeeds.omegaRadiansPerSecond * 0.2);
+      double vy = angle.getY() + (fieldSpeeds.omegaRadiansPerSecond * 0.2);
+      return new Translation2d(vx, vy);
+    }
 
-    return new Translation2d(predictedX, predictedY);
-  }
+    // Move a target a set time in the future along a velocity defined by fieldSpeeds
+      public static Translation2d predictTargetPos(Translation2d target, ChassisSpeeds fieldSpeeds, Double timeOfFlight, Pose2d robot) {
+          Translation2d angularVelocity = angularVelocity(robot, fieldSpeeds);
+          double vx = fieldSpeeds.vxMetersPerSecond + angularVelocity.getX();
+          double vy = fieldSpeeds.vyMetersPerSecond + angularVelocity.getY();
+          double predictedX = target.getX() - vx * timeOfFlight;
+          double predictedY = target.getY() - vy * timeOfFlight;
+          return new Translation2d(predictedX, predictedY);
+      }
 
   public static Translation2d iterativeMovingShotFromFunnelClearance(
       Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target, int iterations) {
@@ -102,7 +110,7 @@ public class LauncherConstants {
     // Iterate the process, getting better time of flight estimations and updating the predicted
     // target accordingly
     for (int i = 0; i < iterations; i++) {
-      predictedTarget = predictTargetPos(target, fieldSpeeds, timeOfFlight);
+      predictedTarget = predictTargetPos(target, fieldSpeeds, timeOfFlight, robot);
       distance = launcherFromRobot(robot).getDistance(predictedTarget);
       timeOfFlight = getTimeFromDistance(distance);
     }
