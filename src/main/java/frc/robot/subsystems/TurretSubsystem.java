@@ -62,8 +62,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   // ----- HARDWARE OBJECTS ----- //
   private final CommandSwerveDrivetrain m_driveTrain;
-  protected final Pose2d hub;
-  protected final Pose2d alliance;
   private final Transform2d turretTransform;
 
   private boolean zeroed = false;
@@ -87,8 +85,6 @@ public class TurretSubsystem extends SubsystemBase {
     request = new MotionMagicVoltage(0);
     configureMotors();
     // --- Hardware --- //
-    hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
-    alliance = hub.transformBy(new Transform2d(-2.312797, 0, Rotation2d.k180deg));
     m_driveTrain = drivetrain;
     turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.kZero);
     // --- NETWORK TABLES --- //
@@ -152,6 +148,8 @@ public class TurretSubsystem extends SubsystemBase {
     protected Pose2d turretPose;
     protected double robotRotation;
     protected double turretRotation;
+    private Pose2d hub;
+    private Pose2d alliance;
 
     private final DoublePublisher ntErrorRad;
     private final DoublePublisher ntTargetRad;
@@ -179,7 +177,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void initialize() {
-      turretPose2d.set(turretPose);
+      hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
+      alliance = hub.transformBy(new Transform2d(-2.312797, 0, Rotation2d.k180deg));
       error = Double.POSITIVE_INFINITY;
       turretPose = driveTrain.getState().Pose;
     }
@@ -187,9 +186,13 @@ public class TurretSubsystem extends SubsystemBase {
     @Override
     public void execute() {
       targetPose = (target.get() == TurretTarget.ALLIANCE) ? alliance : hub;
-      turretPose = driveTrain.getState().Pose.transformBy(turretTransform);
       robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
       turretRotation = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
+      turretPose =
+          new Pose2d(
+              driveTrain.getState().Pose.getX(),
+              driveTrain.getState().Pose.getY(),
+              new Rotation2d(turretRotation));
 
       double turretFieldRel = MathUtil.angleModulus(robotRotation + turretRotation);
 
@@ -211,6 +214,7 @@ public class TurretSubsystem extends SubsystemBase {
       } else {
         turretMotor.setControl(zeroVolts);
       }
+      turretPose2d.accept(turretPose);
     }
 
     @Override
