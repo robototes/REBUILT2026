@@ -200,12 +200,12 @@ public class Controls {
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
 
     // Auto rotate
-    driverController
+    /*driverController
         .rightTrigger()
         .whileTrue(
             AutoDriveRotate.autoRotate(
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
-                .withName("Drivebase rotation towards the hub"));
+                .withName("Drivebase rotation towards the hub")); */
 
     turretTestController
         .x()
@@ -273,7 +273,9 @@ public class Controls {
                     s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
         .toggleOnFalse(
             Commands.parallel(
-                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
+                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0),
+                s.spindexerSubsystem.stopMotor(), s.feederSubsystem.stopMotor()));
+    driverController.start().onTrue(s.hood.autoZeroCommand());
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
           .leftBumper()
