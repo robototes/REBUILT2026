@@ -190,7 +190,7 @@ public class AutoLogic {
     return Commands.sequence(
             AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
             Commands.parallel(s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
-        .andThen(s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0));
+        .andThen(s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)).withTimeout(3);
   }
 
   public static Command intakeCommand() {
