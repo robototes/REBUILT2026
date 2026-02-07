@@ -244,7 +244,7 @@ public class Controls {
       return;
     }
     driverController.b().whileTrue(s.intakeSubsystem.runIntake());
-    // driverController.x().onTrue(s.intakeSubsystem.deployIntake());
+    intakeTestController.x().onTrue(s.intakeSubsystem.deployIntake());
     intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
   }
 

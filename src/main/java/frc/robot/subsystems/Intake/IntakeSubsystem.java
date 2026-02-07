@@ -3,10 +3,13 @@ package frc.robot.subsystems.Intake;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -14,31 +17,38 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 
 public class IntakeSubsystem extends SubsystemBase {
+  // motor
   private static final double INTAKE_SPEED = 1.0;
   public double pivotPos;
+  private double targetPos;
   private final TalonFX pivotMotor;
   private final TalonFX leftRollers;
   private final TalonFX rightRollers;
   private final MotionMagicVoltage pivotRequest = new MotionMagicVoltage(0);
+  private final VoltageOut voltageRequest = new VoltageOut(0);
   private final Follower followerRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private static final double PIVOT_DEPLOYED_POS = 0;
-  private static final double PIVOT_GEAR_RATIO = 36; // keep this incase for later
-  private static final double PIVOT_RETRACTED_POS =
-      200 * PIVOT_GEAR_RATIO; // change this value and ln 44 if u wanna change position
+  private static final double PIVOT_GEAR_RATIO = 36;
+  private static final double PIVOT_DEPLOYED_POS = 1.0;
+  private static final double PIVOT_RETRACTED_POS = 0.0;
+  public static final double POS_TOLERANCE = Units.degreesToRotations(5);
+    // sim
   private final DoubleTopic leftRollerTopic;
   private final DoubleTopic rightRollerTopic;
+  private final DoubleTopic pivotTopic;
   private final DoublePublisher leftRollerPub;
   private final DoublePublisher rightRollerPub;
-
+  private final DoublePublisher pivotPublisher;
   private IntakeSim intakeSim;
 
   public IntakeSubsystem() {
-    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
+    // define the motors
+    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     leftRollers = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID, CompTunerConstants.kCANBus);
     rightRollers = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     TalonFXPivotConfigs();
@@ -56,9 +66,14 @@ public class IntakeSubsystem extends SubsystemBase {
     this.rightRollerTopic = nt.getDoubleTopic("right intake status/speed in RPM");
     this.rightRollerPub = rightRollerTopic.publish();
 
+    this.pivotTopic = nt.getDoubleTopic("pivot position/position");
+    this.pivotPublisher = pivotTopic.publish();
+
+
     // default values
     leftRollerPub.set(0);
     rightRollerPub.set(0);
+    pivotPublisher.set(0);
   }
 
   // configs
@@ -67,10 +82,15 @@ public class IntakeSubsystem extends SubsystemBase {
     var slot0Configs = talonFXConfigs.Slot0;
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
+    talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
+    talonFXConfigs.CurrentLimits.SupplyCurrentLimit = 30;
+    talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
+    talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
+
     // pivot configs
 
     slot0Configs.kS = 0.9;
-    slot0Configs.kV = 0;
+    slot0Configs.kV = 10;
     slot0Configs.kA = 0;
     slot0Configs.kP = 40;
     slot0Configs.kI = 0;
@@ -79,7 +99,7 @@ public class IntakeSubsystem extends SubsystemBase {
         0.048; // change PID values during testing, these are placeholders from last year's robot
 
     var pivotMotionMagicConfigs = talonFXConfigs.MotionMagic;
-    pivotMotionMagicConfigs.MotionMagicAcceleration = 50;
+    pivotMotionMagicConfigs.MotionMagicAcceleration = 25;
     pivotMotionMagicConfigs.MotionMagicJerk = 0;
 
     pivotMotor.getConfigurator().apply(talonFXConfigs);
@@ -115,22 +135,37 @@ public class IntakeSubsystem extends SubsystemBase {
         });
   }
 
-  // public double getPivotPos() {
-  //   pivotPos = pivotMotor.getPosition().getValueAsDouble();
-  //   return pivotPos;
-  // }
+  public double getPivotPos() {
+    pivotPos = pivotMotor.getPosition().getValueAsDouble() * PIVOT_GEAR_RATIO;
+    return pivotPos;
+  }
 
-  // public Command deployIntake() {
-  //   return Commands.runOnce(
-  //     () -> {
-  //       if (pivotPos == PIVOT_RETRACTED_POS) {
-  //         pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-  //       } else {
-  //         pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
-  //       }
-  //     }
-  //     );
-  // }
+  private Command setPivotPos(double pos) {
+    return runOnce( () -> {pivotMotor.setControl(pivotRequest.withPosition(pos));
+    targetPos = pos;
+    });
+  }
+
+  public Command moveToPosition(double position) {
+    return setPivotPos(position).andThen(Commands.waitUntil(atPosition(position)));
+  }
+  public Trigger atPosition(double position) {
+    return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
+  }
+  public Command deployIntake() {
+    return Commands.runOnce(
+      () -> {
+        System.out.println("pivot position: " + pivotPos);
+        System.out.println(getPivotPos() == PIVOT_RETRACTED_POS);
+        if (getPivotPos() == PIVOT_RETRACTED_POS) {
+          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
+        } else {
+          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
+        }
+        System.out.println("pivot position: " + pivotPos);
+      }
+      );
+  }
 
   public Command temporaryRunIntake(double speed) { // for testing
     return Commands.runEnd(
@@ -146,6 +181,7 @@ public class IntakeSubsystem extends SubsystemBase {
   public void periodic() {
     leftRollerPub.set(leftRollers.getVelocity().getValueAsDouble());
     rightRollerPub.set(rightRollers.getVelocity().getValueAsDouble());
+    pivotPublisher.set(getPivotPos());
   }
 
   @Override
