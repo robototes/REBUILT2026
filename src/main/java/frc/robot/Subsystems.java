@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
-import frc.robot.subsystems.DrivebaseWrapper;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.Intake.IntakeSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
@@ -41,7 +40,6 @@ public class Subsystems {
 
   // Subsystems go here
   public final CommandSwerveDrivetrain drivebaseSubsystem;
-  public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
@@ -57,10 +55,8 @@ public class Subsystems {
     if (DRIVEBASE_ENABLED) {
 
       drivebaseSubsystem = CompTunerConstants.createDrivetrain();
-      drivebaseWrapper = new DrivebaseWrapper(drivebaseSubsystem);
     } else {
       drivebaseSubsystem = null;
-      drivebaseWrapper = new DrivebaseWrapper();
     }
     if (INTAKE_ENABLED) {
       intakeSubsystem = new IntakeSubsystem();
@@ -69,7 +65,7 @@ public class Subsystems {
     }
 
     if (VISION_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseWrapper);
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
       SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;
