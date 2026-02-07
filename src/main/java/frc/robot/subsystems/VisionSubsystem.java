@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -35,8 +36,6 @@ public class VisionSubsystem extends SubsystemBase {
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
 
-  private final DrivebaseWrapper drivebaseWrapper;
-
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
@@ -59,8 +58,7 @@ public class VisionSubsystem extends SubsystemBase {
   private double tagAmbiguity = 0;
   private CommandSwerveDrivetrain drivetrain;
 
-  public VisionSubsystem(DrivebaseWrapper drivebaseWrapper, CommandSwerveDrivetrain drivetrain) {
-    this.drivebaseWrapper = drivebaseWrapper;
+  public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
 
     robotField = new Field2d();
@@ -134,14 +132,14 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       if (!pose_bad) {
-        drivebaseWrapper.addVisionMeasurement(
+        drivetrain.addVisionMeasurement(
             fieldPose3d.toPose2d(),
-            timestampSeconds,
+            Utils.fpgaToCurrentTime(timestampSeconds),
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
             // add a distance standard dev
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
-        robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
+        robotField.setRobotPose(drivetrain.getState().Pose);
         // System.out.println("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {
@@ -199,14 +197,14 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       if (!pose_bad) {
-        drivebaseWrapper.addVisionMeasurement(
+        drivetrain.addVisionMeasurement(
             fieldPose3d.toPose2d(),
-            timestampSeconds,
+            Utils.fpgaToCurrentTime(timestampSeconds),
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
             // add a distance standard dev
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
-        robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
+        robotField.setRobotPose(drivetrain.getState().Pose);
         // System.out.println("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {

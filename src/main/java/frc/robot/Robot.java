@@ -125,7 +125,7 @@ public class Robot extends TimedRobot {
       }
       LimelightHelpers.SetRobotOrientation(
           Hardware.LIMELIGHT_C,
-          subsystems.drivebaseWrapper.getEstimatedPosition().getRotation().getDegrees(),
+          subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
           subsystems.drivebaseSubsystem.getState().Speeds.omegaRadiansPerSecond * (180 / Math.PI),
           0,
           0,
