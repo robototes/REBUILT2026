@@ -37,7 +37,25 @@
         {
           "type": "path",
           "data": {
+            "pathName": "NeutralRight-NeutralLeftTHREE"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-NeutralLeftTWO"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "RT-Climb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
           }
         },
         {

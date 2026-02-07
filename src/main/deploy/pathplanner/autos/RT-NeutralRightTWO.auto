@@ -13,7 +13,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-RT"
+            "pathName": "NeutralRight-RT-intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-RT-intake-post"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-NeutralRight-Back"
           }
         },
         {
@@ -25,13 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-NeutralRight"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-NeutralLeft"
+            "pathName": "NeutralRight-NeutralLeftTHREE"
           }
         },
         {
