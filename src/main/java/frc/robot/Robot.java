@@ -7,17 +7,20 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
 
 /**
@@ -32,6 +35,9 @@ public class Robot extends TimedRobot {
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
+  private final int GAMEPIECE_PIPELINE = 2;
+  private FuelSim fuelSimulation;
+  private final Mechanism2d mechanismRobot;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -40,13 +46,29 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    subsystems = new Subsystems();
+    mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
+    SmartDashboard.putData("Mechanism2d", mechanismRobot);
+    subsystems = new Subsystems(mechanismRobot);
     controls = new Controls(subsystems);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
     }
+    AutoLogic.init(subsystems);
+    if (Robot.isSimulation()) {
+      fuelSimulation = FuelSim.getInstance();
+      fuelSimulation.spawnStartingFuel();
 
+      fuelSimulation.registerRobot(
+          0.8,
+          0.8,
+          0.7,
+          () -> subsystems.drivebaseSubsystem.getState().Pose,
+          () -> subsystems.drivebaseSubsystem.getState().Speeds);
+      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
+
+      fuelSimulation.start();
+    }
     CommandScheduler.getInstance()
         .onCommandInitialize(
             command -> System.out.println("Command initialized: " + command.getName()));
@@ -93,6 +115,14 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
+      if (!subsystems.visionSubsystem.isViewFinder()) {
+        subsystems.visionSubsystem.update();
+      }
+    }
+    if (subsystems.detectionSubsystem != null) {
+      if (!subsystems.detectionSubsystem.isViewFinder()) {
+        subsystems.detectionSubsystem.update();
+      }
       LimelightHelpers.SetRobotOrientation(
           Hardware.LIMELIGHT_C,
           subsystems.drivebaseWrapper.getEstimatedPosition().getRotation().getDegrees(),
@@ -115,12 +145,21 @@ public class Robot extends TimedRobot {
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
+    if (subsystems.detectionSubsystem != null) {
+      subsystems.detectionSubsystem.fuelPose3d = null;
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
+    }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+    }
+    if (subsystems.detectionSubsystem != null) {
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
@@ -131,6 +170,12 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     if (AutoLogic.getSelectedAuto() != null) {
+      if (Robot.isSimulation()) {
+
+        fuelSimulation.clearFuel();
+        fuelSimulation.spawnStartingFuel();
+      }
+
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
     }
   }
@@ -173,9 +218,13 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when the robot is first started up. */
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    subsystems.hood.zero();
+  }
 
   /** This function is called periodically whilst in simulation. */
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    FuelSim.getInstance().updateSim();
+  }
 }
