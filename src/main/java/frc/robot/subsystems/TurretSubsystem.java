@@ -21,10 +21,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Controls.TurretState;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.TurretUtils.TurretState;
+import frc.robot.util.TurretUtils.TurretTarget;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -58,7 +59,8 @@ public class TurretSubsystem extends SubsystemBase {
 
   // ----- HARDWARE OBJECTS ----- //
   private final CommandSwerveDrivetrain m_driveTrain;
-  private final Pose2d hub;
+  protected final Pose2d hub;
+  protected final Pose2d alliance;
   private final Transform2d turretTransform;
 
   private boolean zeroed = false;
@@ -82,6 +84,7 @@ public class TurretSubsystem extends SubsystemBase {
     configureMotors();
     // --- Hardware --- //
     hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
+    alliance = hub.transformBy(new Transform2d(-2.312797, 0, Rotation2d.k180deg));
     m_driveTrain = drivetrain;
     turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
     // --- NETWORK TABLES --- //
@@ -131,13 +134,14 @@ public class TurretSubsystem extends SubsystemBase {
     zeroed = true;
   }
 
-  private static class AutoRotate extends Command {
+  private class AutoRotate extends Command {
     private final CommandSwerveDrivetrain driveTrain;
     private final TalonFX turretMotor;
     private final Transform2d turretTransform;
-    private final Pose2d hub;
+    private Pose2d targetPose;
     private final MotionMagicVoltage request;
     private double error;
+    private final Supplier<TurretTarget> target;
 
     protected Pose2d turretPose;
     protected double robotRotation;
@@ -153,15 +157,15 @@ public class TurretSubsystem extends SubsystemBase {
         CommandSwerveDrivetrain driveTrain,
         TalonFX turretMotor,
         Transform2d turretTransform,
-        Pose2d hub,
+        Supplier<TurretTarget> target,
         MotionMagicVoltage request,
         DoublePublisher ntErrorRad,
         DoublePublisher ntTargetRad,
         Subsystem turretSubsystem) {
+      this.target = target;
       this.driveTrain = driveTrain;
       this.turretMotor = turretMotor;
       this.turretTransform = turretTransform;
-      this.hub = hub;
       this.request = request;
       this.ntErrorRad = ntErrorRad;
       this.ntTargetRad = ntTargetRad;
@@ -181,13 +185,14 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void execute() {
+      targetPose = (target.get() == TurretTarget.ALLIANCE) ? alliance : hub;
       turretPose = driveTrain.getState().Pose.transformBy(turretTransform);
       robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
       turretRotation = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
 
       double turretFieldRel = MathUtil.angleModulus(robotRotation + turretRotation);
 
-      Transform2d difference = hub.minus(turretPose);
+      Transform2d difference = targetPose.minus(turretPose);
       double targetRadField = Math.atan2(difference.getY(), difference.getX());
 
       error = MathUtil.angleModulus(targetRadField - turretFieldRel);
@@ -242,9 +247,16 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
-  public Command AutoRotate() {
+  public Command AutoRotate(Supplier<TurretTarget> TurretTarget) {
     return new AutoRotate(
-        m_driveTrain, m_turretMotor, turretTransform, hub, request, ntErrorRad, ntTargetRad, this);
+        m_driveTrain,
+        m_turretMotor,
+        turretTransform,
+        TurretTarget,
+        request,
+        ntErrorRad,
+        ntTargetRad,
+        this);
   }
 
   // --- MOTOR CONFIGS --- //

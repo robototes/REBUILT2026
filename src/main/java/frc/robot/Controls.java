@@ -8,6 +8,8 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -19,6 +21,9 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.util.TurretUtils;
+import frc.robot.util.TurretUtils.TurretState;
+import frc.robot.util.TurretUtils.TurretTarget;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -37,16 +42,8 @@ public class Controls {
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
   private static final int TURRET_TEST_CONTROLLER_PORT_2 = 4;
 
-  // Cool enums
-
-  // --- Turret STATES ---- //
-  public static enum TurretState {
-    MANUAL,
-    AUTO,
-    IDLE
-  }
-
-  private TurretState currentTurretState = TurretState.IDLE;
+  private TurretState currentTurretState = TurretUtils.TurretState.IDLE;
+  private TurretTarget currentTurretTarget = TurretUtils.TurretTarget.HUB;
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -210,6 +207,11 @@ public class Controls {
                 .withName("Drivebase rotation towards the hub"));
 
     turretTestController2
+        .L2()
+        .onTrue(
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+    turretTestController2
         .cross()
         .onTrue(
             Commands.runOnce(
@@ -221,7 +223,10 @@ public class Controls {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  currentTurretState = TurretState.IDLE;
+                  currentTurretTarget =
+                      (currentTurretTarget == TurretTarget.HUB)
+                          ? TurretTarget.ALLIANCE
+                          : TurretTarget.HUB;
                 }));
     turretTestController2
         .square()
@@ -235,7 +240,7 @@ public class Controls {
         .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
     s.turretSubsystem
         .AutoRotateTrigger(() -> currentTurretState)
-        .whileTrue((s.turretSubsystem.AutoRotate()));
+        .whileTrue((s.turretSubsystem.AutoRotate(() -> currentTurretTarget)));
     s.turretSubsystem
         .ManualRotateTrigger(() -> currentTurretState)
         .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX())));
