@@ -23,12 +23,6 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "Depot-Climb"
