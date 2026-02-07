@@ -15,6 +15,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -35,11 +36,13 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private static final double GEAR_RATIO = 20;
-  private static final double TURRET_MAX = Units.degreesToRadians(-42.1);
-  private static final double TURRET_MIN = Units.degreesToRadians(-137.899);
+  private static final double TURRET_MAX = Units.degreesToRadians(90);
+  private static final double TURRET_MIN = Units.degreesToRadians(-90);
+  // private static final double TURRET_MAX = Units.degreesToRadians(-42.1);
+  // private static final double TURRET_MIN = Units.degreesToRadians(-137.899);
 
-  private static final double TURRET_X_OFFSET = 0; //-0.2159; // METERS
-  private static final double TURRET_Y_OFFSET = 0; //-0.1397; // METERS
+  private static final double TURRET_X_OFFSET = 0; // -0.2159; // METERS
+  private static final double TURRET_Y_OFFSET = 0; // -0.1397; // METERS
 
   private static final double STALL_CURRENT = 5; // Amps
 
@@ -75,6 +78,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher ntMotorCurrent;
   private final DoublePublisher ntRobotRotationRad;
   private final DoublePublisher ntMotorFieldRelativeRad;
+  protected StructPublisher<Pose2d> turretPose2d;
 
   // --- CONSTRUCTOR --- //
   public TurretSubsystem(CommandSwerveDrivetrain drivetrain) {
@@ -101,6 +105,8 @@ public class TurretSubsystem extends SubsystemBase {
     ntMotorCurrent = m_nt.getDoubleTopic("MotorCurrent").publish();
     ntRobotRotationRad = m_nt.getDoubleTopic("RobotRotationRadians").publish();
     ntMotorFieldRelativeRad = m_nt.getDoubleTopic("MotorRadiansFieldRelative").publish();
+    turretPose2d =
+        NetworkTableInstance.getDefault().getStructTopic("Turret Pose2d", Pose2d.struct).publish();
   }
 
   // ----- PUBLIC METHODS ----- //
@@ -130,7 +136,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private void zeroMotor() {
-    m_turretMotor.setPosition(Units.radiansToRotations(TURRET_MAX)); // +0.5 Degree of headroom
+    m_turretMotor.setPosition(Units.radiansToRotations(0)); // +0.5 Degree of headroom
     zeroed = true;
   }
 
@@ -151,7 +157,6 @@ public class TurretSubsystem extends SubsystemBase {
     private final DoublePublisher ntTargetRad;
 
     private static final double TRACK_THRESHOLD_RAD = 0.01;
-    private double lastCmdRad = 0.0;
 
     public AutoRotate(
         CommandSwerveDrivetrain driveTrain,
@@ -174,37 +179,35 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void initialize() {
-      lastCmdRad = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
+      turretPose2d.set(turretPose);
       error = Double.POSITIVE_INFINITY;
-      turretPose = driveTrain.getState().Pose.transformBy(turretTransform).rotateBy(Rotation2d.k180deg);
-      robotRotation = driveTrain.getState().Pose.getRotation().rotateBy(Rotation2d.k180deg).getRadians();
-      turretRotation =
-          Units.rotationsToRadians(
-              turretMotor.getPosition().getValueAsDouble()); // Turret rotation in radians
+      turretPose = driveTrain.getState().Pose;
     }
 
     @Override
     public void execute() {
       targetPose = (target.get() == TurretTarget.ALLIANCE) ? alliance : hub;
       turretPose = driveTrain.getState().Pose.transformBy(turretTransform);
-      robotRotation = driveTrain.getState().Pose.getRotation().rotateBy(Rotation2d.k180deg).getRadians();
+      robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
       turretRotation = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
 
       double turretFieldRel = MathUtil.angleModulus(robotRotation + turretRotation);
 
       Transform2d difference = targetPose.minus(turretPose);
       double targetRadField = Math.atan2(difference.getY(), difference.getX());
-
+      // System.out.println("Target Deg : " +
+      // Units.radiansToDegrees(MathUtil.angleModulus(Units.radiansToDegrees(targetRadField))));
+      // System.out.println("Current Deg : " + Units.radiansToDegrees(turretRotation));
       error = MathUtil.angleModulus(targetRadField - turretFieldRel);
 
       if (Math.abs(error) > TRACK_THRESHOLD_RAD) {
         double cmdRad =
             MathUtil.clamp(
                 MathUtil.angleModulus(targetRadField - robotRotation), TURRET_MIN, TURRET_MAX);
-        lastCmdRad = cmdRad;
+
         ntErrorRad.set(error);
         ntTargetRad.set(targetRadField);
-        turretMotor.setControl(request.withPosition(Units.radiansToRotations(lastCmdRad)));
+        turretMotor.setControl(request.withPosition(Units.radiansToRotations(cmdRad)));
       } else {
         turretMotor.setControl(zeroVolts);
       }
@@ -294,7 +297,7 @@ public class TurretSubsystem extends SubsystemBase {
     // ---------------- FEEDBACK / OUTPUT ----------------
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     configs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    configs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    configs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     m_turretMotor.getConfigurator().apply(configs);
   }
