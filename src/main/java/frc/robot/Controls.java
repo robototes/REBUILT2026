@@ -204,7 +204,7 @@ public class Controls {
             Commands.sequence(
                 Commands.parallel(
                     AutoDriveRotate.autoRotate(
-                      s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()),
+                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()),
                     AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels)
                         .withName("AutoRotate and AutoAim have been run"),
                     Commands.parallel(
