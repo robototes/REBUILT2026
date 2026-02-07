@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoAim;
@@ -34,7 +35,18 @@ public class Controls {
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
   private static final int INTAKE_TEST_CONTROLLER_PORT = 3;
+  private static final int TURRET_TEST_CONTROLLER_PORT = 4;
 
+  // Cool enums
+
+  // --- Turret STATES ---- //
+  public static enum TurretState {
+    MANUAL,
+    AUTO,
+    IDLE
+  }
+
+  private TurretState currentTurretState = TurretState.IDLE;
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -46,6 +58,9 @@ public class Controls {
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
   private final CommandXboxController intakeTestController =
       new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController turretTestController =
+      new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -72,7 +87,7 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureIntakeBindings();
-    configureAutoAlignBindings();
+    //configureAutoAlignBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -193,6 +208,50 @@ public class Controls {
             AutoDriveRotate.autoRotate(
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
                 .withName("Drivebase rotation towards the hub"));
+
+    turretTestController
+        .x()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.AUTO;
+                }));
+    turretTestController
+        .b()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.MANUAL;
+                }));
+    turretTestController
+        .y()
+        .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
+    s.turretSubsystem
+        .AutoRotateTrigger(() -> currentTurretState)
+        .whileTrue((s.turretSubsystem.AutoRotate()));
+    s.turretSubsystem
+        .ManualRotateTrigger(() -> currentTurretState)
+        .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController.getLeftX())));
+    s.turretSubsystem
+        .ManualRotateTrigger(() -> currentTurretState)
+        .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController.getLeftX())));
+    driverController
+        .povUp()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.AUTO;
+                }));
+    driverController
+        .povDown()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.MANUAL;
+                }));
+    s.turretSubsystem
+        .ManualRotateTrigger(() -> currentTurretState).and(driverController.leftStick())
+        .whileTrue((s.turretSubsystem.manualMove(() -> driverController.getLeftX())));
   }
 
   private void configureAutoAlignBindings() {
@@ -243,9 +302,10 @@ public class Controls {
       System.out.println("Controls.java: intakeSubsystem is disabled, bindings skipped");
       return;
     }
-    driverController.b().whileTrue(s.intakeSubsystem.runIntake());
+    // driverController.b().whileTrue(s.intakeSubsystem.runIntake());
     // driverController.x().onTrue(s.intakeSubsystem.deployIntake());
     intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
+    driverController.leftTrigger().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
   }
 
   /**
