@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -20,6 +21,9 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.util.TurretUtils;
+import frc.robot.util.TurretUtils.TurretState;
+import frc.robot.util.TurretUtils.TurretTarget;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -38,16 +42,8 @@ public class Controls {
   private static final int INTAKE_TEST_CONTROLLER_PORT = 3;
   private static final int TURRET_TEST_CONTROLLER_PORT = 4;
 
-  // Cool enums
-
-  // --- Turret STATES ---- //
-  public static enum TurretState {
-    MANUAL,
-    AUTO,
-    IDLE
-  }
-
-  private TurretState currentTurretState = TurretState.IDLE;
+  private TurretState currentTurretState = TurretUtils.TurretState.IDLE;
+  private TurretTarget currentTurretTarget = TurretUtils.TurretTarget.HUB;
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -229,9 +225,6 @@ public class Controls {
         .y()
         .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
     s.turretSubsystem
-        .AutoRotateTrigger(() -> currentTurretState)
-        .whileTrue((s.turretSubsystem.AutoRotate()));
-    s.turretSubsystem
         .ManualRotateTrigger(() -> currentTurretState)
         .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController.getLeftX())));
     s.turretSubsystem
@@ -308,6 +301,52 @@ public class Controls {
     // driverController.x().onTrue(s.intakeSubsystem.deployIntake());
     intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
     driverController.leftTrigger().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
+
+  }
+  private void configureTurretBindings(boolean isXbox) {
+    if (isXbox) {
+      turretTestController
+          .rightTrigger()
+          .onTrue(
+              s.drivebaseSubsystem.runOnce(
+                  () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+      turretTestController
+          .a()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    currentTurretState = TurretState.AUTO;
+                  }));
+      turretTestController
+          .b()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    currentTurretTarget =
+                        (currentTurretTarget == TurretTarget.HUB)
+                            ? TurretTarget.ALLIANCE
+                            : TurretTarget.HUB;
+                  }));
+      turretTestController
+          .x()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    currentTurretState = TurretState.MANUAL;
+                  }));
+      turretTestController
+          .y()
+          .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
+      s.turretSubsystem
+          .AutoRotateTrigger(() -> currentTurretState)
+          .whileTrue((s.turretSubsystem.AutoRotate(() -> currentTurretTarget)));
+      s.turretSubsystem
+          .ManualRotateTrigger(() -> currentTurretState)
+          .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController.getLeftX())));
+                }
+      s.turretSubsystem
+        .AutoRotateTrigger(() -> currentTurretState)
+        .whileTrue((s.turretSubsystem.AutoRotate(() -> currentTurretTarget)));
   }
 
   /**
