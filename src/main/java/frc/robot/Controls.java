@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -69,6 +70,7 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureAutoAlignBindings();
+    configureVisionBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -179,13 +181,6 @@ public class Controls {
                 .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
                 .withName("Reset gyro"));
 
-    driverController
-        .leftBumper()
-        .onTrue(
-            s.drivebaseSubsystem
-                .runOnce(() -> s.drivebaseSubsystem.resetPose(s.visionSubsystem.lastFieldPose))
-                .withName("Now Drive Pose is Vision Pose"));
-
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
 
@@ -263,5 +258,19 @@ public class Controls {
             () -> vibrateDriveController(0.0) // end
             )
         .withTimeout(seconds);
+  }
+
+  private void configureVisionBindings() {
+    if (s.visionSubsystem != null) {
+      Pose2d refrenceVisionPose = s.visionSubsystem.lastFieldPose;
+      if (refrenceVisionPose != null) {
+        driverController
+            .leftBumper()
+            .onTrue(
+                s.drivebaseSubsystem
+                    .runOnce(() -> s.drivebaseSubsystem.resetPose(refrenceVisionPose))
+                    .withName("Now Drive Pose is Vision Pose"));
+      }
+    }
   }
 }
