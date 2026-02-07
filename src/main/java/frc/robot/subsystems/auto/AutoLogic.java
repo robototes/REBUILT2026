@@ -33,7 +33,7 @@ public class AutoLogic {
     CENTER("Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(90)))),
     RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(-90)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(3.641, 0.5, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Right Trench", new Pose2d(4.291, 0.5, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
@@ -96,13 +96,13 @@ public class AutoLogic {
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
+
   public static List<AutoPath> getAutos() {
     if (rebuiltPaths != null) {
-return rebuiltPaths;
+      return rebuiltPaths;
     }
     System.out.println("fail");
     return List.of();
-
   }
 
   /* ---------------- Init ---------------- */

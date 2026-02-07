@@ -16,7 +16,6 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -388,29 +387,37 @@ public class FuelSim {
   public void spawnFuel(Translation3d pos, Translation3d vel) {
     fuels.add(new Fuel(pos, vel));
   }
-  public void launchFuel(LinearVelocity launchVelocity, Angle hoodAngle, Angle turretYaw, Distance launchHeight) {
-        if (robotSupplier == null || robotSpeedsSupplier == null) {
-            throw new IllegalStateException("Robot must be registered before launching fuel.");
-        }
 
-        Pose3d launchPose = new Pose3d(this.robotSupplier.get())
-                .plus(new Transform3d(new Translation3d(Units.Meters.zero(),Units.Meters.zero(), launchHeight), Rotation3d.kZero));
-        ChassisSpeeds fieldSpeeds = this.robotSpeedsSupplier.get();
-
-        double horizontalVel = Math.cos(hoodAngle.in(Units.Radians)) * launchVelocity.in(Units.MetersPerSecond);
-        double verticalVel = Math.sin(hoodAngle.in(Units.Radians)) * launchVelocity.in(Units.MetersPerSecond);
-        double xVel = horizontalVel
-                * Math.cos(
-                        turretYaw.plus(launchPose.getRotation().getMeasureZ()).in(Units.Radians));
-        double yVel = horizontalVel
-                * Math.sin(
-                        turretYaw.plus(launchPose.getRotation().getMeasureZ()).in(Units.Radians));
-
-        xVel += fieldSpeeds.vxMetersPerSecond;
-        yVel += fieldSpeeds.vyMetersPerSecond;
-
-        spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+  public void launchFuel(
+      LinearVelocity launchVelocity, Angle hoodAngle, Angle turretYaw, Distance launchHeight) {
+    if (robotSupplier == null || robotSpeedsSupplier == null) {
+      throw new IllegalStateException("Robot must be registered before launching fuel.");
     }
+
+    Pose3d launchPose =
+        new Pose3d(this.robotSupplier.get())
+            .plus(
+                new Transform3d(
+                    new Translation3d(Units.Meters.zero(), Units.Meters.zero(), launchHeight),
+                    Rotation3d.kZero));
+    ChassisSpeeds fieldSpeeds = this.robotSpeedsSupplier.get();
+
+    double horizontalVel =
+        Math.cos(hoodAngle.in(Units.Radians)) * launchVelocity.in(Units.MetersPerSecond);
+    double verticalVel =
+        Math.sin(hoodAngle.in(Units.Radians)) * launchVelocity.in(Units.MetersPerSecond);
+    double xVel =
+        horizontalVel
+            * Math.cos(turretYaw.plus(launchPose.getRotation().getMeasureZ()).in(Units.Radians));
+    double yVel =
+        horizontalVel
+            * Math.sin(turretYaw.plus(launchPose.getRotation().getMeasureZ()).in(Units.Radians));
+
+    xVel += fieldSpeeds.vxMetersPerSecond;
+    yVel += fieldSpeeds.vyMetersPerSecond;
+
+    spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+  }
 
   private void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {
     Translation2d relativePos =
