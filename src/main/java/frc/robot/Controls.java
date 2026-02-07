@@ -85,6 +85,7 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureAutoAlignBindings();
+    configureTurretBindings(true);
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -205,45 +206,6 @@ public class Controls {
             AutoDriveRotate.autoRotate(
                     s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
                 .withName("Drivebase rotation towards the hub"));
-
-    turretTestController2
-        .L2()
-        .onTrue(
-            s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
-    turretTestController2
-        .cross()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  currentTurretState = TurretState.AUTO;
-                }));
-    turretTestController2
-        .circle()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  currentTurretTarget =
-                      (currentTurretTarget == TurretTarget.HUB)
-                          ? TurretTarget.ALLIANCE
-                          : TurretTarget.HUB;
-                }));
-    turretTestController2
-        .square()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  currentTurretState = TurretState.MANUAL;
-                }));
-    turretTestController2
-        .triangle()
-        .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
-    s.turretSubsystem
-        .AutoRotateTrigger(() -> currentTurretState)
-        .whileTrue((s.turretSubsystem.AutoRotate(() -> currentTurretTarget)));
-    s.turretSubsystem
-        .ManualRotateTrigger(() -> currentTurretState)
-        .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX())));
   }
 
   private void configureAutoAlignBindings() {
@@ -287,6 +249,87 @@ public class Controls {
 
     launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
     launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private void configureTurretBindings(boolean isXbox) {
+    if (isXbox) {
+      turretTestController
+          .rightTrigger()
+          .onTrue(
+              s.drivebaseSubsystem.runOnce(
+                  () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+      turretTestController
+          .b()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    currentTurretState = TurretState.AUTO;
+                  }));
+      turretTestController
+          .y()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    currentTurretTarget =
+                        (currentTurretTarget == TurretTarget.HUB)
+                            ? TurretTarget.ALLIANCE
+                            : TurretTarget.HUB;
+                  }));
+      turretTestController
+          .a()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    currentTurretState = TurretState.MANUAL;
+                  }));
+      turretTestController
+          .x()
+          .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
+      s.turretSubsystem
+          .AutoRotateTrigger(() -> currentTurretState)
+          .whileTrue((s.turretSubsystem.AutoRotate(() -> currentTurretTarget)));
+      s.turretSubsystem
+          .ManualRotateTrigger(() -> currentTurretState)
+          .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController.getLeftX())));
+    }
+    turretTestController2
+        .R1()
+        .onTrue(
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+    turretTestController2
+        .cross()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.AUTO;
+                }));
+    turretTestController2
+        .circle()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretTarget =
+                      (currentTurretTarget == TurretTarget.HUB)
+                          ? TurretTarget.ALLIANCE
+                          : TurretTarget.HUB;
+                }));
+    turretTestController2
+        .square()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  currentTurretState = TurretState.MANUAL;
+                }));
+    turretTestController2
+        .triangle()
+        .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
+    s.turretSubsystem
+        .AutoRotateTrigger(() -> currentTurretState)
+        .whileTrue((s.turretSubsystem.AutoRotate(() -> currentTurretTarget)));
+    s.turretSubsystem
+        .ManualRotateTrigger(() -> currentTurretState)
+        .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX())));
   }
 
   /**
