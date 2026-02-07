@@ -266,14 +266,14 @@ public class Controls {
               s.drivebaseSubsystem.runOnce(
                   () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
       turretTestController
-          .b()
+          .a()
           .onTrue(
               Commands.runOnce(
                   () -> {
                     currentTurretState = TurretState.AUTO;
                   }));
       turretTestController
-          .y()
+          .b()
           .onTrue(
               Commands.runOnce(
                   () -> {
@@ -283,14 +283,14 @@ public class Controls {
                             : TurretTarget.HUB;
                   }));
       turretTestController
-          .a()
+          .x()
           .onTrue(
               Commands.runOnce(
                   () -> {
                     currentTurretState = TurretState.MANUAL;
                   }));
       turretTestController
-          .x()
+          .y()
           .onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
       s.turretSubsystem
           .AutoRotateTrigger(() -> currentTurretState)
