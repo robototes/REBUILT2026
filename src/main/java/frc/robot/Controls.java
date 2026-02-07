@@ -180,7 +180,7 @@ public class Controls {
                 .withName("Reset gyro"));
 
     driverController
-        .a()
+        .leftBumper()
         .onTrue(
             s.drivebaseSubsystem
                 .runOnce(() -> s.drivebaseSubsystem.resetPose(s.visionSubsystem.lastFieldPose))
