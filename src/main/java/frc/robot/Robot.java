@@ -123,6 +123,16 @@ public class Robot extends TimedRobot {
       if (!subsystems.detectionSubsystem.isViewFinder()) {
         subsystems.detectionSubsystem.update();
       }
+      LimelightHelpers.SetRobotOrientation(
+          Hardware.LIMELIGHT_C,
+          subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
+          subsystems.drivebaseSubsystem.getState().Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+          0,
+          0,
+          0,
+          0);
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      subsystems.visionSubsystem.update();
     }
   }
 
@@ -130,6 +140,8 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
@@ -170,7 +182,12 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
+  }
 
   @Override
   public void teleopInit() {
@@ -182,7 +199,12 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
+  }
 
   @Override
   public void testInit() {
