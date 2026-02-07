@@ -23,12 +23,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "Depot-Shoot"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"

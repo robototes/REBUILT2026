@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-Depot"
+            "pathName": "LB-Depot"
           }
         },
         {
@@ -32,6 +32,12 @@
           "type": "path",
           "data": {
             "pathName": "Depot-Climb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
           }
         },
         {
