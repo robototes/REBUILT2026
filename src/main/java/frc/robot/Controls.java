@@ -298,7 +298,7 @@ public class Controls {
       s.turretSubsystem
           .ManualRotateTrigger(() -> currentTurretState)
           .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController.getLeftX())));
-    }
+                } else {
     turretTestController2
         .R1()
         .onTrue(
@@ -337,6 +337,7 @@ public class Controls {
     s.turretSubsystem
         .ManualRotateTrigger(() -> currentTurretState)
         .whileTrue((s.turretSubsystem.manualMove(() -> turretTestController2.getLeftX())));
+              }
   }
 
   /**

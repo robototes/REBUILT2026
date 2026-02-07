@@ -35,11 +35,11 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private static final double GEAR_RATIO = 20;
-  private static final double TURRET_MIN = Units.degreesToRadians(-90); // In radians
-  private static final double TURRET_MAX = Units.degreesToRadians(90); // In radians
+  private static final double TURRET_MAX = Units.degreesToRadians(-42.1);
+  private static final double TURRET_MIN = Units.degreesToRadians(-137.899);
 
-  private static final double TURRET_X_OFFSET = 0.2159; // METERS
-  private static final double TURRET_Y_OFFSET = 0.1397; // METERS
+  private static final double TURRET_X_OFFSET = 0; //-0.2159; // METERS
+  private static final double TURRET_Y_OFFSET = 0; //-0.1397; // METERS
 
   private static final double STALL_CURRENT = 5; // Amps
 
@@ -86,7 +86,7 @@ public class TurretSubsystem extends SubsystemBase {
     hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
     alliance = hub.transformBy(new Transform2d(-2.312797, 0, Rotation2d.k180deg));
     m_driveTrain = drivetrain;
-    turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
+    turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.kZero);
     // --- NETWORK TABLES --- //
     if (RobotBase.isSimulation()) {
       m_sim = new TurretSubsystemSim(m_turretMotor, GEAR_RATIO, TURRET_MIN, TURRET_MAX);
@@ -130,7 +130,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private void zeroMotor() {
-    m_turretMotor.setPosition(Units.radiansToRotations(0)); // +0.5 Degree of headroom
+    m_turretMotor.setPosition(Units.radiansToRotations(TURRET_MAX)); // +0.5 Degree of headroom
     zeroed = true;
   }
 
@@ -176,8 +176,8 @@ public class TurretSubsystem extends SubsystemBase {
     public void initialize() {
       lastCmdRad = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
       error = Double.POSITIVE_INFINITY;
-      turretPose = driveTrain.getState().Pose.transformBy(turretTransform);
-      robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
+      turretPose = driveTrain.getState().Pose.transformBy(turretTransform).rotateBy(Rotation2d.k180deg);
+      robotRotation = driveTrain.getState().Pose.getRotation().rotateBy(Rotation2d.k180deg).getRadians();
       turretRotation =
           Units.rotationsToRadians(
               turretMotor.getPosition().getValueAsDouble()); // Turret rotation in radians
@@ -187,7 +187,7 @@ public class TurretSubsystem extends SubsystemBase {
     public void execute() {
       targetPose = (target.get() == TurretTarget.ALLIANCE) ? alliance : hub;
       turretPose = driveTrain.getState().Pose.transformBy(turretTransform);
-      robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
+      robotRotation = driveTrain.getState().Pose.getRotation().rotateBy(Rotation2d.k180deg).getRadians();
       turretRotation = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
 
       double turretFieldRel = MathUtil.angleModulus(robotRotation + turretRotation);
