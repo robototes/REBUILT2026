@@ -5,9 +5,9 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.Launcher.Flywheels;
-import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.launcher.Flywheels;
+import frc.robot.subsystems.launcher.Hood;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 
