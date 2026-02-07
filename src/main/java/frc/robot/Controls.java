@@ -202,11 +202,14 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.sequence(
-                AutoDriveRotate.autoRotate(
-                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()),
-                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
                 Commands.parallel(
-                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+                  AutoDriveRotate.autoRotate(
+                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()),
+                    AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels)
+                        .withName("AutoRotate and AutoAim have been run"),
+                    Commands.parallel(
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+                )
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
