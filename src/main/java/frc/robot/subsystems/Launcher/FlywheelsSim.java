@@ -1,4 +1,4 @@
-package frc.robot.subsystems.launcher;
+package frc.robot.subsystems.Launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;

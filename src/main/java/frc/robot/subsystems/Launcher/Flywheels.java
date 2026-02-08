@@ -1,4 +1,4 @@
-package frc.robot.subsystems.launcher;
+package frc.robot.subsystems.Launcher;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;

@@ -1,4 +1,4 @@
-package frc.robot.subsystems.launcher;
+package frc.robot.subsystems.Launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
