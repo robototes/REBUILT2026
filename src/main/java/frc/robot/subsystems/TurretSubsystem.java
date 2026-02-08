@@ -41,9 +41,11 @@ public class TurretSubsystem extends SubsystemBase {
   // private static final double TURRET_MIN = Units.degreesToRadians(-90);
   private static final double TURRET_MAX = Units.degreesToRadians(-42.1);
   private static final double TURRET_MIN = Units.degreesToRadians(-132.1);
+  private static final double TURRET_DEADBAND = Units.degreesToRadians(-0.5);
 
   private static final double TURRET_X_OFFSET = 0.2159; // METERS  // 0; //
   private static final double TURRET_Y_OFFSET = 0.1397; // METERS // 0; //
+  private static final double ALLIANCE_TARGET_OFFSET_METERS = -2.312797;
 
   private static final double STALL_CURRENT = 5; // Amps
 
@@ -55,8 +57,8 @@ public class TurretSubsystem extends SubsystemBase {
   private final double k_I = 0;
   private final double k_D = 1.5;
 
-  private static final VoltageOut zeroVolts = new VoltageOut(0);
-  private static final VoltageOut _2_volts = new VoltageOut(2);
+  private static final VoltageOut ZERO_VOLTS = new VoltageOut(0);
+  private static final VoltageOut FIVE_VOLTS = new VoltageOut(5);
   // ------- AUTOZERO ------ //
   private static final double MIN_VELOCITY = 0.3;
   private static final double MIN_HITS = 5;
@@ -114,7 +116,7 @@ public class TurretSubsystem extends SubsystemBase {
       return Commands.parallel(
           Commands.run(
                   () -> {
-                    m_turretMotor.setControl(_2_volts);
+                    m_turretMotor.setControl(FIVE_VOLTS);
                     if (m_turretMotor.getStatorCurrent().getValueAsDouble() >= STALL_CURRENT) {
                       hits[0]++;
                     } else {
@@ -134,7 +136,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   private void zeroMotor() {
     m_turretMotor.setPosition(
-        Units.radiansToRotations(-0.7348 - 0.00872665)); // +0.5 Degree of headroom
+        Units.radiansToRotations(TURRET_MAX - TURRET_DEADBAND)); // +0.5 Degree of headroom
     zeroed = true;
   }
 
@@ -179,7 +181,8 @@ public class TurretSubsystem extends SubsystemBase {
     @Override
     public void initialize() {
       hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
-      alliance = hub.transformBy(new Transform2d(-2.312797, 0, Rotation2d.k180deg));
+      alliance =
+          hub.transformBy(new Transform2d(ALLIANCE_TARGET_OFFSET_METERS, 0, Rotation2d.k180deg));
       error = Double.POSITIVE_INFINITY;
       turretPose = driveTrain.getState().Pose;
     }
@@ -225,7 +228,7 @@ public class TurretSubsystem extends SubsystemBase {
       if (Math.abs(error) > TRACK_THRESHOLD_RAD) {
         turretMotor.setControl(request.withPosition(Units.radiansToRotations(cmdRelRad)));
       } else {
-        turretMotor.setControl(zeroVolts);
+        turretMotor.setControl(ZERO_VOLTS);
       }
 
       double turretFieldRad = MathUtil.angleModulus(robotYaw + turretRelRad);
@@ -235,7 +238,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void end(boolean interrupted) {
-      turretMotor.setControl(zeroVolts);
+      turretMotor.setControl(ZERO_VOLTS);
     }
   }
 
@@ -245,7 +248,7 @@ public class TurretSubsystem extends SubsystemBase {
     return Commands.run(
         () -> {
           if (!zeroed) {
-            m_turretMotor.setControl(zeroVolts);
+            m_turretMotor.setControl(ZERO_VOLTS);
             return;
           }
           double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
