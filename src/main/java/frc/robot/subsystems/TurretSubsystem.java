@@ -78,7 +78,6 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher ntRobotRotationRad;
   private final DoublePublisher ntMotorFieldRelativeRad;
   protected StructPublisher<Pose2d> turretPose2d;
-  protected StructPublisher<Pose2d> goalPose2d;
 
   // --- CONSTRUCTOR --- //
   public TurretSubsystem(CommandSwerveDrivetrain drivetrain) {
