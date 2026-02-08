@@ -104,8 +104,6 @@ public class TurretSubsystem extends SubsystemBase {
     ntMotorFieldRelativeRad = m_nt.getDoubleTopic("MotorRadiansFieldRelative").publish();
     turretPose2d =
         NetworkTableInstance.getDefault().getStructTopic("Turret Pose2d", Pose2d.struct).publish();
-    goalPose2d =
-        NetworkTableInstance.getDefault().getStructTopic("Goal Pose2d", Pose2d.struct).publish();
   }
 
   // ----- AUTO ZERO ----- //
@@ -233,7 +231,6 @@ public class TurretSubsystem extends SubsystemBase {
       double turretFieldRad = MathUtil.angleModulus(robotYaw + turretRelRad);
       turretPose = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(turretFieldRad));
       turretPose2d.accept(turretPose);
-      goalPose2d.accept(targetPose);
     }
 
     @Override
