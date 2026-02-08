@@ -77,6 +77,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher ntRobotRotationRad;
   private final DoublePublisher ntMotorFieldRelativeRad;
   protected StructPublisher<Pose2d> turretPose2d;
+  protected StructPublisher<Pose2d> goalPose2d;
 
   // --- CONSTRUCTOR --- //
   public TurretSubsystem(CommandSwerveDrivetrain drivetrain) {
@@ -103,6 +104,8 @@ public class TurretSubsystem extends SubsystemBase {
     ntMotorFieldRelativeRad = m_nt.getDoubleTopic("MotorRadiansFieldRelative").publish();
     turretPose2d =
         NetworkTableInstance.getDefault().getStructTopic("Turret Pose2d", Pose2d.struct).publish();
+    goalPose2d =
+        NetworkTableInstance.getDefault().getStructTopic("Goal Pose2d", Pose2d.struct).publish();
   }
 
   // ----- PUBLIC METHODS ----- //
@@ -215,6 +218,7 @@ public class TurretSubsystem extends SubsystemBase {
         turretMotor.setControl(zeroVolts);
       }
       turretPose2d.accept(turretPose);
+      goalPose2d.accept(targetPose);
     }
 
     @Override
