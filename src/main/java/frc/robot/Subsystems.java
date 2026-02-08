@@ -13,12 +13,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
+import frc.robot.subsystems.Launcher.Flywheels;
+import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.SpindexerSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drivebase.DrivebaseWrapper;
-import frc.robot.subsystems.launcher.Flywheels;
-import frc.robot.subsystems.launcher.Hood;
 
 public class Subsystems {
   public static class SubsystemConstants {
