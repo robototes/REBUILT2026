@@ -298,8 +298,8 @@ public class TurretSubsystem extends SubsystemBase {
     // -----SOFT LIMITS ----- //
     configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.radiansToRotations(TURRET_MAX);
     configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.radiansToRotations(TURRET_MIN);
-    configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-    configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+    configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     // ---- MOTION MAGIC---- //
     var mm = configs.MotionMagic;
