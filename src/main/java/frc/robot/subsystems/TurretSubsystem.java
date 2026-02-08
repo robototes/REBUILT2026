@@ -246,6 +246,9 @@ public class TurretSubsystem extends SubsystemBase {
           return state.get() == TurretState.AUTO;
         });
   }
+  public  Rotation2d getROT(){
+    return turretTransform.getRotation();
+  }
 
   public Trigger ManualRotateTrigger(Supplier<TurretState> state) {
     return new Trigger(
