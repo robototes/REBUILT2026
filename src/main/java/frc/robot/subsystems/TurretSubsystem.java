@@ -74,12 +74,12 @@ public class TurretSubsystem extends SubsystemBase {
   // NETWORKTABLES
   // ---------------- NETWORKTABLES ----------------
   private final NetworkTable m_nt;
-  private final DoublePublisher ntErrorRad;
-  private final DoublePublisher ntTargetRad;
-  private final DoublePublisher ntMotorRad;
+  private final DoublePublisher ntErrorDeg;
+  private final DoublePublisher ntTargetDeg;
+  private final DoublePublisher ntMotorDeg;
   private final DoublePublisher ntMotorCurrent;
-  private final DoublePublisher ntRobotRotationRad;
-  private final DoublePublisher ntMotorFieldRelativeRad;
+  private final DoublePublisher ntRobotRotationDeg;
+  private final DoublePublisher ntMotorFieldRelativeDeg;
   protected StructPublisher<Pose2d> turretPose2d;
 
   // --- CONSTRUCTOR --- //
@@ -99,12 +99,12 @@ public class TurretSubsystem extends SubsystemBase {
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     m_nt = inst.getTable("Turret");
 
-    ntErrorRad = m_nt.getDoubleTopic("ErrorRadians").publish();
-    ntTargetRad = m_nt.getDoubleTopic("TargetRadians").publish();
-    ntMotorRad = m_nt.getDoubleTopic("MotorRadians").publish();
+    ntErrorDeg = m_nt.getDoubleTopic("Error Degrees").publish();
+    ntTargetDeg = m_nt.getDoubleTopic("Target Degrees").publish();
+    ntMotorDeg = m_nt.getDoubleTopic("Motor Degrees").publish();
     ntMotorCurrent = m_nt.getDoubleTopic("MotorCurrent").publish();
-    ntRobotRotationRad = m_nt.getDoubleTopic("RobotRotationRadians").publish();
-    ntMotorFieldRelativeRad = m_nt.getDoubleTopic("MotorRadiansFieldRelative").publish();
+    ntRobotRotationDeg = m_nt.getDoubleTopic("Robot Rotation deg").publish();
+    ntMotorFieldRelativeDeg = m_nt.getDoubleTopic("MotorDegreesFieldRelative").publish();
     turretPose2d =
         NetworkTableInstance.getDefault().getStructTopic("Turret Pose2d", Pose2d.struct).publish();
   }
@@ -222,8 +222,8 @@ public class TurretSubsystem extends SubsystemBase {
       error = MathUtil.angleModulus(cmdRelRad - turretRelRad);
 
       // Network tables stuff
-      ntErrorRad.set(error);
-      ntTargetRad.set(targetFieldRad);
+      ntErrorRad.set(Units.radiansToDegrees(error));
+      ntTargetRad.set(Units.radiansToDegrees(targetFieldRad));
 
       // If the error is greater than the specified threshold, move the motor. Else don't move
       if (Math.abs(error) > TRACK_THRESHOLD_RAD) {
@@ -276,7 +276,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command AutoRotate(Supplier<TurretTarget> TurretTarget) {
     return new AutoRotate(
-        m_driveTrain, m_turretMotor, TurretTarget, request, ntErrorRad, ntTargetRad, this);
+        m_driveTrain, m_turretMotor, TurretTarget, request, ntErrorDeg, ntTargetDeg, this);
   }
 
   // --- MOTOR CONFIGS --- //
@@ -322,21 +322,21 @@ public class TurretSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // Motor angle (mechanism radians) from Talon position (rotations)
-    double motorRad = Units.rotationsToRadians(m_turretMotor.getPosition().getValueAsDouble());
+    double motorDeg = Units.rotationsToDegrees(m_turretMotor.getPosition().getValueAsDouble());
 
     // Motor current
     double motorCurrent = m_turretMotor.getStatorCurrent().getValueAsDouble();
 
     // Robot rotation (field) from drivetrain pose
-    double robotRotRad = m_driveTrain.getState().Pose.getRotation().getRadians();
+    double robotRotDeg = m_driveTrain.getState().Pose.getRotation().getDegrees();
 
     // Motor radians field-relative (robot rot + turret rot), wrapped to [-pi, pi)
-    double motorFieldRel = MathUtil.angleModulus(robotRotRad + motorRad);
+    double motorFieldRel = MathUtil.angleModulus(Units.degreesToRadians(robotRotDeg + motorDeg));
 
-    ntMotorRad.set(motorRad);
+    ntMotorDeg.set(motorDeg);
     ntMotorCurrent.set(motorCurrent);
-    ntRobotRotationRad.set(robotRotRad);
-    ntMotorFieldRelativeRad.set(motorFieldRel);
+    ntRobotRotationDeg.set(robotRotDeg);
+    ntMotorFieldRelativeDeg.set(motorFieldRel);
   }
 
   // in simulationPeriodic():
