@@ -261,16 +261,19 @@ public class Controls {
   }
 
   private void configureVisionBindings() {
-    if (s.visionSubsystem != null) {
-      Pose2d refrenceVisionPose = s.visionSubsystem.lastFieldPose;
-      if (refrenceVisionPose != null) {
-        driverController
-            .leftBumper()
-            .onTrue(
-                s.drivebaseSubsystem
-                    .runOnce(() -> s.drivebaseSubsystem.resetPose(refrenceVisionPose))
-                    .withName("Now Drive Pose is Vision Pose"));
-      }
+    if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
+      driverController
+          .leftBumper()
+          .onTrue(
+              s.drivebaseSubsystem
+                  .runOnce(
+                      () -> {
+                        Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
+                        if (referenceVisionPose != null) {
+                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
+                        }
+                      })
+                  .withName("Now Drive Pose is Vision Pose"));
     }
   }
 }
