@@ -21,7 +21,6 @@ import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.simulation.FuelSim;
 import frc.robot.util.simulation.RobotSim;
 
 /**
