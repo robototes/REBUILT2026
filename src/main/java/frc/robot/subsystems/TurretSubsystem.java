@@ -11,6 +11,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -36,13 +37,15 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private static final double GEAR_RATIO = 20;
-  private static final double TURRET_MAX = Units.degreesToRadians(90);
-  private static final double TURRET_MIN = Units.degreesToRadians(-90);
-  // private static final double TURRET_MAX = Units.degreesToRadians(-42.1);
-  // private static final double TURRET_MIN = Units.degreesToRadians(-137.899);
+  // private static final double TURRET_MAX = Units.degreesToRadians(90);
+  // private static final double TURRET_MIN = Units.degreesToRadians(-90);
+  private static final double TURRET_MAX = Units.degreesToRadians(-42.1);
+  private static final double TURRET_MIN = Units.degreesToRadians(-132.1);
+  private static final double TURRET_DEADBAND = Units.degreesToRadians(-0.5);
 
-  private static final double TURRET_X_OFFSET = 0; // -0.2159; // METERS
-  private static final double TURRET_Y_OFFSET = 0; // -0.1397; // METERS
+  private static final double TURRET_X_OFFSET = 0.2159; // METERS  // 0; //
+  private static final double TURRET_Y_OFFSET = 0.1397; // METERS // 0; //
+  private static final double ALLIANCE_TARGET_OFFSET_METERS = -2.312797;
 
   private static final double STALL_CURRENT = 5; // Amps
 
@@ -54,8 +57,8 @@ public class TurretSubsystem extends SubsystemBase {
   private final double k_I = 0;
   private final double k_D = 1.5;
 
-  private static final VoltageOut zeroVolts = new VoltageOut(0);
-  private static final VoltageOut _2_volts = new VoltageOut(2);
+  private static final VoltageOut ZERO_VOLTS = new VoltageOut(0);
+  private static final VoltageOut FIVE_VOLTS = new VoltageOut(5);
   // ------- AUTOZERO ------ //
   private static final double MIN_VELOCITY = 0.3;
   private static final double MIN_HITS = 5;
@@ -86,7 +89,7 @@ public class TurretSubsystem extends SubsystemBase {
     configureMotors();
     // --- Hardware --- //
     m_driveTrain = drivetrain;
-    turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.kZero);
+    turretTransform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
     // --- NETWORK TABLES --- //
     if (RobotBase.isSimulation()) {
       m_sim = new TurretSubsystemSim(m_turretMotor, GEAR_RATIO, TURRET_MIN, TURRET_MAX);
@@ -105,7 +108,7 @@ public class TurretSubsystem extends SubsystemBase {
         NetworkTableInstance.getDefault().getStructTopic("Turret Pose2d", Pose2d.struct).publish();
   }
 
-  // ----- PUBLIC METHODS ----- //
+  // ----- AUTO ZERO ----- //
 
   public Command autoZeroCommand(boolean runAutoZeroRoutine) {
     final int[] hits = {0};
@@ -113,7 +116,7 @@ public class TurretSubsystem extends SubsystemBase {
       return Commands.parallel(
           Commands.run(
                   () -> {
-                    m_turretMotor.setControl(_2_volts);
+                    m_turretMotor.setControl(FIVE_VOLTS);
                     if (m_turretMotor.getStatorCurrent().getValueAsDouble() >= STALL_CURRENT) {
                       hits[0]++;
                     } else {
@@ -132,22 +135,24 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private void zeroMotor() {
-    m_turretMotor.setPosition(Units.radiansToRotations(0)); // +0.5 Degree of headroom
+    m_turretMotor.setPosition(
+        Units.radiansToRotations(TURRET_MAX - TURRET_DEADBAND)); // +0.5 Degree of headroom
     zeroed = true;
   }
+
+  //////
+  ////// ---------- MOST IMPORTANT CLASS!!!!! ----------- ////////
+  //////
 
   private class AutoRotate extends Command {
     private final CommandSwerveDrivetrain driveTrain;
     private final TalonFX turretMotor;
-    private final Transform2d turretTransform;
     private Pose2d targetPose;
     private final MotionMagicVoltage request;
     private double error;
     private final Supplier<TurretTarget> target;
 
     protected Pose2d turretPose;
-    protected double robotRotation;
-    protected double turretRotation;
     private Pose2d hub;
     private Pose2d alliance;
 
@@ -159,7 +164,6 @@ public class TurretSubsystem extends SubsystemBase {
     public AutoRotate(
         CommandSwerveDrivetrain driveTrain,
         TalonFX turretMotor,
-        Transform2d turretTransform,
         Supplier<TurretTarget> target,
         MotionMagicVoltage request,
         DoublePublisher ntErrorRad,
@@ -168,7 +172,6 @@ public class TurretSubsystem extends SubsystemBase {
       this.target = target;
       this.driveTrain = driveTrain;
       this.turretMotor = turretMotor;
-      this.turretTransform = turretTransform;
       this.request = request;
       this.ntErrorRad = ntErrorRad;
       this.ntTargetRad = ntTargetRad;
@@ -178,7 +181,8 @@ public class TurretSubsystem extends SubsystemBase {
     @Override
     public void initialize() {
       hub = new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero);
-      alliance = hub.transformBy(new Transform2d(-2.312797, 0, Rotation2d.k180deg));
+      alliance =
+          hub.transformBy(new Transform2d(ALLIANCE_TARGET_OFFSET_METERS, 0, Rotation2d.k180deg));
       error = Double.POSITIVE_INFINITY;
       turretPose = driveTrain.getState().Pose;
     }
@@ -186,52 +190,67 @@ public class TurretSubsystem extends SubsystemBase {
     @Override
     public void execute() {
       targetPose = (target.get() == TurretTarget.ALLIANCE) ? alliance : hub;
-      robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
-      turretRotation = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
-      turretPose =
-          new Pose2d(
-              driveTrain.getState().Pose.getX(),
-              driveTrain.getState().Pose.getY(),
-              new Rotation2d(turretRotation));
 
-      double turretFieldRel = MathUtil.angleModulus(robotRotation + turretRotation);
+      // Grab poses
+      Pose2d robotPose = driveTrain.getState().Pose;
+      double robotYaw = robotPose.getRotation().getRadians();
 
-      Transform2d difference = targetPose.minus(turretPose);
-      double targetRadField = Math.atan2(difference.getY(), difference.getX());
-      // System.out.println("Target Deg : " +
-      // Units.radiansToDegrees(MathUtil.angleModulus(Units.radiansToDegrees(targetRadField))));
-      // System.out.println("Current Deg : " + Units.radiansToDegrees(turretRotation));
-      error = MathUtil.angleModulus(targetRadField - turretFieldRel);
+      // turret angle relative to robot
+      double turretRelRad = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
 
+      // Vector from robot (or turret pivot) to target in FIELD coordinates
+      Translation2d toTarget =
+          targetPose
+              .getTranslation()
+              .minus(robotPose.transformBy(turretTransform).getTranslation());
+
+      // Direction to target in FIELD frame
+      double targetFieldRad = Math.atan2(toTarget.getY(), toTarget.getX());
+
+      // Desired turret angle in ROBOT frame (field-to-robot transform)
+      double desiredRelRad = MathUtil.angleModulus(targetFieldRad - robotYaw);
+
+      // Choose equivalent desired angle closest to current turret angle
+      desiredRelRad =
+          MathUtil.inputModulus(desiredRelRad, turretRelRad - Math.PI, turretRelRad + Math.PI);
+
+      // Apply hard stops
+      double cmdRelRad = MathUtil.clamp(desiredRelRad, TURRET_MIN, TURRET_MAX);
+
+      // Error in robot frame
+      error = MathUtil.angleModulus(cmdRelRad - turretRelRad);
+
+      // Network tables stuff
+      ntErrorRad.set(error);
+      ntTargetRad.set(targetFieldRad);
+
+      // If the error is greater than the specified threshold, move the motor. Else don't move
       if (Math.abs(error) > TRACK_THRESHOLD_RAD) {
-        double cmdRad =
-            MathUtil.clamp(
-                MathUtil.angleModulus(targetRadField - robotRotation), TURRET_MIN, TURRET_MAX);
-
-        ntErrorRad.set(error);
-        ntTargetRad.set(targetRadField);
-        turretMotor.setControl(request.withPosition(Units.radiansToRotations(cmdRad)));
+        turretMotor.setControl(request.withPosition(Units.radiansToRotations(cmdRelRad)));
       } else {
-        turretMotor.setControl(zeroVolts);
+        turretMotor.setControl(ZERO_VOLTS);
       }
+
+      double turretFieldRad = MathUtil.angleModulus(robotYaw + turretRelRad);
+      turretPose = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(turretFieldRad));
       turretPose2d.accept(turretPose);
     }
 
     @Override
     public void end(boolean interrupted) {
-      turretMotor.setControl(zeroVolts);
+      turretMotor.setControl(ZERO_VOLTS);
     }
   }
+
+  ////// -------END OF CLASS------- ///////
 
   public Command manualMove(DoubleSupplier joystick) {
     return Commands.run(
         () -> {
           if (!zeroed) {
-            m_turretMotor.setControl(zeroVolts);
+            m_turretMotor.setControl(ZERO_VOLTS);
             return;
           }
-
-          // double rad = Units.rotationsToRadians(m_turretMotor.getPosition().getValueAsDouble());
           double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.10);
           double volts = cmd * 2.0;
           m_turretMotor.setControl(new VoltageOut(volts));
@@ -259,14 +278,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command AutoRotate(Supplier<TurretTarget> TurretTarget) {
     return new AutoRotate(
-        m_driveTrain,
-        m_turretMotor,
-        turretTransform,
-        TurretTarget,
-        request,
-        ntErrorRad,
-        ntTargetRad,
-        this);
+        m_driveTrain, m_turretMotor, TurretTarget, request, ntErrorRad, ntTargetRad, this);
   }
 
   // --- MOTOR CONFIGS --- //
@@ -283,25 +295,25 @@ public class TurretSubsystem extends SubsystemBase {
     slot0.kV = k_V;
     slot0.kA = k_A;
 
-    // ---------------- CURRENT LIMITS ----------------
+    // ---CURRENT LIMITS --- //
     configs.CurrentLimits.StatorCurrentLimitEnable = true;
     configs.CurrentLimits.SupplyCurrentLimitEnable = true;
     configs.CurrentLimits.StatorCurrentLimit = 25;
     configs.CurrentLimits.SupplyCurrentLimit = 10;
 
-    // ---------------- SOFT LIMITS ----------------
+    // -----SOFT LIMITS ----- //
     configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.radiansToRotations(TURRET_MAX);
     configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.radiansToRotations(TURRET_MIN);
     configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-    // ---------------- MOTION MAGIC----------------
+    // ---- MOTION MAGIC---- //
     var mm = configs.MotionMagic;
     mm.MotionMagicCruiseVelocity = 4.0;
     mm.MotionMagicAcceleration = 27;
     mm.MotionMagicJerk = 300;
 
-    // ---------------- FEEDBACK / OUTPUT ----------------
+    // --- FEEDBACK / OUTPUT --- //
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     configs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     configs.MotorOutput.NeutralMode = NeutralModeValue.Coast;

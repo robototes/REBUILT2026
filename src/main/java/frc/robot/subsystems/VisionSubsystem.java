@@ -6,7 +6,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -53,7 +52,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   // state
   private double lastTimestampSeconds = 0;
-  public Pose2d lastFieldPose = new Pose2d(-1, -1, new Rotation2d());
+  public Pose2d lastFieldPose = null;
   private double distance = 0;
   private double tagAmbiguity = 0;
   private CommandSwerveDrivetrain drivetrain;

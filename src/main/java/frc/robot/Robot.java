@@ -132,7 +132,6 @@ public class Robot extends TimedRobot {
           0,
           0,
           0);
-      // ViewFinder Pipeline Switch to reduce Limelight heat
       subsystems.visionSubsystem.update();
     }
   }
@@ -170,6 +169,10 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
 
@@ -183,12 +186,7 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {
-    if (subsystems.visionSubsystem != null) {
-      // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
-    }
-  }
+  public void autonomousPeriodic() {}
 
   @Override
   public void teleopInit() {
@@ -196,16 +194,15 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-  }
-
-  /** This function is called periodically during operator control. */
-  @Override
-  public void teleopPeriodic() {
     if (subsystems.visionSubsystem != null) {
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
   }
+
+  /** This function is called periodically during operator control. */
+  @Override
+  public void teleopPeriodic() {}
 
   @Override
   public void testInit() {
