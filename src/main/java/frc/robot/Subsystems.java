@@ -1,5 +1,6 @@
 package frc.robot;
 
+import static frc.robot.Subsystems.SubsystemConstants.CLIMB_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
@@ -11,6 +12,7 @@ import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
@@ -31,6 +33,7 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
+    public static final boolean CLIMB_ENABLED = true;
   }
 
   // Subsystems go here
@@ -42,6 +45,7 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
+  public final ClimbSubsystem climbSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -88,6 +92,11 @@ public class Subsystems {
       feederSubsystem = new FeederSubsystem();
     } else {
       feederSubsystem = null;
+    }
+    if (CLIMB_ENABLED) {
+      climbSubsystem = new ClimbSubsystem(drivebaseSubsystem);
+    } else {
+      climbSubsystem = null;
     }
   }
 }
