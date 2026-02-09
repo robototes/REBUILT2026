@@ -76,6 +76,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher ntTargetDeg;
   private final DoublePublisher ntMotorDeg;
   private final DoublePublisher ntMotorCurrent;
+  private final DoublePublisher ntMotorVoltage;
   private final DoublePublisher ntRobotRotationDeg;
   private final DoublePublisher ntMotorFieldRelativeDeg;
   protected StructPublisher<Pose2d> turretPose2d;
@@ -97,6 +98,7 @@ public class TurretSubsystem extends SubsystemBase {
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     m_nt = inst.getTable("Turret");
 
+    ntMotorVoltage = m_nt.getDoubleTopic("Motor Voltage").publish();
     ntErrorDeg = m_nt.getDoubleTopic("Error Degrees").publish();
     ntTargetDeg = m_nt.getDoubleTopic("Target Degrees").publish();
     ntMotorDeg = m_nt.getDoubleTopic("Motor Degrees").publish();
@@ -217,7 +219,7 @@ public class TurretSubsystem extends SubsystemBase {
       double cmdRelRad = MathUtil.clamp(desiredRelRad, TURRET_MIN, TURRET_MAX);
 
       // Error in robot frame
-      error = MathUtil.angleModulus(cmdRelRad - turretRelRad);
+      error = MathUtil.angleModulus(cmdRelRad - turretRelRad - Math.PI);
 
       // Network tables stuff
       ntErrorRad.set(Units.radiansToDegrees(error));
@@ -330,7 +332,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     // Motor radians field-relative (robot rot + turret rot), wrapped to [-pi, pi)
     double motorFieldRel = MathUtil.angleModulus(Units.degreesToRadians(robotRotDeg + motorDeg));
-
+    ntMotorVoltage.set(m_turretMotor.getMotorVoltage().getValueAsDouble());
     ntMotorDeg.set(motorDeg);
     ntMotorCurrent.set(motorCurrent);
     ntRobotRotationDeg.set(robotRotDeg);
