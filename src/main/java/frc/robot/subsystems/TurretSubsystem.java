@@ -38,8 +38,8 @@ public class TurretSubsystem extends SubsystemBase {
   private MotionMagicVoltage request;
 
   private static final double GEAR_RATIO = 20;
-  private static final double TURRET_MAX = Units.degreesToRadians(-42.1);
-  private static final double TURRET_MIN = Units.degreesToRadians(-132.1);
+  private static final double TURRET_MAX = Units.degreesToRadians(-42.1 - 180);
+  private static final double TURRET_MIN = Units.degreesToRadians(-132.1 - 180);
   private static final double TURRET_DEADBAND = Units.degreesToRadians(-0.5);
 
   private static final double TURRET_X_OFFSET = 0.2159; // METERS
