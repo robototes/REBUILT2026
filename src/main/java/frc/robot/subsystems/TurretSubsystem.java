@@ -292,10 +292,10 @@ public class TurretSubsystem extends SubsystemBase {
     slot0.kA = k_A;
 
     // ---CURRENT LIMITS --- //
-    configs.CurrentLimits.StatorCurrentLimitEnable = true;
-    configs.CurrentLimits.SupplyCurrentLimitEnable = true;
     configs.CurrentLimits.StatorCurrentLimit = 25;
     configs.CurrentLimits.SupplyCurrentLimit = 10;
+    configs.CurrentLimits.StatorCurrentLimitEnable = true;
+    configs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     // -----SOFT LIMITS ----- //
     configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.radiansToRotations(TURRET_MAX);
@@ -305,8 +305,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     // ---- MOTION MAGIC---- //
     var mm = configs.MotionMagic;
-    mm.MotionMagicCruiseVelocity = 4.0;
-    mm.MotionMagicAcceleration = 27;
+    mm.MotionMagicCruiseVelocity = 5;
+    mm.MotionMagicAcceleration = 20;
     mm.MotionMagicJerk = 300;
 
     // --- FEEDBACK / OUTPUT --- //
