@@ -37,7 +37,8 @@ public class FuelSim {
   private static final double FIELD_WIDTH = 8.04;
   private static final double FRICTION =
       0.1; // proportion of horizontal velocity to lose per second while on ground
-
+public int fuelsHeld = 8;
+public final int CAPACITY = 60;
   private static FuelSim instance = null;
 
   private static final Translation3d[] FIELD_XZ_LINE_STARTS = {
@@ -257,6 +258,7 @@ public class FuelSim {
   /** Clears the field of fuel */
   public void clearFuel() {
     fuels.clear();
+    fuelsHeld = 8;
   }
    public Hub getNearestHub() {
       return (AllianceUtils.isBlue()) ? Hub.BLUE_HUB : Hub.RED_HUB;
@@ -316,13 +318,20 @@ public class FuelSim {
           private DoublePublisher scorePublisher =
       NetworkTableInstance.getDefault()
           .getTable("Game Pieces")
-          .getDoubleTopic("Fuel Simulation/Score")
+          .getDoubleTopic("Fuel Simulation/Scored")
           .publish();
+              private DoublePublisher holdingPublisher =
+      NetworkTableInstance.getDefault()
+          .getTable("Game Pieces")
+          .getDoubleTopic("Fuel Simulation/Held")
+          .publish();
+
 
   /** Adds array of `Translation3d`'s to NetworkTables at "/Fuel Simulation/Fuels" */
   public void logFuels() {
     fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
     scorePublisher.set(getNearestHub().getScore());
+    holdingPublisher.set(fuelsHeld);
   }
 
   /** Start the simulation. `updateSim` must still be called every loop */
@@ -428,9 +437,11 @@ public class FuelSim {
 
     xVel += fieldSpeeds.vxMetersPerSecond;
     yVel += fieldSpeeds.vyMetersPerSecond;
-
+if (fuelsHeld > 0) {
+  fuelsHeld--;
     spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
   }
+}
 
   private void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {
     Translation2d relativePos =
@@ -491,7 +502,11 @@ public class FuelSim {
       for (int i = 0; i < fuels.size(); i++) {
         if (intake.shouldIntake(fuels.get(i), robot)) {
           fuels.remove(i);
+          if (fuelsHeld < CAPACITY) {
+          fuelsHeld++;
+          }
           i--;
+
         }
       }
     }

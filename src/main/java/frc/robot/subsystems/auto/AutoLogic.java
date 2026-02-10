@@ -201,7 +201,7 @@ public class AutoLogic {
     return Commands.sequence(
             AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0),
 
-            Commands.run(() -> frc.robot.util.simulation.FuelSim.getInstance().launchFuel(MetersPerSecond.of(6.0), Radians.of(s.hood.getHoodPosition()),Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1)))).withTimeout(2);
+            Commands.run(() -> frc.robot.util.simulation.FuelSim.getInstance().launchFuel(MetersPerSecond.of(6), Radians.of(s.hood.getHoodPosition()),Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1.45)))).withTimeout(2);
 
   }
 

@@ -24,7 +24,7 @@ public class RobotSim {
         SIM_ROBOT_BUMPER_HEIGHT,
         () -> drive.getState().Pose,
         () -> drive.getState().Speeds);
-    fuelSim.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true;
+    fuelSim.registerIntake(0.4, 1, 0.4, 1, () -> true);
     fuelSim.start();
   }
 
