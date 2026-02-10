@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.simulation;
 
 /* Source: https://github.com/hammerheads5000/FuelSim */
 // Huge thanks to team 5000 for the FuelSim util class!
