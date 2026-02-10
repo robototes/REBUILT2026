@@ -176,6 +176,7 @@ public class TurretSubsystem extends SubsystemBase {
       this.request = request;
       this.ntErrorRad = ntErrorRad;
       this.ntTargetRad = ntTargetRad;
+      ntErrorRad.set(0);
       addRequirements(turretSubsystem);
     }
 
@@ -194,8 +195,7 @@ public class TurretSubsystem extends SubsystemBase {
 
       // Grab poses
       Pose2d robotPose = driveTrain.getState().Pose;
-      double robotYaw = robotPose.getRotation().getRadians();
-
+      double robotYaw = driveTrain.getState().Pose.getRotation().getRadians();
       // turret angle relative to robot
       double turretRelRad = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
 
@@ -203,7 +203,7 @@ public class TurretSubsystem extends SubsystemBase {
       Translation2d toTarget =
           targetPose
               .getTranslation()
-              .minus(robotPose.transformBy(turretTransform).getTranslation());
+              .minus(robotPose.getTranslation());
 
       // Direction to target in FIELD frame
       double targetFieldRad = Math.atan2(toTarget.getY(), toTarget.getX());
@@ -212,21 +212,22 @@ public class TurretSubsystem extends SubsystemBase {
       double desiredRelRad = MathUtil.angleModulus(targetFieldRad - robotYaw);
 
       // Choose equivalent desired angle closest to current turret angle
-      desiredRelRad =
-          MathUtil.inputModulus(desiredRelRad, turretRelRad - Math.PI, turretRelRad + Math.PI);
+      // desiredRelRad =
+         // MathUtil.inputModu(desiredRelRad, turretRelRad - Math.PI, turretRelRad + Math.PI);
 
       // Apply hard stops
-      double cmdRelRad = MathUtil.clamp(desiredRelRad, TURRET_MIN, TURRET_MAX);
+      double cmdRelRad = desiredRelRad;
 
       // Error in robot frame
-      error = MathUtil.angleModulus(cmdRelRad - turretRelRad - Math.PI);
+      error = MathUtil.angleModulus(cmdRelRad - turretRelRad);
+      System.out.println(cmdRelRad);
 
       // Network tables stuff
       ntErrorRad.set(Units.radiansToDegrees(error));
       ntTargetRad.set(Units.radiansToDegrees(targetFieldRad));
 
       // If the error is greater than the specified threshold, move the motor. Else don't move
-      if (Math.abs(error) > TRACK_THRESHOLD_RAD) {
+      if (Math.abs(error) > TRACK_THRESHOLD_RAD || true) {
         turretMotor.setControl(request.withPosition(Units.radiansToRotations(cmdRelRad)));
       } else {
         turretMotor.setControl(ZERO_VOLTS);

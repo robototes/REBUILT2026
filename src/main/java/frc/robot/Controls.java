@@ -87,7 +87,7 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureAutoAlignBindings();
-    configureTurretBindings(false);
+    configureTurretBindings(true);
     configureVisionBindings();
   }
 

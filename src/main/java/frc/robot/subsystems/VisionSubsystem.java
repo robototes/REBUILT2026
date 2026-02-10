@@ -198,7 +198,7 @@ public class VisionSubsystem extends SubsystemBase {
       if (!pose_bad) {
         drivetrain.addVisionMeasurement(
             fieldPose3d.toPose2d(),
-            Utils.fpgaToCurrentTime(timestampSeconds),
+            timestampSeconds,
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
             // add a distance standard dev
