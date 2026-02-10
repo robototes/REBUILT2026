@@ -7,7 +7,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
@@ -40,7 +39,6 @@ public class VisionSubsystem extends SubsystemBase {
   private final FieldObject2d rawVisionFieldObject;
 
   private BooleanSubscriber disableVision;
-  private BooleanPublisher disableVisionPublisher;
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
@@ -58,9 +56,9 @@ public class VisionSubsystem extends SubsystemBase {
   private double distance = 0;
   private double tagAmbiguity = 0;
   // meters
-  private double heightTolerance = 0.15;
+  private static final double HEIGHT_TOLERANCE = 0.15;
   // degrees
-  private double rotationTolerance = 12;
+  private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
@@ -80,36 +78,29 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void update() {
     // System.out.println("updating");
-    RawFiducial[] rawFiducialsB = CCamera.getRawFiducials();
+    RawFiducial[] rawFiducialsC = CCamera.getRawFiducials();
     // System.out.println("got raw fiducials");
-    if (rawFiducialsB != null) {
-      if (rawFiducialsB.length != 1) {
-        for (RawFiducial rf : rawFiducialsB) {
+    if (rawFiducialsC != null) {
+      if (rawFiducialsC.length != 1) {
+        BetterPoseEstimate estimatemt1 = CCamera.getBetterPoseEstimate();
+        for (RawFiducial rf : rawFiducialsC) {
           // System.out.println("processing raw fiducials");
-          processLimelight(CCamera, rawFieldPose3dEntryB, rf, false);
+          processLimelight(estimatemt1, rawFieldPose3dEntryB, rf);
         }
       } else {
-        for (RawFiducial rf : rawFiducialsB) {
+        BetterPoseEstimate estimatemt2 = CCamera.getPoseEstimateMegatag2();
+        for (RawFiducial rf : rawFiducialsC) {
           // System.out.println("processing raw fiducials");
-          processLimelight(CCamera, rawFieldPose3dEntryB, rf, true);
+          processLimelight(estimatemt2, rawFieldPose3dEntryB, rf);
         }
       }
     }
   }
 
   private void processLimelight(
-      LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf, boolean useMt2) {
-    if (disableVision.get(false)) {
+      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
+    if (getDisableVision()) {
       return;
-    }
-
-    BetterPoseEstimate estimate;
-    if (useMt2) {
-      // System.out.println("processed a raw fiducial");
-      estimate = camera.getPoseEstimateMegatag2();
-      // System.out.println("got a pose estimate");
-    } else {
-      estimate = camera.getBetterPoseEstimate();
     }
 
     if (estimate != null) {
@@ -134,11 +125,11 @@ public class VisionSubsystem extends SubsystemBase {
       rawFieldPoseEntry.set(fieldPose3d);
       //   System.out.println("got new data");
 
-      if (!MathUtil.isNear(0, fieldPose3d.getZ(), heightTolerance)
+      if (!MathUtil.isNear(0, fieldPose3d.getZ(), HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
-              0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(rotationTolerance))
+              0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
-              0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(rotationTolerance))) {
+              0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))) {
         pose_bad = true;
         // System.out.println("pose bad");
       }
