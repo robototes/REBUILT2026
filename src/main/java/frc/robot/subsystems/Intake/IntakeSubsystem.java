@@ -8,7 +8,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
@@ -38,7 +37,8 @@ public class IntakeSubsystem extends SubsystemBase {
   public static final double PIVOT_DEPLOYED_POS = 0.5;
   public static final double PIVOT_RETRACTED_POS = -0.5;
   public static final double POS_TOLERANCE = Units.degreesToRotations(5);
-    // sim
+  private boolean pivotIsRetracted = true;
+  // sim
   private final DoubleTopic leftRollerTopic;
   private final DoubleTopic rightRollerTopic;
   private final DoubleTopic pivotTopic;
@@ -69,7 +69,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
     this.pivotTopic = nt.getDoubleTopic("pivot position/position");
     this.pivotPublisher = pivotTopic.publish();
-
 
     // default values
     leftRollerPub.set(0);
@@ -106,15 +105,12 @@ public class IntakeSubsystem extends SubsystemBase {
     irlConfigs.kS = 0.155;
     irlConfigs.kG = 0.0;
 
-
-
     var pivotMotionMagicConfigs = talonFXConfigs.MotionMagic;
     pivotMotionMagicConfigs.MotionMagicAcceleration = 25;
     pivotMotionMagicConfigs.MotionMagicJerk = 0;
 
     talonFXConfigs.Slot0 = (Robot.isSimulation()) ? simConfigs : irlConfigs;
     pivotMotor.getConfigurator().apply(talonFXConfigs);
-
   }
 
   // rollers configs
@@ -148,37 +144,47 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public double getPivotPos() {
-    pivotPos = pivotMotor.getPosition().getValueAsDouble() * PIVOT_GEAR_RATIO;
-    return pivotPos;
+    return pivotMotor.getPosition().getValueAsDouble() * PIVOT_GEAR_RATIO;
   }
 
   private Command setPivotPos(double pos) {
-    return runOnce( () -> {pivotMotor.setControl(pivotRequest.withPosition(pos));
-    targetPos = pos;
-    });
+    return runOnce(
+        () -> {
+          pivotMotor.setControl(pivotRequest.withPosition(pos));
+          targetPos = pos;
+        });
   }
-  public Command moveToPosition(double position) {
-    return setPivotPos(position).andThen(Commands.waitUntil(atPosition(position)));
+
+  public Command togglePivot() {
+    double targetPos = pivotIsRetracted ? PIVOT_DEPLOYED_POS : PIVOT_RETRACTED_POS;
+    pivotIsRetracted = !pivotIsRetracted;
+    return Commands.runOnce(
+        () -> {
+          setPivotPos(targetPos).andThen(Commands.waitUntil(atPosition(targetPos)));
+        });
   }
+
   public Trigger atPosition(double position) {
     return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
   }
+
   public Command stop() {
-    return runOnce(() -> {pivotMotor.stopMotor();});
+    return runOnce(
+        () -> {
+          pivotMotor.stopMotor();
+        });
   }
+
   public Command deployIntake() {
     return Commands.runOnce(
-      () -> {
-        System.out.println("pivot position: " + pivotPos);
-        System.out.println(getPivotPos() == PIVOT_RETRACTED_POS);
-        if (getPivotPos() == PIVOT_RETRACTED_POS) {
-          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-        } else {
-          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
-        }
-        System.out.println("pivot position: " + pivotPos);
-      }
-      );
+        () -> {
+          System.out.println(getPivotPos() == PIVOT_RETRACTED_POS);
+          if (getPivotPos() == PIVOT_RETRACTED_POS) {
+            pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
+          } else {
+            pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
+          }
+        });
   }
 
   public Command temporaryRunIntake(double speed) { // for testing
