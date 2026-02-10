@@ -4,8 +4,9 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -16,7 +17,6 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
