@@ -83,14 +83,18 @@ public class LauncherConstants {
     return timeMap.get(distance);
   }
 
+  //finds angular speed using velocity = angular rotation * radius
+  //radius is launcher offset from center of robot
+  //then converts angular speed into tangent velocity
     public static Translation2d angularVelocity(Pose2d robot, ChassisSpeeds fieldSpeeds) {
       Translation2d angle = LAUNCHER_OFFSET.rotateBy(robot.getRotation());
-      double vx = -angle.getX() + (fieldSpeeds.omegaRadiansPerSecond * 0.2);
-      double vy = angle.getY() + (fieldSpeeds.omegaRadiansPerSecond * 0.2);
+      double angleVelocitySpeed = (fieldSpeeds.omegaRadiansPerSecond * LAUNCHER_OFFSET.getNorm());
+      double vx = -angle.getY() * angleVelocitySpeed;
+      double vy = angle.getX() * angleVelocitySpeed;
       return new Translation2d(vx, vy);
     }
 
-    // Move a target a set time in the future along a velocity defined by fieldSpeeds
+    //predicts fuel landing spot based on time, robot aim, robot velocity
       public static Translation2d predictTargetPos(Translation2d target, ChassisSpeeds fieldSpeeds, Double timeOfFlight, Pose2d robot) {
           Translation2d angularVelocity = angularVelocity(robot, fieldSpeeds);
           double vx = fieldSpeeds.vxMetersPerSecond + angularVelocity.getX();
