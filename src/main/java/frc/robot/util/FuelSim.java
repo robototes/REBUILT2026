@@ -16,6 +16,8 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -358,6 +360,8 @@ public class FuelSim {
     if (!running) return;
 
     stepSim();
+    SmartDashboard.putNumber( "Score:", getNearestHub().score);
+
   }
 
   /** Run the simulation forward 1 time step (0.02s) */
@@ -376,6 +380,10 @@ public class FuelSim {
     }
 
     logFuels();
+  }
+  public Hub getNearestHub() {
+    return AllianceUtils.isRed() ? FuelSim.Hub.RED_HUB : FuelSim.Hub.RED_HUB ;
+
   }
 
   /**

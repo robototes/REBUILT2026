@@ -81,6 +81,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         .withName("Stop Spindexer Motor");
   }
 
+
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(serialMotor.getSimState().getMotorVoltage());

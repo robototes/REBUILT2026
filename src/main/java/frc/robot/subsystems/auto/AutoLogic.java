@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
 import frc.robot.util.FuelSim;
+import frc.robot.util.TurretUtils.TurretState;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -187,12 +188,14 @@ public class AutoLogic {
   }
 
   public static void registerCommands() {
+
     NamedCommands.registerCommand("launch", launcherSimCommand());
     NamedCommands.registerCommand("intake", intakeCommand());
     NamedCommands.registerCommand("climb", climbCommand());
   }
 
   public static Command launcherCommand() {
+
     return Commands.sequence(
             AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
             Commands.parallel(s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
@@ -202,7 +205,8 @@ public class AutoLogic {
   public static Command launcherSimCommand() {
     return Commands.sequence(
             AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0),
-            Commands.run(() -> FuelSim.getInstance().launchFuel(MetersPerSecond.of(6.0), Radians.of(s.hood.getHoodPosition()),Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1.5)))).withTimeout(3);
+            s.turretSubsystem.autoZeroCommand(false).withTimeout(1.2),
+            Commands.run(() -> FuelSim.getInstance().launchFuel(MetersPerSecond.of(5.7), Radians.of(s.hood.getHoodPosition()),Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1.1)))).withTimeout(3);
 
   }
 

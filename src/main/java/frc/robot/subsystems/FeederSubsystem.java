@@ -91,6 +91,7 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   // PLACEHOLDER FOR SENSOR CHECK
+
   public Command checkSensor() {
     return runOnce(
             () -> {

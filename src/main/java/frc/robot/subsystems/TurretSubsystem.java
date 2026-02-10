@@ -185,6 +185,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void execute() {
+      Commands.print("hi");
       targetPose = (target.get() == TurretTarget.ALLIANCE) ? alliance : hub;
       robotRotation = driveTrain.getState().Pose.getRotation().getRadians();
       turretRotation = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
@@ -214,7 +215,7 @@ public class TurretSubsystem extends SubsystemBase {
       } else {
         turretMotor.setControl(zeroVolts);
       }
-      turretPose2d.accept(turretPose);
+      turretPose2d.set(turretPose);
     }
 
     @Override
