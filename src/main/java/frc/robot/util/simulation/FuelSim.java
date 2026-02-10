@@ -10,12 +10,15 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
+import frc.robot.util.AllianceUtils;
+
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -255,6 +258,10 @@ public class FuelSim {
   public void clearFuel() {
     fuels.clear();
   }
+   public Hub getNearestHub() {
+      return (AllianceUtils.isBlue()) ? Hub.BLUE_HUB : Hub.RED_HUB;
+
+    }
 
   /** Spawns fuel in the neutral zone and depots */
   public void spawnStartingFuel() {
@@ -306,10 +313,16 @@ public class FuelSim {
           .getTable("Game Pieces")
           .getStructArrayTopic("Fuel Simulation/Fuels", Translation3d.struct)
           .publish();
+          private DoublePublisher scorePublisher =
+      NetworkTableInstance.getDefault()
+          .getTable("Game Pieces")
+          .getDoubleTopic("Fuel Simulation/Score")
+          .publish();
 
   /** Adds array of `Translation3d`'s to NetworkTables at "/Fuel Simulation/Fuels" */
   public void logFuels() {
     fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
+    scorePublisher.set(getNearestHub().getScore());
   }
 
   /** Start the simulation. `updateSim` must still be called every loop */
@@ -590,6 +603,7 @@ public class FuelSim {
       }
     }
 
+
     private boolean didFuelScore(Fuel fuel) {
       return fuel.pos.toTranslation2d().getDistance(center) <= ENTRY_RADIUS
           && fuel.pos.getZ() <= ENTRY_HEIGHT
@@ -614,6 +628,7 @@ public class FuelSim {
     public int getScore() {
       return score;
     }
+
 
     private Translation2d fuelCollideSide(Fuel fuel) {
       if (fuel.pos.getZ() > ENTRY_HEIGHT - 0.1) return new Translation2d(); // above hub

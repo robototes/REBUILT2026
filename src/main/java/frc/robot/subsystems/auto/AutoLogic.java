@@ -14,8 +14,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
-import frc.robot.util.FuelSim;
-
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -202,7 +200,8 @@ public class AutoLogic {
   public static Command launcherSimCommand() {
     return Commands.sequence(
             AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0),
-            Commands.run(() -> FuelSim.getInstance().launchFuel(MetersPerSecond.of(6.0), Radians.of(s.hood.getHoodPosition()),Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1.5)))).withTimeout(3);
+
+            Commands.run(() -> frc.robot.util.simulation.FuelSim.getInstance().launchFuel(MetersPerSecond.of(6.0), Radians.of(s.hood.getHoodPosition()),Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1)))).withTimeout(2);
 
   }
 

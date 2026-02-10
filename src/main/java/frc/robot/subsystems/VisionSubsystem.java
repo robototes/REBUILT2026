@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drivebase.DrivebaseWrapper;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
@@ -35,7 +36,7 @@ public class VisionSubsystem extends SubsystemBase {
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
 
-  private final DrivebaseWrapper drivebaseWrapper;
+private DrivebaseWrapper drivetrain;
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
@@ -54,12 +55,12 @@ public class VisionSubsystem extends SubsystemBase {
 
   // state
   private double lastTimestampSeconds = 0;
-  private Pose2d lastFieldPose = new Pose2d(-1, -1, new Rotation2d());
+  public Pose2d lastFieldPose = new Pose2d(-1, -1, new Rotation2d());
   private double distance = 0;
   private double tagAmbiguity = 0;
 
-  public VisionSubsystem(DrivebaseWrapper drivebaseWrapper) {
-    this.drivebaseWrapper = drivebaseWrapper;
+  public VisionSubsystem(CommandSwerveDrivetrain drivebaseSubsystem) {
+    this.drivetrain = new DrivebaseWrapper(drivebaseSubsystem);
 
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
@@ -126,14 +127,15 @@ public class VisionSubsystem extends SubsystemBase {
 
       if (!pose_bad) {
 
-        drivebaseWrapper.addVisionMeasurement(
+        drivetrain.addVisionMeasurement(
             fieldPose3d.toPose2d(),
             timestampSeconds,
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
             // add a distance standard dev
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
-        robotField.setRobotPose(drivebaseWrapper.getEstimatedPosition());
+        robotField.setRobotPose(drivetrain.
+        getEstimatedPosition());
         // System.out.println("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {

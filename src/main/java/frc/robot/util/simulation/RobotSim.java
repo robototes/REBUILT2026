@@ -1,6 +1,11 @@
 package frc.robot.util.simulation;
 
+import com.ctre.phoenix6.StatusSignal.SignalMeasurement;
+
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.simulation.FuelSim.Hub;
 
 public class RobotSim {
 
@@ -19,16 +24,19 @@ public class RobotSim {
         SIM_ROBOT_BUMPER_HEIGHT,
         () -> drive.getState().Pose,
         () -> drive.getState().Speeds);
-    fuelSim.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
+    fuelSim.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true;
     fuelSim.start();
   }
 
   public void resetFuelSim() {
     fuelSim.clearFuel();
     fuelSim.spawnStartingFuel();
+    Hub.RED_HUB.resetScore();
+    Hub.BLUE_HUB.resetScore();
   }
 
   public void updateFuelSim() {
     fuelSim.updateSim();
+
   }
 }
