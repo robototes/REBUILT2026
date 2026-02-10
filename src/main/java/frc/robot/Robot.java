@@ -20,8 +20,8 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
-import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.simulation.RobotSim;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -36,7 +36,7 @@ public class Robot extends TimedRobot {
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
   private final int GAMEPIECE_PIPELINE = 2;
-  private FuelSim fuelSimulation;
+  private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
 
   /**
@@ -56,18 +56,9 @@ public class Robot extends TimedRobot {
     }
     AutoLogic.init(subsystems);
     if (Robot.isSimulation()) {
-      fuelSimulation = FuelSim.getInstance();
-      fuelSimulation.spawnStartingFuel();
-
-      fuelSimulation.registerRobot(
-          0.8,
-          0.8,
-          0.7,
-          () -> subsystems.drivebaseSubsystem.getState().Pose,
-          () -> subsystems.drivebaseSubsystem.getState().Speeds);
-      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
-
-      fuelSimulation.start();
+      robotSim = new RobotSim(subsystems.drivebaseSubsystem);
+    } else {
+      robotSim = null;
     }
     CommandScheduler.getInstance()
         .onCommandInitialize(
@@ -159,9 +150,7 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
-
-        fuelSimulation.clearFuel();
-        fuelSimulation.spawnStartingFuel();
+        robotSim.resetFuelSim();
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
@@ -203,6 +192,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    FuelSim.getInstance().updateSim();
+    robotSim.updateFuelSim();
   }
 }
