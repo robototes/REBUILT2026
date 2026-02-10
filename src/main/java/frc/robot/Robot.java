@@ -4,9 +4,8 @@
 
 package frc.robot;
 
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
-
 import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -17,6 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -113,7 +113,6 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
       if (!subsystems.visionSubsystem.isViewFinder()) {
         LimelightHelpers.SetRobotOrientation(
@@ -132,6 +131,7 @@ public class Robot extends TimedRobot {
         subsystems.detectionSubsystem.update();
       }
     }
+    CommandScheduler.getInstance().run();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

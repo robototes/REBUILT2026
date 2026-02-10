@@ -189,7 +189,7 @@ public class VisionSubsystem extends SubsystemBase {
     double distance =
         Math.hypot(targetPose.getX() - yourPose.getX(), targetPose.getY() - yourPose.getY());
     // 0.1 millimeter
-    return (double) Math.round(distance * 10000) / 10000;
+    return (double) Math.round(distance * 1000) / 1000;
   }
 
   public double getTagAmbiguity() {
