@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.Intake.IntakeSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -243,9 +244,11 @@ public class Controls {
       System.out.println("Controls.java: intakeSubsystem is disabled, bindings skipped");
       return;
     }
+    s.intakeSubsystem.setDefaultCommand(s.intakeSubsystem.moveToPosition(IntakeSubsystem.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
     driverController.b().whileTrue(s.intakeSubsystem.runIntake());
-    intakeTestController.x().onTrue(s.intakeSubsystem.deployIntake());
-    intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
+    // intakeTestController.x().onTrue(s.intakeSubsystem.maxwashere.deployIntake());
+    // intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
+    driverController.x().whileTrue(s.intakeSubsystem.moveToPosition(IntakeSubsystem.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
   }
 
   /**

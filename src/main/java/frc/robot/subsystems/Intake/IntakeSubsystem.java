@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
+import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
 
 public class IntakeSubsystem extends SubsystemBase {
@@ -34,8 +35,8 @@ public class IntakeSubsystem extends SubsystemBase {
   private final Follower followerRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
   private static final double PIVOT_GEAR_RATIO = 36;
-  private static final double PIVOT_DEPLOYED_POS = 1.0;
-  private static final double PIVOT_RETRACTED_POS = 0.0;
+  public static final double PIVOT_DEPLOYED_POS = 0.5;
+  public static final double PIVOT_RETRACTED_POS = -0.5;
   public static final double POS_TOLERANCE = Units.degreesToRotations(5);
     // sim
   private final DoubleTopic leftRollerTopic;
@@ -79,7 +80,7 @@ public class IntakeSubsystem extends SubsystemBase {
   // configs
   private void TalonFXPivotConfigs() {
     var talonFXConfigs = new TalonFXConfiguration();
-    var slot0Configs = talonFXConfigs.Slot0;
+    var simConfigs = talonFXConfigs.Slot0;
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
@@ -89,20 +90,31 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // pivot configs
 
-    slot0Configs.kS = 0.9;
-    slot0Configs.kV = 10;
-    slot0Configs.kA = 0;
-    slot0Configs.kP = 40;
-    slot0Configs.kI = 0;
-    slot0Configs.kD = 0;
-    slot0Configs.kG =
-        0.048; // change PID values during testing, these are placeholders from last year's robot
+    simConfigs.kV = 3;
+    simConfigs.kA = 0;
+    simConfigs.kP = 0.0;
+    simConfigs.kI = 0;
+    simConfigs.kD = 0;
+    simConfigs.kG = 0.0;
+
+    var irlConfigs = talonFXConfigs.Slot0;
+    irlConfigs.kP = 45;
+    irlConfigs.kI = 0.0;
+    irlConfigs.kD = 0.0;
+    irlConfigs.kA = 0.0;
+    irlConfigs.kV = 0;
+    irlConfigs.kS = 0.155;
+    irlConfigs.kG = 0.0;
+
+
 
     var pivotMotionMagicConfigs = talonFXConfigs.MotionMagic;
     pivotMotionMagicConfigs.MotionMagicAcceleration = 25;
     pivotMotionMagicConfigs.MotionMagicJerk = 0;
 
+    talonFXConfigs.Slot0 = (Robot.isSimulation()) ? simConfigs : irlConfigs;
     pivotMotor.getConfigurator().apply(talonFXConfigs);
+
   }
 
   // rollers configs
@@ -145,12 +157,14 @@ public class IntakeSubsystem extends SubsystemBase {
     targetPos = pos;
     });
   }
-
   public Command moveToPosition(double position) {
     return setPivotPos(position).andThen(Commands.waitUntil(atPosition(position)));
   }
   public Trigger atPosition(double position) {
     return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
+  }
+  public Command stop() {
+    return runOnce(() -> {pivotMotor.stopMotor();});
   }
   public Command deployIntake() {
     return Commands.runOnce(

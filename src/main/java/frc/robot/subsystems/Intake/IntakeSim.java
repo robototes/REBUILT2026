@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.Intake.IntakeSubsystem;
 
 public class IntakeSim extends SubsystemBase {
   private static final double updateSim = 0.02;
@@ -93,14 +94,14 @@ public class IntakeSim extends SubsystemBase {
     pivotSimV2.setInput(pivotSimState.getMotorVoltage());
     pivotSimV2.update(updateSim);
 
-    double angleRads = pivotSimV2.getAngleRads();
+    double angleRads = pivotSimV2.getAngleRads(); // busted
     double motorRotations = Units.radiansToRotations(angleRads) * PIVOT_GEAR_RATIO;
 
     pivotSimState.setRotorVelocity(
         Units.radiansToDegrees(pivotSimV2.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
     pivotSimState.setRawRotorPosition(motorRotations);
 
-    pivotArm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);
+    pivotArm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS); // busted
 
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(
