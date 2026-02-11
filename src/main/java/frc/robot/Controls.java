@@ -236,7 +236,7 @@ public class Controls {
         .x()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR))); // outtake color green
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR))); // outtake color green
     ledTestController
         .y()
         .onTrue(
