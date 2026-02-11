@@ -9,18 +9,6 @@
           "data": {
             "pathName": "Outpost-Straight"
           }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Copy of Outpost-Straight"
-          }
         }
       ]
     }
