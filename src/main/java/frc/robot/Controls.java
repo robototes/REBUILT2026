@@ -186,14 +186,6 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-
-    // Auto rotate
-    driverController
-        .rightTrigger()
-        .whileTrue(
-            AutoDriveRotate.autoRotate(
-                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
-                .withName("Drivebase rotation towards the hub"));
   }
 
   private void configureAutoAlignBindings() {
@@ -215,9 +207,12 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.sequence(
-                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                Commands.parallel(
-                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+                    AutoDriveRotate.autoRotate(
+                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()),
+                    AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                    Commands.parallel(
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
+                .withName("Autorotate, Autoaim done, feeder and spindexer started"))
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));

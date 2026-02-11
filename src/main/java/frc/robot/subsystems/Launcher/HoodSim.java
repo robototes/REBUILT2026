@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.util.simulation.RobotSim;
 
 public class HoodSim {
 
@@ -59,7 +60,7 @@ public class HoodSim {
   public void update() {
     // Run physics
     armSim.setInput(simState.getMotorVoltage());
-    armSim.update(0.02);
+    armSim.update(RobotSim.UPDATE_S);
 
     // Convert arm into motor units
     double armAngleRad = armSim.getAngleRads();
