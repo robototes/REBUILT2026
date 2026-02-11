@@ -39,7 +39,7 @@ public class LEDSubsystem extends SubsystemBase {
    *
    * <p>Applies to LEDs from index 0 through {@link #END_INDEX}.
    */
-  private final RainbowAnimation slot0Animation = new RainbowAnimation(0, END_INDEX);
+  private final RainbowAnimation rainbowAnimation = new RainbowAnimation(0, END_INDEX);
 
   /** Empty animation used to clear animation slot 0 and stop active animations. */
   private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
@@ -77,7 +77,7 @@ public class LEDSubsystem extends SubsystemBase {
   public void setRainbowAnimation(
       int slot, double brightness, AnimationDirectionValue direction, Frequency frameRate) {
 
-    slot0Animation
+    rainbowAnimation
         .withSlot(slot)
         .withBrightness(brightness)
         .withDirection(direction)
@@ -142,7 +142,7 @@ public class LEDSubsystem extends SubsystemBase {
    */
   public void setRainbowEnabled(boolean enabled) {
     if (enabled) {
-      candle.setControl(slot0Animation);
+      candle.setControl(rainbowAnimation);
     } else {
       candle.setControl(emptyAnimation);
     }
