@@ -16,9 +16,9 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.simulation.RobotSim;
 
 public class IntakeSim extends SubsystemBase {
-  private static final double updateSim = 0.02;
   private final FlywheelSim leftRollerSim;
   private final FlywheelSim rightRollerSim;
   private final SingleJointedArmSim pivotSimV2;
@@ -83,15 +83,15 @@ public class IntakeSim extends SubsystemBase {
     double rightRPS = rightRPM / 60.0;
     // rollers
     leftRollerSim.setInput(leftRollerSimState.getMotorVoltage());
-    leftRollerSim.update(updateSim);
+    leftRollerSim.update(RobotSim.UPDATE_S);
     leftRollerSimState.setRotorVelocity(leftRPS * ROLLERS_GEAR_RATIO);
 
     rightRollerSim.setInput(rightRollerSimState.getMotorVoltage());
-    rightRollerSim.update(updateSim);
+    rightRollerSim.update(RobotSim.UPDATE_S);
     rightRollerSimState.setRotorVelocity(rightRPS * ROLLERS_GEAR_RATIO);
     // pivot arm
     pivotSimV2.setInput(pivotSimState.getMotorVoltage());
-    pivotSimV2.update(updateSim);
+    pivotSimV2.update(RobotSim.UPDATE_S);
 
     double angleRads = pivotSimV2.getAngleRads();
     double motorRotations = Units.radiansToRotations(angleRads) * PIVOT_GEAR_RATIO;

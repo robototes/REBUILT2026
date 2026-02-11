@@ -30,7 +30,6 @@ public class IntakeSubsystem extends SubsystemBase {
   private final TalonFX leftRollers;
   private final TalonFX rightRollers;
   private final MotionMagicVoltage pivotRequest = new MotionMagicVoltage(0);
-  private final VoltageOut voltageRequest = new VoltageOut(0);
   private final Follower followerRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
   private static final double PIVOT_GEAR_RATIO = 36.0;
@@ -89,7 +88,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // pivot configs
 
-    simConfigs.kV = 3.0;
+    simConfigs.kV = 5.0;
     simConfigs.kA = 0.0;
     simConfigs.kP = 0.0;
     simConfigs.kI = 0.0;
@@ -145,10 +144,10 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   private Command setPivotPos(double pos) {
-    return runOnce(
+    return Commands.runOnce(
         () -> {
-          pivotMotor.setControl(pivotRequest.withPosition(pos));
           targetPos = pos;
+          pivotMotor.setControl(pivotRequest.withPosition(pos));
         });
   }
 
