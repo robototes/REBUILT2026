@@ -9,9 +9,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -34,10 +32,12 @@ public class IntakeSim extends SubsystemBase {
 
   private static final double PIVOT_GEAR_RATIO = 36.0;
   private static final double ROLLERS_GEAR_RATIO = 1.0;
-  private static final double ARM_LENGTH_METERS = Units.inchesToMeters(10.919);
-  private static final double ARM_START_POS = 15.0;
+  private static final double ARM_LENGTH_INCHES = 11.598;
+  private static final double ARM_START_POS = 45;
 
-  LinearSystem rollerSystem = LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), 1, 1);
+  LinearSystem rollerSystem =
+      LinearSystemId.createFlywheelSystem(
+          DCMotor.getKrakenX60(1), 20, ROLLERS_GEAR_RATIO); // idk how to calculate MOI
 
   public IntakeSim(TalonFX leftRollers, TalonFX rightRollers, TalonFX pivotMotor) {
 
@@ -59,8 +59,8 @@ public class IntakeSim extends SubsystemBase {
         new SingleJointedArmSim(
             DCMotor.getKrakenX44(1),
             PIVOT_GEAR_RATIO,
-            SingleJointedArmSim.estimateMOI(ARM_LENGTH_METERS, 2),
-            Units.inchesToMeters(ARM_LENGTH_METERS), // length
+            SingleJointedArmSim.estimateMOI(ARM_LENGTH_INCHES, 2),
+            ARM_LENGTH_INCHES, // length
             Units.degreesToRadians(-120), // minimum arm angle
             Units.degreesToRadians(120), // maximum arm angle
             false,
@@ -71,7 +71,7 @@ public class IntakeSim extends SubsystemBase {
     pivotSimState.Orientation = ChassisReference.Clockwise_Positive;
 
     pivotRoot = mech.getRoot("Shoulder", 20, 20);
-    pivotArm = pivotRoot.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
+    pivotArm = pivotRoot.append(new MechanismLigament2d("arm", ARM_LENGTH_INCHES, 90));
 
     SmartDashboard.putData("Pivot", mech);
   }
@@ -93,19 +93,14 @@ public class IntakeSim extends SubsystemBase {
     pivotSimV2.setInput(pivotSimState.getMotorVoltage());
     pivotSimV2.update(updateSim);
 
-    double angleRads = pivotSimV2.getAngleRads(); // busted
+    double angleRads = pivotSimV2.getAngleRads();
     double motorRotations = Units.radiansToRotations(angleRads) * PIVOT_GEAR_RATIO;
 
-    pivotSimState.setRotorVelocity(
-        Units.radiansToDegrees(pivotSimV2.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
     pivotSimState.setRawRotorPosition(motorRotations);
+    pivotSimState.setRotorVelocity(
+        Units.radiansToRotations(pivotSimV2.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
 
-    pivotArm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS); // busted
-
-    RoboRioSim.setVInVoltage(
-        BatterySim.calculateDefaultBatteryLoadedVoltage(
-            leftRollerSim.getCurrentDrawAmps()
-                + rightRollerSim.getCurrentDrawAmps()
-                + pivotSimV2.getCurrentDrawAmps()));
+    // update sim
+    pivotArm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);
   }
 }

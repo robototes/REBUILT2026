@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -240,12 +241,11 @@ public class Controls {
 
   private void configureIntakeBindings() {
     if (s.intakeSubsystem == null) {
-      System.out.println("Controls.java: intakeSubsystem is disabled, bindings skipped");
+      DataLogManager.log("Controls.java: intakeSubsystem is disabled, bindings skipped");
       return;
     }
     driverController.b().whileTrue(s.intakeSubsystem.runIntake());
     // intakeTestController.x().onTrue(s.intakeSubsystem.maxwashere.deployIntake());
-    // intakeTestController.a().whileTrue(s.intakeSubsystem.temporaryRunIntake(1));
     driverController.x().onTrue(s.intakeSubsystem.togglePivot());
   }
 
