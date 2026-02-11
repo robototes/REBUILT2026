@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -282,18 +283,19 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
+    // use static position constants from TurretSubsystem
     turretTestController
         .povUp()
-        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.FRONT_POSITION));
+        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
     turretTestController
         .povLeft()
-        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.LEFT_POSITION));
+        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
     turretTestController
         .povRight()
-        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.RIGHT_POSITION));
+        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
     turretTestController
         .povDown()
-        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.BACK_POSITION));
+        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
     turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
     turretTestController
         .rightStick()
@@ -301,7 +303,7 @@ public class Controls {
             s.turretSubsystem.manualMovingVoltage(
                 () ->
                     Volts.of(
-                        s.turretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
+                        TurretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
     turretTestController
         .leftStick()
         .whileTrue(
