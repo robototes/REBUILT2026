@@ -299,14 +299,9 @@ public class Controls {
 
     setManualButton.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
 
-    zeroTurretButton.onTrue(s.turretSubsystem.autoZeroCommand(false).withName("Auto Zero"));
+    driverController.a().onTrue(s.turretSubsystem.zeroCommand().withName("Auto Zero"));
 
-    s.turretSubsystem
-        .AutoRotateTrigger(() -> currentTurretState)
-        .whileTrue((s.turretSubsystem.AutoRotate(() -> currentTurretTarget)));
-    s.turretSubsystem
-        .ManualRotateTrigger(() -> currentTurretState)
-        .whileTrue((s.turretSubsystem.manualMove(manualMoveSupplier)));
+    driverController.b().onTrue(s.turretSubsystem.trackTargetCommand());
   }
 
   /**
