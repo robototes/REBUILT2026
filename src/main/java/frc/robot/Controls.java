@@ -299,7 +299,9 @@ public class Controls {
         .rightStick()
         .whileTrue(
             s.turretSubsystem.manualMovingVoltage(
-                () -> Volts.of(3 * turretTestController.getRightY())));
+                () ->
+                    Volts.of(
+                        s.turretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
     turretTestController
         .leftStick()
         .whileTrue(

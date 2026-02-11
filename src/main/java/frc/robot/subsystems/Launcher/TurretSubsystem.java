@@ -22,6 +22,8 @@ public class TurretSubsystem extends SubsystemBase {
   private final CommandSwerveDrivetrain driveTrain;
   private final AutoTurretRotation autoTurretRotation;
 
+  public static final double TURRET_MANUAL_SPEED = 3; // Volts
+
   // Positions
   private double targetPos;
   public static final double FRONT_POSITION = Units.degreesToRotations(0);
@@ -75,9 +77,9 @@ public class TurretSubsystem extends SubsystemBase {
     config.CurrentLimits.SupplyCurrentLimit = SUPPLY_CURRENT_LIMIT;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.degreesToRadians(TURRET_MAX);
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.degreesToRotations(TURRET_MAX);
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false; // false for testing
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRadians(TURRET_MIN);
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(TURRET_MIN);
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false; // false for testing
 
     config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;
