@@ -178,7 +178,7 @@ public class VisionSubsystem extends SubsystemBase {
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
     double distance =
         Math.hypot(targetPose.getX() - yourPose.getX(), targetPose.getY() - yourPose.getY());
-    // 0.1 millimeter
+    // 1 millimeter
     return (double) Math.round(distance * 1000) / 1000;
   }
 
