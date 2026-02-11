@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -34,6 +35,7 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
+  private static final int TURRET_TEST_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -44,6 +46,9 @@ public class Controls {
 
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
+
+  private final CommandXboxController turretTestController =
+      new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -71,6 +76,7 @@ public class Controls {
     configureIndexingBindings();
     configureAutoAlignBindings();
     configureVisionBindings();
+    configureTurretBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -270,5 +276,35 @@ public class Controls {
                       })
                   .withName("Now Drive Pose is Vision Pose"));
     }
+  }
+
+  private void configureTurretBindings() {
+    if (s.turretSubsystem == null) {
+      return;
+    }
+    turretTestController
+        .povUp()
+        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.FRONT_POSITION));
+    turretTestController
+        .povLeft()
+        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.LEFT_POSITION));
+    turretTestController
+        .povRight()
+        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.RIGHT_POSITION));
+    turretTestController
+        .povDown()
+        .onTrue(s.turretSubsystem.setTurretPosition(s.turretSubsystem.BACK_POSITION));
+    turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
+    turretTestController
+        .rightStick()
+        .whileTrue(
+            s.turretSubsystem.manualMovingVoltage(
+                () -> Volts.of(3 * turretTestController.getRightY())));
+    turretTestController
+        .leftStick()
+        .whileTrue(
+            s.turretSubsystem.pointFacingJoystick(
+                () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
+    turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
   }
 }
