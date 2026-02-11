@@ -117,28 +117,6 @@ public class LEDSubsystem extends SubsystemBase {
         .repeatedly();
   }
 
-  /**
-   * Toggles between {@code otherColor} with {@link frc.robot.subsystems.LEDSubsystem#OFF_COLOR}
-   *
-   * @param otherColor the color to toggle with
-   * @return a {@link Command} that toggles the rainbow animation state
-   */
-  public Command toggleColor(RGBWColor otherColor) {
-    return new InstantCommand(
-        () -> {
-          if (activeSolidColor.equals(otherColor)) {
-            // If the requested color is already active, turn it off.
-            setHardwareColor(OFF_COLOR);
-            activeSolidColor = OFF_COLOR;
-          } else {
-            // Otherwise, set the new color.
-            setHardwareColor(otherColor);
-            activeSolidColor = otherColor;
-          }
-        },
-        this);
-  }
-
   // Start rainbow animation
   public void startRainbow() {
     candle.setControl(slot0Animation);
