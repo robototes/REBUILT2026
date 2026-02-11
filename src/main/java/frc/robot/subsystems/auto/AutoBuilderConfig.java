@@ -9,6 +9,7 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class AutoBuilderConfig {
 
@@ -23,10 +24,11 @@ public class AutoBuilderConfig {
                   pose);}, // Method to reset odometry (will be called if your auto has a starting
           // pose)
           () -> {System.out.println(" Get Speeds"); return drivebase.getState().Speeds;}, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-          (speeds, feedforwards) ->{
+          (speeds, feedforwards) ->
               drivebase.setControl(
                   new SwerveRequest.ApplyRobotSpeeds()
-                      .withSpeeds(speeds));}, // Method that will drive the robot given ROBOT RELATIVE
+                      .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020)).withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())), // Method that will drive the robot given ROBOT RELATIVE
           // ChassisSpeeds. Also optionally outputs individual module
           // feedforwards
           new PPHolonomicDriveController( // PPHolonomicController is the built in path following
