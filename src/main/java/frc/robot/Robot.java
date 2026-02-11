@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
@@ -19,13 +16,11 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.simulation.FuelSim;
 import frc.robot.util.simulation.RobotSim;
 
 /**
@@ -199,15 +194,6 @@ public class Robot extends TimedRobot {
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
-    Commands.run(
-            () ->
-                FuelSim.getInstance()
-                    .launchFuel(
-                        MetersPerSecond.of(6),
-                        Radians.of(subsystems.hood.getHoodPosition()),
-                        Radians.of(subsystems.turretSubsystem.getROT().getRadians() + Math.PI),
-                        Meters.of(1.45)))
-        .withTimeout(3.0);
   }
 
   @Override
