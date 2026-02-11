@@ -36,7 +36,7 @@ public class VisionSubsystem extends SubsystemBase {
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
 
-private DrivebaseWrapper drivetrain;
+  private DrivebaseWrapper drivetrain;
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
@@ -134,8 +134,7 @@ private DrivebaseWrapper drivetrain;
             // meter of distance past 1 meter,
             // add a distance standard dev
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
-        robotField.setRobotPose(drivetrain.
-        getEstimatedPosition());
+        robotField.setRobotPose(drivetrain.getEstimatedPosition());
         // System.out.println("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {

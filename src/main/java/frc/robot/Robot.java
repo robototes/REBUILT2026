@@ -199,7 +199,15 @@ public class Robot extends TimedRobot {
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
-    Commands.run(() -> FuelSim.getInstance().launchFuel(MetersPerSecond.of(6), Radians.of(subsystems.hood.getHoodPosition()),Radians.of(subsystems.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1.45))).withTimeout(3.0);
+    Commands.run(
+            () ->
+                FuelSim.getInstance()
+                    .launchFuel(
+                        MetersPerSecond.of(6),
+                        Radians.of(subsystems.hood.getHoodPosition()),
+                        Radians.of(subsystems.turretSubsystem.getROT().getRadians() + Math.PI),
+                        Meters.of(1.45)))
+        .withTimeout(3.0);
   }
 
   @Override

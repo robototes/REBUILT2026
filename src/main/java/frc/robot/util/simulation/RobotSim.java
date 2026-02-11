@@ -1,9 +1,5 @@
 package frc.robot.util.simulation;
 
-import com.ctre.phoenix6.StatusSignal.SignalMeasurement;
-
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
 
@@ -37,6 +33,5 @@ public class RobotSim {
 
   public void updateFuelSim() {
     fuelSim.updateSim();
-
   }
 }

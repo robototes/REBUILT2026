@@ -18,7 +18,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.util.AllianceUtils;
-
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -37,8 +36,8 @@ public class FuelSim {
   private static final double FIELD_WIDTH = 8.04;
   private static final double FRICTION =
       0.1; // proportion of horizontal velocity to lose per second while on ground
-public int fuelsHeld = 8;
-public final int CAPACITY = 60;
+  public int fuelsHeld = 8;
+  public final int CAPACITY = 60;
   private static FuelSim instance = null;
 
   private static final Translation3d[] FIELD_XZ_LINE_STARTS = {
@@ -260,10 +259,10 @@ public final int CAPACITY = 60;
     fuels.clear();
     fuelsHeld = 8;
   }
-   public Hub getNearestHub() {
-      return (AllianceUtils.isBlue()) ? Hub.BLUE_HUB : Hub.RED_HUB;
 
-    }
+  public Hub getNearestHub() {
+    return (AllianceUtils.isBlue()) ? Hub.BLUE_HUB : Hub.RED_HUB;
+  }
 
   /** Spawns fuel in the neutral zone and depots */
   public void spawnStartingFuel() {
@@ -315,17 +314,17 @@ public final int CAPACITY = 60;
           .getTable("Game Pieces")
           .getStructArrayTopic("Fuel Simulation/Fuels", Translation3d.struct)
           .publish();
-          private DoublePublisher scorePublisher =
+
+  private DoublePublisher scorePublisher =
       NetworkTableInstance.getDefault()
           .getTable("Game Pieces")
           .getDoubleTopic("Fuel Simulation/Scored")
           .publish();
-              private DoublePublisher holdingPublisher =
+  private DoublePublisher holdingPublisher =
       NetworkTableInstance.getDefault()
           .getTable("Game Pieces")
           .getDoubleTopic("Fuel Simulation/Held")
           .publish();
-
 
   /** Adds array of `Translation3d`'s to NetworkTables at "/Fuel Simulation/Fuels" */
   public void logFuels() {
@@ -437,11 +436,11 @@ public final int CAPACITY = 60;
 
     xVel += fieldSpeeds.vxMetersPerSecond;
     yVel += fieldSpeeds.vyMetersPerSecond;
-if (fuelsHeld > 0) {
-  fuelsHeld--;
-    spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    if (fuelsHeld > 0) {
+      fuelsHeld--;
+      spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    }
   }
-}
 
   private void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {
     Translation2d relativePos =
@@ -503,10 +502,9 @@ if (fuelsHeld > 0) {
         if (intake.shouldIntake(fuels.get(i), robot)) {
           fuels.remove(i);
           if (fuelsHeld < CAPACITY) {
-          fuelsHeld++;
+            fuelsHeld++;
           }
           i--;
-
         }
       }
     }
@@ -618,7 +616,6 @@ if (fuelsHeld > 0) {
       }
     }
 
-
     private boolean didFuelScore(Fuel fuel) {
       return fuel.pos.toTranslation2d().getDistance(center) <= ENTRY_RADIUS
           && fuel.pos.getZ() <= ENTRY_HEIGHT
@@ -643,7 +640,6 @@ if (fuelsHeld > 0) {
     public int getScore() {
       return score;
     }
-
 
     private Translation2d fuelCollideSide(Fuel fuel) {
       if (fuel.pos.getZ() > ENTRY_HEIGHT - 0.1) return new Translation2d(); // above hub

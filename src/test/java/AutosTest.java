@@ -8,7 +8,6 @@ import frc.robot.subsystems.auto.AutoPath;
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Enumeration;
-
 import java.util.Hashtable;
 import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.BeforeEach;
