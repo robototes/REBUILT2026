@@ -18,7 +18,6 @@ import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.SpindexerSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.drivebase.DrivebaseWrapper;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -35,7 +34,6 @@ public class Subsystems {
 
   // Subsystems go here
   public final CommandSwerveDrivetrain drivebaseSubsystem;
-  public final DrivebaseWrapper drivebaseWrapper;
   public final VisionSubsystem visionSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
@@ -49,14 +47,12 @@ public class Subsystems {
     if (DRIVEBASE_ENABLED) {
 
       drivebaseSubsystem = CompTunerConstants.createDrivetrain();
-      drivebaseWrapper = new DrivebaseWrapper(drivebaseSubsystem);
     } else {
       drivebaseSubsystem = null;
-      drivebaseWrapper = new DrivebaseWrapper();
     }
 
     if (VISION_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseWrapper);
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
       SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;
