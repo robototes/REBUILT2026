@@ -67,6 +67,7 @@ public class AutoLogic {
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
           new AutoPath("RT-NeutralRightTWO", "RT-NeutralRightTWO"),
           new AutoPath("RT-NeutralRightTWO-Climb", "RT-NeutralRightTWO-Climb"),
+          new AutoPath("Straight", "Straight"),
           new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
