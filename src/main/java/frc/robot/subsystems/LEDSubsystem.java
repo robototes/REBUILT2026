@@ -109,7 +109,7 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a {@link Command} that continuously sets the LEDs to the given color
    */
   public Command setLEDsCommand(RGBWColor color) {
-    return Commands.run(() -> setHardwareColor(color), this)
+    return Commands.runOnce(() -> setHardwareColor(color), this)
         .withName("SetLEDs"); // Good practice to name commands
   }
 
