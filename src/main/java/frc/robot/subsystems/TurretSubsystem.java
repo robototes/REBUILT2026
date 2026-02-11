@@ -35,8 +35,6 @@ import java.util.function.Supplier;
 public class TurretSubsystem extends SubsystemBase {
   // ------ VARIABLES ------//
   private final TalonFX m_turretMotor;
-  private MotionMagicVoltage request;
-
   private static final double GEAR_RATIO = 20;
   private static final double TURRET_MAX = Units.degreesToRadians(-42.1 - 180);
   private static final double TURRET_MIN = Units.degreesToRadians(-132.1 - 180);
@@ -56,6 +54,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final double k_I = 0;
   private final double k_D = 1.5;
 
+  private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private static final VoltageOut ZERO_VOLTS = new VoltageOut(0);
   private static final VoltageOut FIVE_VOLTS = new VoltageOut(5);
   // ------- AUTOZERO ------ //
@@ -85,7 +84,6 @@ public class TurretSubsystem extends SubsystemBase {
   public TurretSubsystem(CommandSwerveDrivetrain drivetrain) {
     // --- MOTOR SETUP ---//
     m_turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
-    request = new MotionMagicVoltage(0);
     configureMotors();
     // --- Hardware --- //
     m_driveTrain = drivetrain;
@@ -196,14 +194,13 @@ public class TurretSubsystem extends SubsystemBase {
       // Grab poses
       Pose2d robotPose = driveTrain.getState().Pose;
       double robotYaw = driveTrain.getState().Pose.getRotation().getRadians();
+
       // turret angle relative to robot
       double turretRelRad = Units.rotationsToRadians(turretMotor.getPosition().getValueAsDouble());
 
       // Vector from robot (or turret pivot) to target in FIELD coordinates
-      Translation2d toTarget =
-          targetPose
-              .getTranslation()
-              .minus(robotPose.getTranslation());
+      Translation2d turretFieldPos = robotPose.transformBy(turretTransform).getTranslation();
+      Translation2d toTarget = targetPose.getTranslation().minus(turretFieldPos);
 
       // Direction to target in FIELD frame
       double targetFieldRad = Math.atan2(toTarget.getY(), toTarget.getX());
@@ -212,29 +209,25 @@ public class TurretSubsystem extends SubsystemBase {
       double desiredRelRad = MathUtil.angleModulus(targetFieldRad - robotYaw);
 
       // Choose equivalent desired angle closest to current turret angle
-      // desiredRelRad =
-         // MathUtil.inputModu(desiredRelRad, turretRelRad - Math.PI, turretRelRad + Math.PI);
-
-      // Apply hard stops
-      double cmdRelRad = desiredRelRad;
+      desiredRelRad =
+          MathUtil.inputModulus(desiredRelRad, turretRelRad - Math.PI, turretRelRad + Math.PI);
 
       // Error in robot frame
-      error = MathUtil.angleModulus(cmdRelRad - turretRelRad);
-      System.out.println(cmdRelRad);
+      error = MathUtil.angleModulus(desiredRelRad - turretRelRad);
 
       // Network tables stuff
       ntErrorRad.set(Units.radiansToDegrees(error));
       ntTargetRad.set(Units.radiansToDegrees(targetFieldRad));
 
       // If the error is greater than the specified threshold, move the motor. Else don't move
-      if (Math.abs(error) > TRACK_THRESHOLD_RAD || true) {
-        turretMotor.setControl(request.withPosition(Units.radiansToRotations(cmdRelRad)));
+      if (Math.abs(error) > TRACK_THRESHOLD_RAD) {
+        turretMotor.setControl(request.withPosition(Units.radiansToRotations(desiredRelRad)));
       } else {
         turretMotor.setControl(ZERO_VOLTS);
       }
 
       double turretFieldRad = MathUtil.angleModulus(robotYaw + turretRelRad);
-      turretPose = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(turretFieldRad));
+      turretPose = new Pose2d(turretFieldPos, new Rotation2d(turretFieldRad));
       turretPose2d.accept(turretPose);
     }
 
@@ -307,10 +300,9 @@ public class TurretSubsystem extends SubsystemBase {
     configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     // ---- MOTION MAGIC---- //
-    var mm = configs.MotionMagic;
-    mm.MotionMagicCruiseVelocity = 5;
-    mm.MotionMagicAcceleration = 20;
-    mm.MotionMagicJerk = 300;
+    configs.MotionMagic.MotionMagicCruiseVelocity = 5;
+    configs.MotionMagic.MotionMagicAcceleration = 20;
+    configs.MotionMagic.MotionMagicJerk = 300;
 
     // --- FEEDBACK / OUTPUT --- //
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
