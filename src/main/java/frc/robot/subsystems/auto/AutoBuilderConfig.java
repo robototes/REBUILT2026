@@ -16,16 +16,17 @@ public class AutoBuilderConfig {
 
     try {
       AutoBuilder.configure(
-          () -> drivebase.getState().Pose, // Robot pose supplier
-          (pose) ->
+          () -> {
+            return drivebase.getState().Pose;}, // Robot pose supplier
+        (pose) ->{
               drivebase.resetPose(
-                  pose), // Method to reset odometry (will be called if your auto has a starting
+                  pose);}, // Method to reset odometry (will be called if your auto has a starting
           // pose)
-          () -> drivebase.getState().Speeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-          (speeds, feedforwards) ->
+          () -> {System.out.println(" Get Speeds"); return drivebase.getState().Speeds;}, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+          (speeds, feedforwards) ->{
               drivebase.setControl(
                   new SwerveRequest.ApplyRobotSpeeds()
-                      .withSpeeds(speeds)), // Method that will drive the robot given ROBOT RELATIVE
+                      .withSpeeds(speeds));}, // Method that will drive the robot given ROBOT RELATIVE
           // ChassisSpeeds. Also optionally outputs individual module
           // feedforwards
           new PPHolonomicDriveController( // PPHolonomicController is the built in path following
