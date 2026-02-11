@@ -17,7 +17,6 @@ import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.SpindexerSubsystem;
-import frc.robot.subsystems.TurretSubsystem;
 import frc.robot.subsystems.TurretSubsystem2;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -45,7 +44,6 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
-  public final TurretSubsystem turretSubsystem;
   public final TurretSubsystem2 turretSubsystem2;
 
   public Subsystems(Mechanism2d mechanism2d) {

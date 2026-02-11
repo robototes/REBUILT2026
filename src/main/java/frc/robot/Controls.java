@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
@@ -256,12 +257,22 @@ public class Controls {
     if (s.turretSubsystem2 == null) {
       return;
     }
+    Trigger cross = turretTestController2.cross();
+    Trigger square = turretTestController2.square();
+    Trigger circle = turretTestController2.circle();
+    Trigger triangle = turretTestController2.triangle();
+    cross.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
+    square.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
+    circle.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.POSITION));
+    s.turretSubsystem2
+        .PositionRotateTrigger(() -> currentTurretState)
+        .whileTrue(s.turretSubsystem2.PositionMove(() -> turretTestController2.getLeftX()));
+    s.turretSubsystem2
+        .ManualRotateTrigger(() -> currentTurretState)
+        .whileTrue(s.turretSubsystem2.ManualMove(() -> turretTestController2.getLeftX()));
     // s.turretSubsystem2
-    //    .PositionRotateTrigger(() -> currentTurretState)
-    //    .whileTrue((s.turretSubsystem2.PositionMove(() -> turretTestController2.getLeftX())));
-    turretTestController2
-        .cross()
-        .whileTrue((s.turretSubsystem2.PositionMove(() -> turretTestController2.getLeftX())));
+    //     .AutoRotateTrigger(() -> currentTurretState)
+    //     .whileTrue(());
   }
 
   /**

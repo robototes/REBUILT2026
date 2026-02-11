@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.TurretSubsystemSim;
 import frc.robot.util.TurretUtils.TurretState;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -23,6 +24,8 @@ public class TurretSubsystem2 extends SubsystemBase {
   private TalonFX m_turret;
 
   private final double GEAR_RATIO = 20;
+  private final double TURRET_MIN = 0;
+  private final double TURRET_MAX = 180;
   private final VoltageOut FIVE_VOLTS = new VoltageOut(5);
   private final VoltageOut ZERO_VOLTS = new VoltageOut(0);
 
@@ -34,11 +37,17 @@ public class TurretSubsystem2 extends SubsystemBase {
   private final double k_I = 0;
   private final double k_D = 1.5;
 
+  TurretSubsystemSim sim;
+
   public TurretSubsystem2(CommandSwerveDrivetrain train) {
     request = new MotionMagicVoltage(0);
     driveTrain = train;
     m_turret = new TalonFX(24);
+    sim = new TurretSubsystemSim(m_turret, GEAR_RATIO, -Math.PI / 2, Math.PI / 2);
+    configureMotors();
   }
+
+  // public Command autoRotate()
 
   public Command ManualMove(DoubleSupplier joystick) {
     return Commands.run(
@@ -62,10 +71,17 @@ public class TurretSubsystem2 extends SubsystemBase {
     m_turret.setControl(request.withPosition(rotations));
   }
 
+  private double wrapDegreesToSoftLimits(double targetDegrees, double currentDegrees) {
+    return MathUtil.clamp(
+        currentDegrees + ((targetDegrees - currentDegrees + 540) % 360) - 180,
+        TURRET_MIN,
+        TURRET_MAX);
+  }
+
   public Trigger ManualRotateTrigger(Supplier<TurretState> state) {
     return new Trigger(
         () -> {
-          System.out.println(state);
+          System.out.println(state.get());
           return state.get() == TurretState.MANUAL;
         });
   }
@@ -124,5 +140,12 @@ public class TurretSubsystem2 extends SubsystemBase {
     configs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     m_turret.getConfigurator().apply(configs);
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    if (sim != null) {
+      sim.update(0.02);
+    }
   }
 }
