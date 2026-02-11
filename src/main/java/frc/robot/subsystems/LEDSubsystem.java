@@ -10,7 +10,6 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 // import frc.robot.util.LEDMode;
@@ -18,10 +17,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
-  private static final int CAN_ID = 22;
+  private static final int CAN_ID = 15;
 
   private static final int END_INDEX =
-      7; // temporary for testing (only using 1 module which is 8 leds)
+      7; // temporary for testing (only using 1 module which is 8 leds zero-indexed)
 
   private final CANdle candle = new CANdle(CAN_ID);
   private final SolidColor solid = new SolidColor(0, END_INDEX);
@@ -34,10 +33,9 @@ public class LEDSubsystem extends SubsystemBase {
   public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 0, 255); // blue
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0); // off
 
-  private RGBWColor activeSolidColor = OFF_COLOR;
 
   public LEDSubsystem() {
-    setRainbowAnimation(0, 1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
+    setRainbowAnimation(0, 0.1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
   }
 
   /**
@@ -52,7 +50,7 @@ public class LEDSubsystem extends SubsystemBase {
    * @param frameRate the update frequency of the animation
    */
   public void setRainbowAnimation(
-      int slot, int brightness, AnimationDirectionValue direction, Frequency frameRate) {
+      int slot, double brightness, AnimationDirectionValue direction, Frequency frameRate) {
 
     slot0Animation
         .withSlot(slot)
