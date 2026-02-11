@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -18,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.drivebase.DrivebaseWrapper;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
@@ -27,13 +27,15 @@ public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
   private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
-  // hub pose blue X: 4.625m, Y: 4.035m
-  // hub pose red X: 11.915m, Y: 4.035m
+  // hub pose blue X: 4.536m, Y: 4.053m
+  // hub pose red X: 11.950m, Y: 4.105m,
   // Deviations
   private static final Vector<N3> STANDARD_DEVS =
       VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
+
+  private DrivebaseWrapper drivetrain;
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
@@ -55,10 +57,9 @@ public class VisionSubsystem extends SubsystemBase {
   public Pose2d lastFieldPose = null;
   private double distance = 0;
   private double tagAmbiguity = 0;
-  private CommandSwerveDrivetrain drivetrain;
 
-  public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
-    this.drivetrain = drivetrain;
+  public VisionSubsystem(CommandSwerveDrivetrain drivebaseSubsystem) {
+    this.drivetrain = new DrivebaseWrapper(drivebaseSubsystem);
 
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
@@ -77,16 +78,9 @@ public class VisionSubsystem extends SubsystemBase {
     RawFiducial[] rawFiducialsB = CCamera.getRawFiducials();
     // System.out.println("got raw fiducials");
     if (rawFiducialsB != null) {
-      if (rawFiducialsB.length != 1) {
-        for (RawFiducial rf : rawFiducialsB) {
-          // System.out.println("processing raw fiducials");
-          processLimelight(CCamera, rawFieldPose3dEntryB, rf);
-        }
-      } else {
-        for (RawFiducial rf : rawFiducialsB) {
-          // System.out.println("processing raw fiducials");
-          processLimelightmt2(CCamera, rawFieldPose3dEntryB, rf);
-        }
+      for (RawFiducial rf : rawFiducialsB) {
+        // System.out.println("processing raw fiducials");
+        processLimelight(CCamera, rawFieldPose3dEntryB, rf);
       }
     }
   }
@@ -123,87 +117,23 @@ public class VisionSubsystem extends SubsystemBase {
       rawFieldPoseEntry.set(fieldPose3d);
       //   System.out.println("got new data");
 
-      if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.15)
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(12))
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(12))) {
+      if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.10)
+          || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(8))
+          || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(8))) {
         pose_bad = true;
         // System.out.println("pose bad");
       }
 
       if (!pose_bad) {
+
         drivetrain.addVisionMeasurement(
             fieldPose3d.toPose2d(),
-            Utils.fpgaToCurrentTime(timestampSeconds),
+            timestampSeconds,
             // start with STANDARD_DEVS, and for every
             // meter of distance past 1 meter,
             // add a distance standard dev
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
-        robotField.setRobotPose(drivetrain.getState().Pose);
-        // System.out.println("put pose in");
-      }
-      if (timestampSeconds > lastTimestampSeconds) {
-        if (!pose_bad) {
-          fieldPose3dEntry.set(fieldPose3d);
-          lastFieldPose = fieldPose3d.toPose2d();
-          rawVisionFieldObject.setPose(lastFieldPose);
-          //   System.out.println("updated pose");
-        }
-        lastTimestampSeconds = timestampSeconds;
-        // System.out.println("updated time");
-      }
-    }
-  }
-
-  private void processLimelightmt2(
-      LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
-
-    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
-    if (disableVision) {
-      return;
-    }
-
-    // System.out.println("processed a raw fiducial");
-    BetterPoseEstimate estimate = camera.getPoseEstimateMegatag2();
-    // System.out.println("got a pose estimate");
-
-    if (estimate != null) {
-      if (estimate.tagCount <= 0) {
-        // System.out.println("no tags");
-        return;
-      }
-
-      double timestampSeconds = estimate.timestampSeconds;
-      Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-      if (tagPose.isEmpty()) {
-        DriverStation.reportWarning(
-            "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-            false);
-        return;
-      }
-      this.distance =
-          getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), tagPose.get().toPose2d());
-      this.tagAmbiguity = rf.ambiguity;
-      boolean pose_bad = false;
-      rawFieldPoseEntry.set(fieldPose3d);
-      //   System.out.println("got new data");
-
-      if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.15)
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(12))
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(12))) {
-        pose_bad = true;
-        // System.out.println("pose bad");
-      }
-
-      if (!pose_bad) {
-        drivetrain.addVisionMeasurement(
-            fieldPose3d.toPose2d(),
-            Utils.fpgaToCurrentTime(timestampSeconds),
-            // start with STANDARD_DEVS, and for every
-            // meter of distance past 1 meter,
-            // add a distance standard dev
-            DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
-        robotField.setRobotPose(drivetrain.getState().Pose);
+        robotField.setRobotPose(drivetrain.getEstimatedPosition());
         // System.out.println("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {

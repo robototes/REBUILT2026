@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.simulation;
 
 /* Source: https://github.com/hammerheads5000/FuelSim */
 // Huge thanks to team 5000 for the FuelSim util class!
@@ -10,12 +10,14 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
+import frc.robot.util.AllianceUtils;
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -34,7 +36,8 @@ public class FuelSim {
   private static final double FIELD_WIDTH = 8.04;
   private static final double FRICTION =
       0.1; // proportion of horizontal velocity to lose per second while on ground
-
+  public int fuelsHeld = 8;
+  public final int CAPACITY = 60;
   private static FuelSim instance = null;
 
   private static final Translation3d[] FIELD_XZ_LINE_STARTS = {
@@ -254,6 +257,11 @@ public class FuelSim {
   /** Clears the field of fuel */
   public void clearFuel() {
     fuels.clear();
+    fuelsHeld = 8;
+  }
+
+  public Hub getNearestHub() {
+    return (AllianceUtils.isBlue()) ? Hub.BLUE_HUB : Hub.RED_HUB;
   }
 
   /** Spawns fuel in the neutral zone and depots */
@@ -307,9 +315,22 @@ public class FuelSim {
           .getStructArrayTopic("Fuel Simulation/Fuels", Translation3d.struct)
           .publish();
 
+  private DoublePublisher scorePublisher =
+      NetworkTableInstance.getDefault()
+          .getTable("Game Pieces")
+          .getDoubleTopic("Fuel Simulation/Scored")
+          .publish();
+  private DoublePublisher holdingPublisher =
+      NetworkTableInstance.getDefault()
+          .getTable("Game Pieces")
+          .getDoubleTopic("Fuel Simulation/Held")
+          .publish();
+
   /** Adds array of `Translation3d`'s to NetworkTables at "/Fuel Simulation/Fuels" */
   public void logFuels() {
     fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
+    scorePublisher.set(getNearestHub().getScore());
+    holdingPublisher.set(fuelsHeld);
   }
 
   /** Start the simulation. `updateSim` must still be called every loop */
@@ -415,8 +436,10 @@ public class FuelSim {
 
     xVel += fieldSpeeds.vxMetersPerSecond;
     yVel += fieldSpeeds.vyMetersPerSecond;
-
-    spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    if (fuelsHeld > 0) {
+      fuelsHeld--;
+      spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    }
   }
 
   private void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {
@@ -478,6 +501,9 @@ public class FuelSim {
       for (int i = 0; i < fuels.size(); i++) {
         if (intake.shouldIntake(fuels.get(i), robot)) {
           fuels.remove(i);
+          if (fuelsHeld < CAPACITY) {
+            fuelsHeld++;
+          }
           i--;
         }
       }

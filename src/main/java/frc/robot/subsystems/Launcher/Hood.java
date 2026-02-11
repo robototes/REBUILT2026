@@ -25,8 +25,7 @@ import frc.robot.Robot;
 import frc.robot.util.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-
-// import lombok.Getter;
+import lombok.Getter;
 
 public class Hood extends SubsystemBase {
   private TalonFX hood;
@@ -37,8 +36,7 @@ public class Hood extends SubsystemBase {
   private DoubleTopic goalTopic; // hood pose in rotations
   private DoublePublisher goalPub;
 
-  // @Getter
-  private boolean hoodZeroed = false; // is hood Zeroed
+  @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);

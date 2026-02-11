@@ -31,7 +31,7 @@ public class Subsystems {
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
-    public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
+    public static final boolean GAMEPIECE_DETECTION_ENABLED = false;
     public static final boolean TURRET_ENABLED = true;
   }
 

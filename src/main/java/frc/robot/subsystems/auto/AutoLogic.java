@@ -1,5 +1,9 @@
 package frc.robot.subsystems.auto;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radians;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -14,12 +18,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
-import frc.robot.util.FuelSim;
-
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Radians;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +67,7 @@ public class AutoLogic {
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
           new AutoPath("RT-NeutralRightTWO", "RT-NeutralRightTWO"),
           new AutoPath("RT-NeutralRightTWO-Climb", "RT-NeutralRightTWO-Climb"),
+          new AutoPath("Straight", "Straight"),
           new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
@@ -187,7 +186,7 @@ public class AutoLogic {
   }
 
   public static void registerCommands() {
-    NamedCommands.registerCommand("launch", launcherSimCommand());
+    NamedCommands.registerCommand("launch", launcherCommand());
     NamedCommands.registerCommand("intake", intakeCommand());
     NamedCommands.registerCommand("climb", climbCommand());
   }
@@ -199,11 +198,19 @@ public class AutoLogic {
         .andThen(s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0))
         .withTimeout(3);
   }
+
   public static Command launcherSimCommand() {
     return Commands.sequence(
             AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0),
-            Commands.run(() -> FuelSim.getInstance().launchFuel(MetersPerSecond.of(6.0), Radians.of(s.hood.getHoodPosition()),Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI), Meters.of(1.5)))).withTimeout(3);
-
+            Commands.run(
+                () ->
+                    frc.robot.util.simulation.FuelSim.getInstance()
+                        .launchFuel(
+                            MetersPerSecond.of(0),
+                            Radians.of(s.hood.getHoodPosition()),
+                            Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI),
+                            Meters.of(1.45))))
+        .withTimeout(2);
   }
 
   public static Command intakeCommand() {
