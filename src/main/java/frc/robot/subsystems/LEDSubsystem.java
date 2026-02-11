@@ -12,27 +12,52 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-// import frc.robot.util.LEDMode;
-// import java.util.function.Supplier;
-
 public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
+  /** CAN ID for the CANdle LED controller. */
   private static final int CAN_ID = 15;
 
-  private static final int END_INDEX =
-      7; // temporary for testing (only using 1 module which is 8 leds zero-indexed)
+  /**
+   * Last LED index in the strip (inclusive).
+   *
+   * <p>Currently set for testing with a single module (8 LEDs total), which are zero-indexed (0–7).
+   */
+  private static final int END_INDEX = 7;
 
+  /** CTRE CANdle LED controller instance. */
   private final CANdle candle = new CANdle(CAN_ID);
+
+  /**
+   * Solid color control object.
+   *
+   * <p>Configured to control LEDs from index 0 through {@link #END_INDEX}.
+   */
   private final SolidColor solid = new SolidColor(0, END_INDEX);
+
+  /**
+   * Preconfigured rainbow animation assigned to animation slot 0.
+   *
+   * <p>Applies to LEDs from index 0 through {@link #END_INDEX}.
+   */
   private final RainbowAnimation slot0Animation = new RainbowAnimation(0, END_INDEX);
+
+  /** Empty animation used to clear animation slot 0 and stop active animations. */
   private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
 
-  public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0); // red
-  public static final RGBWColor INTAKE_COLOR = new RGBWColor(255, 255, 0); // yellow
-  public static final RGBWColor OUTTAKE_COLOR = new RGBWColor(0, 255, 0); // green
-  public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 0, 255); // blue
-  public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0); // off
+  /** Default robot LED color (red). */
+  public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0);
 
+  /** LED color used while intaking (yellow). */
+  public static final RGBWColor INTAKE_COLOR = new RGBWColor(255, 255, 0);
+
+  /** LED color used while outtaking (green). */
+  public static final RGBWColor OUTTAKE_COLOR = new RGBWColor(0, 255, 0);
+
+  /** LED color used during climb mode (blue). */
+  public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 0, 255);
+
+  /** LED color representing LEDs off. */
+  public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
 
   public LEDSubsystem() {
     setRainbowAnimation(0, 0.1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
@@ -59,38 +84,30 @@ public class LEDSubsystem extends SubsystemBase {
         .withFrameRate(frameRate);
   }
 
-  /* to be used in the future */
-  // public Command LED_Mode(Supplier<LEDMode> mode) {
-  //   return Commands.run(
-  //       () -> {
-  //         LEDMode currentMode = mode.get();
-  //         switch (currentMode) {
-  //           case DEFAULT:
-  //             setLEDsCommand(defaultColor);
-  //             break;
-  //           case OUTTAKE_IN_PROGRESS:
-  //             setLEDsCommand(outtakeColor);
-  //             break;
-  //           case INTAKE_IN_PROGRESS:
-  //             setLEDsCommand(intakeColor);
-  //             break;
-  //           case CLIMB_IN_PROGRESS:
-  //             setLEDsCommand(climbColor);
-  //             break;
-  //         }
-  //       }, this);
-  // }
-
   /**
-   * Sets Leds at specified {@link frc.robot.subsystems.LEDSubsystem#CAN_ID id} to color
+   * Sets the physical CANdle LED controller to a solid color.
    *
-   * @param color
+   * <p>This directly updates the hardware output and should generally only be called internally by
+   * commands that manage LED state.
+   *
+   * @param color the {@link RGBWColor} to apply to the LED strip
    */
   public void setHardwareColor(RGBWColor color) {
     solid.withColor(color);
     candle.setControl(solid);
   }
 
+  /**
+   * Creates a command that sets the LEDs to the specified color while scheduled.
+   *
+   * <p>This command requires the {@link LEDSubsystem}, ensuring no other LED commands can run
+   * simultaneously.
+   *
+   * <p>This command uses the {@link #setHardwareColor} function
+   *
+   * @param color the {@link RGBWColor} to display
+   * @return a {@link Command} that continuously sets the LEDs to the given color
+   */
   public Command setLEDsCommand(RGBWColor color) {
     return Commands.run(() -> setHardwareColor(color), this)
         .withName("SetLEDs"); // Good practice to name commands
@@ -115,13 +132,19 @@ public class LEDSubsystem extends SubsystemBase {
         .repeatedly();
   }
 
-  // Start rainbow animation
-  public void startRainbow() {
-    candle.setControl(slot0Animation);
-  }
-
-  // Stop rainbow animation
-  public void stopRainbow() {
-    candle.setControl(emptyAnimation);
+  /**
+   * Enables or disables the rainbow animation on the CANdle.
+   *
+   * <p>If {@code enabled} is true, the preconfigured rainbow animation is applied. If false, the
+   * active animation is cleared.
+   *
+   * @param enabled true to start the rainbow animation, false to stop it
+   */
+  public void setRainbowEnabled(boolean enabled) {
+    if (enabled) {
+      candle.setControl(slot0Animation);
+    } else {
+      candle.setControl(emptyAnimation);
+    }
   }
 }
