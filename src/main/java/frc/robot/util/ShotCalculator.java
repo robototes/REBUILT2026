@@ -8,18 +8,17 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Robot;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class ShotCalculator {
   private static ShotCalculator instance;
-  private static CommandSwerveDrivetrain drive = null;
 
   // Offset from robot center to turret center (leave zero if turret is centered)
   private static final Transform2d robotToTurret = new Transform2d();
 
-  public static ShotCalculator getInstance(CommandSwerveDrivetrain drive) {
-    ShotCalculator.drive = drive;
+  public static ShotCalculator getInstance() {
     if (instance == null)
       instance = new ShotCalculator();
     return instance;
@@ -81,7 +80,7 @@ public class ShotCalculator {
     timeOfFlightMap.put(1.38, 0.90);
   }
 
-  public ShootingParameters getParameters() {
+  public ShootingParameters getParameters(CommandSwerveDrivetrain drive) {
     if (latestParameters != null) {
       return latestParameters;
     }

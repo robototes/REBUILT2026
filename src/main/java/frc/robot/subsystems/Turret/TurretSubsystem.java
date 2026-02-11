@@ -9,12 +9,15 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NTSendableBuilder;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -81,6 +84,7 @@ public class TurretSubsystem extends SubsystemBase {
         private TurretSim sim;
         private DoublePublisher positionPub;
         private DoublePublisher goalPub;
+        private StructPublisher<Pose2d> posePub;
 
         private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
         private final MotionMagicVoltage request = new MotionMagicVoltage(0);
@@ -135,6 +139,7 @@ public class TurretSubsystem extends SubsystemBase {
     positionPub.set(0);
     goalPub = nt.getDoubleTopic("/turret/goal").publish();
     goalPub.set(request.Position);
+    posePub = nt.getStructTopic("/turret/pose2d",new  Pose2d(0,0, new Rotation2d()).struct).publish();
 
 
   }
@@ -219,7 +224,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     public Command trackTargetCommand() {
         return run(() -> {
-            var params = ShotCalculator.getInstance(drive).getParameters();
+            var params = ShotCalculator.getInstance().getParameters(drive);
             aimFieldRelative(params.turretAngle());
         });
     }
@@ -273,5 +278,10 @@ public class TurretSubsystem extends SubsystemBase {
                         Math.abs(((Units.rotationsToDegrees(motor.getPosition().getValueAsDouble()) % 360) + 360) % 360 - target.getAsDouble())
                                 < tolerance.getAsDouble());
     }
-
-}
+    @Override
+  public void simulationPeriodic() {
+    if (sim != null) {
+      sim.update();
+    }
+    posePub.set(new Pose2d(drive.getState().Pose.getX(), drive.getState().Pose.getY(), new Rotation2d(Units.rotationsToRadians(motor.getPosition().getValueAsDouble()))));
+}}
