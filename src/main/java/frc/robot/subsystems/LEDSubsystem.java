@@ -70,7 +70,7 @@ public class LEDSubsystem extends SubsystemBase {
    * rate} for the rainbow animation.
    *
    * @param slot the animation slot to run the rainbow animation on
-   * @param brightness the brightness level of the LEDs (typically 0–255)
+   * @param brightness the brightness level of the LEDs (0.0-1.0)
    * @param direction the direction the rainbow animation moves
    * @param frameRate the update frequency of the animation
    */
