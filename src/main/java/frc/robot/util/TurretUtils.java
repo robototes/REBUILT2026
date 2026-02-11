@@ -5,7 +5,7 @@ public class TurretUtils {
   public static enum TurretState {
     MANUAL,
     AUTO,
-    IDLE
+    POSITION
   }
 
   public static enum TurretTarget {
