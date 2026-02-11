@@ -9,6 +9,12 @@
           "data": {
             "pathName": "Outpost-Straight"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Copy of Outpost-Straight"
+          }
         }
       ]
     }
