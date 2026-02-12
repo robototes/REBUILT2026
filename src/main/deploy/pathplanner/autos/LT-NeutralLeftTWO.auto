@@ -5,6 +5,24 @@
     "data": {
       "commands": [
         {
+          "type": "path",
+          "data": {
+            "pathName": "LT-NeutralLeft"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-NeutralLeft-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LB-NeutralLeft-Back"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "launch"
@@ -13,37 +31,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RB-NeutralRight"
+            "pathName": "LT-NeutralLeft-AGAIN"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-RT"
+            "pathName": "LT-NeutralLeft-THREE"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "launch"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "RT-NeutralRight"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-NeutralLeft"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-NeutralLeftTWO"
           }
         }
       ]

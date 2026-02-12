@@ -7,13 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Drive"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
+            "pathName": "Outpost-Straight"
           }
         }
       ]
