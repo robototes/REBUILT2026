@@ -106,7 +106,8 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
-  public void setTurretPositionRaw(double pos) {
+  public void
+  setTurretPositionRaw(double pos) {
     turretMotor.setControl(request.withPosition(pos));
     targetPos = pos;
   }
