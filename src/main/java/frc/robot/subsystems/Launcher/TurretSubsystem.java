@@ -26,10 +26,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double FRONT_POSITION = Units.degreesToRotations(0);
-  public static final double LEFT_POSITION = Units.degreesToRotations(-90);
-  public static final double RIGHT_POSITION = Units.degreesToRotations(90);
-  public static final double BACK_POSITION = Units.degreesToRotations(180);
+  public static final double FRONT_POSITION = 0.16748;
+  public static final double LEFT_POSITION = 0.3122;
+  public static final double RIGHT_POSITION = 0;
+  public static final double BACK_POSITION = 0.5;
 
   // PID variables
   private static final double kP = 2.97;
@@ -70,7 +70,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    config.Feedback.SensorToMechanismRatio = 1; // Use outside of testing GEAR_RATIO;
+    config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -78,9 +78,9 @@ public class TurretSubsystem extends SubsystemBase {
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.degreesToRotations(TURRET_MAX);
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false; // false for testing
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(TURRET_MIN);
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false; // false for testing
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;
     config.MotionMagic.MotionMagicAcceleration = ACCELERATION;
@@ -108,9 +108,8 @@ public class TurretSubsystem extends SubsystemBase {
   public Command zeroTurret() {
     return runOnce(
         () -> {
-          turretMotor.setPosition(0);
-          targetPos =
-              0; // Use Units.degreesToRotations(TURRET_MAX - TURRET_DEADBAND); outside of testing
+          turretMotor.setPosition(Units.degreesToRotations(0));
+          targetPos = Units.degreesToRotations(0);
         });
   }
 
