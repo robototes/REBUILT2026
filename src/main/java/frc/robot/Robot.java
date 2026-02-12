@@ -110,9 +110,16 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
       if (!subsystems.visionSubsystem.isViewFinder()) {
+        LimelightHelpers.SetRobotOrientation(
+            Hardware.LIMELIGHT_C,
+            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
+            subsystems.drivebaseSubsystem.getState().Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+            0,
+            0,
+            0,
+            0);
         subsystems.visionSubsystem.update();
       }
     }
@@ -130,6 +137,7 @@ public class Robot extends TimedRobot {
           0);
       subsystems.visionSubsystem.update();
     }
+    CommandScheduler.getInstance().run();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -153,6 +161,8 @@ public class Robot extends TimedRobot {
 
     if (subsystems.visionSubsystem != null) {
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
     if (subsystems.detectionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat

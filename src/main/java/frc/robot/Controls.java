@@ -87,7 +87,6 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureAutoAlignBindings();
-    configureTurretBindings(false);
     configureVisionBindings();
   }
 
@@ -201,14 +200,6 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-
-    // Auto rotate
-    driverController
-        .rightTrigger()
-        .whileTrue(
-            AutoDriveRotate.autoRotate(
-                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
-                .withName("Drivebase rotation towards the hub"));
   }
 
   private void configureAutoAlignBindings() {
@@ -230,9 +221,12 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.sequence(
-                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                Commands.parallel(
-                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+                    AutoDriveRotate.autoRotate(
+                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()),
+                    AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                    Commands.parallel(
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
+                .withName("Autorotate, Autoaim done, feeder and spindexer started"))
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
@@ -334,16 +328,19 @@ public class Controls {
   }
 
   private void configureVisionBindings() {
-    if (s.visionSubsystem != null) {
-      Pose2d refrenceVisionPose = s.visionSubsystem.lastFieldPose;
-      if (refrenceVisionPose != null) {
-        driverController
-            .leftBumper()
-            .onTrue(
-                s.drivebaseSubsystem
-                    .runOnce(() -> s.drivebaseSubsystem.resetPose(refrenceVisionPose))
-                    .withName("Now Drive Pose is Vision Pose"));
-      }
+    if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
+      driverController
+          .leftBumper()
+          .onTrue(
+              s.drivebaseSubsystem
+                  .runOnce(
+                      () -> {
+                        Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
+                        if (referenceVisionPose != null) {
+                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
+                        }
+                      })
+                  .withName("Now Drive Pose is Vision Pose"));
     }
   }
 }
