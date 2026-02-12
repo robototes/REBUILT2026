@@ -6,7 +6,6 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
-import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
@@ -16,7 +15,6 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
@@ -94,7 +92,6 @@ public class Robot extends TimedRobot {
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
-
   }
 
   /**
@@ -187,7 +184,6 @@ public class Robot extends TimedRobot {
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
     }
-
   }
 
   /** This function is called periodically during autonomous. */
