@@ -55,15 +55,15 @@ public class TurretSubsystem extends SubsystemBase {
 
         @Getter private final double supplyCurrentLimit = 5;
         @Getter private final double statorCurrentLimit = 10;
-        @Getter private final double positionKp = 1000;
-        @Getter private final double positionKd = 175;
+        @Getter private final double positionKp = 2;
+        @Getter private final double positionKd = 0.2;
         @Getter private final double positionKv = 0.15;
         @Getter private final double positionKs = 1.8;
         @Getter private final double positionKa = 2;
         @Getter private final double positionKg = 0;
         @Getter private final double mmCruiseVelocity = 50;
         @Getter private final double mmAcceleration = 300;
-        @Getter private final double mmJerk = 1000;
+        @Getter private final double mmJerk = 0;
 
         @Getter @Setter private double sensorToMechanismRatio = 22.4;
         @Getter @Setter private double rotorToSensorRatio = 1;
@@ -74,8 +74,8 @@ public class TurretSubsystem extends SubsystemBase {
 
         @Getter @Setter private double CANcoderSensorToMechanismRatio = 1;
 
-        @Getter @Setter private double maxRotations = 1;
-        @Getter @Setter private double minRotations = -1;
+        @Getter @Setter private double maxRotations = 0.25;
+        @Getter @Setter private double minRotations = 0;
 
         @Getter @Setter private boolean turretZeroed = false;
 
