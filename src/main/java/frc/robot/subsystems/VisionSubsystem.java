@@ -35,8 +35,6 @@ public class VisionSubsystem extends SubsystemBase {
   private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
       VecBuilder.fill(1, 1, Units.degreesToRadians(50));
 
-  private final DrivebaseWrapper drivebaseWrapper;
-
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
