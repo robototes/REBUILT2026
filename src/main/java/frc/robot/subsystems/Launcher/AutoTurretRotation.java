@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 
@@ -30,21 +31,28 @@ public class AutoTurretRotation {
     Translation2d robotToHub = hubTranslation.minus(robotTranslation);
 
     // Calculate absolute field angle to hub
-    Rotation2d absoluteAngleToHub = new Rotation2d(robotToHub.getX(), robotToHub.getY());
+    Rotation2d absoluteAngleToHub = new Rotation2d(Math.atan2(robotToHub.getX(), robotToHub.getY()));
 
     // Calculate turret angle relative to robot's forward direction
     // Subtract robot's rotation to get robot-relative angle
-    Rotation2d turretAngle = absoluteAngleToHub.minus(robotRotation);
+    Rotation2d turretAngle = absoluteAngleToHub.plus(robotRotation);
 
     // Convert to rotations for the turret motor
-    return turretAngle.getRotations();
+    double rotations = turretAngle.getRotations() + Math.PI;
+
+    double min = Units.degreesToRotations(0);
+    double max = Units.degreesToRotations(170);
+
+    rotations = Math.max(min, Math.min(max, rotations));
+
+    return rotations;
   }
 
   public Command trackHub() {
-    return turretSubsystem.run(
+    return Commands.run(
         () -> {
           double targetRotations = calculateTurretAngle();
-          turretSubsystem.setTurretPosition(targetRotations);
+          turretSubsystem.setTurretPositionRaw(targetRotations);
         });
   }
 

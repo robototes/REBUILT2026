@@ -11,6 +11,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -53,8 +54,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = 20;
 
   // Soft Limits
-  private static final double TURRET_MAX = -42.1 - 180; // degrees
-  private static final double TURRET_MIN = -132.1 - 180; // degrees
+  private static final double TURRET_MAX = 170; // degrees
+  private static final double TURRET_MIN = 0; // degrees
   private static final double TURRET_DEADBAND = -0.5; // degrees
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
@@ -105,6 +106,11 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
+  public void setTurretPositionRaw(double pos) {
+    turretMotor.setControl(request.withPosition(pos));
+    targetPos = pos;
+  }
+
   public Command zeroTurret() {
     return runOnce(
         () -> {
@@ -143,7 +149,11 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command rotateToHub() {
-    return autoTurretRotation.trackHub();
+    return Commands.run(() -> {
+    double targetRotations = autoTurretRotation.calculateTurretAngle();
+
+    setTurretPositionRaw(targetRotations);});
+
   }
 
   @Override
