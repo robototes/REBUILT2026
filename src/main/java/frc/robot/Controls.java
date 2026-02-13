@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -34,6 +35,7 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
+  private static final int INTAKE_TEST_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -44,6 +46,8 @@ public class Controls {
 
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
+  private final CommandXboxController intakeTestController =
+      new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -69,6 +73,7 @@ public class Controls {
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
+    configureIntakeBindings();
     configureAutoAlignBindings();
     configureVisionBindings();
   }
@@ -229,6 +234,16 @@ public class Controls {
 
     launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
     launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private void configureIntakeBindings() {
+    if (s.intakeSubsystem == null) {
+      DataLogManager.log("Controls.java: intakeSubsystem is disabled, bindings skipped");
+      return;
+    }
+    driverController.a().onTrue(s.intakeSubsystem.runIntake());
+    intakeTestController.a().onTrue(s.intakeSubsystem.runRollers());
+    // TODO: add run only pivot command and bind to another button
   }
 
   /**
