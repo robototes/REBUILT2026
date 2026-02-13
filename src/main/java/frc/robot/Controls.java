@@ -247,6 +247,9 @@ public class Controls {
         .whileTrue(
             LEDs.alternateColors(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.INTAKE_COLOR)
                 .withName("Alternate between climb and intake color"));
+    ledTestController
+        .rightBumper()
+        .onTrue(LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)); // turns off leds
   }
 
   private void configureLauncherBindings() {
