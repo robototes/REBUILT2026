@@ -35,7 +35,7 @@ public class AutoTurretRotation {
 
     // Calculate turret angle relative to robot's forward direction
     // Subtract robot's rotation to get robot-relative angle
-    Rotation2d turretAngle = absoluteAngleToHub; //.minus(robotRotation);
+    Rotation2d turretAngle = absoluteAngleToHub.minus(robotRotation);
 
     // Convert to rotations for the turret motor
     double rotations = turretAngle.getRotations() + Units.radiansToRotations(Math.PI);
@@ -46,7 +46,6 @@ public class AutoTurretRotation {
 
     rotations = Math.max(min, Math.min(max, rotations));
 
-    /* s
     System.out.println("Robot x " + robotTranslation.getX());
     System.out.println("Robot y " + robotTranslation.getY());
     System.out.println("Hub x " + hubTranslation.getX());
@@ -55,7 +54,7 @@ public class AutoTurretRotation {
     System.out.println("Robot to hub y " + robotToHub.getY());
     System.out.println("absolute angle to hub " + absoluteAngleToHub.getDegrees());
     System.out.println("robot rotation " + robotRotation.getDegrees());
-    System.out.println("Turret angle " + turretAngle.getDegrees()); */
+    System.out.println("Turret angle " + turretAngle.getDegrees());
 
     System.out.println("Rots" + rotations);
 
