@@ -270,19 +270,20 @@ public class Controls {
     x.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
     a.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
     b.onTrue((Commands.runOnce(() -> currentTurretState = TurretState.POSITION)));
-
+    y.onTrue(Commands.runOnce(() -> s.turretSubsystem2.zeroMotor(), s.turretSubsystem2));
     // cross.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
     // square.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
     // circle.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.POSITION));
+    // triangle.onTrue((Commands.runOnce(() -> s.turretSubsystem2.zeroMotor())));
     s.turretSubsystem2
         .PositionRotateTrigger(() -> currentTurretState)
         .whileTrue(s.turretSubsystem2.PositionMove(() -> turretTestController.getLeftX()));
     s.turretSubsystem2
         .ManualRotateTrigger(() -> currentTurretState)
         .whileTrue(s.turretSubsystem2.ManualMove(() -> turretTestController.getLeftX()));
-    // s.turretSubsystem2
-    //     .AutoRotateTrigger(() -> currentTurretState)
-    //     .whileTrue(());
+    s.turretSubsystem2
+        .AutoRotateTrigger(() -> currentTurretState)
+        .onTrue(s.turretSubsystem2.AutoRotate());
   }
 
   /**
