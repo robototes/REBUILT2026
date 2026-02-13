@@ -44,7 +44,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Poses
   private final Transform2d turret_transform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
-  private final Translation2d hub = AllianceUtils.getHubTranslation2d();
 
   // Configs
   private MotionMagicVoltage request;
