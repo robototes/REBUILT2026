@@ -7,6 +7,10 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -14,13 +18,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final CommandSwerveDrivetrain driveTrain;
-  private final AutoTurretRotation autoTurretRotation;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
@@ -59,7 +63,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    autoTurretRotation = new AutoTurretRotation(this, driveTrain);
     turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
     turretConfig();
     turretMotor.setPosition(0);
@@ -105,11 +108,6 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
-  public void setTurretPositionRaw(double pos) {
-    turretMotor.setControl(request.withPosition(pos));
-    targetPos = pos;
-  }
-
   public Command zeroTurret() {
     return runOnce(
         () -> {
@@ -124,17 +122,34 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command pointFacingJoystick(Supplier<Double> xSupplier, Supplier<Double> ySupplier) {
+
     return run(
         () -> {
           double x = xSupplier.get();
           double y = ySupplier.get();
 
-          double magnitude = Math.sqrt(x * x + y * y);
-          if (magnitude > 0.1) {
-            double angle = Units.radiansToRotations(Math.atan2(y, x) + Math.PI);
-            turretMotor.setControl(request.withPosition(angle));
-            targetPos = angle;
-          }
+          // Joystick angle: 0° = forward, CCW positive
+          double degrees = Math.toDegrees(Math.atan2(y, x));
+
+          // Rotate so 0° = robot forward
+          degrees -= 90.0;
+
+          // Subtract robot angle
+          degrees -= driveTrain.getState().Pose.getRotation().getDegrees();
+
+          // Shift so 0° = backward
+          degrees += 180.0;
+
+          // Normalize to [0, 360)
+          degrees = (degrees % 360 + 360) % 360;
+
+          // Clamp to turret range
+          degrees = MathUtil.clamp(degrees, 0, 170);
+
+          double rotations = Units.degreesToRotations(degrees);
+
+          turretMotor.setControl(request.withPosition(rotations));
+          targetPos = rotations;
         });
   }
 
@@ -147,15 +162,55 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(2);
   }
 
+  private double calculateTurretAngle() {
+    // Get current robot pose
+    Pose2d robotPose = driveTrain.getState().Pose;
+    Translation2d robotTranslation = robotPose.getTranslation();
+    Rotation2d robotRotation = robotPose.getRotation();
+
+    // Get hub position
+    Translation2d hubTranslation = AllianceUtils.getHubTranslation2d();
+
+    // Calculate vector from robot to hub
+    Translation2d robotToHub = hubTranslation.minus(robotTranslation);
+
+    // Calculate absolute field angle to hub
+    Rotation2d absoluteAngleToHub =
+        new Rotation2d(Math.atan2(robotToHub.getY(), robotToHub.getX()));
+
+    // Calculate turret angle relative to robot's forward direction
+    // Subtract robot's rotation to get robot-relative angle
+    Rotation2d turretAngle = absoluteAngleToHub.minus(robotRotation);
+
+    // Convert to degrees
+    double degrees = turretAngle.getDegrees();
+
+    // Shift so 0 = backward
+    degrees += 180.0;
+
+    // Convert to cloackwise positive
+    degrees = -degrees;
+
+    // Normalize to [0, 360)
+    degrees = (degrees % 360 + 360) % 360;
+
+    // Clamp to turret limits
+    degrees = MathUtil.clamp(degrees, 0, 170);
+
+    // Convert to rotations
+    double rotations = Units.degreesToRotations(degrees);
+
+    return rotations;
+  }
+
   public Command rotateToHub() {
-    return run(
+    return runEnd(
         () -> {
-          double targetRotations = autoTurretRotation.calculateTurretAngle();
-
-          setTurretPositionRaw(targetRotations);
-
-          setName("Rotate to: " + targetRotations);
-        });
+          double targetRotations = calculateTurretAngle();
+          turretMotor.setControl(request.withPosition(targetRotations));
+          targetPos = targetRotations;
+        },
+        () -> turretMotor.stopMotor());
   }
 
   @Override
