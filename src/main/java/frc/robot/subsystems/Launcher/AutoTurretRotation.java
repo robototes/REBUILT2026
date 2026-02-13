@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Launcher;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -44,7 +45,7 @@ public class AutoTurretRotation {
     double min = Units.degreesToRotations(0);
     double max = Units.degreesToRotations(170);
 
-    rotations = Math.max(min, Math.min(max, rotations));
+    rotations = MathUtil.clamp(rotations, min, max);
     /*
     System.out.println("Robot x " + robotTranslation.getX());
     System.out.println("Robot y " + robotTranslation.getY());
