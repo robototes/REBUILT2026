@@ -10,15 +10,19 @@ import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.subsystems.LauncherConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
 
@@ -37,6 +41,7 @@ public class Robot extends TimedRobot {
   private final int GAMEPIECE_PIPELINE = 2;
   private FuelSim fuelSimulation;
   private final Mechanism2d mechanismRobot;
+  private final Field2d robotField = new Field2d();
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -81,6 +86,7 @@ public class Robot extends TimedRobot {
         .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
 
     SmartDashboard.putData(CommandScheduler.getInstance());
+    SmartDashboard.putData("feild", robotField);
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       AutoLogic.registerCommands();
@@ -124,6 +130,9 @@ public class Robot extends TimedRobot {
         subsystems.detectionSubsystem.update();
       }
     }
+    var robotState = subsystems.drivebaseSubsystem.getState();
+    LauncherConstants.update(robotState.Pose, robotState.Speeds, AllianceUtils.getHubTranslation2d(), robotField);
+    robotField.getObject("robot").setPose(robotState.Pose);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

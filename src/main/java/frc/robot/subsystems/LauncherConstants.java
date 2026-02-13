@@ -10,6 +10,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.List;
 
@@ -71,22 +72,19 @@ public class LauncherConstants {
     Trajectory t =
         TrajectoryGenerator.generateTrajectory(
             List.of(turret, updatedTarget), new TrajectoryConfig(50, 50));
-    Pose2d turretVelocity =
-        turret.plus(new Transform2d(angularVelocity(robot, fieldSpeeds), Rotation2d.kZero));
-    Trajectory t2 =
-        TrajectoryGenerator.generateTrajectory(
-            List.of(turret, turretVelocity), new TrajectoryConfig(50, 50));
     field.getObject("adjustedTarget").setTrajectory(t);
-    field.getObject("balisticTarget").setTrajectory(t2);
+    if (Math.abs(fieldSpeeds.omegaRadiansPerSecond) > .1){
+      Pose2d turretVelocity =
+          turret.plus(new Transform2d(angularVelocity(robot, fieldSpeeds), Rotation2d.kZero));
+      Trajectory t2 =
+          TrajectoryGenerator.generateTrajectory(
+              List.of(turret, turretVelocity), new TrajectoryConfig(50, 50));
+      field.getObject("balisticTarget").setTrajectory(t2);
+    }
   }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
     return flywheelMap.get(distance);
-  }
-
-  public static void update() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'update'");
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
