@@ -37,6 +37,7 @@ public class IntakeSubsystem extends SubsystemBase {
   public static final double PIVOT_RETRACTED_POS = 0.0 * PIVOT_GEAR_RATIO;
   public static final double POS_TOLERANCE = Units.degreesToRotations(3) * PIVOT_GEAR_RATIO;
   private boolean pivotIsRetracted = true;
+  private boolean intakeRunning = false;
   // sim
   private final DoubleTopic leftRollerTopic;
   private final DoubleTopic rightRollerTopic;
@@ -60,13 +61,13 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     var nt = NetworkTableInstance.getDefault();
-    this.leftRollerTopic = nt.getDoubleTopic("left intake status/speed in RPM");
+    this.leftRollerTopic = nt.getDoubleTopic("intake/leftRollerSpeed");
     this.leftRollerPub = leftRollerTopic.publish();
 
-    this.rightRollerTopic = nt.getDoubleTopic("right intake status/speed in RPM");
+    this.rightRollerTopic = nt.getDoubleTopic("intake/rightRollerSpeed");
     this.rightRollerPub = rightRollerTopic.publish();
 
-    this.pivotTopic = nt.getDoubleTopic("pivot position/position");
+    this.pivotTopic = nt.getDoubleTopic("intake/pivotPosition");
     this.pivotPublisher = pivotTopic.publish();
 
     // default values
@@ -90,7 +91,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     simConfigs.kV = 5.0;
     simConfigs.kA = 0.0;
-    simConfigs.kP = 0.0;
+    simConfigs.kP = 2.0;
     simConfigs.kI = 0.0;
     simConfigs.kD = 0.0;
     simConfigs.kG = 0.0;
@@ -128,6 +129,29 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command runIntake() {
+    return Commands.runOnce(
+      () -> {
+        moveIntake();
+      }
+    );
+  }
+
+  private void moveIntake() {
+    intakeRunning = !intakeRunning;
+    if (intakeRunning) {
+          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
+          leftRollers.set(INTAKE_SPEED);
+          rightRollers.setControl(followerRequest); // opposite direction as left rollers
+    }
+    else {
+          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
+          leftRollers.stopMotor();
+          rightRollers.stopMotor();
+
+    }
+  }
+
+  public Command runRollers() {
     return Commands.startEnd(
         () -> {
           leftRollers.set(INTAKE_SPEED);
@@ -143,44 +167,39 @@ public class IntakeSubsystem extends SubsystemBase {
     return pivotMotor.getPosition().getValueAsDouble() * PIVOT_GEAR_RATIO;
   }
 
-  private Command setPivotPos(double pos) {
-    return Commands.runOnce(
-        () -> {
-          targetPos = pos;
-          pivotMotor.setControl(pivotRequest.withPosition(pos));
-        });
-  }
 
-  public Command togglePivot() {
-    double targetPos = pivotIsRetracted ? PIVOT_DEPLOYED_POS : PIVOT_RETRACTED_POS;
-    pivotIsRetracted = !pivotIsRetracted;
-    return Commands.runOnce(
-        () -> {
-          setPivotPos(targetPos).andThen(Commands.waitUntil(atPosition(targetPos)));
-        });
-  }
 
-  public Trigger atPosition(double position) {
-    return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
-  }
 
-  public Command stop() {
-    return Commands.runOnce(
-        () -> {
-          pivotMotor.stopMotor();
-        });
-  }
+  // public Command togglePivot() {
+  //   double targetPos = pivotIsRetracted ? PIVOT_DEPLOYED_POS : PIVOT_RETRACTED_POS;
+  //   pivotIsRetracted = !pivotIsRetracted;
+  //   return Commands.runOnce(
+  //       () -> {
+  //         pivotMotor.setControl(pivotRequest.withPosition(targetPos));
+  //       });
+  // }
 
-  public Command deployIntake() {
-    return Commands.runOnce(
-        () -> {
-          if (Math.abs(getPivotPos() - PIVOT_RETRACTED_POS) < POS_TOLERANCE) {
-            pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-          } else {
-            pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
-          }
-        });
-  }
+  // public Trigger atPosition(double position) {
+  //   return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
+  // }
+
+  // public Command stop() {
+  //   return Commands.runOnce(
+  //       () -> {
+  //         pivotMotor.stopMotor();
+  //       });
+  // }
+
+  // public Command deployIntake() {
+  //   return Commands.runOnce(
+  //       () -> {
+  //         if (Math.abs(getPivotPos() - PIVOT_RETRACTED_POS) < POS_TOLERANCE) {
+  //           pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
+  //         } else {
+  //           pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
+  //         }
+  //       });
+  // }
 
   @Override
   public void periodic() {

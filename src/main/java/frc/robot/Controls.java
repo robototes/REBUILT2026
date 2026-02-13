@@ -239,9 +239,9 @@ public class Controls {
       DataLogManager.log("Controls.java: intakeSubsystem is disabled, bindings skipped");
       return;
     }
-    driverController.b().whileTrue(s.intakeSubsystem.runIntake());
-    // intakeTestController.x().onTrue(s.intakeSubsystem.maxwashere.deployIntake());
-    driverController.x().onTrue(s.intakeSubsystem.togglePivot());
+    driverController.a().onTrue(s.intakeSubsystem.runIntake());
+    intakeTestController.a().onTrue(s.intakeSubsystem.runRollers());
+    // TODO: add run only pivot command and bind to another button
   }
 
   /**
