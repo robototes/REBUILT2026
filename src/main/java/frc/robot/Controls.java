@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -32,12 +33,24 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
+  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
+  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int LED_CONTROLLER_PORT = 5;
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
+
+  private final CommandXboxController ledTestController =
+      new CommandXboxController(LED_CONTROLLER_PORT);
+
+  private final CommandXboxController feederTestController =
+      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController spindexerTestController =
+      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController indexingTestController =
       new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
@@ -67,6 +80,10 @@ public class Controls {
     // Configure the trigger bindings
     s = subsystems;
     configureDrivebaseBindings();
+    configureLEDBindings();
+    if (s.detectionSubsystem != null) {
+      configureAutoAlignBindings();
+    }
     configureLauncherBindings();
     configureIndexingBindings();
     configureAutoAlignBindings();
@@ -191,6 +208,42 @@ public class Controls {
       return;
     }
     driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+  }
+
+  private void configureLEDBindings() {
+    LEDSubsystem LEDs = s.ledSubsystem;
+    if (s.ledSubsystem == null) {
+      // Stop running this method
+      return;
+    }
+    ledTestController
+        .a()
+        .onTrue(
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR))); // intake color yellow
+    ledTestController
+        .b()
+        .onTrue(
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR))); // climb color blue
+    ledTestController
+        .x()
+        .onTrue(
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR))); // outtake color green
+    ledTestController
+        .y()
+        .onTrue(
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR))); // default color red
+    ledTestController
+        .leftBumper()
+        .whileTrue(
+            LEDs.alternateColors(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.INTAKE_COLOR)
+                .withName("Alternate between climb and intake color"));
+    ledTestController
+        .rightBumper()
+        .onTrue(LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)); // turns off leds
   }
 
   private void configureLauncherBindings() {
