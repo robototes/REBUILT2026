@@ -8,27 +8,36 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.TurretSubsystemSim;
 import frc.robot.util.TurretUtils.TurretState;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class TurretSubsystem2 extends SubsystemBase {
-  private MotionMagicVoltage request;
+  // Hardware
   private CommandSwerveDrivetrain driveTrain;
   private TalonFX m_turret;
 
   private final double GEAR_RATIO = 20;
-  private final double TURRET_MIN = 0;
+  private final double TURRET_MIN = -180;
   private final double TURRET_MAX = 180;
   private final VoltageOut FIVE_VOLTS = new VoltageOut(5);
   private final VoltageOut ZERO_VOLTS = new VoltageOut(0);
 
+  // Poses
+  private final Translation2d hub = AllianceUtils.getHubTranslation2d();
+
+  // Configs
+  private MotionMagicVoltage request;
   private final double k_S = 0.41;
   private final double k_V = 0.9;
   private final double k_A = 0.12;
@@ -37,13 +46,19 @@ public class TurretSubsystem2 extends SubsystemBase {
   private final double k_I = 0;
   private final double k_D = 1.5;
 
+  // Simulation and Network tables
   TurretSubsystemSim sim;
 
   public TurretSubsystem2(CommandSwerveDrivetrain train) {
     request = new MotionMagicVoltage(0);
     driveTrain = train;
     m_turret = new TalonFX(24);
-    sim = new TurretSubsystemSim(m_turret, GEAR_RATIO, -Math.PI / 2, Math.PI / 2);
+    sim =
+        new TurretSubsystemSim(
+            m_turret,
+            GEAR_RATIO,
+            Units.degreesToRadians(TURRET_MIN),
+            Units.degreesToRadians(TURRET_MAX));
     configureMotors();
   }
 
@@ -62,7 +77,7 @@ public class TurretSubsystem2 extends SubsystemBase {
     return Commands.run(
         () -> {
           double multiplier = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1);
-          double position = multiplier * 0.5;
+          double position = multiplier * (TURRET_MAX / 360);
           setMotorPosition(position);
         });
   }
@@ -102,6 +117,22 @@ public class TurretSubsystem2 extends SubsystemBase {
 
   private class Autorotate extends Command {
     public Autorotate() {}
+
+    @Override
+    public void execute() {
+      Pose2d robotPose = driveTrain.getStateCopy().Pose;
+
+      double robotRotation = robotPose.getRotation().getDegrees();
+      double motorPos = Units.rotationsToDegrees(m_turret.getPosition().getValueAsDouble());
+      double motorPosFieldRelative = motorPos + robotRotation;
+      // Target angle field relative
+      Translation2d result = AllianceUtils.getHubTranslation2d().minus(robotPose.getTranslation());
+      double targetAngle = Math.atan2(result.getY(), result.getX());
+      double targetAngleRobotRelative = motorPos - targetAngle;
+
+      setMotorPosition(
+          Units.degreesToRotations(wrapDegreesToSoftLimits(targetAngleRobotRelative, motorPos)));
+    }
   }
 
   private void configureMotors() {

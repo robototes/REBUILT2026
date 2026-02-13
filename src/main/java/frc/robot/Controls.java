@@ -257,19 +257,29 @@ public class Controls {
     if (s.turretSubsystem2 == null) {
       return;
     }
-    Trigger cross = turretTestController2.cross();
-    Trigger square = turretTestController2.square();
-    Trigger circle = turretTestController2.circle();
-    Trigger triangle = turretTestController2.triangle();
-    cross.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
-    square.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
-    circle.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.POSITION));
+    // Trigger cross = turretTestController2.cross();
+    // Trigger square = turretTestController2.square();
+    // Trigger circle = turretTestController2.circle();
+    // Trigger triangle = turretTestController2.triangle();
+
+    Trigger a = turretTestController.a();
+    Trigger b = turretTestController.b();
+    Trigger x = turretTestController.x();
+    Trigger y = turretTestController.y();
+
+    x.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
+    a.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
+    b.onTrue((Commands.runOnce(() -> currentTurretState = TurretState.POSITION)));
+
+    // cross.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
+    // square.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
+    // circle.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.POSITION));
     s.turretSubsystem2
         .PositionRotateTrigger(() -> currentTurretState)
-        .whileTrue(s.turretSubsystem2.PositionMove(() -> turretTestController2.getLeftX()));
+        .whileTrue(s.turretSubsystem2.PositionMove(() -> turretTestController.getLeftX()));
     s.turretSubsystem2
         .ManualRotateTrigger(() -> currentTurretState)
-        .whileTrue(s.turretSubsystem2.ManualMove(() -> turretTestController2.getLeftX()));
+        .whileTrue(s.turretSubsystem2.ManualMove(() -> turretTestController.getLeftX()));
     // s.turretSubsystem2
     //     .AutoRotateTrigger(() -> currentTurretState)
     //     .whileTrue(());
