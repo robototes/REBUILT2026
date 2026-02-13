@@ -270,7 +270,7 @@ public class Controls {
     x.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
     a.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
     b.onTrue((Commands.runOnce(() -> currentTurretState = TurretState.POSITION)));
-    y.onTrue(Commands.runOnce(() -> s.turretSubsystem2.zeroMotor(), s.turretSubsystem2));
+    y.onTrue(Commands.runOnce(() -> s.turretSubsystem2.autoZeroCommand(false), s.turretSubsystem2));
     // cross.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
     // square.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.MANUAL));
     // circle.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.POSITION));

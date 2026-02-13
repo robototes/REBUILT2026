@@ -37,6 +37,9 @@ public class TurretSubsystem extends SubsystemBase {
   private final double GEAR_RATIO = 20;
   private final double TURRET_MIN = 0;
   private final double TURRET_MAX = 90;
+  private final double MIN_HITS = 7;
+  private final double STALL_CURRENT = 5;
+  private final double MIN_VELOCITY = 0.03;
   private static final double TURRET_X_OFFSET = 0.2159;
   private static final double TURRET_Y_OFFSET = 0.1397;
   private final VoltageOut FIVE_VOLTS = new VoltageOut(5);
@@ -96,12 +99,35 @@ public class TurretSubsystem extends SubsystemBase {
     return new Autorotate();
   }
 
-  private void setMotorPosition(double rotations) {
-    m_turret.setControl(request.withPosition(rotations));
+  public Command autoZeroCommand(boolean runAutoZeroRoutine) {
+    final int[] hits = {0};
+    if (runAutoZeroRoutine) {
+      return Commands.parallel(
+          Commands.run(
+                  () -> {
+                    m_turret.setControl(FIVE_VOLTS);
+                    if (m_turret.getStatorCurrent().getValueAsDouble() >= STALL_CURRENT) {
+                      hits[0]++;
+                    } else {
+                      hits[0] = 0;
+                    }
+                  },
+                  TurretSubsystem.this)
+              .until(
+                  () -> {
+                    double motorVelocity = m_turret.getVelocity().getValueAsDouble();
+                    return hits[0] > MIN_HITS && motorVelocity <= MIN_VELOCITY;
+                  }));
+    } else {
+      return Commands.runOnce(() -> zeroMotor());
+    }
+  }
+  private void zeroMotor() {
+    m_turret.setPosition(0);
   }
 
-  public void zeroMotor() {
-    m_turret.setPosition(0);
+  private void setMotorPosition(double rotations) {
+    m_turret.setControl(request.withPosition(rotations));
   }
 
   private double wrapDegreesToSoftLimits(double targetDegrees, double currentDegrees) {
