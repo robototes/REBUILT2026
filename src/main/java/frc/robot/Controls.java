@@ -310,7 +310,7 @@ public class Controls {
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
-    turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
+    turretTestController.rightTrigger().onTrue(s.turretSubsystem.rotateToHub());
     turretTestController
         .rightBumper()
         .onTrue(

@@ -153,6 +153,8 @@ public class TurretSubsystem extends SubsystemBase {
           double targetRotations = autoTurretRotation.calculateTurretAngle();
 
           setTurretPositionRaw(targetRotations);
+
+          setName("Rotate to: " + targetRotations);
         });
   }
 
