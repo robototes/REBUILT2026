@@ -6,7 +6,6 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
@@ -39,7 +38,6 @@ public class Robot extends TimedRobot {
   private final int GAMEPIECE_PIPELINE = 2;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
-  private SwerveDriveState swerveState;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -107,19 +105,22 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     if (subsystems.visionSubsystem != null) {
-      swerveState = subsystems.drivebaseSubsystem.getState();
-      LimelightHelpers.SetRobotOrientation(
-          Hardware.LIMELIGHT_C,
-          swerveState.Pose.getRotation().getDegrees(),
-          swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-          0,
-          0,
-          0,
-          0);
-      subsystems.visionSubsystem.update();
+      if (!subsystems.visionSubsystem.isViewFinder()) {
+        LimelightHelpers.SetRobotOrientation(
+            Hardware.LIMELIGHT_C,
+            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
+            subsystems.drivebaseSubsystem.getState().Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+            0,
+            0,
+            0,
+            0);
+        subsystems.visionSubsystem.update();
+      }
     }
     if (subsystems.detectionSubsystem != null) {
-      subsystems.detectionSubsystem.update();
+      if (!subsystems.detectionSubsystem.isViewFinder()) {
+        subsystems.detectionSubsystem.update();
+      }
     }
     CommandScheduler.getInstance().run();
   }
@@ -128,31 +129,28 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
       // seed internal limelight imu for mt2
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
-      // Throttle to reduce Limelight heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, 150);
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
-      // Throttle to reduce Limelight heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, 150);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
     }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      // turn throttle to zero to get rid of throttle "glaze"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, 0);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
     if (subsystems.detectionSubsystem != null) {
-      // turn throttle to zero to get rid of throttle "glaze"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, 0);
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 

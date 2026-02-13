@@ -51,7 +51,7 @@ public class Subsystems {
       drivebaseSubsystem = null;
     }
 
-    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
+    if (VISION_ENABLED) {
       visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
       SmartDashboard.putData(visionSubsystem);
     } else {
