@@ -10,6 +10,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
@@ -27,6 +28,12 @@ public class TurretSubsystem extends SubsystemBase {
   private final CommandSwerveDrivetrain driveTrain;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
+
+  // Offsets
+  private static final double TURRET_X_OFFSET = 0.2159;
+  private static final double TURRET_Y_OFFSET = 0.1397;
+  private static final Transform2d TURRET_OFFSET =
+      new Transform2d(TURRET_X_OFFSET, -TURRET_Y_OFFSET, Rotation2d.k180deg);
 
   // Positions
   private double targetPos;
@@ -122,7 +129,6 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command pointFacingJoystick(Supplier<Double> xSupplier, Supplier<Double> ySupplier) {
-
     return run(
         () -> {
           double x = xSupplier.get();
@@ -164,9 +170,9 @@ public class TurretSubsystem extends SubsystemBase {
 
   private double calculateTurretAngle() {
     // Get current robot pose
-    Pose2d robotPose = driveTrain.getState().Pose;
-    Translation2d robotTranslation = robotPose.getTranslation();
-    Rotation2d robotRotation = robotPose.getRotation();
+    Pose2d turretPose = driveTrain.getState().Pose.plus(TURRET_OFFSET);
+    Translation2d robotTranslation = turretPose.getTranslation();
+    Rotation2d robotRotation = turretPose.getRotation();
 
     // Get hub position
     Translation2d hubTranslation = AllianceUtils.getHubTranslation2d();
@@ -185,10 +191,7 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
 
-    // Shift so 0 = backward
-    degrees += 180.0;
-
-    // Convert to cloackwise positive
+    // Convert to clockwise positive
     degrees = -degrees;
 
     // Normalize to [0, 360)
