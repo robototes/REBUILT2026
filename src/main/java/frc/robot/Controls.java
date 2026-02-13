@@ -311,8 +311,10 @@ public class Controls {
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
     turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
-    turretTestController.rightBumper().onTrue(
-        s.drivebaseSubsystem.runOnce(
-            () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+    turretTestController
+        .rightBumper()
+        .onTrue(
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
   }
 }

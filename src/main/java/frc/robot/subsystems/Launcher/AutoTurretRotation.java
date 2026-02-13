@@ -31,7 +31,8 @@ public class AutoTurretRotation {
     Translation2d robotToHub = hubTranslation.minus(robotTranslation);
 
     // Calculate absolute field angle to hub
-    Rotation2d absoluteAngleToHub = new Rotation2d(Math.atan2(robotToHub.getY(), robotToHub.getX()));
+    Rotation2d absoluteAngleToHub =
+        new Rotation2d(Math.atan2(robotToHub.getY(), robotToHub.getX()));
 
     // Calculate turret angle relative to robot's forward direction
     // Subtract robot's rotation to get robot-relative angle
@@ -39,7 +40,6 @@ public class AutoTurretRotation {
 
     // Convert to rotations for the turret motor
     double rotations = turretAngle.getRotations() + Units.radiansToRotations(Math.PI);
-
 
     double min = Units.degreesToRotations(0);
     double max = Units.degreesToRotations(170);

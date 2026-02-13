@@ -1,21 +1,20 @@
 package frc.robot.subsystems.Launcher;
 
-import java.util.function.Supplier;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.math.util.Units;
-import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
@@ -106,8 +105,7 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
-  public void
-  setTurretPositionRaw(double pos) {
+  public void setTurretPositionRaw(double pos) {
     turretMotor.setControl(request.withPosition(pos));
     targetPos = pos;
   }
@@ -150,11 +148,12 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command rotateToHub() {
-    return run(() -> {
-    double targetRotations = autoTurretRotation.calculateTurretAngle();
+    return run(
+        () -> {
+          double targetRotations = autoTurretRotation.calculateTurretAngle();
 
-    setTurretPositionRaw(targetRotations);});
-
+          setTurretPositionRaw(targetRotations);
+        });
   }
 
   @Override
