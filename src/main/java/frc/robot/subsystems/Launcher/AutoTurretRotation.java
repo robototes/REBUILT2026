@@ -54,9 +54,9 @@ public class AutoTurretRotation {
     System.out.println("Robot to hub y " + robotToHub.getY());
     System.out.println("absolute angle to hub " + absoluteAngleToHub.getDegrees());
     System.out.println("robot rotation " + robotRotation.getDegrees());
-    System.out.println("Turret angle " + turretAngle.getDegrees());
+    System.out.println("Turret angle " + turretAngle.getDegrees()); */
 
-    System.out.println("Rots" + rotations); */
+    System.out.println("Rots" + rotations);
 
     return rotations;
   }
