@@ -95,6 +95,7 @@ public class TurretSubsystem extends SubsystemBase {
         this);
   }
 
+  //Returns new Autorotate command that continuously runs
   public Command AutoRotate() {
     return new Autorotate();
   }
@@ -117,7 +118,7 @@ public class TurretSubsystem extends SubsystemBase {
                   () -> {
                     double motorVelocity = m_turret.getVelocity().getValueAsDouble();
                     return hits[0] > MIN_HITS && motorVelocity <= MIN_VELOCITY;
-                  }));
+                  }).andThen(Commands.runOnce(() -> zeroMotor())));
     } else {
       return Commands.runOnce(() -> zeroMotor());
     }
@@ -137,6 +138,7 @@ public class TurretSubsystem extends SubsystemBase {
         TURRET_MAX);
   }
 
+  //Triggers. Most likely won't be used on competition robot
   public Trigger ManualRotateTrigger(Supplier<TurretState> state) {
     return new Trigger(
         () -> {
@@ -165,16 +167,19 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void execute() {
+      //Get robot rotation and motor rotation
       Pose2d robotPose = driveTrain.getStateCopy().Pose.transformBy(turret_transform);
-
       double robotRotation = robotPose.getRotation().getDegrees();
       double motorPos = Units.rotationsToDegrees(m_turret.getPosition().getValueAsDouble());
       // Target angle field relative
-      Translation2d result = AllianceUtils.getHubTranslation2d().minus(robotPose.getTranslation());
-      double targetAngle = Units.radiansToDegrees(Math.atan2(result.getY(), result.getX()));
-      double targetAngleRobotRelative = targetAngle - robotRotation;
 
-      System.out.println(targetAngleRobotRelative);
+      //Get the position vector from robot to hub
+      Translation2d result = AllianceUtils.getHubTranslation2d().minus(robotPose.getTranslation());
+      //Get arctangent of the x and y of result
+      double targetAngle = Units.radiansToDegrees(Math.atan2(result.getY(), result.getX()));
+      //Convert targetAngle (field relativ) to robot relative angle
+      double targetAngleRobotRelative = targetAngle - robotRotation;
+      //Set the clamped position of the turret
       setMotorPosition(
           Units.degreesToRotations(wrapDegreesToSoftLimits(targetAngleRobotRelative, motorPos)));
     }
