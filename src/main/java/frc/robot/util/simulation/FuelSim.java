@@ -343,7 +343,7 @@ public class FuelSim {
    * @param tableKey NetworkTable to log fuel positions to as an array of {@link Translation3d}
    *     structs.
    */
-  public FuelSim(String tableKey) {
+  private FuelSim(String tableKey) {
     // Initialize grid
     for (int i = 0; i < GRID_COLS; i++) {
       for (int j = 0; j < GRID_ROWS; j++) {
@@ -358,7 +358,7 @@ public class FuelSim {
   }
 
   /** Creates a new instance of FuelSim with log path "/Fuel Simulation" */
-  public FuelSim() {
+  private FuelSim() {
     this("/Fuel Simulation");
   }
 
@@ -909,9 +909,9 @@ public class FuelSim {
   }
 
   protected class SimIntake {
-    double xMin, xMax, yMin, yMax;
-    BooleanSupplier ableToIntake;
-    Runnable callback;
+    final double xMin, xMax, yMin, yMax;
+    final BooleanSupplier ableToIntake;
+    final Runnable callback;
 
     protected SimIntake(
         double xMin,
