@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class LEDSubsystem extends SubsystemBase {
-  /** Constants goes here */
   /** CAN ID for the CANdle LED controller. */
   private static final int CAN_ID = Hardware.CANdle_ID;
 
@@ -115,7 +114,7 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   /**
-   * Alternates the LED strip between two colors, switching every 0.5 seconds.
+   * Alternates the LED strip between two colors, switching every {@code interval} seconds.
    *
    * <p>This command will run indefinitely, repeatedly showing {@code colorA} for 0.5s, then {@code
    * colorB} for 0.5s, creating a flashing effect.

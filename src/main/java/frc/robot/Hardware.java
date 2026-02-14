@@ -24,7 +24,7 @@ public class Hardware {
   // Check CompTunerConstants
 
   // CANdle: 15
-  public static final int CANdle_ID = 15;
+  public static final int CANdle_ID = 15; // temporary
 
   // Vision
   // TODO: Use more descriptive names for Limelights once their positions are known.
