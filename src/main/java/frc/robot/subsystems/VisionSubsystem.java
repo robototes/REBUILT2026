@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -8,6 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -38,7 +38,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
 
-  private boolean disableVision;
+  private BooleanSubscriber disableVision;
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
@@ -52,9 +52,13 @@ public class VisionSubsystem extends SubsystemBase {
 
   // state
   private double lastTimestampSeconds = 0;
-  public Pose2d lastFieldPose = null;
+  private Pose2d lastFieldPose = null;
   private double distance = 0;
   private double tagAmbiguity = 0;
+  // meters
+  private static final double HEIGHT_TOLERANCE = 0.15;
+  // degrees
+  private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
@@ -68,38 +72,36 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("april tag distance meters", getDistanceToTarget());
     SmartDashboard.putNumber("time since last reading", getTimeSinceLastReading());
     SmartDashboard.putNumber("tag ambiguity", getTagAmbiguity());
-    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
+    var nt = NetworkTableInstance.getDefault();
+    disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
 
   public void update() {
-    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
     // System.out.println("updating");
-    RawFiducial[] rawFiducialsB = CCamera.getRawFiducials();
+    RawFiducial[] rawFiducialsC = CCamera.getRawFiducials();
     // System.out.println("got raw fiducials");
-    if (rawFiducialsB != null) {
-      if (rawFiducialsB.length != 1) {
-        for (RawFiducial rf : rawFiducialsB) {
+    if (rawFiducialsC != null) {
+      if (rawFiducialsC.length != 1) {
+        BetterPoseEstimate estimatemt1 = CCamera.getBetterPoseEstimate();
+        for (RawFiducial rf : rawFiducialsC) {
           // System.out.println("processing raw fiducials");
-          processLimelight(CCamera, rawFieldPose3dEntryB, rf);
+          processLimelight(estimatemt1, rawFieldPose3dEntryB, rf);
         }
       } else {
-        for (RawFiducial rf : rawFiducialsB) {
+        BetterPoseEstimate estimatemt2 = CCamera.getPoseEstimateMegatag2();
+        for (RawFiducial rf : rawFiducialsC) {
           // System.out.println("processing raw fiducials");
-          processLimelightmt2(CCamera, rawFieldPose3dEntryB, rf);
+          processLimelight(estimatemt2, rawFieldPose3dEntryB, rf);
         }
       }
     }
   }
 
   private void processLimelight(
-      LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
-    if (disableVision) {
+      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
+    if (getDisableVision()) {
       return;
     }
-
-    // System.out.println("processed a raw fiducial");
-    BetterPoseEstimate estimate = camera.getBetterPoseEstimate();
-    // System.out.println("got a pose estimate");
 
     if (estimate != null) {
       if (estimate.tagCount <= 0) {
@@ -123,74 +125,11 @@ public class VisionSubsystem extends SubsystemBase {
       rawFieldPoseEntry.set(fieldPose3d);
       //   System.out.println("got new data");
 
-      if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.15)
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(12))
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(12))) {
-        pose_bad = true;
-        // System.out.println("pose bad");
-      }
-
-      if (!pose_bad) {
-        drivetrain.addVisionMeasurement(
-            fieldPose3d.toPose2d(),
-            Utils.fpgaToCurrentTime(timestampSeconds),
-            // start with STANDARD_DEVS, and for every
-            // meter of distance past 1 meter,
-            // add a distance standard dev
-            DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
-        robotField.setRobotPose(drivetrain.getState().Pose);
-        // System.out.println("put pose in");
-      }
-      if (timestampSeconds > lastTimestampSeconds) {
-        if (!pose_bad) {
-          fieldPose3dEntry.set(fieldPose3d);
-          lastFieldPose = fieldPose3d.toPose2d();
-          rawVisionFieldObject.setPose(lastFieldPose);
-          //   System.out.println("updated pose");
-        }
-        lastTimestampSeconds = timestampSeconds;
-        // System.out.println("updated time");
-      }
-    }
-  }
-
-  private void processLimelightmt2(
-      LLCamera camera, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
-
-    disableVision = SmartDashboard.getBoolean("Disable Vision", false);
-    if (disableVision) {
-      return;
-    }
-
-    // System.out.println("processed a raw fiducial");
-    BetterPoseEstimate estimate = camera.getPoseEstimateMegatag2();
-    // System.out.println("got a pose estimate");
-
-    if (estimate != null) {
-      if (estimate.tagCount <= 0) {
-        // System.out.println("no tags");
-        return;
-      }
-
-      double timestampSeconds = estimate.timestampSeconds;
-      Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-      if (tagPose.isEmpty()) {
-        DriverStation.reportWarning(
-            "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-            false);
-        return;
-      }
-      this.distance =
-          getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), tagPose.get().toPose2d());
-      this.tagAmbiguity = rf.ambiguity;
-      boolean pose_bad = false;
-      rawFieldPoseEntry.set(fieldPose3d);
-      //   System.out.println("got new data");
-
-      if (!MathUtil.isNear(0, fieldPose3d.getZ(), 0.15)
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(12))
-          || !MathUtil.isNear(0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(12))) {
+      if (!MathUtil.isNear(0, fieldPose3d.getZ(), HEIGHT_TOLERANCE)
+          || !MathUtil.isNear(
+              0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
+          || !MathUtil.isNear(
+              0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))) {
         pose_bad = true;
         // System.out.println("pose bad");
       }
@@ -239,8 +178,8 @@ public class VisionSubsystem extends SubsystemBase {
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
     double distance =
         Math.hypot(targetPose.getX() - yourPose.getX(), targetPose.getY() - yourPose.getY());
-    // 0.1 millimeter
-    return (double) Math.round(distance * 10000) / 10000;
+    // 1 millimeter
+    return (double) Math.round(distance * 1000) / 1000;
   }
 
   public double getTagAmbiguity() {
@@ -248,10 +187,14 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public boolean getDisableVision() {
-    return disableVision;
+    return disableVision.get(false);
   }
 
   public boolean isViewFinder() {
     return "viewfinder".equals(CCamera.getPipeline());
+  }
+
+  public Pose2d getLastVisionPose2d() {
+    return lastFieldPose;
   }
 }
