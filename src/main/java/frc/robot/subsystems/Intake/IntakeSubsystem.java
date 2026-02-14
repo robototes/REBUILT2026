@@ -89,7 +89,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // pivot configs
 
-    simConfigs.kV = 5.0;
+    // simConfigs.kV = 5.0;
     simConfigs.kA = 0.0;
     simConfigs.kP = 2.0;
     simConfigs.kI = 0.0;
@@ -101,7 +101,7 @@ public class IntakeSubsystem extends SubsystemBase {
     irlConfigs.kI = 0.0;
     irlConfigs.kD = 0.0;
     irlConfigs.kA = 0.0;
-    irlConfigs.kV = 0;
+    irlConfigs.kV = 0.0;
     irlConfigs.kS = 0.155;
     irlConfigs.kG = 0.0;
 
@@ -135,24 +135,27 @@ public class IntakeSubsystem extends SubsystemBase {
       }
     );
   }
-
+;
   private void moveIntake() {
     intakeRunning = !intakeRunning;
     if (intakeRunning) {
-          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-          leftRollers.set(INTAKE_SPEED);
-          rightRollers.setControl(followerRequest); // opposite direction as left rollers
+        leftRollers.set(INTAKE_SPEED);
+        rightRollers.setControl(followerRequest); // opposite direction as left rollers
+        setPivotPos(PIVOT_DEPLOYED_POS);
     }
     else {
-          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
-          leftRollers.stopMotor();
-          rightRollers.stopMotor();
-
+        leftRollers.stopMotor();
+        rightRollers.stopMotor();
+        setPivotPos(PIVOT_RETRACTED_POS);
     }
   }
 
+  private void setPivotPos(double position) {
+    pivotMotor.setControl(pivotRequest.withPosition(position));
+  }
+
   public Command runRollers() {
-    return Commands.startEnd(
+    return Commands.runEnd(
         () -> {
           leftRollers.set(INTAKE_SPEED);
           rightRollers.setControl(followerRequest); // opposite direction as left rollers
@@ -164,42 +167,23 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public double getPivotPos() {
-    return pivotMotor.getPosition().getValueAsDouble() * PIVOT_GEAR_RATIO;
+    var curPos = pivotMotor.getPosition();
+    return curPos.getValueAsDouble();
   }
 
+  public Command togglePivot() {
+    double targetPos = pivotIsRetracted ? PIVOT_DEPLOYED_POS : PIVOT_RETRACTED_POS;
+    pivotIsRetracted = !pivotIsRetracted;
+    return Commands.runOnce(
+        () -> {
+          System.out.println("pivot toggle");
+          pivotMotor.setControl(pivotRequest.withPosition(targetPos));
+        });
+  }
 
-
-
-  // public Command togglePivot() {
-  //   double targetPos = pivotIsRetracted ? PIVOT_DEPLOYED_POS : PIVOT_RETRACTED_POS;
-  //   pivotIsRetracted = !pivotIsRetracted;
-  //   return Commands.runOnce(
-  //       () -> {
-  //         pivotMotor.setControl(pivotRequest.withPosition(targetPos));
-  //       });
-  // }
-
-  // public Trigger atPosition(double position) {
-  //   return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
-  // }
-
-  // public Command stop() {
-  //   return Commands.runOnce(
-  //       () -> {
-  //         pivotMotor.stopMotor();
-  //       });
-  // }
-
-  // public Command deployIntake() {
-  //   return Commands.runOnce(
-  //       () -> {
-  //         if (Math.abs(getPivotPos() - PIVOT_RETRACTED_POS) < POS_TOLERANCE) {
-  //           pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-  //         } else {
-  //           pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
-  //         }
-  //       });
-  // }
+  public Trigger atPosition(double position) {
+    return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
+  }
 
   @Override
   public void periodic() {
