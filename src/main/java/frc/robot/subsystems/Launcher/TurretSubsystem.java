@@ -45,26 +45,26 @@ public class TurretSubsystem extends SubsystemBase {
   // PID variables
   private static final double kP = 2.97;
   private static final double kI = 0;
-  private static final double kD = 1.5;
+  private static final double kD = 1;
   private static final double kG = 0;
   private static final double kS = 0.41;
   private static final double kV = 0.9;
   private static final double kA = 0.12;
 
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 60; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
+  private static final int STATOR_CURRENT_LIMIT = 40; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 5;
-  private static final double ACCELERATION = 20;
-  private static final double JERK = 300;
+  private static final double ACCELERATION = 10;
+  private static final double JERK = 150;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 20;
 
   // Soft Limits
-  private static final double TURRET_MAX = 170; // degrees
+  private static final double TURRET_MAX = 190; // degrees
   private static final double TURRET_MIN = 0; // degrees
   private static final double TURRET_DEADBAND = -0.5; // degrees
 
@@ -79,7 +79,7 @@ public class TurretSubsystem extends SubsystemBase {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
@@ -150,7 +150,7 @@ public class TurretSubsystem extends SubsystemBase {
           degrees = (degrees % 360 + 360) % 360;
 
           // Clamp to turret range
-          degrees = MathUtil.clamp(degrees, 0, 170);
+          degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
           double rotations = Units.degreesToRotations(degrees);
 
@@ -198,7 +198,7 @@ public class TurretSubsystem extends SubsystemBase {
     degrees = (degrees % 360 + 360) % 360;
 
     // Clamp to turret limits
-    degrees = MathUtil.clamp(degrees, 0, 170);
+    degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
     // Convert to rotations
     double rotations = Units.degreesToRotations(degrees);

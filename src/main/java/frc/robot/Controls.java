@@ -319,5 +319,7 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+    driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
+    driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
   }
 }
