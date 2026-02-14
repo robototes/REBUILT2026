@@ -50,8 +50,8 @@ public class LauncherConstants {
 
   private static final LauncherDistanceDataPoint[] distanceData = {
     new LauncherDistanceDataPoint(2.0, 0.1, 2300, 0.7),
-    new LauncherDistanceDataPoint(3.0, 0.1, 3300, 1),
-    new LauncherDistanceDataPoint(4.0, 0.1, 4300, 1.3),
+    new LauncherDistanceDataPoint(3.0, 0.1, 3300, 0.75),
+    new LauncherDistanceDataPoint(4.0, 0.1, 4300, 0.8),
   };
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();

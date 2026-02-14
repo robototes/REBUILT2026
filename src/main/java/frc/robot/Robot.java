@@ -82,6 +82,8 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance()
         .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
 
+    SmartDashboard.putData(CommandScheduler.getInstance());
+
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       AutoLogic.registerCommands();
       AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
