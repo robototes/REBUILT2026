@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
-import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 
 /**
@@ -219,7 +218,9 @@ public class Controls {
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
-    driverController.y().onTrue(Commands.parallel(s.hood.zeroHoodCommand(), s.turretSubsystem.zeroTurret()));
+    driverController
+        .y()
+        .onTrue(Commands.parallel(s.hood.zeroHoodCommand(), s.turretSubsystem.zeroTurret()));
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
           .leftBumper()

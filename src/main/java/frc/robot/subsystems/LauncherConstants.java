@@ -25,7 +25,6 @@ public class LauncherConstants {
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
           .publish();
-  
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
