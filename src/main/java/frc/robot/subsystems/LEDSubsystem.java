@@ -116,8 +116,8 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Alternates the LED strip between two colors, switching every {@code interval} seconds.
    *
-   * <p>This command will run indefinitely, repeatedly showing {@code colorA} for {@code interval} seconds, then {@code
-   * colorB} for {@code interval} seconds, creating a flashing effect.
+   * <p>This command will run indefinitely, repeatedly showing {@code colorA} for {@code interval}
+   * seconds, then {@code colorB} for {@code interval} seconds, creating a flashing effect.
    *
    * @param colorA the first color in the sequence
    * @param colorB the second color in the sequence
