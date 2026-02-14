@@ -6,13 +6,9 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotState;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import java.util.List;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 
 public class LauncherConstants {
   private static final double LAUNCHER_OFFSET_INCHES = 12;
@@ -21,6 +17,14 @@ public class LauncherConstants {
       new Translation2d(
           Units.inchesToMeters(LAUNCHER_OFFSET_INCHES),
           Rotation2d.fromDegrees(LAUNCHER_OFFSET_DEGREES));
+  private static final StructArrayPublisher<Pose2d> turretToTarget =
+      NetworkTableInstance.getDefault()
+          .getStructArrayTopic("lines/turretToTarget", Pose2d.struct)
+          .publish();
+  private static final StructArrayPublisher<Pose2d> turretRotationalVelocity =
+      NetworkTableInstance.getDefault()
+          .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
+          .publish();
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -60,27 +64,24 @@ public class LauncherConstants {
       hoodMap.put(point.distance, point.hoodAngle);
       timeMap.put(point.distance, point.time);
     }
+    turretToTarget.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
+    turretRotationalVelocity.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
   }
 
-  public static void update(
-      Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target, Field2d field) {
+  public static void update(Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target) {
     Pose2d turret = new Pose2d(launcherFromRobot(robot), Rotation2d.kZero);
     Pose2d updatedTarget =
         new Pose2d(
             iterativeMovingShotFromFunnelClearance(robot, fieldSpeeds, target, 3),
             Rotation2d.kZero);
-    Trajectory t =
-        TrajectoryGenerator.generateTrajectory(
-            List.of(turret, updatedTarget), new TrajectoryConfig(50, 50));
-    field.getObject("adjustedTarget").setTrajectory(t);
-    if (Math.abs(fieldSpeeds.omegaRadiansPerSecond) > .1){
-      Pose2d turretVelocity =
-          turret.plus(new Transform2d(angularVelocity(robot, fieldSpeeds), Rotation2d.kZero));
-      Trajectory t2 =
-          TrajectoryGenerator.generateTrajectory(
-              List.of(turret, turretVelocity), new TrajectoryConfig(50, 50));
-      field.getObject("balisticTarget").setTrajectory(t2);
-    }
+    Pose2d turretVelocity =
+        turret.plus(new Transform2d(angularVelocity(robot, fieldSpeeds), Rotation2d.kZero));
+
+    var array = new Pose2d[] {turret, updatedTarget};
+    turretToTarget.set(array, 0);
+
+    var array2 = new Pose2d[] {turret, turretVelocity};
+    turretRotationalVelocity.set(array2, 0);
   }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
