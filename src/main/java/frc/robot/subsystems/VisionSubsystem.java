@@ -77,20 +77,20 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void update() {
-    // System.out.println("updating");
+    // DataLogManager.log("updating");
     RawFiducial[] rawFiducialsC = CCamera.getRawFiducials();
-    // System.out.println("got raw fiducials");
+    // DataLogManager.log("got raw fiducials");
     if (rawFiducialsC != null) {
       if (rawFiducialsC.length != 1) {
         BetterPoseEstimate estimatemt1 = CCamera.getBetterPoseEstimate();
         for (RawFiducial rf : rawFiducialsC) {
-          // System.out.println("processing raw fiducials");
+          // DataLogManager.log("processing raw fiducials");
           processLimelight(estimatemt1, rawFieldPose3dEntryB, rf);
         }
       } else {
         BetterPoseEstimate estimatemt2 = CCamera.getPoseEstimateMegatag2();
         for (RawFiducial rf : rawFiducialsC) {
-          // System.out.println("processing raw fiducials");
+          // DataLogManager.log("processing raw fiducials");
           processLimelight(estimatemt2, rawFieldPose3dEntryB, rf);
         }
       }
@@ -105,7 +105,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (estimate != null) {
       if (estimate.tagCount <= 0) {
-        // System.out.println("no tags");
+        // DataLogManager.log("no tags");
         return;
       }
 
@@ -123,7 +123,7 @@ public class VisionSubsystem extends SubsystemBase {
       this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
-      //   System.out.println("got new data");
+      //   DataLogManager.log("got new data");
 
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
@@ -131,7 +131,7 @@ public class VisionSubsystem extends SubsystemBase {
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))) {
         pose_bad = true;
-        // System.out.println("pose bad");
+        // DataLogManager.log(("pose bad");
       }
 
       if (!pose_bad) {
@@ -143,17 +143,17 @@ public class VisionSubsystem extends SubsystemBase {
             // add a distance standard dev
             DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
         robotField.setRobotPose(drivetrain.getState().Pose);
-        // System.out.println("put pose in");
+        // DataLogManager.log("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {
         if (!pose_bad) {
           fieldPose3dEntry.set(fieldPose3d);
           lastFieldPose = fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
-          //   System.out.println("updated pose");
+          //   DataLogManager.log("updated pose");
         }
         lastTimestampSeconds = timestampSeconds;
-        // System.out.println("updated time");
+        // DataLogManager.log("updated time");
       }
     }
   }

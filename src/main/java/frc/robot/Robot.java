@@ -9,6 +9,7 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -62,17 +63,17 @@ public class Robot extends TimedRobot {
     }
     CommandScheduler.getInstance()
         .onCommandInitialize(
-            command -> System.out.println("Command initialized: " + command.getName()));
+            command -> DataLogManager.log("Command initialized: " + command.getName()));
     CommandScheduler.getInstance()
         .onCommandInterrupt(
             (command, interruptor) ->
-                System.out.println(
+                DataLogManager.log(
                     "Command interrupted: "
                         + command.getName()
                         + "; Cause: "
                         + interruptor.map(cmd -> cmd.getName()).orElse("<none>")));
     CommandScheduler.getInstance()
-        .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
+        .onCommandFinish(command -> DataLogManager.log("Command finished: " + command.getName()));
 
     SmartDashboard.putData(CommandScheduler.getInstance());
 
