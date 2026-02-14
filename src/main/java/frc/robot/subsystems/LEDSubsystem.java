@@ -16,7 +16,7 @@ import frc.robot.Hardware;
 public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
   /** CAN ID for the CANdle LED controller. */
-  private static final int CAN_ID = Hardware.CANdle_ID ;
+  private static final int CAN_ID = Hardware.CANdle_ID;
 
   /**
    * Last LED index in the strip (inclusive).
@@ -48,14 +48,14 @@ public class LEDSubsystem extends SubsystemBase {
   /** Default robot LED color (red). */
   public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0);
 
-  /** LED color used while intaking (yellow). */
-  public static final RGBWColor INTAKE_COLOR = new RGBWColor(255, 255, 0);
+  /** LED color used while intaking (blue). */
+  public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
 
   /** LED color used while outtaking (green). */
   public static final RGBWColor OUTTAKE_COLOR = new RGBWColor(0, 255, 0);
 
-  /** LED color used during climb mode (blue). */
-  public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 0, 255);
+  /** LED color used during climb mode (cyan). */
+  public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 255, 255);
 
   /** LED color representing LEDs off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
@@ -124,13 +124,46 @@ public class LEDSubsystem extends SubsystemBase {
    * @param colorB the second color in the sequence
    * @return a {@link Command} that continuously alternates LED colors
    */
-  public Command alternateColors(RGBWColor colorA, RGBWColor colorB) {
+  public Command alternateColors(RGBWColor colorA, RGBWColor colorB, double interval) {
     return Commands.sequence(
             Commands.runOnce(() -> setHardwareColor(colorA), this),
-            Commands.waitSeconds(0.5),
+            Commands.waitSeconds(interval),
             Commands.runOnce(() -> setHardwareColor(colorB), this),
-            Commands.waitSeconds(0.5))
+            Commands.waitSeconds(interval))
         .repeatedly();
+  }
+
+  /**
+   * Creates a command that cycles through an array of colors, switching to the next color every
+   * {@code interval} seconds.
+   *
+   * @param colors an array of {@link RGBWColor} objects to cycle through
+   * @param interval the time in seconds to wait before switching to the next color
+   * @return a {@link Command} that cycles through the given colors
+   */
+  public Command cycleColors(RGBWColor[] colors, double interval) {
+    switch (colors.length) {
+      case 0:
+        throw new IllegalArgumentException("Colors array must contain at least one color");
+
+      case 1:
+        return setLEDsCommand(colors[0]);
+
+      case 2:
+        return alternateColors(colors[0], colors[1], interval);
+
+      default:
+        Command sequenceBuilder = Commands.sequence();
+
+        for (RGBWColor color : colors) {
+          sequenceBuilder =
+              sequenceBuilder
+                  .andThen(Commands.runOnce(() -> setHardwareColor(color), this))
+                  .andThen(Commands.waitSeconds(interval));
+        }
+
+        return sequenceBuilder.repeatedly();
+    }
   }
 
   /**

@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
+import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
@@ -34,9 +35,9 @@ public class Controls {
   private static final int DRIVER_CONTROLLER_PORT = 0;
   private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
   private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
-  private static final int LED_CONTROLLER_PORT = 5;
-  private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
-  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
+  private static final int INDEXING_TEST_CONTROLLER_PORT = 3; // for now
+  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 4; // for now
+  private static final int LED_CONTROLLER_PORT = 5; // keep this one at 5 plz
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -45,12 +46,14 @@ public class Controls {
   private final CommandXboxController ledTestController =
       new CommandXboxController(LED_CONTROLLER_PORT);
 
+  // TODO: use these controllers
+  //--------
   private final CommandXboxController feederTestController =
       new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
-
+  //--------
   private final CommandXboxController indexingTestController =
       new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
 
@@ -226,30 +229,49 @@ public class Controls {
         .a()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR))); // intake color yellow
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR))
+                .withName("Set intake color")); //blue
+
     ledTestController
         .b()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR))); // climb color blue
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR))
+                .withName("Set climb color")); //cyan
+
     ledTestController
         .x()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR))); // outtake color green
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR))
+                .withName("Set outtake color")); //green
+
     ledTestController
         .y()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR))); // default color red
+                .andThen(LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR))
+                .withName("Set default color")); //red
+
     ledTestController
         .leftBumper()
         .whileTrue(
-            LEDs.alternateColors(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.INTAKE_COLOR)
-                .withName("Alternate between climb and intake color"));
+            LEDs.alternateColors(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.OUTTAKE_COLOR, 0.5)
+                .withName("Alternate climb and outtake colors with 0.5s delay"));
+
     ledTestController
         .rightBumper()
-        .onTrue(LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)); // turns off leds
+        .whileTrue(
+            LEDs.cycleColors(
+                    new RGBWColor[] {
+                      LEDSubsystem.DEFAULT_COLOR,
+                      LEDSubsystem.INTAKE_COLOR,
+                      LEDSubsystem.OUTTAKE_COLOR,
+                      LEDSubsystem.CLIMB_COLOR,
+                      LEDSubsystem.OFF_COLOR
+                    },
+                    0.5)
+                .withName("Cycle through all colors with 0.5s delay"));
   }
 
   private void configureLauncherBindings() {
