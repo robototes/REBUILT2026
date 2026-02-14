@@ -59,6 +59,7 @@ public class VisionSubsystem extends SubsystemBase {
   private static final double HEIGHT_TOLERANCE = 0.15;
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
+  private static final double ROTATION_TOLERANCE_YAW = 10;
   private CommandSwerveDrivetrain drivetrain;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
@@ -129,7 +130,11 @@ public class VisionSubsystem extends SubsystemBase {
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
-              0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))) {
+              0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
+          || !MathUtil.isNear(
+              lastFieldPose.getRotation().getRadians(),
+              fieldPose3d.getRotation().getAngle(),
+              Units.degreesToRadians(ROTATION_TOLERANCE_YAW))) {
         pose_bad = true;
         // System.out.println("pose bad");
       }
