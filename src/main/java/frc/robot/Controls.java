@@ -36,6 +36,7 @@ public class Controls {
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
+
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
@@ -84,10 +85,10 @@ public class Controls {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
-    indexingTestController.a().onTrue(s.feederSubsystem.startMotor());
+    indexingTestController.a().whileTrue(s.feederSubsystem.startMotor());
 
     // stop feeder motor
-    indexingTestController.b().onTrue(s.feederSubsystem.stopMotor());
+    indexingTestController.b().whileTrue(s.feederSubsystem.stopMotor());
 
     // start spindexer motor
     indexingTestController.x().onTrue(s.spindexerSubsystem.startMotor());

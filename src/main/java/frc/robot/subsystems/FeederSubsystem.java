@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.MotionMagicDutyCycle;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -20,6 +22,7 @@ public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
   public static final double feederCurrent = 12;
   public static final int feederRumbleThreshold = 67;
+  public TorqueCurrentFOC torqueReq = new TorqueCurrentFOC(0);
 
   private final TalonFX feedMotor;
 
@@ -64,15 +67,16 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public void setCurrent(double current) {
-    final TorqueCurrentFOC torqueReq = new TorqueCurrentFOC(current);
-    feedMotor.setControl(torqueReq);
+    feedMotor.setControl(torqueReq.withOutput(current));
   }
 
   public Command startMotor() {
-    return runOnce(
+    return runEnd(
             () -> {
               setCurrent(feederCurrent);
-            })
+            },
+            () ->
+              setCurrent(0))
         .withName("Start Feeder Motor");
   }
 
