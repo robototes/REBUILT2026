@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -262,7 +263,8 @@ public class Controls {
     a.onTrue(Commands.runOnce(() -> currentTurretState = TurretState.AUTO));
     b.onTrue((Commands.runOnce(() -> currentTurretState = TurretState.POSITION)));
     y.onTrue(Commands.runOnce(() -> s.turretSubsystem2.autoZeroCommand(false), s.turretSubsystem2));
-
+    turretTestController.rightTrigger().onTrue(
+      s.drivebaseSubsystem.runOnce(() -> s.drivebaseSubsystem.resetPose(new Pose2d(13,4,Rotation2d.kZero))));
     // Trigger cross = turretTestController2.cross();
     // Trigger square = turretTestController2.square();
     // Trigger circle = turretTestController2.circle();
