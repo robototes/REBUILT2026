@@ -47,13 +47,13 @@ public class Controls {
       new CommandXboxController(LED_CONTROLLER_PORT);
 
   // TODO: use these controllers
-  //--------
+  // --------
   private final CommandXboxController feederTestController =
       new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController spindexerTestController =
       new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
-  //--------
+  // --------
   private final CommandXboxController indexingTestController =
       new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
 
@@ -230,28 +230,28 @@ public class Controls {
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
                 .andThen(LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR))
-                .withName("Set intake color")); //blue
+                .withName("Set intake color")); // blue
 
     ledTestController
         .b()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
                 .andThen(LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR))
-                .withName("Set climb color")); //cyan
+                .withName("Set climb color")); // cyan
 
     ledTestController
         .x()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
                 .andThen(LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR))
-                .withName("Set outtake color")); //green
+                .withName("Set outtake color")); // green
 
     ledTestController
         .y()
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
                 .andThen(LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR))
-                .withName("Set default color")); //red
+                .withName("Set default color")); // red
 
     ledTestController
         .leftBumper()
