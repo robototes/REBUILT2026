@@ -23,6 +23,9 @@ public class Hardware {
   // Swerve: 1-12
   // Check CompTunerConstants
 
+  // CANdle: 15
+  public static final int CANdle_ID = 15;
+
   // Vision
   // TODO: Use more descriptive names for Limelights once their positions are known.
   public static final String LIMELIGHT_A = "limelight-a";

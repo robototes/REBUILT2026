@@ -11,11 +11,12 @@ import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Hardware;
 
 public class LEDSubsystem extends SubsystemBase {
   /** Constants goes here */
   /** CAN ID for the CANdle LED controller. */
-  private static final int CAN_ID = 15;
+  private static final int CAN_ID = Hardware.CANdle_ID ;
 
   /**
    * Last LED index in the strip (inclusive).
