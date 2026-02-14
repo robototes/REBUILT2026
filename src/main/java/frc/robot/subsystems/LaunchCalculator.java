@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -10,15 +12,17 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 
 public class LaunchCalculator {
   private static LaunchCalculator instance;
 
   private final LinearFilter turretAngleFilter =
-      LinearFilter.movingAverage((int) (0.1 / Constants.loopPeriodSecs));
+      LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
   private final LinearFilter hoodAngleFilter =
-      LinearFilter.movingAverage((int) (0.1 / Constants.loopPeriodSecs));
+      LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
 
   private Rotation2d lastTurretAngle;
   private double lastHoodAngle;
@@ -87,14 +91,14 @@ public class LaunchCalculator {
     timeOfFlightMap.put(1.38, 0.90);
   }
 
-  public LaunchingParameters getParameters() {
+  public LaunchingParameters getParameters(SwerveDriveState robotState) {
     if (latestParameters != null) {
       return latestParameters;
     }
 
     // Calculate estimated pose while accounting for phase delay
-    Pose2d estimatedPose = RobotState.getInstance().getEstimatedPose();
-    ChassisSpeeds robotRelativeVelocity = RobotState.getInstance().getRobotVelocity();
+    Pose2d estimatedPose = robotState.Pose;
+    ChassisSpeeds robotRelativeVelocity = robotState.Speeds;
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
