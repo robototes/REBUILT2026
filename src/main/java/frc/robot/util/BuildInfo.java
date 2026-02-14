@@ -1,9 +1,5 @@
 package frc.robot.util;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +7,12 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
+
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 
 public class BuildInfo {
   /**
@@ -85,7 +87,7 @@ public class BuildInfo {
   public static void logBuildInfo() {
     Optional<String> buildInfo = loadBuildInfo();
     // Print info to stdout
-    System.out.println("Build info:\n" + buildInfo.orElse("N/A"));
+    DataLogManager.log("Build info:\n" + buildInfo.orElse("N/A"));
     // Extract data from the build info
     String commitHash = "<N/A>";
     String[] commitRefs = {};
