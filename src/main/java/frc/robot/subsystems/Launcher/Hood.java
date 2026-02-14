@@ -48,7 +48,7 @@ public class Hood extends SubsystemBase {
       1; // voltage/speed to control the motor for manual control
   private static final double STATOR_CURRENT_LIMIT = 10; // stator limit in amps
   // GEAR_RATIO = 2.90909;
-  private static final double FORWARD_SOFT_LIMIT = 1.72; // 1.72 rotations
+  private static final double FORWARD_SOFT_LIMIT = 2.1; // 2.1 rotations
   private static final double BACKWARD_SOFT_LIMIT = -0.02; // -0.02 rotations, past zeroing point
 
   public final boolean TUNER_CONTROLLED = false; // boolean to check if tuner control is being used

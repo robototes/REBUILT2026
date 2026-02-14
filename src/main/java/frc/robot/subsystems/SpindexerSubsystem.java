@@ -53,9 +53,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 5;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 2;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     cfg.apply(talonFXConfiguration);
