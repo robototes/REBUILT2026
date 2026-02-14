@@ -131,22 +131,20 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
-          || !MathUtil.isNear(
-              lastFieldPose.getRotation().getRadians(),
-              fieldPose3d.getRotation().getAngle(),
-              Units.degreesToRadians(ROTATION_TOLERANCE_YAW))) {
+          || lastFieldPose == fieldPose3d.toPose2d()) {
         pose_bad = true;
         // System.out.println("pose bad");
       }
 
       if (!pose_bad) {
-        drivetrain.addVisionMeasurement(
-            fieldPose3d.toPose2d(),
-            timestampSeconds,
-            // start with STANDARD_DEVS, and for every
-            // meter of distance past 1 meter,
-            // add a distance standard dev
-            DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
+        // drivetrain.addVisionMeasurement(
+        //     fieldPose3d.toPose2d(),
+        //     timestampSeconds,
+        //     // start with STANDARD_DEVS, and for every
+        //     // meter of distance past 1 meter,
+        //     // add a distance standard dev
+        //     DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
+        drivetrain.resetPose(fieldPose3d.toPose2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // System.out.println("put pose in");
       }
