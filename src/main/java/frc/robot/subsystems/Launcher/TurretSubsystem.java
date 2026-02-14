@@ -13,6 +13,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,6 +23,7 @@ import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.util.function.Supplier;
+import frc.robot.util.LauncherConstants;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
@@ -61,18 +64,24 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double JERK = 150;
 
   // Gear Ratio
-  private static final double GEAR_RATIO = 20;
+  private static final double GEAR_RATIO = 24;
 
   // Soft Limits
   private static final double TURRET_MAX = 190; // degrees
   private static final double TURRET_MIN = 0; // degrees
   private static final double TURRET_DEADBAND = -0.5; // degrees
 
+    StructArrayPublisher<Pose2d> turretRotation =
+      NetworkTableInstance.getDefault()
+          .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
+          .publish();
+
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
     turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
     turretConfig();
     turretMotor.setPosition(0);
+
   }
 
   public void turretConfig() {
@@ -212,6 +221,12 @@ public class TurretSubsystem extends SubsystemBase {
           double targetRotations = calculateTurretAngle();
           turretMotor.setControl(request.withPosition(targetRotations));
           targetPos = targetRotations;
+          Pose2d turretPose = driveTrain.getState().Pose.plus(TURRET_OFFSET);
+          Transform2d fieldRelativeOffset = new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
+          var array = new Pose2d[] {turretPose, new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero)};
+          Pose2d turretPose2 = new Pose2d(LauncherConstants.launcherFromRobot(driveTrain.getState().Pose), driveTrain.getState().Pose.getRotation().minus(Rotation2d.fromRotations(targetRotations)));
+          var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
+          turretRotation.set(array2, 0);
         },
         () -> turretMotor.stopMotor());
   }
