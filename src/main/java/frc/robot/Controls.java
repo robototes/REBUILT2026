@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -69,6 +70,7 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureAutoAlignBindings();
+    configureVisionBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -181,14 +183,6 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-
-    // Auto rotate
-    driverController
-        .rightTrigger()
-        .whileTrue(
-            AutoDriveRotate.autoRotate(
-                    s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY())
-                .withName("Drivebase rotation towards the hub"));
   }
 
   private void configureAutoAlignBindings() {
@@ -210,9 +204,12 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.sequence(
-                AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                Commands.parallel(
-                    s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+                    AutoDriveRotate.autoRotate(
+                        s.drivebaseSubsystem, () -> this.getDriveX(), () -> this.getDriveY()),
+                    AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                    Commands.parallel(
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
+                .withName("Autorotate, Autoaim done, feeder and spindexer started"))
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
@@ -256,5 +253,22 @@ public class Controls {
             () -> vibrateDriveController(0.0) // end
             )
         .withTimeout(seconds);
+  }
+
+  private void configureVisionBindings() {
+    if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
+      driverController
+          .leftBumper()
+          .onTrue(
+              s.drivebaseSubsystem
+                  .runOnce(
+                      () -> {
+                        Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
+                        if (referenceVisionPose != null) {
+                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
+                        }
+                      })
+                  .withName("Now Drive Pose is Vision Pose"));
+    }
   }
 }
