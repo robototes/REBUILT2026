@@ -37,7 +37,7 @@ public class IntakeSim extends SubsystemBase {
 
   LinearSystem rollerSystem =
       LinearSystemId.createFlywheelSystem(
-          DCMotor.getKrakenX60(1), 20, ROLLERS_GEAR_RATIO); // idk how to calculate MOI
+          DCMotor.getKrakenX60(1), 0.002, ROLLERS_GEAR_RATIO); // idk how to calculate MOI
 
   public IntakeSim(TalonFX leftRollers, TalonFX rightRollers, TalonFX pivotMotor) {
 
