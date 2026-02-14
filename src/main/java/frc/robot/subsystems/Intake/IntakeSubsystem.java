@@ -24,18 +24,19 @@ import frc.robot.generated.CompTunerConstants;
 public class IntakeSubsystem extends SubsystemBase {
   // motor
   private static final double INTAKE_SPEED = 1.0;
-  private double pivotPos;
+  public double pivotPos;
   private double targetPos;
   private final TalonFX pivotMotor;
   private final TalonFX leftRollers;
   private final TalonFX rightRollers;
   private final MotionMagicVoltage pivotRequest = new MotionMagicVoltage(0);
+  private final VoltageOut voltageRequest = new VoltageOut(0);
   private final Follower followerRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private static final double PIVOT_GEAR_RATIO = 36.0;
-  public static final double PIVOT_DEPLOYED_POS = (120.0 / 360.0) * PIVOT_GEAR_RATIO;
-  public static final double PIVOT_RETRACTED_POS = 0.0 * PIVOT_GEAR_RATIO;
-  public static final double POS_TOLERANCE = Units.degreesToRotations(3) * PIVOT_GEAR_RATIO;
+  private static final double PIVOT_GEAR_RATIO = 36;
+  public static final double PIVOT_DEPLOYED_POS = 0.5;
+  public static final double PIVOT_RETRACTED_POS = -0.5;
+  public static final double POS_TOLERANCE = Units.degreesToRotations(5);
   private boolean pivotIsRetracted = true;
   // sim
   private final DoubleTopic leftRollerTopic;
@@ -88,11 +89,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // pivot configs
 
-    simConfigs.kV = 5.0;
-    simConfigs.kA = 0.0;
+    simConfigs.kV = 3;
+    simConfigs.kA = 0;
     simConfigs.kP = 0.0;
-    simConfigs.kI = 0.0;
-    simConfigs.kD = 0.0;
+    simConfigs.kI = 0;
+    simConfigs.kD = 0;
     simConfigs.kG = 0.0;
 
     var irlConfigs = talonFXConfigs.Slot0;
@@ -132,10 +133,13 @@ public class IntakeSubsystem extends SubsystemBase {
         () -> {
           leftRollers.set(INTAKE_SPEED);
           rightRollers.setControl(followerRequest); // opposite direction as left rollers
+          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
         },
         () -> {
           leftRollers.stopMotor();
           rightRollers.stopMotor();
+          pivotMotor.setControl(
+              pivotRequest.withPosition(PIVOT_RETRACTED_POS)); // hopefully this retracts the intake
         });
   }
 
@@ -144,10 +148,10 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   private Command setPivotPos(double pos) {
-    return Commands.runOnce(
+    return runOnce(
         () -> {
-          targetPos = pos;
           pivotMotor.setControl(pivotRequest.withPosition(pos));
+          targetPos = pos;
         });
   }
 
@@ -165,7 +169,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command stop() {
-    return Commands.runOnce(
+    return runOnce(
         () -> {
           pivotMotor.stopMotor();
         });
@@ -174,11 +178,22 @@ public class IntakeSubsystem extends SubsystemBase {
   public Command deployIntake() {
     return Commands.runOnce(
         () -> {
-          if (Math.abs(getPivotPos() - PIVOT_RETRACTED_POS) < POS_TOLERANCE) {
+          System.out.println(getPivotPos() == PIVOT_RETRACTED_POS);
+          if (getPivotPos() == PIVOT_RETRACTED_POS) {
             pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
           } else {
             pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
           }
+        });
+  }
+
+  public Command temporaryRunIntake(double speed) { // for testing
+    return Commands.runEnd(
+        () -> {
+          leftRollers.set(speed);
+        },
+        () -> {
+          leftRollers.stopMotor();
         });
   }
 
