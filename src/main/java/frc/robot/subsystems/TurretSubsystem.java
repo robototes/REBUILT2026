@@ -11,7 +11,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,9 +22,6 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.TurretSubsystemSim;
 import frc.robot.util.TurretUtils.TurretState;
-
-import static edu.wpi.first.units.Units.Rotation;
-
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -46,7 +42,8 @@ public class TurretSubsystem extends SubsystemBase {
   private final VoltageOut ZERO_VOLTS = new VoltageOut(0);
 
   // Poses
-  private final Transform2d turret_transform = new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
+  private final Transform2d turret_transform =
+      new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
 
   // Configs
   private MotionMagicVoltage request;
@@ -95,7 +92,7 @@ public class TurretSubsystem extends SubsystemBase {
         this);
   }
 
-  //Returns new Autorotate command that continuously runs
+  // Returns new Autorotate command that continuously runs
   public Command AutoRotate() {
     return new Autorotate();
   }
@@ -118,11 +115,13 @@ public class TurretSubsystem extends SubsystemBase {
                   () -> {
                     double motorVelocity = m_turret.getVelocity().getValueAsDouble();
                     return hits[0] > MIN_HITS && motorVelocity <= MIN_VELOCITY;
-                  }).andThen(Commands.runOnce(() -> zeroMotor())));
+                  })
+              .andThen(Commands.runOnce(() -> zeroMotor())));
     } else {
       return Commands.runOnce(() -> zeroMotor());
     }
   }
+
   private void zeroMotor() {
     m_turret.setPosition(0);
   }
@@ -138,7 +137,7 @@ public class TurretSubsystem extends SubsystemBase {
         TURRET_MAX);
   }
 
-  //Triggers. Most likely won't be used on competition robot
+  // Triggers. Most likely won't be used on competition robot
   public Trigger ManualRotateTrigger(Supplier<TurretState> state) {
     return new Trigger(
         () -> {
@@ -167,19 +166,19 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void execute() {
-      //Get robot rotation and motor rotation
+      // Get robot rotation and motor rotation
       Pose2d robotPose = driveTrain.getStateCopy().Pose.transformBy(turret_transform);
       double robotRotation = robotPose.getRotation().getDegrees();
       double motorPos = Units.rotationsToDegrees(m_turret.getPosition().getValueAsDouble());
       // Target angle field relative
 
-      //Get the position vector from robot to hub
+      // Get the position vector from robot to hub
       Translation2d result = AllianceUtils.getHubTranslation2d().minus(robotPose.getTranslation());
-      //Get arctangent of the x and y of result
+      // Get arctangent of the x and y of result
       double targetAngle = Units.radiansToDegrees(Math.atan2(result.getY(), result.getX()));
-      //Convert targetAngle (field relativ) to robot relative angle
+      // Convert targetAngle (field relativ) to robot relative angle
       double targetAngleRobotRelative = targetAngle - robotRotation;
-      //Set the clamped position of the turret
+      // Set the clamped position of the turret
       setMotorPosition(
           Units.degreesToRotations(wrapDegreesToSoftLimits(targetAngleRobotRelative, motorPos)));
     }
