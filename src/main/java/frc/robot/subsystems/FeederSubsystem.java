@@ -1,7 +1,9 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -17,16 +19,8 @@ import frc.robot.Hardware;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  public static final double feederSpeed = 0.4;
+  public static final double feederCurrent = 12;
   public static final int feederRumbleThreshold = 67;
-
-  private static final double FEEDMOTOR_KP = 38.5;
-  private static final double FEEDMOTOR_KI = 0;
-  private static final double FEEDMOTOR_KD = 0;
-  private static final double FEEDMOTOR_KS = 0;
-  private static final double FEEDMOTOR_KV = 0;
-  private static final double FEEDMOTOR_KG = 0;
-  private static final double FEEDMOTOR_KA = 0;
 
   private final TalonFX feedMotor;
 
@@ -70,14 +64,15 @@ public class FeederSubsystem extends SubsystemBase {
     cfg.apply(talonFXConfiguration);
   }
 
-  public void setSpeed(double speed) {
-    feedMotor.set(speed);
+  public void setCurrent(double current) {
+    final TorqueCurrentFOC torqueReq = new TorqueCurrentFOC(current);
+    feedMotor.setControl(torqueReq);
   }
 
   public Command startMotor() {
     return runOnce(
             () -> {
-              setSpeed(feederSpeed);
+              setCurrent(feederCurrent);
             })
         .withName("Start Feeder Motor");
   }
@@ -85,7 +80,7 @@ public class FeederSubsystem extends SubsystemBase {
   public Command stopMotor() {
     return runOnce(
             () -> {
-              setSpeed(0);
+              setCurrent(0);
             })
         .withName("Stop Feeder Motor");
   }
