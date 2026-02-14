@@ -75,9 +75,12 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public Command startMotor() {
-    return runOnce(
+    return runEnd(
             () -> {
               setSpeed(feederSpeed);
+            },
+            () -> {
+              setSpeed(0);
             })
         .withName("Start Feeder Motor");
   }
