@@ -122,6 +122,15 @@ public class Robot extends TimedRobot {
       if (!subsystems.detectionSubsystem.isViewFinder()) {
         subsystems.detectionSubsystem.update();
       }
+      LimelightHelpers.SetRobotOrientation(
+          Hardware.LIMELIGHT_C,
+          subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
+          subsystems.drivebaseSubsystem.getState().Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+          0,
+          0,
+          0,
+          0);
+      subsystems.visionSubsystem.update();
     }
     CommandScheduler.getInstance().run();
   }
@@ -161,6 +170,10 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -180,6 +193,10 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
   }
 
   /** This function is called periodically during operator control. */

@@ -6,6 +6,7 @@ import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.TURRET2_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -16,6 +17,7 @@ import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.SpindexerSubsystem;
+import frc.robot.subsystems.TurretSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
@@ -30,6 +32,8 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
+    public static final boolean TURRET_ENABLED = false;
+    public static final boolean TURRET2_ENABLED = true;
   }
 
   // Subsystems go here
@@ -40,6 +44,7 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
+  public final TurretSubsystem turretSubsystem2;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -84,6 +89,11 @@ public class Subsystems {
       feederSubsystem = new FeederSubsystem();
     } else {
       feederSubsystem = null;
+    }
+    if (TURRET2_ENABLED) {
+      turretSubsystem2 = new TurretSubsystem(drivebaseSubsystem);
+    } else {
+      turretSubsystem2 = null;
     }
   }
 }
