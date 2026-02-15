@@ -9,6 +9,7 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -62,17 +63,17 @@ public class Robot extends TimedRobot {
     }
     CommandScheduler.getInstance()
         .onCommandInitialize(
-            command -> System.out.println("Command initialized: " + command.getName()));
+            command -> DataLogManager.log("Command initialized: " + command.getName()));
     CommandScheduler.getInstance()
         .onCommandInterrupt(
             (command, interruptor) ->
-                System.out.println(
+                DataLogManager.log(
                     "Command interrupted: "
                         + command.getName()
                         + "; Cause: "
                         + interruptor.map(cmd -> cmd.getName()).orElse("<none>")));
     CommandScheduler.getInstance()
-        .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
+        .onCommandFinish(command -> DataLogManager.log("Command finished: " + command.getName()));
 
     SmartDashboard.putData(CommandScheduler.getInstance());
 
@@ -104,9 +105,16 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    CommandScheduler.getInstance().run();
     if (subsystems.visionSubsystem != null) {
       if (!subsystems.visionSubsystem.isViewFinder()) {
+        LimelightHelpers.SetRobotOrientation(
+            Hardware.LIMELIGHT_C,
+            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
+            subsystems.drivebaseSubsystem.getState().Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+            0,
+            0,
+            0,
+            0);
         subsystems.visionSubsystem.update();
       }
     }
@@ -115,12 +123,15 @@ public class Robot extends TimedRobot {
         subsystems.detectionSubsystem.update();
       }
     }
+    CommandScheduler.getInstance().run();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
     }
@@ -135,6 +146,8 @@ public class Robot extends TimedRobot {
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
     if (subsystems.detectionSubsystem != null) {
       // ViewFinder Pipeline Switch to reduce Limelight heat
