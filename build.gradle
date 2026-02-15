@@ -3,6 +3,7 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2026.2.1"
     id "com.diffplug.spotless" version "6.25.0"
     id("io.freefair.lombok") version "9.2.0"
+    id "checkstyle"
 
 }
 
@@ -136,4 +137,9 @@ spotless {
         endWithNewline()
         trimTrailingWhitespace()
     }
+}
+
+checkstyle {
+    toolVersion = "10.12.5"
+    configFile = file("config/checkstyle/checkstyle.xml")
 }

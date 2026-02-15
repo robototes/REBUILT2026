@@ -15,6 +15,7 @@ import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -145,7 +146,7 @@ public class Hood extends SubsystemBase {
 
   public void setHoodPosition(double positionRotations) {
     if (!hoodZeroed) {
-      System.out.println("Hood not zero'd!");
+      DataLogManager.log("Hood not zero'd!");
       return;
     }
     hood.setControl(request.withPosition(positionRotations));

@@ -1,6 +1,7 @@
 package frc.robot.test;
 
 import edu.wpi.first.hal.simulation.DriverStationDataJNI;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Robot;
 
@@ -9,12 +10,12 @@ public class AutomatedTestRobot extends Robot {
     try {
       Thread.sleep(durationMillis);
     } catch (InterruptedException interrupt) {
-      System.out.println("Interrupted");
+      DataLogManager.log("Interrupted");
     }
   }
 
   public AutomatedTestRobot() {
-    System.out.println("Robot type: Automated test");
+    DataLogManager.log("Robot type: Automated test");
   }
 
   @Override
@@ -39,21 +40,21 @@ public class AutomatedTestRobot extends Robot {
   }
 
   private void runTest() {
-    System.out.println("Waiting two seconds for robot to finish startup");
+    DataLogManager.log("Waiting two seconds for robot to finish startup");
     sleep(2000);
 
-    System.out.println("Enabling autonomous mode and waiting 10 seconds");
+    DataLogManager.log("Enabling autonomous mode and waiting 10 seconds");
     DriverStationDataJNI.setAutonomous(true);
     DriverStationDataJNI.setEnabled(true);
 
     sleep(10000);
 
-    System.out.println("Disabling robot and waiting two seconds");
+    DataLogManager.log("Disabling robot and waiting two seconds");
     DriverStationDataJNI.setEnabled(false);
 
     sleep(2000);
 
-    System.out.println("Ending competition");
+    DataLogManager.log("Ending competition");
     suppressExitWarning(true);
     endCompetition();
   }

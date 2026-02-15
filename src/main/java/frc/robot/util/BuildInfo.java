@@ -104,7 +104,7 @@ public class BuildInfo {
         // Check commit hash header
         String commitHashHeader = scanner.nextLine();
         if (!lineIsHeader(commitHashHeader, "Commit hash")) {
-          System.out.println("No git!");
+          DataLogManager.log("No git!");
           throw new InvalidFormatException();
         }
         // Read the commit hash

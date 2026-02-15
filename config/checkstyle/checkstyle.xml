@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+          "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+          "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+  <module name="TreeWalker">
+    <module name="RegexpSinglelineJava">
+      <property name="format" value="System\.out\.print"/>
+      <property name="message" value="System.out.print* is not allowed. Use DataLogManager.log() instead, or '// print-allow-override' to override."/>
+      <property name="ignoreComments" value="true"/>
+    </module>
+    <module name="SuppressWithNearbyCommentFilter">
+      <property name="commentFormat" value="print-allow-override"/>
+      <property name="checkFormat" value="RegexpSinglelineJava"/>
+      <property name="influenceFormat" value="0"/>
+    </module>
+  </module>
+</module>
