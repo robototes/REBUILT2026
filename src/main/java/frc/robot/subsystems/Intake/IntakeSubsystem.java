@@ -150,11 +150,6 @@ public class IntakeSubsystem extends SubsystemBase {
         setPivotPos(PIVOT_RETRACTED_POS);
     }
   }
-
-  private void setPivotPos(double position) {
-    pivotMotor.setControl(pivotRequest.withPosition(position));
-  }
-
   public Command runRollers() {
     return Commands.runEnd(
         () -> {
