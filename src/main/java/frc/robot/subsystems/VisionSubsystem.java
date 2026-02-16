@@ -69,20 +69,20 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void update() {
-    // DataLogManager.log("updating");
+    // System.out.println("updating");
     RawFiducial[] rawFiducialsC = CCamera.getRawFiducials();
-    // DataLogManager.log("got raw fiducials");
+    // System.out.println("got raw fiducials");
     if (rawFiducialsC != null) {
       if (rawFiducialsC.length != 1) {
         BetterPoseEstimate estimatemt1 = CCamera.getBetterPoseEstimate();
         for (RawFiducial rf : rawFiducialsC) {
-          // DataLogManager.log("processing raw fiducials");
+          // System.out.println("processing raw fiducials");
           processLimelight(estimatemt1, rawFieldPose3dEntryB, rf);
         }
       } else {
         BetterPoseEstimate estimatemt2 = CCamera.getPoseEstimateMegatag2();
         for (RawFiducial rf : rawFiducialsC) {
-          // DataLogManager.log("processing raw fiducials");
+          // System.out.println("processing raw fiducials");
           processLimelight(estimatemt2, rawFieldPose3dEntryB, rf);
         }
       }
@@ -97,7 +97,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (estimate != null) {
       if (estimate.tagCount <= 0) {
-        // DataLogManager.log("no tags");
+        // System.out.println("no tags");
         return;
       }
 
@@ -115,7 +115,7 @@ public class VisionSubsystem extends SubsystemBase {
       this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
-      //   DataLogManager.log("got new data");
+      //   System.out.println("got new data");
 
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
@@ -124,25 +124,23 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())) {
         pose_bad = true;
-        // DataLogManager.log(("pose bad");
+        // System.out.println("pose bad");
       }
 
       if (!pose_bad) {
-        // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
-        // to not need kalman filtering
         drivetrain.resetPose(fieldPose3d.toPose2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
-        // DataLogManager.log("put pose in");
+        // System.out.println("put pose in");
       }
       if (timestampSeconds > lastTimestampSeconds) {
         if (!pose_bad) {
           fieldPose3dEntry.set(fieldPose3d);
           lastFieldPose = fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
-          //   DataLogManager.log("updated pose");
+          //   System.out.println("updated pose");
         }
         lastTimestampSeconds = timestampSeconds;
-        // DataLogManager.log("updated time");
+        // System.out.println("updated time");
       }
     }
   }

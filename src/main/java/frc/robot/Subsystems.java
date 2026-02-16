@@ -16,8 +16,8 @@ import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
+import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.SpindexerSubsystem;
-import frc.robot.subsystems.TurretSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
@@ -31,7 +31,7 @@ public class Subsystems {
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
-    public static final boolean GAMEPIECE_DETECTION_ENABLED = false;
+    public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
     public static final boolean TURRET_ENABLED = true;
   }
 
