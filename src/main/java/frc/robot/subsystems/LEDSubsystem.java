@@ -6,6 +6,13 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.BooleanTopic;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.networktables.StringTopic;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -24,7 +31,7 @@ public class LEDSubsystem extends SubsystemBase {
    */
   private static final int END_INDEX = 7;
 
-  /** CTRE CANdle LED controller instance. */
+  /** CTRE CANdle LED instance. */
   private final CANdle candle = new CANdle(CAN_ID);
 
   /**
@@ -44,13 +51,13 @@ public class LEDSubsystem extends SubsystemBase {
   /** Empty animation used to clear animation slot 0 and stop active animations. */
   private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
 
-  /** Default robot LED color (red). */
+  /** Default robot LED color (Red). */
   public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0);
 
-  /** LED color used while intaking (blue). */
+  /** LED color used while intaking (Blue). */
   public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
 
-  /** LED color used while outtaking (green). */
+  /** LED color used while outtaking (Green). */
   public static final RGBWColor OUTTAKE_COLOR = new RGBWColor(0, 255, 0);
 
   /** LED color used during climb mode (cyan). */
@@ -59,8 +66,60 @@ public class LEDSubsystem extends SubsystemBase {
   /** LED color representing LEDs off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
 
+  /** NetworkTable topics and publishers for LED state information */
+  private final BooleanTopic isRainbow;
+  private final BooleanPublisher isRainbowPub;
+
+  private final StringTopic currentColor;
+  private final StringPublisher currentColorPub;
+
+  private final StringTopic currentAnimation;
+  private final StringPublisher currentAnimationPub;
+
+  private final StringTopic alternatingColors;
+  private final StringPublisher alternatingColorsPub;
+
+  private final NetworkTable ledTable;
+  private final NetworkTableEntry colorsEntry;
+
   public LEDSubsystem() {
     setRainbowAnimation(0, 0.1, AnimationDirectionValue.Forward, Units.Hertz.of(100));
+
+    var nt = NetworkTableInstance.getDefault();
+
+    ledTable = NetworkTableInstance.getDefault().getTable("LEDs");
+    colorsEntry = ledTable.getEntry("Current Colors");
+
+    isRainbow = nt.getBooleanTopic("/color/isRainbow");
+    isRainbowPub = isRainbow.publish();
+    isRainbowPub.set(false);
+
+    currentColor = nt.getStringTopic("/color/currentColor");
+    currentColorPub = currentColor.publish();
+    currentColorPub.set("None");
+
+    currentAnimation = nt.getStringTopic("/color/currentAnimation");
+    currentAnimationPub = currentAnimation.publish();
+    currentAnimationPub.set("None");
+
+    alternatingColors = nt.getStringTopic("/color/alternatingColors");
+    alternatingColorsPub = alternatingColors.publish();
+    alternatingColorsPub.set("A:None | B:None");
+  }
+
+  public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
+    String value =
+        String.format(
+            "A:R%d,G%d,B%d,W%d | B:R%d,G%d,B%d,W%d",
+            colorA.Red,
+            colorA.Green,
+            colorA.Blue,
+            colorA.White,
+            colorB.Red,
+            colorB.Green,
+            colorB.Blue,
+            colorB.White);
+    alternatingColorsPub.set(value);
   }
 
   /**
@@ -93,6 +152,8 @@ public class LEDSubsystem extends SubsystemBase {
    * @param color the {@link RGBWColor} to apply to the LED strip
    */
   public void setHardwareColor(RGBWColor color) {
+    currentColorPub.set(color.toString());
+
     solid.withColor(color);
     candle.setControl(solid);
   }
@@ -109,8 +170,7 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a {@link Command} that sets the LEDs to the given color once
    */
   public Command setLEDsCommand(RGBWColor color) {
-    return Commands.runOnce(() -> setHardwareColor(color), this)
-        .withName("SetLEDs"); // Good practice to name commands
+    return Commands.runOnce(() -> setHardwareColor(color), this).withName("SetLEDs");
   }
 
   /**
@@ -126,8 +186,10 @@ public class LEDSubsystem extends SubsystemBase {
   public Command alternateColors(RGBWColor colorA, RGBWColor colorB, double interval) {
     return Commands.sequence(
             Commands.runOnce(() -> setHardwareColor(colorA), this),
+            Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
             Commands.waitSeconds(interval),
             Commands.runOnce(() -> setHardwareColor(colorB), this),
+            Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
             Commands.waitSeconds(interval))
         .repeatedly();
   }
@@ -157,7 +219,13 @@ public class LEDSubsystem extends SubsystemBase {
         for (RGBWColor color : colors) {
           sequenceBuilder =
               sequenceBuilder
-                  .andThen(Commands.runOnce(() -> setHardwareColor(color), this))
+                  .andThen(
+                      Commands.runOnce(
+                          () -> {
+                            System.out.println("Setting color: " + color);
+                            setHardwareColor(color);
+                          },
+                          this))
                   .andThen(Commands.waitSeconds(interval));
         }
 
@@ -168,16 +236,20 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Enables or disables the rainbow animation on the CANdle.
    *
-   * <p>If {@code enabled} is true, the preconfigured rainbow animation is applied. If false, the
-   * active animation is cleared.
+   * <p>If {@code enabled} is true, the preconfiguRed rainbow animation is applied. If false, the
+   * active animation is cleaRed.
    *
    * @param enabled true to start the rainbow animation, false to stop it
    */
   public void setRainbowEnabled(boolean enabled) {
     if (enabled) {
       candle.setControl(rainbowAnimation);
+      isRainbowPub.set(true);
+      currentAnimationPub.set("Rainbow");
     } else {
       candle.setControl(emptyAnimation);
+      isRainbowPub.set(false);
+      currentAnimationPub.set("None");
     }
   }
 }

@@ -83,9 +83,6 @@ public class Controls {
     s = subsystems;
     configureDrivebaseBindings();
     configureLEDBindings();
-    if (s.detectionSubsystem != null) {
-      configureAutoAlignBindings();
-    }
     configureLauncherBindings();
     configureIndexingBindings();
     configureAutoAlignBindings();
@@ -221,6 +218,14 @@ public class Controls {
 
   private void configureLEDBindings() {
     LEDSubsystem LEDs = s.ledSubsystem;
+    final RGBWColor[] colors =
+        new RGBWColor[] {
+          LEDSubsystem.DEFAULT_COLOR,
+          LEDSubsystem.INTAKE_COLOR,
+          LEDSubsystem.OUTTAKE_COLOR,
+          LEDSubsystem.CLIMB_COLOR,
+          LEDSubsystem.OFF_COLOR
+        };
     if (s.ledSubsystem == null) {
       // Stop running this method
       return;
@@ -262,16 +267,7 @@ public class Controls {
     ledTestController
         .rightBumper()
         .whileTrue(
-            LEDs.cycleColors(
-                    new RGBWColor[] {
-                      LEDSubsystem.DEFAULT_COLOR,
-                      LEDSubsystem.INTAKE_COLOR,
-                      LEDSubsystem.OUTTAKE_COLOR,
-                      LEDSubsystem.CLIMB_COLOR,
-                      LEDSubsystem.OFF_COLOR
-                    },
-                    0.5)
-                .withName("Cycle through all colors with 0.5s delay"));
+            LEDs.cycleColors(colors, 0.5).withName("Cycle through all colors with 0.5s delay"));
   }
 
   private void configureLauncherBindings() {
