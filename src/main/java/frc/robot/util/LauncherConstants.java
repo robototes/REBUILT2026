@@ -1,20 +1,16 @@
 package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 
 public class LauncherConstants {
-  private static final double LAUNCHER_OFFSET_INCHES = 12;
-  private static final double LAUNCHER_OFFSET_DEGREES = 135;
+  private static final double TURRET_X_OFFSET = 0.2159;
+  private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
-      new Translation2d(
-          Units.inchesToMeters(LAUNCHER_OFFSET_INCHES),
-          Rotation2d.fromDegrees(LAUNCHER_OFFSET_DEGREES));
+      new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;

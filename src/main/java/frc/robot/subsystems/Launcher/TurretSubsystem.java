@@ -34,9 +34,9 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Offsets
   private static final double TURRET_X_OFFSET = 0.2159;
-  private static final double TURRET_Y_OFFSET = 0.1397;
+  private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Transform2d TURRET_OFFSET =
-      new Transform2d(TURRET_X_OFFSET, -TURRET_Y_OFFSET, Rotation2d.k180deg);
+      new Transform2d(TURRET_X_OFFSET, TURRET_Y_OFFSET, Rotation2d.k180deg);
 
   // Positions
   private double targetPos;
