@@ -60,14 +60,16 @@ public class AutoLogic {
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
           new AutoPath("Default", "Default"),
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
-          new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
-          new AutoPath("LT-NeutralLeftTWO", "LT-NeutralLeftTWO"),
-          new AutoPath("LT-NeutralLeftTWO-Climb", "LT-NeutralLeftTWO-Climb"),
+          new AutoPath("LT-NeutralLeft-Shallow-Climb", "LT-NeutralLeft-Shallow-Climb"),
+          new AutoPath("LT-NeutralLeft-Shallow-Middle", "LT-NeutralLeft-Shallow-Middle"),
+          new AutoPath(
+              "LT-NeutralLeft-Shallow-Middle-Climb", "LT-NeutralLeft-Shallow-Middle-Climb"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
           new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
-          new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-NeutralRightTWO", "RT-NeutralRightTWO"),
-          new AutoPath("RT-NeutralRightTWO-Climb", "RT-NeutralRightTWO-Climb"),
+          new AutoPath("RT-NeutralRight-Shallow-Climb", "RT-NeutralRight-Shallow-Climb"),
+          new AutoPath("RT-NeutralRight-Shallow-Middle", "RT-NeutralRight-Shallow-Middle"),
+          new AutoPath(
+              "RT-NeutralRight-Shallow-Middle-Climb", "RT-NeutralRight-Shallow-Middle-Climb"),
           new AutoPath("Straight", "Straight"),
           new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
 
