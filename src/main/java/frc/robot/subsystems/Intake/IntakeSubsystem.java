@@ -167,10 +167,9 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   private void setPivotPos(double pos) {
-      pivotMotor.setControl(pivotRequest.withPosition(pos));
-      while (Math.abs(getPivotPos() - pos) < POS_TOLERANCE) {
-      }
-      pivotMotor.stopMotor();
+    pivotMotor.setControl(pivotRequest.withPosition(pos));
+    while (Math.abs(getPivotPos() - pos) < POS_TOLERANCE) {}
+    pivotMotor.stopMotor();
   }
 
   public Command stopIntake() {
