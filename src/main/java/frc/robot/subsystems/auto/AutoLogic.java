@@ -18,6 +18,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
+import frc.robot.util.simulation.FuelSim;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -186,7 +188,7 @@ public class AutoLogic {
   }
 
   public static void registerCommands() {
-    NamedCommands.registerCommand("launch", launcherCommand());
+    NamedCommands.registerCommand("launch", launcherSimCommand());
     NamedCommands.registerCommand("intake", intakeCommand());
     NamedCommands.registerCommand("climb", climbCommand());
   }
@@ -200,17 +202,24 @@ public class AutoLogic {
   }
 
   public static Command launcherSimCommand() {
+
     return Commands.sequence(
-            AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0),
+            AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), //SIM PURPOSES ONLY
+
+
+
+
+
             Commands.run(
                 () ->
-                    frc.robot.util.simulation.FuelSim.getInstance()
-                        .launchFuel(
-                            MetersPerSecond.of(0),
+
+                        FuelSim.getInstance().launchFuel(
+                            MetersPerSecond.of(6),
                             Radians.of(s.hood.getHoodPosition()),
-                            Radians.of(s.turretSubsystem.getROT().getRadians() + Math.PI),
-                            Meters.of(1.45))))
-        .withTimeout(2);
+
+                            Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                            Meters.of(1.45)))
+        .withTimeout(3));
   }
 
   public static Command intakeCommand() {
