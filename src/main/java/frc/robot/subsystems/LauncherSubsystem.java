@@ -1,4 +1,4 @@
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -8,26 +8,32 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcherSubsystems.Flywheels;
 import frc.robot.subsystems.launcherSubsystems.Hood;
+import frc.robot.subsystems.launcherSubsystems.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 
-public class AutoAim {
+public class LauncherSubsystem {
+  protected Translation2d targetPose;
+  protected CommandSwerveDrivetrain drive;
+  protected Hood hood;
+  protected Flywheels flywheels;
+  protected double flywheelsGoal;
+  protected double hoodGoal;
+
+  private final DoubleTopic hoodGoalTopic;
+  private final DoubleTopic flywheelGoalTopic;
+  private final DoublePublisher flywheelGoalPub;
+  private final DoublePublisher hoodGoalPub;
+
+  public LauncherSubsystem(CommandSwerveDrivetrain drive, Hood hood, Flywheels flywheels, TurretSubsystem turret) {
+
+  }
   public static Command autoAim(CommandSwerveDrivetrain drive, Hood hood, Flywheels flywheels) {
     return new AutoAimCommand(drive, hood, flywheels).withName("Auto Align");
   }
 
   private static class AutoAimCommand extends Command {
-    protected Translation2d targetPose;
-    protected CommandSwerveDrivetrain drive;
-    protected Hood hood;
-    protected Flywheels flywheels;
-    protected double flywheelsGoal;
-    protected double hoodGoal;
 
-    private final DoubleTopic hoodGoalTopic;
-    private final DoubleTopic flywheelGoalTopic;
-    private final DoublePublisher flywheelGoalPub;
-    private final DoublePublisher hoodGoalPub;
 
     AutoAimCommand(CommandSwerveDrivetrain drive, Hood hood, Flywheels flywheels) {
       this.drive = drive;
