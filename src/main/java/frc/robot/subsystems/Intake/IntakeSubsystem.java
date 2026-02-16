@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
@@ -131,37 +130,34 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public Command runIntake() {
     return Commands.runOnce(
-      () -> {
-        moveIntake();
-      }
-    );
+        () -> {
+          moveIntake();
+        });
   }
-;
+  ;
+
   private void moveIntake() {
     intakeRunning = !intakeRunning;
     if (intakeRunning) {
-        leftRollers.set(INTAKE_SPEED);
-        rightRollers.setControl(followerRequest); // opposite direction as left rollers
-        setPivotPos(PIVOT_DEPLOYED_POS);
-    }
-    else {
-        leftRollers.stopMotor();
-        rightRollers.stopMotor();
-        setPivotPos(PIVOT_RETRACTED_POS);
+      leftRollers.set(INTAKE_SPEED);
+      rightRollers.setControl(followerRequest); // opposite direction as left rollers
+      setPivotPos(PIVOT_DEPLOYED_POS);
+    } else {
+      leftRollers.stopMotor();
+      rightRollers.stopMotor();
+      setPivotPos(PIVOT_RETRACTED_POS);
     }
   }
+
   public Command runRollers() {
     return Commands.runEnd(
         () -> {
           leftRollers.set(INTAKE_SPEED);
           rightRollers.setControl(followerRequest); // opposite direction as left rollers
-          pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
         },
         () -> {
           leftRollers.stopMotor();
           rightRollers.stopMotor();
-          pivotMotor.setControl(
-              pivotRequest.withPosition(PIVOT_RETRACTED_POS)); // hopefully this retracts the intake
         });
   }
 
@@ -178,37 +174,22 @@ public class IntakeSubsystem extends SubsystemBase {
         });
   }
 
-
-
-  public Command stop() {
+  public Command stopIntake() {
     return runOnce(
         () -> {
+          leftRollers.stopMotor();
+          rightRollers.stopMotor();
           pivotMotor.stopMotor();
         });
   }
 
-  public Command deployIntake() {
+  public Command togglePivot() {
+    double targetPos = pivotIsRetracted ? PIVOT_DEPLOYED_POS : PIVOT_RETRACTED_POS;
+    pivotIsRetracted = !pivotIsRetracted;
     return Commands.runOnce(
         () -> {
-          System.out.println(getPivotPos() == PIVOT_RETRACTED_POS);
-          if (getPivotPos() == PIVOT_RETRACTED_POS) {
-            pivotMotor.setControl(pivotRequest.withPosition(PIVOT_DEPLOYED_POS));
-          } else {
-            pivotMotor.setControl(pivotRequest.withPosition(PIVOT_RETRACTED_POS));
-          }
+          pivotMotor.setControl(pivotRequest.withPosition(targetPos));
         });
-  }
-  // public Command togglePivot() {
-  //   double targetPos = pivotIsRetracted ? PIVOT_DEPLOYED_POS : PIVOT_RETRACTED_POS;
-  //   pivotIsRetracted = !pivotIsRetracted;
-  //   return Commands.runOnce(
-  //       () -> {
-  //         pivotMotor.setControl(pivotRequest.withPosition(targetPos));
-  //       });
-  // }
-
-  public Trigger atPosition(double position) {
-    return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
   }
 
   @Override

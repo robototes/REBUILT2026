@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.Intake.IntakeSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -243,7 +242,7 @@ public class Controls {
       return;
     }
     driverController.a().onTrue(s.intakeSubsystem.runIntake());
-    intakeTestController.a().onTrue(s.intakeSubsystem.runRollers());
+    intakeTestController.x().whileTrue(s.intakeSubsystem.runRollers());
     intakeTestController.b().onTrue(s.intakeSubsystem.togglePivot());
     // TODO: add run only pivot command and bind to another button
   }
