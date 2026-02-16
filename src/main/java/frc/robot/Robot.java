@@ -109,7 +109,7 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    if (subsystems.visionSubsystem != null) {
+    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
       LimelightHelpers.SetRobotOrientation(
           Hardware.LIMELIGHT_C,
