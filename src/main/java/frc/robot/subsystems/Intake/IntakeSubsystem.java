@@ -166,12 +166,11 @@ public class IntakeSubsystem extends SubsystemBase {
     return curPos.getValueAsDouble();
   }
 
-  private Command setPivotPos(double pos) {
-    return runOnce(
-        () -> {
-          pivotMotor.setControl(pivotRequest.withPosition(pos));
-          targetPos = pos;
-        });
+  private void setPivotPos(double pos) {
+      pivotMotor.setControl(pivotRequest.withPosition(pos));
+      while (Math.abs(getPivotPos() - pos) < POS_TOLERANCE) {
+      }
+      pivotMotor.stopMotor();
   }
 
   public Command stopIntake() {
