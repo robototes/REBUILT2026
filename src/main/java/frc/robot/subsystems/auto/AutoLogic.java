@@ -28,6 +28,8 @@ import org.json.simple.parser.ParseException;
 public class AutoLogic {
 
   private static Subsystems s;
+  private static boolean enableCommands;
+  private static boolean enableAutosSim;
 
   /* ---------------- Start positions ---------------- */
 
@@ -109,8 +111,16 @@ public class AutoLogic {
   }
 
   /* ---------------- Init ---------------- */
-  public static void init(Subsystems subsystems) {
+  public static void init(Subsystems subsystems, boolean enableNamedCommands) {
     s = subsystems;
+    enableCommands = enableNamedCommands;
+  }
+
+  public static void init(
+      Subsystems subsystems, boolean enableNamedCommands, boolean enableSimCommands) {
+    s = subsystems;
+    enableCommands = enableNamedCommands;
+    enableAutosSim = enableSimCommands;
   }
 
   public static void initSmartDashBoard() {
@@ -189,9 +199,26 @@ public class AutoLogic {
   }
 
   public static void registerCommands() {
-    NamedCommands.registerCommand("launch", launcherSimCommand());
+
+    if (!enableCommands) {
+      NamedCommands.registerCommand("launch", empty());
+      NamedCommands.registerCommand("intake", empty());
+      NamedCommands.registerCommand("climb", empty());
+      return;
+    }
+
+    if (enableAutosSim) {
+      NamedCommands.registerCommand("launch", launcherSimCommand());
+    } else {
+      NamedCommands.registerCommand("launch", launcherCommand());
+    }
+
     NamedCommands.registerCommand("intake", intakeCommand());
     NamedCommands.registerCommand("climb", climbCommand());
+  }
+
+  public static final Command empty() {
+    return Commands.none();
   }
 
   public static Command launcherCommand() {
@@ -218,10 +245,11 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return Commands.none();
+    return empty();
   }
 
   public static Command climbCommand() {
-    return Commands.none();
+    return empty();
+    // return s.climbSubsystem.autoAlignRoutine(ClimbState.Climbing); WIP?
   }
 }
