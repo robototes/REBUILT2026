@@ -186,7 +186,7 @@ public class IntakeSubsystem extends SubsystemBase {
     pivotIsRetracted = !pivotIsRetracted;
     return Commands.runOnce(
         () -> {
-          pivotMotor.setControl(pivotRequest.withPosition(targetPos));
+          setPivotPos(targetPos);
         });
   }
 
