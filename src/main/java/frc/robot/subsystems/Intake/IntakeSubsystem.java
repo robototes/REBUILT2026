@@ -24,7 +24,6 @@ public class IntakeSubsystem extends SubsystemBase {
   // motor
   private static final double INTAKE_SPEED = 1.0;
   public double pivotPos;
-  private double targetPos;
   private final TalonFX pivotMotor;
   private final TalonFX leftRollers;
   private final TalonFX rightRollers;
