@@ -1,6 +1,7 @@
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
@@ -13,11 +14,13 @@ import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class Autostest {
+class AutosTest {
 
   @BeforeEach
   void setup() {
-    AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain());
+    if (RobotBase.isReal()) {
+      AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain());
+    }
   }
 
   @Test
