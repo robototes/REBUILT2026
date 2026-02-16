@@ -1,11 +1,8 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -29,11 +26,6 @@ public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
-  // Deviations
-  private static final Vector<N3> STANDARD_DEVS =
-      VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(20));
-  private static final Vector<N3> DISTANCE_SC_STANDARD_DEVS =
-      VecBuilder.fill(1, 1, Units.degreesToRadians(50));
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
@@ -129,19 +121,16 @@ public class VisionSubsystem extends SubsystemBase {
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
-              0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))) {
+              0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
+          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
       }
 
       if (!pose_bad) {
-        drivetrain.addVisionMeasurement(
-            fieldPose3d.toPose2d(),
-            timestampSeconds,
-            // start with STANDARD_DEVS, and for every
-            // meter of distance past 1 meter,
-            // add a distance standard dev
-            DISTANCE_SC_STANDARD_DEVS.times(Math.max(0, this.distance - 1)).plus(STANDARD_DEVS));
+        // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
+        // to not need kalman filtering
+        drivetrain.resetPose(fieldPose3d.toPose2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
