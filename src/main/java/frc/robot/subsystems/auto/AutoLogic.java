@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
 import frc.robot.util.simulation.FuelSim;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -204,22 +203,16 @@ public class AutoLogic {
   public static Command launcherSimCommand() {
 
     return Commands.sequence(
-            AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), //SIM PURPOSES ONLY
-
-
-
-
-
-            Commands.run(
+        AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), // SIM PURPOSES ONLY
+        Commands.run(
                 () ->
-
-                        FuelSim.getInstance().launchFuel(
+                    FuelSim.getInstance()
+                        .launchFuel(
                             MetersPerSecond.of(6),
                             Radians.of(s.hood.getHoodPosition()),
-
                             Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
                             Meters.of(1.45)))
-        .withTimeout(3));
+            .withTimeout(3));
   }
 
   public static Command intakeCommand() {
