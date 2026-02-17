@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
@@ -18,10 +17,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.Intake.IntakeArm;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.subsystems.intake.IntakePivot;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -75,10 +74,9 @@ public class Controls {
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
-    configureIntakeRollerBindings();
+    configureIntakeBindings();
     configureAutoAlignBindings();
     configureVisionBindings();
-    configureIntakeArmBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -89,6 +87,10 @@ public class Controls {
   }
 
   private void configureIndexingBindings() {
+    if (s.feederSubsystem == null || s.spindexerSubsystem == null) {
+      DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
+      return;
+    }
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
@@ -239,20 +241,23 @@ public class Controls {
     launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
   }
 
-  private void configureIntakeRollerBindings() {
-    if (s.intakeRollers == null) {
-      DataLogManager.log("Controls.java: intakeRollers is disabled, bindings skipped");
+  private void configureIntakeBindings() {
+    if (s.intakeRollers == null || s.intakeArm == null) {
+      DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
       return;
     }
 
-    driverController.a().whileTrue(s.intakeRollers.runRollers());
-  }
-  private void configureIntakeArmBindings() {
-    if (s.intakeArm == null) {
-      DataLogManager.log("Controls.java: intakeArm is disabled, bindings skipped");
-    }
-    driverController.x().onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
-    driverController.y().onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
+    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
+    driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
+
+    intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
+    intakeTestController
+        .x()
+        .onTrue(s.intakeArm.goToPos(IntakePivot.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
+    intakeTestController
+        .y()
+        .onTrue(s.intakeArm.goToPos(IntakePivot.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
   }
 
   /**

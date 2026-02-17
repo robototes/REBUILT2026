@@ -6,6 +6,7 @@ import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ARM_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
@@ -15,13 +16,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
-import frc.robot.subsystems.SpindexerSubsystem;
-import frc.robot.subsystems.VisionSubsystem;
-import frc.robot.subsystems.Intake.IntakeArm;
-import frc.robot.subsystems.Intake.IntakeRollers;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
+import frc.robot.subsystems.SpindexerSubsystem;
+import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakeRollers;
+import frc.robot.subsystems.intake.IntakeSubsystem;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -36,6 +38,7 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
   }
 
   // Subsystems go here
@@ -47,7 +50,8 @@ public class Subsystems {
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
   public final IntakeRollers intakeRollers;
-  public final IntakeArm intakeArm;
+  public final IntakePivot intakeArm;
+  public final IntakeSubsystem intakeSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -64,7 +68,7 @@ public class Subsystems {
       intakeRollers = null;
     }
     if (INTAKE_ARM_ENABLED) {
-      intakeArm = new IntakeArm();
+      intakeArm = new IntakePivot();
     } else {
       intakeArm = null;
     }
@@ -101,6 +105,11 @@ public class Subsystems {
       feederSubsystem = new FeederSubsystem();
     } else {
       feederSubsystem = null;
+    }
+    if (INTAKE_ENABLED) {
+      intakeSubsystem = new IntakeSubsystem(intakeArm, intakeRollers);
+    } else {
+      intakeSubsystem = null;
     }
   }
 }
