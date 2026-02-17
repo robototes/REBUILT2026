@@ -17,25 +17,27 @@ import frc.robot.Hardware;
 
 public class SpindexerSubsystem extends SubsystemBase {
 
-  public static final double serializerSpeed = 1.0;
+  public static final double SPINDEXER_SPEED = 1.0;
 
-  private final TalonFX serialMotor;
+  private final TalonFX spindexerMotor;
 
   private final FlywheelSim motorSim;
 
   public SpindexerSubsystem() {
-    serialMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
+    spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
 
     if (RobotBase.isSimulation()) {
-      LinearSystem serialMotorSystem =
+      LinearSystem spindexerMotorSystem =
           LinearSystemId.createFlywheelSystem(
               DCMotor.getKrakenX60(1),
               0.001,
               1.0); // TODO: Update to final moment of inertia and gear ratio
       motorSim =
           new FlywheelSim(
-              serialMotorSystem, DCMotor.getKrakenX60(1), 1.0); // TODO: Update to final gear ratio
+              spindexerMotorSystem,
+              DCMotor.getKrakenX60(1),
+              1.0); // TODO: Update to final gear ratio
     } else {
       motorSim = null;
     }
@@ -44,7 +46,7 @@ public class SpindexerSubsystem extends SubsystemBase {
   public void spindexerConfig() {
     // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
-    TalonFXConfigurator cfg = serialMotor.getConfigurator();
+    TalonFXConfigurator cfg = spindexerMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
@@ -62,13 +64,13 @@ public class SpindexerSubsystem extends SubsystemBase {
   }
 
   public void setSpeed(double speed) {
-    serialMotor.set(speed);
+    spindexerMotor.set(speed);
   }
 
   public Command startMotor() {
     return runOnce(
             () -> {
-              setSpeed(serializerSpeed);
+              setSpeed(SPINDEXER_SPEED);
             })
         .withName("Start Spindexer Motor");
   }
@@ -83,7 +85,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
   @Override
   public void simulationPeriodic() {
-    motorSim.setInput(serialMotor.getSimState().getMotorVoltage());
+    motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
   }
 }
