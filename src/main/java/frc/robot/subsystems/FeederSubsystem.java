@@ -72,14 +72,14 @@ public class FeederSubsystem extends SubsystemBase {
             () -> {
               setVoltage(feederCurrent);
             },
-            () -> setVoltage(0))
+            () -> feedMotor.stopMotor())
         .withName("Start Feeder Motor");
   }
 
-  public Command stopMotor() {
+  public Command stop() {
     return runOnce(
             () -> {
-              feedMotor.set(0);
+              feedMotor.stopMotor();
             })
         .withName("Stop Feeder Motor");
   }
