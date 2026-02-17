@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.Intake.IntakeArm;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -74,9 +75,10 @@ public class Controls {
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
-    configureIntakeBindings();
+    configureIntakeRollerBindings();
     configureAutoAlignBindings();
     configureVisionBindings();
+    configureIntakeArmBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -237,15 +239,20 @@ public class Controls {
     launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
   }
 
-  private void configureIntakeBindings() {
-    if (s.intakeSubsystem == null) {
-      DataLogManager.log("Controls.java: intakeSubsystem is disabled, bindings skipped");
+  private void configureIntakeRollerBindings() {
+    if (s.intakeRollers == null) {
+      DataLogManager.log("Controls.java: intakeRollers is disabled, bindings skipped");
       return;
     }
-    driverController.a().onTrue(s.intakeSubsystem.runIntake());
-    intakeTestController.a().onTrue(s.intakeSubsystem.runRollers());
-    // intakeTestController.b().onTrue(s.intakeSubsystem.togglePivot());
-    // TODO: add run only pivot command and bind to another button
+
+    driverController.a().whileTrue(s.intakeRollers.runRollers());
+  }
+  private void configureIntakeArmBindings() {
+    if (s.intakeArm == null) {
+      DataLogManager.log("Controls.java: intakeArm is disabled, bindings skipped");
+    }
+    driverController.x().onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
+    driverController.y().onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
   }
 
   /**
