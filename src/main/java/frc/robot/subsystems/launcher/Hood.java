@@ -1,4 +1,4 @@
-package frc.robot.subsystems.launcherSubsystems;
+package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 import lombok.Getter;
 
 public class Hood extends SubsystemBase {
-  private TalonFX hood;
+  private final TalonFX hood;
   private HoodSim hoodSim;
 
   private DoubleTopic positionTopic; // hood pose in rotations
@@ -152,7 +152,8 @@ public class Hood extends SubsystemBase {
   }
 
   public Command hoodPositionCommand(double positionRotations) {
-    return runOnce(() -> setHoodPosition(positionRotations)).withName("setting Hood position");
+    return runEnd(() -> setHoodPosition(positionRotations), () -> hood.stopMotor())
+        .withName("setting Hood position");
   }
 
   public Command suppliedHoodPositionCommand(DoubleSupplier positionRotations) {

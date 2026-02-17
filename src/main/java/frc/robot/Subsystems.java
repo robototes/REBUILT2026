@@ -5,6 +5,7 @@ import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.LAUNCHER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
@@ -13,13 +14,14 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
-import frc.robot.subsystems.FeederSubsystem;
-import frc.robot.subsystems.SpindexerSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.launcherSubsystems.Flywheels;
-import frc.robot.subsystems.launcherSubsystems.Hood;
-import frc.robot.subsystems.launcherSubsystems.TurretSubsystem;
+import frc.robot.subsystems.index.FeederSubsystem;
+import frc.robot.subsystems.index.SpindexerSubsystem;
+import frc.robot.subsystems.launcher.Flywheels;
+import frc.robot.subsystems.launcher.Hood;
+import frc.robot.subsystems.launcher.LauncherSubsystem;
+import frc.robot.subsystems.launcher.TurretSubsystem;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -33,10 +35,13 @@ public class Subsystems {
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
     public static final boolean TURRET_ENABLED = true;
+    public static final boolean LAUNCHER_ENABLED =
+        DRIVEBASE_ENABLED && HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
   }
 
   // Subsystems go here
   public final CommandSwerveDrivetrain drivebaseSubsystem;
+  public final LauncherSubsystem launcherSubsystem;
   public final VisionSubsystem visionSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
@@ -49,7 +54,6 @@ public class Subsystems {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
     if (DRIVEBASE_ENABLED) {
-
       drivebaseSubsystem = CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
@@ -73,11 +77,13 @@ public class Subsystems {
     } else {
       hood = null;
     }
+
     if (GAMEPIECE_DETECTION_ENABLED) {
       detectionSubsystem = new DetectionSubsystem(drivebaseSubsystem);
     } else {
       detectionSubsystem = null;
     }
+
     if (SPINDEXER_ENABLED) {
       spindexerSubsystem = new SpindexerSubsystem();
     } else {
@@ -89,10 +95,18 @@ public class Subsystems {
     } else {
       feederSubsystem = null;
     }
+
     if (TURRET_ENABLED) {
       turretSubsystem = new TurretSubsystem(drivebaseSubsystem);
     } else {
       turretSubsystem = null;
+    }
+
+    if (LAUNCHER_ENABLED) {
+      launcherSubsystem =
+          new LauncherSubsystem(drivebaseSubsystem, hood, flywheels, turretSubsystem);
+    } else {
+      launcherSubsystem = null;
     }
   }
 }

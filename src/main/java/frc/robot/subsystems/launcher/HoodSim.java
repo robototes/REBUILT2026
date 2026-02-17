@@ -1,4 +1,4 @@
-package frc.robot.subsystems.launcherSubsystems;
+package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;

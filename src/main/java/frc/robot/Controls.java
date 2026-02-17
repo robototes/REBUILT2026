@@ -19,9 +19,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
-import frc.robot.subsystems.launcherSubsystems.TurretSubsystem;
+import frc.robot.subsystems.launcher.TurretSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -38,6 +37,7 @@ public class Controls {
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
+  private static final int VISION_TEST_CONTROLLER_PORT = 4;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -51,6 +51,9 @@ public class Controls {
 
   private final CommandXboxController turretTestController =
       new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController visionTestController =
+      new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -198,7 +201,7 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
-    driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+    visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLauncherBindings() {
@@ -212,16 +215,13 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.sequence(
-                    AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                    s.launcherSubsystem.launcherAimCommand(),
                     Commands.parallel(
                         s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
                 .withName("Autorotate, Autoaim done, feeder and spindexer started"))
-        .toggleOnFalse(
-            Commands.parallel(
-                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
-    driverController
-        .y()
-        .onTrue(Commands.parallel(s.hood.zeroHoodCommand(), s.turretSubsystem.zeroTurret()));
+        .toggleOnFalse(s.launcherSubsystem.stowCommand());
+    driverController.y().onTrue(s.launcherSubsystem.launcherAimCommand());
+
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
           .leftBumper()
@@ -266,7 +266,7 @@ public class Controls {
 
   private void configureVisionBindings() {
     if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      driverController
+      visionTestController
           .leftBumper()
           .onTrue(
               s.drivebaseSubsystem
@@ -320,7 +320,5 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
-    driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
-    driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
   }
 }
