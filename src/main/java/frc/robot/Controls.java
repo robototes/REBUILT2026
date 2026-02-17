@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
@@ -247,12 +246,17 @@ public class Controls {
 
     driverController.a().whileTrue(s.intakeRollers.runRollers());
   }
+
   private void configureIntakeArmBindings() {
     if (s.intakeArm == null) {
       DataLogManager.log("Controls.java: intakeArm is disabled, bindings skipped");
     }
-    driverController.x().onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
-    driverController.y().onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
+    driverController
+        .x()
+        .onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
+    driverController
+        .y()
+        .onTrue(s.intakeArm.goToPos(IntakeArm.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
   }
 
   /**
