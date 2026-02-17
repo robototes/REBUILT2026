@@ -214,13 +214,12 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-            Commands.sequence(
-                    s.launcherSubsystem.launcherAimCommand(),
-                    Commands.parallel(
-                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
-                .withName("Autorotate, Autoaim done, feeder and spindexer started"))
-        .toggleOnFalse(s.launcherSubsystem.stowCommand());
-    driverController.y().onTrue(s.launcherSubsystem.launcherAimCommand());
+            Commands.parallel(
+                    s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(s.indexerSubsystem.runFeeder()))
+                .withName("Aim turret then feeder and spindexer started"));
+    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand());
 
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController

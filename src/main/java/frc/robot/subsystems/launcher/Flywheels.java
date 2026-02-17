@@ -104,11 +104,15 @@ public class Flywheels extends SubsystemBase {
   }
 
   public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
-    return runOnce(
+    return runEnd(
             () -> {
               request.Velocity = rps.getAsDouble();
               FlywheelOne.setControl(request);
               FlywheelTwo.setControl(follow);
+            },
+            () -> {
+              FlywheelOne.stopMotor();
+              FlywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Velocity");
   }

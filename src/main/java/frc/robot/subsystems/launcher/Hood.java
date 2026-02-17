@@ -157,7 +157,7 @@ public class Hood extends SubsystemBase {
   }
 
   public Command suppliedHoodPositionCommand(DoubleSupplier positionRotations) {
-    return runOnce(() -> setHoodPosition(positionRotations.getAsDouble()))
+    return runEnd(() -> setHoodPosition(positionRotations.getAsDouble()), () -> hood.stopMotor())
         .withName("Setting hood position - Supplied");
   }
 

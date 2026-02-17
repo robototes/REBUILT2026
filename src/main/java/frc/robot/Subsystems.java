@@ -5,6 +5,7 @@ import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.LAUNCHER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
@@ -17,6 +18,7 @@ import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.FeederSubsystem;
+import frc.robot.subsystems.index.IndexerSubsystem;
 import frc.robot.subsystems.index.SpindexerSubsystem;
 import frc.robot.subsystems.launcher.Flywheels;
 import frc.robot.subsystems.launcher.Hood;
@@ -36,7 +38,8 @@ public class Subsystems {
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
     public static final boolean TURRET_ENABLED = true;
     public static final boolean LAUNCHER_ENABLED =
-        DRIVEBASE_ENABLED && HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
+        HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
+    public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
   }
 
   // Subsystems go here
@@ -49,6 +52,7 @@ public class Subsystems {
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
   public final TurretSubsystem turretSubsystem;
+  public final IndexerSubsystem indexerSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -103,10 +107,15 @@ public class Subsystems {
     }
 
     if (LAUNCHER_ENABLED) {
-      launcherSubsystem =
-          new LauncherSubsystem(drivebaseSubsystem, hood, flywheels, turretSubsystem);
+      launcherSubsystem = new LauncherSubsystem(hood, flywheels, turretSubsystem);
     } else {
       launcherSubsystem = null;
+    }
+
+    if (INDEXER_ENABLED) {
+      indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
+    } else {
+      indexerSubsystem = null;
     }
   }
 }

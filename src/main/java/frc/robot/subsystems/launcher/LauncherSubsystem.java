@@ -5,14 +5,13 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 
 public class LauncherSubsystem {
-  protected Translation2d targetPose;
-  protected CommandSwerveDrivetrain drive;
   protected Hood hood;
   protected Flywheels flywheels;
   protected TurretSubsystem turret;
@@ -24,9 +23,7 @@ public class LauncherSubsystem {
   private final DoublePublisher flywheelGoalPub;
   private final DoublePublisher hoodGoalPub;
 
-  public LauncherSubsystem(
-      CommandSwerveDrivetrain drive, Hood hood, Flywheels flywheels, TurretSubsystem turret) {
-    this.drive = drive;
+  public LauncherSubsystem(Hood hood, Flywheels flywheels, TurretSubsystem turret) {
     this.hood = hood;
     this.flywheels = flywheels;
     this.turret = turret;
@@ -40,18 +37,23 @@ public class LauncherSubsystem {
     flywheelGoalPub.set(0.0);
   }
 
-  public Command launcherAimCommand() {
-    targetPose = (AllianceUtils.getHubTranslation2d());
-    flywheelsGoal = LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
-    hoodGoal = LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
+  public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
+    return Commands.runEnd(
+        () -> {
+          Translation2d targetPose = (AllianceUtils.getHubTranslation2d());
 
-    hoodGoalPub.set(hoodGoal);
-    flywheelGoalPub.set(flywheelsGoal);
+          hoodGoal = LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
+          flywheelsGoal =
+              LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
 
-    return Commands.parallel(
-        hood.hoodPositionCommand(hoodGoal),
-        flywheels.setVelocityCommand(flywheelsGoal),
-        turret.rotateToHub());
+          hoodGoalPub.set(hoodGoal);
+          flywheelGoalPub.set(flywheelsGoal);
+
+          hood.setHoodPosition(hoodGoal);
+          flywheels.setVelocityRPS(flywheelsGoal);
+          CommandScheduler.getInstance().schedule(turret.rotateToHub());
+        },
+        () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
 
   // TODO: add tolerance range calculation
