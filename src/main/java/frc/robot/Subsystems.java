@@ -50,7 +50,7 @@ public class Subsystems {
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
   public final IntakeRollers intakeRollers;
-  public final IntakePivot intakeArm;
+  public final IntakePivot intakePivot;
   public final IntakeSubsystem intakeSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
@@ -68,9 +68,9 @@ public class Subsystems {
       intakeRollers = null;
     }
     if (INTAKE_ARM_ENABLED) {
-      intakeArm = new IntakePivot();
+      intakePivot = new IntakePivot();
     } else {
-      intakeArm = null;
+      intakePivot = null;
     }
     if (VISION_ENABLED) {
       visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
@@ -107,7 +107,7 @@ public class Subsystems {
       feederSubsystem = null;
     }
     if (INTAKE_ENABLED) {
-      intakeSubsystem = new IntakeSubsystem(intakeArm, intakeRollers);
+      intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
     } else {
       intakeSubsystem = null;
     }

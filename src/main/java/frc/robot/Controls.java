@@ -242,7 +242,7 @@ public class Controls {
   }
 
   private void configureIntakeBindings() {
-    if (s.intakeRollers == null || s.intakeArm == null) {
+    if (s.intakeRollers == null || s.intakePivot == null) {
       DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
       return;
     }
@@ -254,10 +254,10 @@ public class Controls {
     intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
     intakeTestController
         .x()
-        .onTrue(s.intakeArm.goToPos(IntakePivot.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
+        .onTrue(s.intakePivot.goToPos(IntakePivot.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
     intakeTestController
         .y()
-        .onTrue(s.intakeArm.goToPos(IntakePivot.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
+        .onTrue(s.intakePivot.goToPos(IntakePivot.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
   }
 
   /**
