@@ -45,7 +45,6 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public void feederConfig() {
-    // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
