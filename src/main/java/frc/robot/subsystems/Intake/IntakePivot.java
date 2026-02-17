@@ -1,9 +1,11 @@
-package frc.robot.subsystems.intake;
+package frc.robot.subsystems.Intake;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
@@ -49,8 +51,8 @@ public class IntakePivot extends SubsystemBase {
   private void TalonFXConfigs() {
     // define config variables
     var talonFXConfigs = new TalonFXConfiguration();
-    var simConfigs = talonFXConfigs.Slot0;
-    var irlConfigs = talonFXConfigs.Slot0;
+    var simConfigs = new Slot0Configs();
+    var irlConfigs = new Slot0Configs();
     var motionMagic = talonFXConfigs.MotionMagic; // motion magic settings
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS IN COAST
 

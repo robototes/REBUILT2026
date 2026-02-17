@@ -22,7 +22,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
-import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.Intake.IntakePivot;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a

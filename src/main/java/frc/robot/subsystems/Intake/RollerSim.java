@@ -1,8 +1,9 @@
-package frc.robot.subsystems.intake;
+package frc.robot.subsystems.Intake;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
+
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -31,7 +32,7 @@ public class RollerSim extends SubsystemBase {
   // flywheel system variable
   LinearSystem rollerSystem =
       LinearSystemId.createFlywheelSystem(
-          DCMotor.getKrakenX60(2), 0.002, ROLLERS_GEAR_RATIO); // idk how to calculate MOI
+          DCMotor.getKrakenX60(1), 0.002, ROLLERS_GEAR_RATIO); // idk how to calculate MOI
 
   public RollerSim(TalonFX leftRoller, TalonFX rightRoller) {
     if (!RobotBase.isSimulation()) {

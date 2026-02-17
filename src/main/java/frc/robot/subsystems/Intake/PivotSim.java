@@ -1,4 +1,4 @@
-package frc.robot.subsystems.intake;
+package frc.robot.subsystems.Intake;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
@@ -69,6 +69,6 @@ public class PivotSim extends SubsystemBase {
         Units.radiansToRotations(intakeArmSim.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
 
     // update sim
-    arm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);
+    arm.setAngle(Units.radiansToDegrees(angleRads));
   }
 }

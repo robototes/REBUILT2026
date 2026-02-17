@@ -23,9 +23,9 @@ import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.SpindexerSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.intake.IntakePivot;
-import frc.robot.subsystems.intake.IntakeRollers;
-import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.Intake.IntakePivot;
+import frc.robot.subsystems.Intake.IntakeRollers;
+import frc.robot.subsystems.Intake.IntakeSubsystem;
 
 public class Subsystems {
   public static class SubsystemConstants {
