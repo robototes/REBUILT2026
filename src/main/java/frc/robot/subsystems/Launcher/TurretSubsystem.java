@@ -41,9 +41,9 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = 2.97;
+  private static final double kP = 20;
   private static final double kI = 0;
-  private static final double kD = 1;
+  private static final double kD = 0.1;
   private static final double kG = 0;
   private static final double kS = 0.41;
   private static final double kV = 0.9;
@@ -55,15 +55,15 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 5;
-  private static final double ACCELERATION = 10;
-  private static final double JERK = 150;
+  private static final double ACCELERATION = 5;
+  private static final double JERK = 20;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 24;
 
   // Soft Limits
   private static final double TURRET_MAX = 190; // degrees
-  private static final double TURRET_MIN = 0; // degrees
+  private static final double TURRET_MIN = -45; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()

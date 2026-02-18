@@ -6,17 +6,15 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 
 public class LauncherConstants {
-  private static final double LAUNCHER_OFFSET_INCHES = 12;
-  private static final double LAUNCHER_OFFSET_DEGREES = 135;
+  // Offsets
+  private static final double TURRET_X_OFFSET = 0.2159;
+  private static final double TURRET_Y_OFFSET = 0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
-      new Translation2d(
-          Units.inchesToMeters(LAUNCHER_OFFSET_INCHES),
-          Rotation2d.fromDegrees(LAUNCHER_OFFSET_DEGREES));
+      new Translation2d(TURRET_X_OFFSET, -TURRET_Y_OFFSET);
   private static final StructArrayPublisher<Pose2d> turretToTarget =
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretToTarget", Pose2d.struct)
@@ -89,7 +87,7 @@ public class LauncherConstants {
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
-    Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, robot.getRotation());
+    Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
     return robot.plus(fieldRelativeLauncherOffset).getTranslation();
   }
 

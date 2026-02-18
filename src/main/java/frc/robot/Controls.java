@@ -245,6 +245,7 @@ public class Controls {
     }
     launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
   }
+
   private void configureIntakeBindings() {
     if (s.intakeRollers == null || s.intakePivot == null) {
       DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
