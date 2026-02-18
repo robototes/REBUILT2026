@@ -12,7 +12,7 @@ public class IndexerSubsystem {
     this.spindexerSubsystem = spindexerSubsystem;
   }
 
-  public Command runFeeder() {
+  public Command runIndexer() {
     return Commands.runEnd(
         () -> {
           feeder.startMotor();

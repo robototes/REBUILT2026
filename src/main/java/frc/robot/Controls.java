@@ -227,7 +227,7 @@ public class Controls {
             Commands.parallel(
                     s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(s.indexerSubsystem.runFeeder()))
+                        .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
     driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
 
