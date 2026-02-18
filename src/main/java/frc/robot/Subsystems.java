@@ -6,6 +6,9 @@ import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INDEXER_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ARM_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.LAUNCHER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
@@ -20,6 +23,9 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.FeederSubsystem;
 import frc.robot.subsystems.index.IndexerSubsystem;
 import frc.robot.subsystems.index.SpindexerSubsystem;
+import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakeRollers;
+import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.launcher.Flywheels;
 import frc.robot.subsystems.launcher.Hood;
 import frc.robot.subsystems.launcher.LauncherSubsystem;
@@ -30,12 +36,15 @@ public class Subsystems {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
+    public static final boolean INTAKE_ROLLERS_ENABLED = true;
+    public static final boolean INTAKE_ARM_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean TURRET_ENABLED = true;
     public static final boolean LAUNCHER_ENABLED =
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
@@ -51,6 +60,9 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
+  public final IntakeRollers intakeRollers;
+  public final IntakePivot intakePivot;
+  public final IntakeSubsystem intakeSubsystem;
   public final TurretSubsystem turretSubsystem;
   public final IndexerSubsystem indexerSubsystem;
 
@@ -61,6 +73,18 @@ public class Subsystems {
       drivebaseSubsystem = CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
+    }
+
+    if (INTAKE_ROLLERS_ENABLED) {
+      intakeRollers = new IntakeRollers();
+    } else {
+      intakeRollers = null;
+    }
+
+    if (INTAKE_ARM_ENABLED) {
+      intakePivot = new IntakePivot();
+    } else {
+      intakePivot = null;
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
@@ -98,6 +122,12 @@ public class Subsystems {
       feederSubsystem = new FeederSubsystem();
     } else {
       feederSubsystem = null;
+    }
+
+    if (INTAKE_ENABLED) {
+      intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
+    } else {
+      intakeSubsystem = null;
     }
 
     if (TURRET_ENABLED) {

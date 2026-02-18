@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 
 /**
@@ -37,7 +38,8 @@ public class Controls {
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
-  private static final int VISION_TEST_CONTROLLER_PORT = 4;
+  private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
+  private static final int VISION_TEST_CONTROLLER_PORT = 5;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -48,6 +50,9 @@ public class Controls {
 
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
+
+  private final CommandXboxController intakeTestController =
+      new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController turretTestController =
       new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
@@ -79,6 +84,7 @@ public class Controls {
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
+    configureIntakeBindings();
     configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
@@ -92,6 +98,10 @@ public class Controls {
   }
 
   private void configureIndexingBindings() {
+    if (s.feederSubsystem == null || s.spindexerSubsystem == null) {
+      DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
+      return;
+    }
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
@@ -237,6 +247,23 @@ public class Controls {
 
     launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
     launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private void configureIntakeBindings() {
+    if (s.intakeRollers == null || s.intakePivot == null) {
+      DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
+      return;
+    }
+
+    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+
+    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
+    driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
+
+    intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
+    intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**
