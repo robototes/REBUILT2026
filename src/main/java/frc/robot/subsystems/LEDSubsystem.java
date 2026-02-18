@@ -154,14 +154,18 @@ public class LEDSubsystem extends SubsystemBase {
    *
    * @param color the {@link RGBWColor} to apply to the LED strip
    */
-  public void setHardwareColor(RGBWColor color) {
-    RGBWColor scaled = scaleBrightness(color, GLOBAL_BRIGHTNESS);
+  public void setHardwareColor(RGBWColor color, double brightness) {
+    RGBWColor scaled = scaleBrightness(color, brightness);
 
     // currentColorPub.set(scaled.toHexString());
     System.out.println("Color: " + scaled.toHexString());
 
     solid.withColor(scaled);
     candle.setControl(solid);
+  }
+
+  public void setHardwareColor(RGBWColor color) {
+    setHardwareColor(color, GLOBAL_BRIGHTNESS);
   }
 
   /**

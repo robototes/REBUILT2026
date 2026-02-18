@@ -42,9 +42,8 @@ public class Controls {
   private static final int INDEXING_TEST_CONTROLLER_PORT = 3; // for now
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 4; // for now
   private static final int LED_CONTROLLER_PORT = 5; // keep this one at 5 plz
-  // private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
-  // private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
-  private static final int TURRET_TEST_CONTROLLER_PORT = 3;
+  // private static final int TURRET_TEST_CONTROLLER_PORT = 3; // not sure what to do about this
+  // because Driver Station allows only 6 controllers.
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
