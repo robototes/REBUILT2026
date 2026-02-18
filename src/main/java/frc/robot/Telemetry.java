@@ -110,11 +110,9 @@ public class Telemetry {
   public void telemeterize(SwerveDriveState state) {
     /* Telemeterize the swerve drive state */
     drivePose.set(state.Pose);
-    turretTranslation.set(LauncherConstants.launcherFromRobot(state.Pose));
-    var robotToHubMeters =
-        AllianceUtils.getHubTranslation2d()
-            .minus(LauncherConstants.launcherFromRobot(state.Pose))
-            .getNorm();
+    var turret = LauncherConstants.launcherFromRobot(state.Pose);
+    var robotToHubMeters = AllianceUtils.getHubTranslation2d().minus(turret).getNorm();
+    turretTranslation.set(turret);
     turretToHubDistance.set(robotToHubMeters);
     driveSpeeds.set(state.Speeds);
     driveModuleStates.set(state.ModuleStates);
