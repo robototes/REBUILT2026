@@ -72,7 +72,7 @@ public class IntakePivot extends SubsystemBase {
   public void pivotConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 

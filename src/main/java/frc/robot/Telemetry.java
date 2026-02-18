@@ -108,13 +108,14 @@ public class Telemetry {
   /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
   public void telemeterize(SwerveDriveState state) {
     /* Telemeterize the swerve drive state */
+    /*
     drivePose.set(state.Pose);
     turretPose.set(state.Pose.plus(TurretSubsystem.TURRET_OFFSET));
     var robotToHubMeters =
         AllianceUtils.getHubTranslation2d()
             .minus(state.Pose.plus(TurretSubsystem.TURRET_OFFSET).getTranslation())
             .getNorm();
-    turretToHubDistance.set(robotToHubMeters);
+    turretToHubDistance.set(robotToHubMeters); */
     driveSpeeds.set(state.Speeds);
     driveModuleStates.set(state.ModuleStates);
     driveModuleTargets.set(state.ModuleTargets);

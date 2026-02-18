@@ -32,7 +32,7 @@ public class IntakeRollers extends SubsystemBase {
 
   public IntakeRollers() {
     // define motors and configs
-    leftRoller = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID, CompTunerConstants.kCANBus);
+    leftRoller = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID);
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     networktables();
