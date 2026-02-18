@@ -72,7 +72,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID,  CompTunerConstants.kCANBus);
+    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, CompTunerConstants.kCANBus);
     turretConfig();
     turretMotor.setPosition(0);
     turretRotation.set(new Pose2d[2]);
