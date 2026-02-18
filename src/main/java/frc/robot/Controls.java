@@ -33,8 +33,8 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
-  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
-  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  // private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
+  // private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
   private static final int INDEXING_TEST_CONTROLLER_PORT = 3; // for now
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 4; // for now
   private static final int LED_CONTROLLER_PORT = 5; // keep this one at 5 plz
@@ -46,14 +46,12 @@ public class Controls {
   private final CommandXboxController ledTestController =
       new CommandXboxController(LED_CONTROLLER_PORT);
 
-  // TODO: use these controllers
-  // --------
-  private final CommandXboxController feederTestController =
-      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+  // private final CommandXboxController feederTestController =
+  // new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
 
-  private final CommandXboxController spindexerTestController =
-      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
-  // --------
+  // private final CommandXboxController spindexerTestController =
+  // new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+
   private final CommandXboxController indexingTestController =
       new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
 
@@ -233,29 +231,33 @@ public class Controls {
     ledTestController
         .a()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR))
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+                .andThen(
+                    LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
                 .withName("Set intake color")); // blue
 
     ledTestController
         .b()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR))
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+                .andThen(
+                    LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
                 .withName("Set climb color")); // cyan
 
     ledTestController
         .x()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR))
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+                .andThen(
+                    LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
                 .withName("Set outtake color")); // green
 
     ledTestController
         .y()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR)
-                .andThen(LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR))
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+                .andThen(
+                    LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
                 .withName("Set default color")); // red
 
     ledTestController
