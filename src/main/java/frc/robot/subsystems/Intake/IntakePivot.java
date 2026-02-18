@@ -81,9 +81,9 @@ public class IntakePivot extends SubsystemBase {
     config.CurrentLimits.SupplyCurrentLimit = SUPPLY_CURRENT_LIMIT;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.degreesToRotations(PIVOT_MAX);
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.degreesToRotations(PIVOT_MIN);
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(PIVOT_MIN);
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(PIVOT_MAX);
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;

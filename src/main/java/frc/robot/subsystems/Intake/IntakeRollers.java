@@ -3,6 +3,7 @@ package frc.robot.subsystems.Intake;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -47,6 +48,7 @@ public class IntakeRollers extends SubsystemBase {
   private void motorConfigs() {
     var talonFXConfigs = new TalonFXConfiguration();
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
+    talonFXConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // motor limits idk if i need to add anymore
     talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
