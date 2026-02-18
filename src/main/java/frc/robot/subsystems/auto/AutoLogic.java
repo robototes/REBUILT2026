@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems;
-import frc.robot.subsystems.ClimbSubsystem.ClimbState;
 import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
@@ -250,7 +249,7 @@ public class AutoLogic {
   }
 
   public static Command climbCommand() {
-
-    return s.climbSubsystem.autoAlignRoutine(ClimbState.Climbing);
+    return Commands.none();
+    // return s.climbSubsystem.autoAlignRoutine(ClimbState.Climbing);
   }
 }
