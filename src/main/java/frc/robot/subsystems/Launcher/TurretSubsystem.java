@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
@@ -71,7 +72,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
+    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID,  CompTunerConstants.kCANBus);
     turretConfig();
     turretMotor.setPosition(0);
     turretRotation.set(new Pose2d[2]);

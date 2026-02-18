@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.generated.CompTunerConstants;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
@@ -33,7 +34,7 @@ public class FeederSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
+    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID,  CompTunerConstants.kCANBus);
     feederConfig();
 
     if (RobotBase.isSimulation()) {

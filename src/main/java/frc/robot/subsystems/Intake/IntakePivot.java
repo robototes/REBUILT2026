@@ -16,6 +16,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
+import frc.robot.generated.CompTunerConstants;
+
 import java.util.function.Supplier;
 
 public class IntakePivot extends SubsystemBase {
@@ -24,7 +26,7 @@ public class IntakePivot extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = 0.5;
+  public static final double DEPLOYED_POS = -0.26;
   public static final double RETRACTED_POS = 0.0;
 
   // PID variables
@@ -49,7 +51,7 @@ public class IntakePivot extends SubsystemBase {
   private static final double GEAR_RATIO = 36;
 
   // Soft Limits
-  private static final double PIVOT_MAX = 180; // degrees
+  private static final double PIVOT_MAX = Units.rotationsToDegrees(DEPLOYED_POS); // degrees
   private static final double PIVOT_MIN = 0; // degrees
 
   // Simulator and NetworkTables
@@ -58,7 +60,7 @@ public class IntakePivot extends SubsystemBase {
   private DoublePublisher pivotPub;
 
   public IntakePivot() {
-    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
+    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     pivotConfig();
     networktables();
     pivotMotor.setPosition(0);
