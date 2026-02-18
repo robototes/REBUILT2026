@@ -7,22 +7,15 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
-import frc.robot.util.LauncherConstants;
+import frc.robot.Robot;
 import java.util.function.Supplier;
 
 public class IntakePivot extends SubsystemBase {
@@ -59,14 +52,22 @@ public class IntakePivot extends SubsystemBase {
   private static final double PIVOT_MAX = 180; // degrees
   private static final double PIVOT_MIN = 0; // degrees
 
+  // Simulator and NetworkTables
+  private PivotSim pivotSim;
+  private DoubleTopic pivotTopic;
+  private DoublePublisher pivotPub;
 
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
-    turretConfig();
+    pivotConfig();
+    networktables();
     pivotMotor.setPosition(0);
+    if (Robot.isSimulation()) {
+      pivotSim = new PivotSim(pivotMotor);
+    }
   }
 
-  public void turretConfig() {
+  public void pivotConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -98,6 +99,14 @@ public class IntakePivot extends SubsystemBase {
     pivotMotor.getConfigurator().apply(config);
   }
 
+  private void networktables() {
+    var nt = NetworkTableInstance.getDefault();
+    this.pivotTopic = nt.getDoubleTopic("intake/pivotPosition");
+    this.pivotPub = pivotTopic.publish();
+
+    pivotPub.set(0.0); // default value
+  }
+
   public Command setPivotPosition(double pos) {
     return runOnce(
         () -> {
@@ -120,7 +129,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
 
-  public double getTurretPosition() {
+  public double getPivotPosition() {
     return pivotMotor.getPosition().getValueAsDouble();
   }
 
@@ -129,5 +138,11 @@ public class IntakePivot extends SubsystemBase {
         < Units.degreesToRotations(degreeTolerance);
   }
 
-
+    @Override
+    // update simulation
+    public void simulationPeriodic() {
+      if (pivotSim != null) {
+        pivotSim.updateArm();
+      }
+    }
 }
