@@ -21,6 +21,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.subsystems.intake.IntakePivot;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -37,6 +38,7 @@ public class Controls {
   private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
+  private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -47,6 +49,8 @@ public class Controls {
 
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
+  private final CommandXboxController intakeTestController =
+      new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController turretTestController =
       new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
@@ -75,6 +79,7 @@ public class Controls {
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
+    configureIntakeBindings();
     configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
@@ -88,6 +93,10 @@ public class Controls {
   }
 
   private void configureIndexingBindings() {
+    if (s.feederSubsystem == null || s.spindexerSubsystem == null) {
+      DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
+      return;
+    }
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
@@ -210,17 +219,25 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-            Commands.sequence(
-                    AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                    Commands.parallel(
-                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
-                .withName("Autorotate, Autoaim done, feeder and spindexer started"))
+            Commands.parallel(
+                s.turretSubsystem.rotateToHub(),
+                Commands.sequence(
+                        AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                        Commands.parallel(
+                            s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
+                    .withName("Autorotate, Autoaim done, feeder and spindexer started")))
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
     driverController
         .y()
-        .onTrue(Commands.parallel(s.hood.zeroHoodCommand(), s.turretSubsystem.zeroTurret()));
+        .onTrue(
+            Commands.parallel(
+                    s.hood.zeroHoodCommand(),
+                    s.turretSubsystem.zeroTurret(),
+                    s.intakePivot.zeroPivot())
+                .withName("Zero subsystems")
+                .ignoringDisable(true));
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
           .leftBumper()
@@ -237,6 +254,23 @@ public class Controls {
 
     launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
     launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private void configureIntakeBindings() {
+    if (s.intakeRollers == null || s.intakePivot == null) {
+      DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
+      return;
+    }
+
+    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+
+    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
+    driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
+
+    intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
+    intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**
@@ -319,7 +353,5 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
-    driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
-    driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
   }
 }
