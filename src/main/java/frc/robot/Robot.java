@@ -6,9 +6,11 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -21,8 +23,8 @@ import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
-import frc.robot.util.FuelSim;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.simulation.RobotSim;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -38,8 +40,11 @@ public class Robot extends TimedRobot {
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
   private final int GAMEPIECE_PIPELINE = 2;
-  private FuelSim fuelSimulation;
+  private final int THROTTLE_ON = 150;
+  private final int THROTTLE_OFF = 0;
+  private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
+  private SwerveDriveState swerveState;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -58,32 +63,23 @@ public class Robot extends TimedRobot {
     }
     AutoLogic.init(subsystems);
     if (Robot.isSimulation()) {
-      fuelSimulation = FuelSim.getInstance();
-      fuelSimulation.spawnStartingFuel();
-
-      fuelSimulation.registerRobot(
-          0.8,
-          0.8,
-          0.7,
-          () -> subsystems.drivebaseSubsystem.getState().Pose,
-          () -> subsystems.drivebaseSubsystem.getState().Speeds);
-      fuelSimulation.registerIntake(0.4, 0.8, 0.4, 0.8, () -> true);
-
-      fuelSimulation.start();
+      robotSim = new RobotSim(subsystems.drivebaseSubsystem);
+    } else {
+      robotSim = null;
     }
     CommandScheduler.getInstance()
         .onCommandInitialize(
-            command -> System.out.println("Command initialized: " + command.getName()));
+            command -> DataLogManager.log("Command initialized: " + command.getName()));
     CommandScheduler.getInstance()
         .onCommandInterrupt(
             (command, interruptor) ->
-                System.out.println(
+                DataLogManager.log(
                     "Command interrupted: "
                         + command.getName()
                         + "; Cause: "
                         + interruptor.map(cmd -> cmd.getName()).orElse("<none>")));
     CommandScheduler.getInstance()
-        .onCommandFinish(command -> System.out.println("Command finished: " + command.getName()));
+        .onCommandFinish(command -> DataLogManager.log("Command finished: " + command.getName()));
 
     SmartDashboard.putData(CommandScheduler.getInstance());
 
@@ -115,40 +111,53 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    CommandScheduler.getInstance().run();
-    if (subsystems.visionSubsystem != null) {
-      if (!subsystems.visionSubsystem.isViewFinder()) {
-        subsystems.visionSubsystem.update();
-      }
+    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
+      swerveState = subsystems.drivebaseSubsystem.getState();
+      LimelightHelpers.SetRobotOrientation(
+          Hardware.LIMELIGHT_C,
+          swerveState.Pose.getRotation().getDegrees(),
+          swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+          0,
+          0,
+          0,
+          0);
+      subsystems.visionSubsystem.update();
     }
     if (subsystems.detectionSubsystem != null) {
-      if (!subsystems.detectionSubsystem.isViewFinder()) {
-        subsystems.detectionSubsystem.update();
-      }
+      subsystems.detectionSubsystem.update();
     }
+    CommandScheduler.getInstance().run();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, VIEWFINDER_PIPELINE);
+      // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_ON);
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
-      // ViewFinder Pipeline Switch to reduce Limelight heat
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
+      // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+      // get rid of throttle to get rid of throttle "glazing"
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_OFF);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
     if (subsystems.detectionSubsystem != null) {
-      // ViewFinder Pipeline Switch to reduce Limelight heat
+      // get rid of throttle to get rid of throttle "glazing"
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
@@ -162,9 +171,7 @@ public class Robot extends TimedRobot {
     subsystems.ledSubsystem.setRainbowEnabled(true);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
-
-        fuelSimulation.clearFuel();
-        fuelSimulation.spawnStartingFuel();
+        robotSim.resetFuelSim();
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
@@ -208,6 +215,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    FuelSim.getInstance().updateSim();
+    robotSim.updateFuelSim();
   }
 }
