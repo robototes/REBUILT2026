@@ -355,46 +355,46 @@ public class Controls {
     }
   }
 
-  private void configureTurretBindings() {
-    if (s.turretSubsystem == null) {
-      return;
-    }
-    // use static position constants from TurretSubsystem
-    turretTestController
-        .povUp()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
-    turretTestController
-        .povLeft()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
-    turretTestController
-        .povRight()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
-    turretTestController
-        .povDown()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
-    turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
-    turretTestController
-        .rightStick()
-        .whileTrue(
-            s.turretSubsystem.manualMovingVoltage(
-                () ->
-                    Volts.of(
-                        TurretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
-    turretTestController
-        .leftStick()
-        .whileTrue(
-            s.turretSubsystem.pointFacingJoystick(
-                () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
-    turretTestController
-        .leftTrigger()
-        .whileTrue(Commands.run(() -> System.out.println("Stick Pressed")));
-    turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
-    turretTestController
-        .rightBumper()
-        .onTrue(
-            s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
-    driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
-    driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
-  }
+  // private void configureTurretBindings() {
+  //   if (s.turretSubsystem == null) {
+  //     return;
+  //   }
+  //   // use static position constants from TurretSubsystem
+  //   turretTestController
+  //       .povUp()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
+  //   turretTestController
+  //       .povLeft()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
+  //   turretTestController
+  //       .povRight()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
+  //   turretTestController
+  //       .povDown()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
+  //   turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
+  //   turretTestController
+  //       .rightStick()
+  //       .whileTrue(
+  //           s.turretSubsystem.manualMovingVoltage(
+  //               () ->
+  //                   Volts.of(
+  //                       TurretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
+  //   turretTestController
+  //       .leftStick()
+  //       .whileTrue(
+  //           s.turretSubsystem.pointFacingJoystick(
+  //               () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
+  //   turretTestController
+  //       .leftTrigger()
+  //       .whileTrue(Commands.run(() -> System.out.println("Stick Pressed")));
+  //   turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
+  //   turretTestController
+  //       .rightBumper()
+  //       .onTrue(
+  //           s.drivebaseSubsystem.runOnce(
+  //               () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+  //   driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
+  //   driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
+  // }
 }
