@@ -220,11 +220,13 @@ public class Controls {
     driverController
         .rightTrigger()
         .whileTrue(
-            Commands.sequence(
-                    AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                    Commands.parallel(
-                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
-                .withName("Autorotate, Autoaim done, feeder and spindexer started"))
+            Commands.parallel(
+                s.turretSubsystem.rotateToHub(),
+                Commands.sequence(
+                        AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                        Commands.parallel(
+                            s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
+                    .withName("Autorotate, Autoaim done, feeder and spindexer started")))
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
@@ -235,6 +237,7 @@ public class Controls {
                     s.hood.zeroHoodCommand(),
                     s.turretSubsystem.zeroTurret(),
                     s.intakePivot.zeroPivot())
+                .withName("Zero subsystems")
                 .ignoringDisable(true));
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
