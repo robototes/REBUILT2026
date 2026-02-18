@@ -91,7 +91,7 @@ public class Controls {
     configureIndexingBindings();
     configureAutoAlignBindings();
     configureVisionBindings();
-    configureTurretBindings();
+    // configureTurretBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
