@@ -6,10 +6,6 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
-// import edu.wpi.first.networktables.BooleanPublisher;
-// import edu.wpi.first.networktables.BooleanTopic;
-// import edu.wpi.first.networktables.StringPublisher;
-// import edu.wpi.first.networktables.StringTopic;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -106,9 +102,7 @@ public class LEDSubsystem extends SubsystemBase {
    */
   // private final StringPublisher alternatingColorsPub;
 
-  /**
-   *
-   */
+  /** */
   public LEDSubsystem() {
     setRainbowAnimation(0, 0.25, AnimationDirectionValue.Forward, Units.Hertz.of(100));
 
