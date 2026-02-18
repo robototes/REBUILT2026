@@ -1,4 +1,4 @@
-package frc.robot.subsystems.itake;
+package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 

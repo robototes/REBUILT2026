@@ -1,4 +1,4 @@
-package frc.robot.subsystems.itake;
+package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
