@@ -5,6 +5,9 @@ import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ARM_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
@@ -20,18 +23,24 @@ import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.SpindexerSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakeRollers;
+import frc.robot.subsystems.intake.IntakeSubsystem;
 
 public class Subsystems {
   public static class SubsystemConstants {
     // <SUBSYSTEM>_ENABLED constants go here
 
     public static final boolean DRIVEBASE_ENABLED = true;
+    public static final boolean INTAKE_ROLLERS_ENABLED = true;
+    public static final boolean INTAKE_ARM_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean TURRET_ENABLED = true;
   }
 
@@ -43,6 +52,9 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
+  public final IntakeRollers intakeRollers;
+  public final IntakePivot intakePivot;
+  public final IntakeSubsystem intakeSubsystem;
   public final TurretSubsystem turretSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
@@ -53,6 +65,18 @@ public class Subsystems {
       drivebaseSubsystem = CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
+    }
+
+    if (INTAKE_ROLLERS_ENABLED) {
+      intakeRollers = new IntakeRollers();
+    } else {
+      intakeRollers = null;
+    }
+
+    if (INTAKE_ARM_ENABLED) {
+      intakePivot = new IntakePivot();
+    } else {
+      intakePivot = null;
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
@@ -73,11 +97,13 @@ public class Subsystems {
     } else {
       hood = null;
     }
+
     if (GAMEPIECE_DETECTION_ENABLED) {
       detectionSubsystem = new DetectionSubsystem(drivebaseSubsystem);
     } else {
       detectionSubsystem = null;
     }
+
     if (SPINDEXER_ENABLED) {
       spindexerSubsystem = new SpindexerSubsystem();
     } else {
@@ -89,6 +115,13 @@ public class Subsystems {
     } else {
       feederSubsystem = null;
     }
+
+    if (INTAKE_ENABLED) {
+      intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
+    } else {
+      intakeSubsystem = null;
+    }
+
     if (TURRET_ENABLED) {
       turretSubsystem = new TurretSubsystem(drivebaseSubsystem);
     } else {
