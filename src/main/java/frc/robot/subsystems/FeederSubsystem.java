@@ -76,14 +76,6 @@ public class FeederSubsystem extends SubsystemBase {
         .withName("Start Feeder Motor");
   }
 
-  public Command stop() {
-    return runOnce(
-            () -> {
-              feedMotor.stopMotor();
-            })
-        .withName("Stop Feeder Motor");
-  }
-
   // PLACEHOLDER FOR SENSOR CHECK
   public Command checkSensor() {
     return runOnce(

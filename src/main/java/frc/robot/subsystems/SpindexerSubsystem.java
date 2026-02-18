@@ -76,14 +76,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         .withName("Start Spindexer Motor");
   }
 
-  public Command stop() {
-    return runOnce(
-            () -> {
-              spindexerMotor.stopMotor();
-            })
-        .withName("Stop Spindexer Motor");
-  }
-
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
