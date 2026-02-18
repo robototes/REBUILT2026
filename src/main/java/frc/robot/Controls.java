@@ -4,14 +4,12 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -21,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.LEDSubsystem;
-import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 
@@ -379,7 +376,8 @@ public class Controls {
   //           s.turretSubsystem.manualMovingVoltage(
   //               () ->
   //                   Volts.of(
-  //                       TurretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
+  //                       TurretSubsystem.TURRET_MANUAL_SPEED *
+  // turretTestController.getRightY())));
   //   turretTestController
   //       .leftStick()
   //       .whileTrue(
