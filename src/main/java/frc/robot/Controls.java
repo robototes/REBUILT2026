@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.Intake.IntakeSubsystem;
+import frc.robot.subsystems.Intake.IntakePivot;
 import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
@@ -95,6 +96,10 @@ public class Controls {
   }
 
   private void configureIndexingBindings() {
+    if (s.feederSubsystem == null || s.spindexerSubsystem == null) {
+      DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
+      return;
+    }
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
@@ -225,11 +230,9 @@ public class Controls {
         .toggleOnFalse(
             Commands.parallel(
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
-    driverController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
     driverController
         .y()
         .onTrue(Commands.parallel(s.hood.zeroHoodCommand(), s.turretSubsystem.zeroTurret()));
-    driverController.leftTrigger().whileTrue(s.intakeSubsystem.runIntake());
     if (s.flywheels.TUNER_CONTROLLED) {
       driverController
           .leftBumper()
@@ -243,12 +246,18 @@ public class Controls {
     launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
   }
   private void configureIntakeBindings() {
-    if (s.intakeSubsystem == null) {
-      DataLogManager.log("Controls.java: intakeSubsystem is disabled, bindings skipped");
+    if (s.intakeRollers == null || s.intakePivot == null) {
+      DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
       return;
     }
-    intakeTestController.a().onTrue(s.intakeSubsystem.runRollers());
-    // TODO: add run only pivot command and bind to another button
+
+    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
+    driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
+
+    intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
+    intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**

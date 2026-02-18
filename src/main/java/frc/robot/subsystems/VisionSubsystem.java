@@ -128,6 +128,8 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       if (!pose_bad) {
+        // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
+        // to not need kalman filtering
         drivetrain.resetPose(fieldPose3d.toPose2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");

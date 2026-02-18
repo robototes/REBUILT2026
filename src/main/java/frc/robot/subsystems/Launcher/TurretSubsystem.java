@@ -32,12 +32,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
-  // Offsets
-  private static final double TURRET_X_OFFSET = 0.2159;
-  private static final double TURRET_Y_OFFSET = 0.1397;
-  private static final Transform2d TURRET_OFFSET =
-      new Transform2d(TURRET_X_OFFSET, -TURRET_Y_OFFSET, Rotation2d.k180deg);
-
   // Positions
   private double targetPos;
   public static final double FRONT_POSITION = 0.16748;
@@ -69,7 +63,6 @@ public class TurretSubsystem extends SubsystemBase {
   // Soft Limits
   private static final double TURRET_MAX = 190; // degrees
   private static final double TURRET_MIN = 0; // degrees
-  private static final double TURRET_DEADBAND = -0.5; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
@@ -81,6 +74,7 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
     turretConfig();
     turretMotor.setPosition(0);
+    turretRotation.set(new Pose2d[2]);
   }
 
   public void turretConfig() {
@@ -126,8 +120,8 @@ public class TurretSubsystem extends SubsystemBase {
   public Command zeroTurret() {
     return runOnce(
         () -> {
-          turretMotor.setPosition(Units.degreesToRotations(0));
-          targetPos = Units.degreesToRotations(0);
+          turretMotor.setPosition(0);
+          targetPos = 0;
         });
   }
 
@@ -171,30 +165,32 @@ public class TurretSubsystem extends SubsystemBase {
     return turretMotor.getPosition().getValueAsDouble();
   }
 
-  public boolean atTarget() {
+  public boolean atTarget(double degreeTolerance) {
     return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
-        < Units.degreesToRotations(2);
+        < Units.degreesToRotations(degreeTolerance);
   }
 
   private double calculateTurretAngle() {
-    // Get current robot pose
-    Pose2d turretPose = driveTrain.getState().Pose.plus(TURRET_OFFSET);
-    Translation2d robotTranslation = turretPose.getTranslation();
-    Rotation2d robotRotation = turretPose.getRotation();
+    // Get current turret pose
+    Translation2d turretTranslation =
+        LauncherConstants.launcherFromRobot(driveTrain.getState().Pose);
+
+    // Add 180 degrees to account for 0 posistion
+    Rotation2d turretRotation = driveTrain.getState().Pose.getRotation().plus(Rotation2d.k180deg);
 
     // Get hub position
     Translation2d hubTranslation = AllianceUtils.getHubTranslation2d();
 
-    // Calculate vector from robot to hub
-    Translation2d robotToHub = hubTranslation.minus(robotTranslation);
+    // Calculate vector from turret to hub
+    Translation2d turretToHub = hubTranslation.minus(turretTranslation);
 
     // Calculate absolute field angle to hub
     Rotation2d absoluteAngleToHub =
-        new Rotation2d(Math.atan2(robotToHub.getY(), robotToHub.getX()));
+        new Rotation2d(Math.atan2(turretToHub.getY(), turretToHub.getX()));
 
     // Calculate turret angle relative to robot's forward direction
-    // Subtract robot's rotation to get robot-relative angle
-    Rotation2d turretAngle = absoluteAngleToHub.minus(robotRotation);
+    // Subtract turret's rotation to get robot-relative angle
+    Rotation2d turretAngle = absoluteAngleToHub.minus(turretRotation);
 
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
@@ -220,13 +216,8 @@ public class TurretSubsystem extends SubsystemBase {
           double targetRotations = calculateTurretAngle();
           turretMotor.setControl(request.withPosition(targetRotations));
           targetPos = targetRotations;
-          Pose2d turretPose = driveTrain.getState().Pose.plus(TURRET_OFFSET);
           Transform2d fieldRelativeOffset =
               new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
-          var array =
-              new Pose2d[] {
-                turretPose, new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero)
-              };
           Pose2d turretPose2 =
               new Pose2d(
                   LauncherConstants.launcherFromRobot(driveTrain.getState().Pose),
