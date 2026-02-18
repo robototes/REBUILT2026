@@ -49,8 +49,8 @@ public class IntakePivot extends SubsystemBase {
   private static final double GEAR_RATIO = 36;
 
   // Soft Limits
-  private static final double PIVOT_MIN = -0.30; // degrees
-  private static final double PIVOT_MAX = 0.0; // degrees
+  private static final double PIVOT_MIN = -0.30; // rotations
+  private static final double PIVOT_MAX = 0.0;
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
@@ -81,9 +81,9 @@ public class IntakePivot extends SubsystemBase {
     config.CurrentLimits.SupplyCurrentLimit = SUPPLY_CURRENT_LIMIT;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.degreesToRotations(PIVOT_MAX);
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = PIVOT_MAX;
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(PIVOT_MIN);
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = PIVOT_MIN;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;
