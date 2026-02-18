@@ -51,7 +51,7 @@ public class PivotSim extends SubsystemBase {
     intakeArmSimState.Orientation = ChassisReference.Clockwise_Positive;
 
     root = mech.getRoot("Shoulder", 20, 20);
-    arm = root.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 90));
+    arm = root.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 0));
 
     SmartDashboard.putData("Pivot", mech);
   }
@@ -69,6 +69,6 @@ public class PivotSim extends SubsystemBase {
         Units.radiansToRotations(intakeArmSim.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
 
     // update sim
-    arm.setAngle(Units.radiansToDegrees(angleRads));
+    arm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);
   }
 }

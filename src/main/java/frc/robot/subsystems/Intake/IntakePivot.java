@@ -1,146 +1,133 @@
 package frc.robot.subsystems.Intake;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
-import frc.robot.Robot;
-import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.LauncherConstants;
+import java.util.function.Supplier;
 
 public class IntakePivot extends SubsystemBase {
-  // motor
   private final TalonFX pivotMotor;
-  private final MotionMagicVoltage pivotRequest = new MotionMagicVoltage(0);
+  private final MotionMagicVoltage request = new MotionMagicVoltage(0);
 
-  // positions
-  public static final double PIVOT_DEPLOYED_POS = 12; // (120/360) * pivot gear ratio
-  public static final double PIVOT_RETRACTED_POS = 0;
-  public static final double POS_TOLERANCE = Units.degreesToRotations(10); // for tolerance check
+  // Positions
   private double targetPos;
-  private boolean pivotIsRetracted = true; // for toggle feature
+  public static final double DEPLOYED_POS = 0.5;
+  public static final double RETRACTED_POS = 0.0;
 
-  // networktables and sim
-  private DoubleTopic pivotTopic;
-  private DoublePublisher pivotPublisher;
-  private PivotSim pivotSim;
+  // PID variables
+  private static final double kP = 2.97;
+  private static final double kI = 0;
+  private static final double kD = 1;
+  private static final double kG = 0;
+  private static final double kS = 0.41;
+  private static final double kV = 0.9;
+  private static final double kA = 0.12;
+
+  // Current limits
+  private static final int STATOR_CURRENT_LIMIT = 60; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 30; // amps
+
+  // Motion Magic Config
+  private static final double CRUISE_VELOCITY = 25;
+  private static final double ACCELERATION = 10;
+  private static final double JERK = 50;
+
+  // Gear Ratio
+  private static final double GEAR_RATIO = 36;
+
+  // Soft Limits
+  private static final double PIVOT_MAX = 180; // degrees
+  private static final double PIVOT_MIN = 0; // degrees
+
 
   public IntakePivot() {
-    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
-    TalonFXConfigs();
-    networktables();
-
-    // sim creator
-    if (RobotBase.isSimulation()) {
-      pivotSim = new PivotSim(pivotMotor);
-    }
+    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
+    turretConfig();
+    pivotMotor.setPosition(0);
   }
 
-  // configs
-  private void TalonFXConfigs() {
-    // define config variables
-    var talonFXConfigs = new TalonFXConfiguration();
-    var simConfigs = new Slot0Configs();
-    var irlConfigs = new Slot0Configs();
-    var motionMagic = talonFXConfigs.MotionMagic; // motion magic settings
-    talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS IN COAST
+  public void turretConfig() {
+    TalonFXConfiguration config = new TalonFXConfiguration();
 
-    // PIDS
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
-    // simConfigs.kV = 5.0;
-    simConfigs.kA = 0.0;
-    simConfigs.kP = 2.0;
-    simConfigs.kI = 0.0;
-    simConfigs.kD = 0.0;
-    simConfigs.kG = 0.0;
+    config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
+    config.CurrentLimits.StatorCurrentLimitEnable = true;
+    config.CurrentLimits.SupplyCurrentLimit = SUPPLY_CURRENT_LIMIT;
+    config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    // note: these are PIDS from last year's robot
-    // TODO: tune with physical robot
-    irlConfigs.kP = 45;
-    irlConfigs.kI = 0.0;
-    irlConfigs.kD = 0.0;
-    irlConfigs.kA = 0.0;
-    irlConfigs.kV = 0.0;
-    irlConfigs.kS = 0.155;
-    irlConfigs.kG = 0.0;
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = Units.degreesToRotations(PIVOT_MAX);
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(PIVOT_MIN);
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-    // motion magic settings
-    motionMagic.MotionMagicAcceleration = 25;
-    motionMagic.MotionMagicJerk = 0;
+    config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;
+    config.MotionMagic.MotionMagicAcceleration = ACCELERATION;
+    config.MotionMagic.MotionMagicJerk = JERK;
 
-    // apply configs
-    talonFXConfigs.Slot0 =
-        (Robot.isSimulation()) ? simConfigs : irlConfigs; // interchanging between sim and irl
-    pivotMotor.getConfigurator().apply(talonFXConfigs);
+    config.Slot0.kP = kP;
+    config.Slot0.kI = kI;
+    config.Slot0.kD = kD;
+    config.Slot0.kG = kG;
+    config.Slot0.kS = kS;
+    config.Slot0.kV = kV;
+    config.Slot0.kA = kA;
+
+    pivotMotor.getConfigurator().apply(config);
   }
 
-  // configure networktables
-  private void networktables() {
-    var nt = NetworkTableInstance.getDefault();
-    this.pivotTopic = nt.getDoubleTopic("intake/pivotPosition");
-    this.pivotPublisher = pivotTopic.publish();
-
-    pivotPublisher.set(0); // default value
-  }
-
-  // pivot position for networktables
-  public double getPivotPos() {
-    var curPos = pivotMotor.getPosition();
-    return curPos.getValueAsDouble();
-  }
-
-  private Command setTargetPos(double pos) {
-    return Commands.runOnce(
+  public Command setPivotPosition(double pos) {
+    return runOnce(
         () -> {
-          pivotMotor.setControl(pivotRequest.withPosition(pos));
+          pivotMotor.setControl(request.withPosition(pos));
           targetPos = pos;
         });
   }
 
-  // main command to go to a position
-  public Command goToPos(double position) {
-    return setTargetPos(position).andThen(Commands.waitUntil(atPosition(position)));
-  }
-
-  // check position with tolerance
-  public Trigger atPosition(double position) {
-    return new Trigger(() -> Math.abs(getPivotPos() - position) < POS_TOLERANCE);
-  }
-
-  // stop command just in case
-  public Command stop() {
-    return Commands.runOnce(
+  public Command zeroPivot() {
+    return runOnce(
         () -> {
-          pivotMotor.stopMotor();
+          pivotMotor.setPosition(0);
+          targetPos = 0;
         });
   }
 
-  // check if pivot is retracted
-  public boolean isDeployed() {
-    return Math.abs(getPivotPos() - PIVOT_DEPLOYED_POS) < POS_TOLERANCE;
+  public Command manualMovingVoltage(Supplier<Voltage> speed) {
+    return runEnd(
+        () -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor());
   }
 
-  @Override
-  // update networktables
-  public void periodic() {
-    pivotPublisher.set(getPivotPos());
+
+  public double getTurretPosition() {
+    return pivotMotor.getPosition().getValueAsDouble();
   }
 
-  // update sim
-  public void simulationPeriodic() {
-    if (pivotSim != null) {
-      pivotSim.updateArm();
-    }
+  public boolean isDeployed(double degreeTolerance) {
+    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPos)
+        < Units.degreesToRotations(degreeTolerance);
   }
+
+
 }

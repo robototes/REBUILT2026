@@ -19,10 +19,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.Intake.IntakePivot;
 import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
-import frc.robot.subsystems.Intake.IntakePivot;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -262,10 +262,10 @@ public class Controls {
     intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
     intakeTestController
         .x()
-        .onTrue(s.intakePivot.goToPos(IntakePivot.PIVOT_DEPLOYED_POS).andThen(Commands.idle()));
+        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
     intakeTestController
         .y()
-        .onTrue(s.intakePivot.goToPos(IntakePivot.PIVOT_RETRACTED_POS).andThen(Commands.idle()));
+        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**

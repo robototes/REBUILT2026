@@ -17,17 +17,18 @@ public class IntakeSubsystem {
   }
 
   public Command deployPivot() {
-    return intakePivot.goToPos(IntakePivot.PIVOT_DEPLOYED_POS);
+    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
   }
 
   public Command retractPivot() {
-    return intakePivot.goToPos(IntakePivot.PIVOT_RETRACTED_POS);
+    return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
   }
 
   public Command smartIntake() {
     return Commands.either(
         runRollersCommand(),
         Commands.sequence(deployPivot(), runRollersCommand()),
-        () -> intakePivot.isDeployed());
+        // () -> intakePivot.isDeployed()
+        () -> true);
   }
 }
