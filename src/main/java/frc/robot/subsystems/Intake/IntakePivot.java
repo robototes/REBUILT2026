@@ -124,10 +124,8 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
-    return runEnd(
-        () -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor());
+    return runEnd(() -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor());
   }
-
 
   public double getPivotPosition() {
     return pivotMotor.getPosition().getValueAsDouble();
@@ -138,11 +136,11 @@ public class IntakePivot extends SubsystemBase {
         < Units.degreesToRotations(degreeTolerance);
   }
 
-    @Override
-    // update simulation
-    public void simulationPeriodic() {
-      if (pivotSim != null) {
-        pivotSim.updateArm();
-      }
+  @Override
+  // update simulation
+  public void simulationPeriodic() {
+    if (pivotSim != null) {
+      pivotSim.updateArm();
     }
+  }
 }

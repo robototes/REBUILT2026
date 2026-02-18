@@ -260,12 +260,8 @@ public class Controls {
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
     intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
-    intakeTestController
-        .x()
-        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
-    intakeTestController
-        .y()
-        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
+    intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**
