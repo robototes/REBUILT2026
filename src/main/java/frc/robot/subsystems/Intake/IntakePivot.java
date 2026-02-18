@@ -24,7 +24,7 @@ public class IntakePivot extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = 0.5;
+  public static final double DEPLOYED_POS = 0.28;
   public static final double RETRACTED_POS = 0.0;
 
   // PID variables
@@ -37,8 +37,8 @@ public class IntakePivot extends SubsystemBase {
   private static final double kA = 0.12;
 
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 60; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 30; // amps
+  private static final int STATOR_CURRENT_LIMIT = 20; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 10; // amps
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 25;
@@ -49,13 +49,15 @@ public class IntakePivot extends SubsystemBase {
   private static final double GEAR_RATIO = 36;
 
   // Soft Limits
-  private static final double PIVOT_MAX = 180; // degrees
-  private static final double PIVOT_MIN = 0; // degrees
+  private static final double PIVOT_MAX = 0.30; // degrees
+  private static final double PIVOT_MIN = 0.0; // degrees
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
-  private DoubleTopic pivotTopic;
-  private DoublePublisher pivotPub;
+  private DoubleTopic currentPosTopic;
+  private DoublePublisher currentPosPub;
+  private DoublePublisher targetPosPub;
+  private DoubleTopic targetPosTopic;
 
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
@@ -101,10 +103,14 @@ public class IntakePivot extends SubsystemBase {
 
   private void networktables() {
     var nt = NetworkTableInstance.getDefault();
-    this.pivotTopic = nt.getDoubleTopic("intake/pivotPosition");
-    this.pivotPub = pivotTopic.publish();
+    this.currentPosTopic = nt.getDoubleTopic("intake/pivotCurrentPosition");
+    this.currentPosPub = currentPosTopic.publish();
 
-    pivotPub.set(0.0); // default value
+    this.targetPosTopic = nt.getDoubleTopic("intake/pivotTargetPosition");
+    this.targetPosPub = targetPosTopic.publish();
+
+    currentPosPub.set(0.0); // default value
+    targetPosPub.set(0.0); // default value
   }
 
   public Command setPivotPosition(double pos) {
@@ -130,6 +136,9 @@ public class IntakePivot extends SubsystemBase {
   public double getPivotPosition() {
     return pivotMotor.getPosition().getValueAsDouble();
   }
+  public double getPivotTargetPosition() {
+    return targetPos;
+  }
 
   public boolean isDeployed(double degreeTolerance) {
     return Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPos)
@@ -138,6 +147,11 @@ public class IntakePivot extends SubsystemBase {
 
   @Override
   // update simulation
+  public void periodic() {
+    currentPosPub.set(getPivotPosition());
+    targetPosPub.set(getPivotTargetPosition());
+  }
+
   public void simulationPeriodic() {
     if (pivotSim != null) {
       pivotSim.updateArm();
