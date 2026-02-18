@@ -2,7 +2,6 @@ package frc.robot.subsystems.launcher;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -18,11 +17,11 @@ public class LauncherSubsystem extends SubsystemBase {
   protected TurretSubsystem turret;
   protected double flywheelsGoal;
   protected double hoodGoal;
+  protected double turretGoal;
 
-  private final DoubleTopic hoodGoalTopic;
-  private final DoubleTopic flywheelGoalTopic;
-  private final DoublePublisher flywheelGoalPub;
   private final DoublePublisher hoodGoalPub;
+  private final DoublePublisher flywheelGoalPub;
+  private final DoublePublisher turretGoalPub;
 
   public LauncherSubsystem(Hood hood, Flywheels flywheels, TurretSubsystem turret) {
     this.hood = hood;
@@ -30,12 +29,12 @@ public class LauncherSubsystem extends SubsystemBase {
     this.turret = turret;
 
     var nt = NetworkTableInstance.getDefault();
-    hoodGoalTopic = nt.getDoubleTopic("/AutoAim/hoodGoal");
-    flywheelGoalTopic = nt.getDoubleTopic("/AutoAim/flywheelGoal");
-    hoodGoalPub = hoodGoalTopic.publish();
+    hoodGoalPub = nt.getDoubleTopic("/AutoAim/hoodGoal").publish();
     hoodGoalPub.set(0.0);
-    flywheelGoalPub = flywheelGoalTopic.publish();
+    flywheelGoalPub = nt.getDoubleTopic("/AutoAim/flywheelGoal").publish();
     flywheelGoalPub.set(0.0);
+    turretGoalPub = nt.getDoubleTopic("/AutoAim/turretGoal").publish();
+    turretGoalPub.set(0.0);
   }
 
   public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
@@ -46,13 +45,15 @@ public class LauncherSubsystem extends SubsystemBase {
           hoodGoal = LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
           flywheelsGoal =
               LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
+          turretGoal = turret.calculateTurretAngle();
 
           hoodGoalPub.set(hoodGoal);
           flywheelGoalPub.set(flywheelsGoal);
+          turretGoalPub.set(turretGoal);
 
           hood.setHoodPosition(hoodGoal);
           flywheels.setVelocityRPS(flywheelsGoal);
-          CommandScheduler.getInstance().schedule(turret.rotateToHub());
+          turret.setTurretRawPosition(turretGoal);
         },
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }

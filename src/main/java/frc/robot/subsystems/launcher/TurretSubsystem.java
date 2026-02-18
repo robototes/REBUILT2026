@@ -118,6 +118,11 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
+  public void setTurretRawPosition(double pos) {
+    turretMotor.setControl(request.withPosition(pos));
+    targetPos = pos;
+  }
+
   public Command zeroTurret() {
     return runOnce(
         () -> {
@@ -171,7 +176,7 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(degreeTolerance);
   }
 
-  private double calculateTurretAngle() {
+  public double calculateTurretAngle() {
     // Get current turret pose
     Translation2d turretTranslation =
         LauncherConstants.launcherFromRobot(driveTrain.getState().Pose);
