@@ -19,10 +19,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.Intake.IntakePivot;
 import frc.robot.subsystems.Launcher.TurretSubsystem;
 import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.subsystems.intake.IntakePivot;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -230,7 +230,12 @@ public class Controls {
                 s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
     driverController
         .y()
-        .onTrue(Commands.parallel(s.hood.zeroHoodCommand(), s.turretSubsystem.zeroTurret()));
+        .onTrue(
+            Commands.parallel(
+                    s.hood.zeroHoodCommand(),
+                    s.turretSubsystem.zeroTurret(),
+                    s.intakePivot.zeroPivot())
+                .ignoringDisable(true));
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
           .leftBumper()
@@ -254,6 +259,8 @@ public class Controls {
       DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
       return;
     }
+
+    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
 
     driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
@@ -344,7 +351,5 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
-    driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
-    driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
   }
 }

@@ -1,4 +1,4 @@
-package frc.robot.subsystems.Intake;
+package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 
@@ -24,7 +24,7 @@ public class IntakePivot extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = 0.28;
+  public static final double DEPLOYED_POS = -0.28;
   public static final double RETRACTED_POS = 0.0;
 
   // PID variables
@@ -49,8 +49,8 @@ public class IntakePivot extends SubsystemBase {
   private static final double GEAR_RATIO = 36;
 
   // Soft Limits
-  private static final double PIVOT_MAX = 0.30; // degrees
-  private static final double PIVOT_MIN = 0.0; // degrees
+  private static final double PIVOT_MIN = -0.30; // degrees
+  private static final double PIVOT_MAX = 0.0; // degrees
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
@@ -72,7 +72,7 @@ public class IntakePivot extends SubsystemBase {
   public void pivotConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -136,12 +136,18 @@ public class IntakePivot extends SubsystemBase {
   public double getPivotPosition() {
     return pivotMotor.getPosition().getValueAsDouble();
   }
+
   public double getPivotTargetPosition() {
     return targetPos;
   }
 
-  public boolean isDeployed(double degreeTolerance) {
+  public boolean isAtTargetPose(double degreeTolerance) {
     return Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPos)
+        < Units.degreesToRotations(degreeTolerance);
+  }
+
+  public boolean isDeployed(double degreeTolerance) {
+    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - DEPLOYED_POS)
         < Units.degreesToRotations(degreeTolerance);
   }
 
