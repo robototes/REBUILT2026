@@ -3,6 +3,7 @@ package frc.robot;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -18,6 +19,8 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.LauncherConstants;
 
 public class Telemetry {
   private final double MaxSpeed;
@@ -39,8 +42,8 @@ public class Telemetry {
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
   private final StructPublisher<Pose2d> drivePose =
       driveStateTable.getStructTopic("Pose", Pose2d.struct).publish();
-  private final StructPublisher<Pose2d> turretPose =
-      driveStateTable.getStructTopic("Turret Pose", Pose2d.struct).publish();
+  private final StructPublisher<Translation2d> turretTranslation =
+      driveStateTable.getStructTopic("Turret Pose", Translation2d.struct).publish();
   private final DoublePublisher turretToHubDistance =
       driveStateTable.getDoubleTopic("Tuuret to hub distance").publish();
   private final StructPublisher<ChassisSpeeds> driveSpeeds =
@@ -106,14 +109,13 @@ public class Telemetry {
   /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
   public void telemeterize(SwerveDriveState state) {
     /* Telemeterize the swerve drive state */
-    /*
     drivePose.set(state.Pose);
-    turretPose.set(state.Pose.plus(TurretSubsystem.TURRET_OFFSET));
+    turretTranslation.set(LauncherConstants.launcherFromRobot(state.Pose));
     var robotToHubMeters =
         AllianceUtils.getHubTranslation2d()
-            .minus(state.Pose.plus(TurretSubsystem.TURRET_OFFSET).getTranslation())
+            .minus(LauncherConstants.launcherFromRobot(state.Pose))
             .getNorm();
-    turretToHubDistance.set(robotToHubMeters); */
+    turretToHubDistance.set(robotToHubMeters);
     driveSpeeds.set(state.Speeds);
     driveModuleStates.set(state.ModuleStates);
     driveModuleTargets.set(state.ModuleTargets);
