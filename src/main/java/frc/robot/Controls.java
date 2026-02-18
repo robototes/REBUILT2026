@@ -219,7 +219,7 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runFeeder()))
                 .withName("Aim turret then feeder and spindexer started"));
-    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand());
+    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
@@ -310,14 +310,16 @@ public class Controls {
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
-    turretTestController
-        .leftTrigger()
-        .whileTrue(Commands.run(() -> System.out.println("Stick Pressed")));
     turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
     turretTestController
         .rightBumper()
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            s.turretSubsystem.pointFacingJoystick(
+                () -> driverController.getLeftX(), () -> driverController.getLeftY()));
   }
 }
