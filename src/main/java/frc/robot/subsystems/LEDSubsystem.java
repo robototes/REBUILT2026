@@ -201,7 +201,7 @@ public class LEDSubsystem extends SubsystemBase {
               setHardwareColor(scaled);
             },
             this)
-        .withName("SetLEDsWithBrightness");
+        .withName("Set LEDS with default Brightness");
   }
   /**
    * Scales the brightness of a given RGBW color.
