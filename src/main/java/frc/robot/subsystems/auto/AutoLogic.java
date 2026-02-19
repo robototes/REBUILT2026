@@ -191,6 +191,7 @@ public class AutoLogic {
   public static void registerCommands() {
 
     NamedCommands.registerCommand("launch", launcherCommand());
+    NamedCommands.registerCommand("aim", aimCommand());
     NamedCommands.registerCommand("intake", intakeCommand());
     NamedCommands.registerCommand("climb", climbCommand());
   }
@@ -199,13 +200,16 @@ public class AutoLogic {
     return Commands.none();
   }
 
-  public static Command launcherCommand() {
-    return s.turretSubsystem.rotateToHub().repeatedly();
+  public static Command aimCommand() {
+    return s.turretSubsystem.rotateToHub();
+  }
 
-                //Commands.sequence(
-                //        AutoAim.utoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                //        Commands.parallel(
-                //            s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))).withTimeout(7.0);
+  public static Command launcherCommand() {
+    return Commands.parallel(
+            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget()).andThen(
+            Commands.parallel(s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+        .withTimeout(7.0);
   }
 
   public static Command launcherSimCommand() {
@@ -225,7 +229,7 @@ public class AutoLogic {
 
   public static Command intakeCommand() {
 
- return  s.intakeSubsystem.deployPivot();
+    return s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {

@@ -344,7 +344,7 @@ public class Controls {
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
     driverController
-        .rightTrigger()
+        .rightStick()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> driverController.getLeftX(), () -> driverController.getLeftY()));
