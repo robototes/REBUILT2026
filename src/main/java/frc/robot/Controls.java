@@ -231,33 +231,33 @@ public class Controls {
     ledTestController
         .a()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
+                    LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set intake color")); // blue
 
     ledTestController
         .b()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
+                    LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set climb color")); // cyan
 
     ledTestController
         .x()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
+                    LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set outtake color")); // green
 
     ledTestController
         .y()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS)
+            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.GLOBAL_BRIGHTNESS))
+                    LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set default color")); // red
 
     ledTestController

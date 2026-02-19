@@ -25,7 +25,7 @@ public class LEDSubsystem extends SubsystemBase {
   private static final int END_INDEX = 7;
 
   /** Default brightness applied to all SolidColor operations (0.0–1.0). */
-  public static final double GLOBAL_BRIGHTNESS = 0.5;
+  public static final double DEFAULT_BRIGHTNESS = 0.25;
 
   /** Instance of the CTRE CANdle LED controller used to control the LED strip. */
   private final CANdle candle = new CANdle(CAN_ID);
@@ -165,7 +165,7 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   public void setHardwareColor(RGBWColor color) {
-    setHardwareColor(color, GLOBAL_BRIGHTNESS);
+    setHardwareColor(color, DEFAULT_BRIGHTNESS);
   }
 
   /**
