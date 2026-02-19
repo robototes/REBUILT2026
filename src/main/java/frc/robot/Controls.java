@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
@@ -97,6 +98,10 @@ public class Controls {
         });
   }
 
+  private Trigger connected(CommandXboxController controller) {
+    return new Trigger(() -> controller.isConnected());
+  }
+
   private void configureIndexingBindings() {
     if (s.feederSubsystem == null || s.spindexerSubsystem == null) {
       DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
@@ -105,20 +110,28 @@ public class Controls {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // start feeder motor
-    indexingTestController.a().onTrue(s.feederSubsystem.startMotor());
+    connected(indexingTestController)
+        .and(indexingTestController.a())
+        .onTrue(s.feederSubsystem.startMotor());
 
     // stop feeder motor
-    indexingTestController.b().onTrue(s.feederSubsystem.stopMotor());
+    connected(indexingTestController)
+        .and(indexingTestController.b())
+        .onTrue(s.feederSubsystem.stopMotor());
 
     // start spindexer motor
-    indexingTestController.x().onTrue(s.spindexerSubsystem.startMotor());
+    connected(indexingTestController)
+        .and(indexingTestController.x())
+        .onTrue(s.spindexerSubsystem.startMotor());
 
     // stop spindexer motor
-    indexingTestController.y().onTrue(s.spindexerSubsystem.stopMotor());
+    connected(indexingTestController)
+        .and(indexingTestController.y())
+        .onTrue(s.spindexerSubsystem.stopMotor());
 
     // run both while left trigger is held
-    indexingTestController
-        .leftTrigger()
+    connected(indexingTestController)
+        .and(indexingTestController.leftTrigger())
         .whileTrue(
             Commands.startEnd(
                 () -> {
@@ -211,7 +224,9 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
-    visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+    connected(visionTestController)
+        .and(visionTestController.rightBumper())
+        .whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLauncherBindings() {
@@ -232,21 +247,31 @@ public class Controls {
     driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
-      launcherTuningController
-          .leftBumper()
+      connected(launcherTuningController)
+          .and(launcherTuningController.leftBumper())
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
     }
     if (s.hood.TUNER_CONTROLLED) {
-      launcherTuningController
-          .rightBumper()
+      connected(launcherTuningController)
+          .and(launcherTuningController.rightBumper())
           .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
     }
-    launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
-    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
-    launcherTuningController.b().onTrue(s.hood.hoodPositionCommand(1));
+    connected(launcherTuningController)
+        .and(launcherTuningController.start())
+        .onTrue(s.hood.autoZeroCommand());
+    connected(launcherTuningController)
+        .and(launcherTuningController.a())
+        .onTrue(s.hood.hoodPositionCommand(0.5));
+    connected(launcherTuningController)
+        .and(launcherTuningController.b())
+        .onTrue(s.hood.hoodPositionCommand(1));
 
-    launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
-    launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
+    connected(launcherTuningController)
+        .and(launcherTuningController.x())
+        .onTrue(s.flywheels.setVelocityCommand(50));
+    connected(launcherTuningController)
+        .and(launcherTuningController.y())
+        .onTrue(s.flywheels.setVelocityCommand(60));
   }
 
   private void configureIntakeBindings() {
@@ -261,9 +286,15 @@ public class Controls {
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
-    intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
-    intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
-    intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
+    connected(intakeTestController)
+        .and(intakeTestController.a())
+        .whileTrue(s.intakeRollers.runRollers());
+    connected(intakeTestController)
+        .and(intakeTestController.x())
+        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    connected(intakeTestController)
+        .and(intakeTestController.y())
+        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**
@@ -292,8 +323,8 @@ public class Controls {
 
   private void configureVisionBindings() {
     if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      visionTestController
-          .leftBumper()
+      connected(visionTestController)
+          .and(visionTestController.leftBumper())
           .onTrue(
               s.drivebaseSubsystem
                   .runOnce(
@@ -312,34 +343,38 @@ public class Controls {
       return;
     }
     // use static position constants from TurretSubsystem
-    turretTestController
-        .povUp()
+    connected(turretTestController)
+        .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
-    turretTestController
-        .povLeft()
+    connected(turretTestController)
+        .and(turretTestController.povLeft())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
-    turretTestController
-        .povRight()
+    connected(turretTestController)
+        .and(turretTestController.povRight())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
-    turretTestController
-        .povDown()
+    connected(turretTestController)
+        .and(turretTestController.povDown())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
-    turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
-    turretTestController
-        .rightStick()
+    connected(turretTestController)
+        .and(turretTestController.y())
+        .onTrue(s.turretSubsystem.zeroTurret());
+    connected(turretTestController)
+        .and(turretTestController.rightStick())
         .whileTrue(
             s.turretSubsystem.manualMovingVoltage(
                 () ->
                     Volts.of(
                         TurretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
-    turretTestController
-        .leftStick()
+    connected(turretTestController)
+        .and(turretTestController.leftStick())
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
-    turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
-    turretTestController
-        .rightBumper()
+    connected(turretTestController)
+        .and(turretTestController.rightTrigger())
+        .whileTrue(s.turretSubsystem.rotateToHub());
+    connected(turretTestController)
+        .and(turretTestController.rightBumper())
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
