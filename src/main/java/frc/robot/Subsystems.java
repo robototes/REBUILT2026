@@ -32,7 +32,7 @@ import frc.robot.subsystems.launcher.Hood;
 import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.robotType.RobotTypes;
+import frc.robot.util.robotType.RobotTypesEnum;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -73,10 +73,9 @@ public class Subsystems {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
     if (DRIVEBASE_ENABLED) {
-      drivebaseSubsystem =
-          (RobotType.type == RobotTypes.ALPHA)
-              ? AlphaTunerConstants.createDrivetrain()
-              : CompTunerConstants.createDrivetrain();
+      drivebaseSubsystem = (RobotType.type == RobotTypesEnum.ALPHA)
+          ? AlphaTunerConstants.createDrivetrain()
+          : CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
     }
