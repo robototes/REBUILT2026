@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -26,6 +28,14 @@ public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
+  public static final Transform3d COMP_BOT_LEFT_CAMERA =
+      new Transform3d(
+          0.114,
+          0.368,
+          0.235,
+          new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
+  public static final Transform3d COMP_BOT_FRONT_CAMERA =
+      new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
@@ -40,6 +50,18 @@ public class VisionSubsystem extends SubsystemBase {
   private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dLeft", Pose3d.struct)
+          .publish();
+  public static final StructPublisher<Pose3d> betaBotLeftCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/betaBotLeftCameraView", Pose3d.struct)
+          .publish();
+  public static final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/compBotLeftCameraView", Pose3d.struct)
+          .publish();
+  public static final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
           .publish();
 
   // state
@@ -185,5 +207,12 @@ public class VisionSubsystem extends SubsystemBase {
 
   public Pose2d getLastVisionPose2d() {
     return lastFieldPose;
+  }
+
+  public void updateSim() {
+    Pose2d robotPose2d = drivetrain.getState().Pose;
+    Pose3d robotPose3d = new Pose3d(robotPose2d);
+    compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
+    compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
   }
 }
