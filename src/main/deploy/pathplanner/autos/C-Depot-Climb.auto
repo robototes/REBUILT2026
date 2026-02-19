@@ -5,33 +5,47 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "deadline",
           "data": {
-            "name": "launch"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "CENTER DEPOT"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "launch"
+                }
+              }
+            ]
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "CENTER DEPOT"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "DEPOT DEPT"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "DEPOT DEPT"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "Depot-Climb"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
           }
         },
         {
