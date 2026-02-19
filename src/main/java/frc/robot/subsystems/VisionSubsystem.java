@@ -51,11 +51,11 @@ public class VisionSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dLeft", Pose3d.struct)
           .publish();
-  public static final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
+  private final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/compBotLeftCameraView", Pose3d.struct)
           .publish();
-  public static final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
+  private final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
           .publish();
