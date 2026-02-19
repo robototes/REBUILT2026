@@ -1,4 +1,4 @@
-package frc.robot.subsystems.Launcher;
+package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -90,21 +90,29 @@ public class Flywheels extends SubsystemBase {
   }
 
   public Command setVelocityCommand(double rps) {
-    return runOnce(
+    return runEnd(
             () -> {
               request.Velocity = rps;
               FlywheelOne.setControl(request);
               FlywheelTwo.setControl(follow);
+            },
+            () -> {
+              FlywheelOne.stopMotor();
+              FlywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Velocity");
   }
 
   public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
-    return runOnce(
+    return runEnd(
             () -> {
               request.Velocity = rps.getAsDouble();
               FlywheelOne.setControl(request);
               FlywheelTwo.setControl(follow);
+            },
+            () -> {
+              FlywheelOne.stopMotor();
+              FlywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Velocity");
   }
