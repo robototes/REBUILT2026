@@ -120,7 +120,7 @@ public class TurretSubsystem extends SubsystemBase {
   public void setTurretRawPosition(double pos) {
     turretMotor.setControl(request.withPosition(pos));
     targetPos = pos;
-    System.out.println(Units.rotationsToDegrees(pos));
+    System.out.println(pos);
   }
 
   public Command
@@ -206,7 +206,7 @@ public class TurretSubsystem extends SubsystemBase {
     degrees = -degrees;
 
     // Normalize to [0, 360)
-    degrees = (degrees % 360 + 360) % 360;
+    degrees = MathUtil.inputModulus(degrees, -180, 180);
 
     // Clamp to turret limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
