@@ -200,11 +200,12 @@ public class AutoLogic {
   }
 
   public static Command launcherCommand() {
-    return Commands.sequence(
-            AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-            Commands.parallel(s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
-        .andThen(s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0))
-        .withTimeout(3);
+    return s.turretSubsystem.rotateToHub().repeatedly();
+
+                //Commands.sequence(
+                //        AutoAim.utoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
+                //        Commands.parallel(
+                //            s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))).withTimeout(7.0);
   }
 
   public static Command launcherSimCommand() {
@@ -223,7 +224,8 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return empty(); // TODO ADD INTAKING STUFF
+
+ return  s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {
