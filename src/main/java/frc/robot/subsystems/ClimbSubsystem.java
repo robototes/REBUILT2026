@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -16,13 +17,25 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 
 public class ClimbSubsystem extends SubsystemBase {
+  // Climb states
+  public enum ClimbState {
+    L1
+  }
+
+  // Motion magic request
+  private MotionMagicVoltage request;
+
   // hardware objects
   CommandSwerveDrivetrain driveTrain;
   private static TalonFX climb_motor;
@@ -31,15 +44,22 @@ public class ClimbSubsystem extends SubsystemBase {
   // Magic Numbers
   private static final double ROBOT_LENGTH = Units.inchesToMeters(35); // Inches
   private static final double CLIMB_X_OFFSET = Units.inchesToMeters(43.51); // Inches
-  private static final double GEAR_RATIO = 1;
+  private static final double GEAR_RATIO = 15;
 
   // Motor Tunables
-  private double k_P = 0;
-  private double k_I = 0;
-  private double k_D = 0;
-  private double k_S = 0;
-  private double k_V = 0;
-  private double k_A = 0;
+  private static double k_P = 0;
+  private static double k_I = 0;
+  private static double k_D = 0;
+  private static double k_S = 0;
+  private static double k_V = 0;
+  private static double k_A = 0;
+  private static double STATOR_CURRENT_LIMIT = 40;
+  private static double SUPPLY_CURRENT_LIMIT = 30;
+  private static double FORWARD_SOFT_LIMIT = 5;
+  private static double REVERSE_SOFT_LIMIT = -5;
+  private static double MM_CRUISE_VELOCITY = 1;
+  private static double MM_ACCEL = 1;
+  private static double MM_JERK = 5;
 
   // Poses and trasnforms
   private static final Transform2d frontBumperOffset =
@@ -47,10 +67,37 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final Transform2d climbOffSet =
       new Transform2d(new Translation2d(0, CLIMB_X_OFFSET), Rotation2d.kZero);
 
+  // Simulation
+  private DoublePublisher ntMotorPos;
+
   public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
     climb_motor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
     configureMotors();
+    NetworkTableInstance inst = NetworkTableInstance.getDefault();
+    NetworkTable table = inst.getTable("Climb");
+    ntMotorPos = table.getDoubleTopic("Motor Pos (rotations): ").publish();
+  }
+
+  // Helpers
+  public void setMotorPosition(double position) {
+    climb_motor.setControl(request.withPosition(position));
+  }
+
+  public void zeroMotor() {
+    climb_motor.setPosition(0);
+  }
+
+  // -------- CLIMB --------- //
+  public Command Climb(ClimbState state) {
+    switch (state) {
+      case L1:
+        {
+          return Commands.runOnce(() -> setMotorPosition(5), this).andThen();
+        }
+      default:
+        return Commands.none();
+    }
   }
 
   // -------- AUTO ALIGN -------- //
@@ -129,22 +176,22 @@ public class ClimbSubsystem extends SubsystemBase {
     slot0.kA = k_A;
 
     // CURRENT LIMITS
-    configs.CurrentLimits.StatorCurrentLimit = 40;
-    configs.CurrentLimits.SupplyCurrentLimit = 30;
+    configs.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
+    configs.CurrentLimits.SupplyCurrentLimit = SUPPLY_CURRENT_LIMIT;
     configs.CurrentLimits.StatorCurrentLimitEnable = true;
     configs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     // SOFT LIMITS
-    configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 5;
-    configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -5;
+    configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = FORWARD_SOFT_LIMIT;
+    configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = REVERSE_SOFT_LIMIT;
     configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     // Motion magic
     var mm = configs.MotionMagic;
-    mm.MotionMagicCruiseVelocity = 5;
-    mm.MotionMagicAcceleration = 5;
-    mm.MotionMagicJerk = 5;
+    mm.MotionMagicCruiseVelocity = MM_CRUISE_VELOCITY;
+    mm.MotionMagicAcceleration = MM_ACCEL;
+    mm.MotionMagicJerk = MM_JERK;
 
     // Feedback / output
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
@@ -152,5 +199,11 @@ public class ClimbSubsystem extends SubsystemBase {
     configs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     climb_motor.getConfigurator().apply(configs);
+  }
+
+  @Override
+  public void periodic() {
+    // set motor position in network tables
+    ntMotorPos.set(climb_motor.getPosition().getValueAsDouble());
   }
 }
