@@ -12,6 +12,7 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -99,6 +100,10 @@ public class LaunchCalculator {
     // Calculate estimated pose while accounting for phase delay
     Pose2d estimatedPose = robotState.Pose;
     ChassisSpeeds robotRelativeVelocity = robotState.Speeds;
+    /* This takes dX /s and dY /s, both multiplied by the estimated delta T (in this case it's the phase delay) to get the real dX dY for the Twist2d object.
+    Twist 2d objects gives us a transformation result that tells us where the robot will end up accounting for a continuous change in rotation
+    in field frame by multiplying the integral of cos and sin (integral of the x and y components with the x and y components of the velocity). Then
+    */
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
