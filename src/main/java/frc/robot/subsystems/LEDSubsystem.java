@@ -171,12 +171,10 @@ public class LEDSubsystem extends SubsystemBase {
   /**
    * Creates a command that sets the LEDs to the specified color while scheduled.
    *
-   * <p>This command requires the {@link LEDSubsystem}, ensuring no other LED commands can run
-   * simultaneously.
-   *
    * <p>This command uses the {@link #setHardwareColor} function
    *
    * @param color the {@link RGBWColor} to display
+   * @param brightness the brightness  to set the CANdle
    * @return a {@link Command} that sets the LEDs to the given color once
    */
   public Command setLEDsCommand(RGBWColor color, double brightness) {
@@ -188,7 +186,23 @@ public class LEDSubsystem extends SubsystemBase {
             this)
         .withName("SetLEDsWithBrightness");
   }
-
+  /**
+   * Creates a command that sets the LEDs to the specified color while scheduled.
+   *
+   * <p>This command uses the {@link #setHardwareColor} function
+   *
+   * @param color the {@link RGBWColor} to display
+   * @return a {@link Command} that sets the LEDs to the given color once
+   */
+  public Command setLEDsCommand(RGBWColor color) {
+    return Commands.runOnce(
+            () -> {
+              RGBWColor scaled = scaleBrightness(color);
+              setHardwareColor(scaled);
+            },
+            this)
+        .withName("SetLEDsWithBrightness");
+  }
   /**
    * Scales the brightness of a given RGBW color.
    *
