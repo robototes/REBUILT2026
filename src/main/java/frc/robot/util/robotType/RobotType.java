@@ -9,22 +9,19 @@ public class RobotType {
 
   public static RobotTypesEnum type = RobotTypesEnum.OTHER;
 
-  public static RobotTypesEnum getRobotType() {
+  static {
     if (RobotBase.isSimulation()) {
-      return RobotTypesEnum.SIM;
-    }
-    String serialNumber = RobotController.getSerialNumber();
-    if (serialNumber.equals(comp)) {
-      return RobotTypesEnum.COMP;
-    } else if (serialNumber.equals(alpha)) {
-      return RobotTypesEnum.ALPHA;
+      type = RobotTypesEnum.SIM;
     } else {
-      return RobotTypesEnum.OTHER;
+      String serialNumber = RobotController.getSerialNumber();
+      if (serialNumber.equals(comp)) {
+        type = RobotTypesEnum.COMP;
+      } else if (serialNumber.equals(alpha)) {
+        type = RobotTypesEnum.ALPHA;
+      } else {
+        type = RobotTypesEnum.OTHER;
+      }
     }
-  }
-
-  public static void initType() {
-    type = getRobotType();
   }
 
   public static boolean isAlpha() {
