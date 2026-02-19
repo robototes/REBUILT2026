@@ -43,7 +43,7 @@ public class VisionSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dA", Pose3d.struct)
           .publish();
-   private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
+  private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dB", Pose3d.struct)
           .publish();

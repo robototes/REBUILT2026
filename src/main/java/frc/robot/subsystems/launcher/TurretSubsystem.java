@@ -63,7 +63,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Soft Limits
   private static final double TURRET_MAX = 190; // degrees
-  private static final double TURRET_MIN = -45; // degrees
+  private static final double TURRET_MIN = 0; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
@@ -74,7 +74,6 @@ public class TurretSubsystem extends SubsystemBase {
     this.driveTrain = driveTrain;
     turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, CompTunerConstants.kCANBus);
     turretConfig();
-    turretMotor.setPosition(0);
     turretRotation.set(new Pose2d[2]);
   }
 
@@ -121,9 +120,11 @@ public class TurretSubsystem extends SubsystemBase {
   public void setTurretRawPosition(double pos) {
     turretMotor.setControl(request.withPosition(pos));
     targetPos = pos;
+    System.out.println(Units.rotationsToDegrees(pos));
   }
 
-  public Command zeroTurret() {
+  public Command
+  zeroTurret() {
     return runOnce(
         () -> {
           turretMotor.setPosition(0);

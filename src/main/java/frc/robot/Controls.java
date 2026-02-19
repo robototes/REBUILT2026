@@ -226,11 +226,14 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                     s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
-    driverController.y().onTrue(Commands.parallel(s.launcherSubsystem.zeroSubsystemCommand(), s.intakePivot.zeroPivot()).ignoringDisable(true));
+    driverController
+        .y()
+        .onTrue(
+            Commands.parallel(s.launcherSubsystem.zeroSubsystemCommand(), s.intakePivot.zeroPivot())
+                .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
       driverController
@@ -341,6 +344,6 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
-                () -> driverController.getLeftX(), () -> driverController.getLeftY()));
+                () -> driverController.getRightX(), () -> driverController.getRightY()));
   }
 }

@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class IndexerSubsystem extends SubsystemBase{
+public class IndexerSubsystem extends SubsystemBase {
   protected FeederSubsystem feeder;
   protected SpindexerSubsystem spindexerSubsystem;
 
@@ -20,7 +20,8 @@ public class IndexerSubsystem extends SubsystemBase{
           spindexerSubsystem.setSpeed(SpindexerSubsystem.serializerSpeed);
         },
         () -> {
-          feeder.setSpeed(0);;
+          feeder.setSpeed(0);
+          ;
           spindexerSubsystem.setSpeed(0);
         });
   }

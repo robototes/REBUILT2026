@@ -38,8 +38,7 @@ public class IntakePivot extends SubsystemBase {
   private static final double kV = 0;
   private static final double kA = 0;
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 40
-  ; // amps
+  private static final int STATOR_CURRENT_LIMIT = 40; // amps
   private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config

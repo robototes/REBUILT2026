@@ -112,7 +112,15 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
       LimelightHelpers.SetRobotOrientation(
-          Hardware.LIMELIGHT_C,
+          Hardware.LIMELIGHT_A,
+          swerveState.Pose.getRotation().getDegrees(),
+          swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+          0,
+          0,
+          0,
+          0);
+      LimelightHelpers.SetRobotOrientation(
+          Hardware.LIMELIGHT_B,
           swerveState.Pose.getRotation().getDegrees(),
           swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
           0,
@@ -132,16 +140,21 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
       // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_ON);
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
       // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_A, 1);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, APRILTAG_PIPELINE);
+      // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_B, THROTTLE_ON);
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_B, 1);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
       // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
+      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
@@ -149,14 +162,18 @@ public class Robot extends TimedRobot {
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
       // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_OFF);
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
       // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_A, 4);
+      // get rid of throttle to get rid of throttle "glazing"
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_B, THROTTLE_OFF);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_B, 4);
     }
     if (subsystems.detectionSubsystem != null) {
       // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
+      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
