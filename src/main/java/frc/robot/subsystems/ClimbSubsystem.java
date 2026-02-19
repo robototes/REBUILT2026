@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
@@ -118,5 +120,37 @@ public class ClimbSubsystem extends SubsystemBase {
   private void configureMotors() {
     TalonFXConfiguration configs = new TalonFXConfiguration();
     Slot0Configs slot0 = configs.Slot0;
+
+    slot0.kP = k_P;
+    slot0.kI = k_I;
+    slot0.kD = k_D;
+    slot0.kS = k_S;
+    slot0.kV = k_V;
+    slot0.kA = k_A;
+
+    // CURRENT LIMITS
+    configs.CurrentLimits.StatorCurrentLimit = 40;
+    configs.CurrentLimits.SupplyCurrentLimit = 30;
+    configs.CurrentLimits.StatorCurrentLimitEnable = true;
+    configs.CurrentLimits.SupplyCurrentLimitEnable = true;
+
+    // SOFT LIMITS
+    configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 5;
+    configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -5;
+    configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+    // Motion magic
+    var mm = configs.MotionMagic;
+    mm.MotionMagicCruiseVelocity = 5;
+    mm.MotionMagicAcceleration = 5;
+    mm.MotionMagicJerk = 5;
+
+    // Feedback / output
+    configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
+    configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    configs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
+    climb_motor.getConfigurator().apply(configs);
   }
 }
