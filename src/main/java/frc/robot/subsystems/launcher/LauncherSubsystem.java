@@ -60,9 +60,10 @@ public class LauncherSubsystem extends SubsystemBase {
 
   // TODO: add tolerance range calculation
   public boolean isAtTarget() {
+
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
         && hood.atTargetPosition()
-        && turret.atTarget(2);
+        && turret.atTarget(50);
   }
 
   public Command zeroSubsystemCommand() {

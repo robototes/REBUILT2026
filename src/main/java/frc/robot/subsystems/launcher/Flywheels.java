@@ -73,7 +73,7 @@ public class Flywheels extends SubsystemBase {
 
     // create coast mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // create PID gains
     config.Slot0.kP = 0.1;

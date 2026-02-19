@@ -35,9 +35,9 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double FRONT_POSITION = 0.16748;
-  public static final double LEFT_POSITION = 0.3122;
-  public static final double RIGHT_POSITION = 0;
+  public static final double FRONT_POSITION = 0;
+  public static final double LEFT_POSITION = -0.15;
+  public static final double RIGHT_POSITION = 0.15;
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
@@ -59,7 +59,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double JERK = 20;
 
   // Gear Ratio
-  private static final double GEAR_RATIO = 24;
+  private static final double GEAR_RATIO = 72;
 
   // Soft Limits
   private static final double TURRET_MAX = 190; // degrees
@@ -82,7 +82,7 @@ public class TurretSubsystem extends SubsystemBase {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
@@ -222,6 +222,7 @@ public class TurretSubsystem extends SubsystemBase {
           double targetRotations = calculateTurretAngle();
           turretMotor.setControl(request.withPosition(targetRotations));
           targetPos = targetRotations;
+          System.out.println(Units.rotationsToDegrees(targetRotations));
           Transform2d fieldRelativeOffset =
               new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
           Pose2d turretPose2 =

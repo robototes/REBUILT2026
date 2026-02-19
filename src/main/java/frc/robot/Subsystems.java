@@ -38,7 +38,7 @@ public class Subsystems {
     public static final boolean DRIVEBASE_ENABLED = true;
     public static final boolean INTAKE_ROLLERS_ENABLED = true;
     public static final boolean INTAKE_ARM_ENABLED = true;
-    public static final boolean VISION_ENABLED = true;
+    public static final boolean VISION_ENABLED = false;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;

@@ -21,7 +21,7 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private static final double INTAKE_SPEED = 1.0; // full speed
+  private static final double INTAKE_SPEED = 0.5; // full speed
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;

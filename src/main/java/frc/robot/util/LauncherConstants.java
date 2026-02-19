@@ -8,7 +8,7 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class LauncherConstants {
-  private static final double TURRET_X_OFFSET = 0.2159;
+  private static final double TURRET_X_OFFSET = -0.2159;
   private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
       new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);

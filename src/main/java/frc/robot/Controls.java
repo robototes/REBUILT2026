@@ -226,10 +226,11 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                     s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
-    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
+    driverController.y().onTrue(Commands.parallel(s.launcherSubsystem.zeroSubsystemCommand(), s.intakePivot.zeroPivot()).ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
       driverController
@@ -249,8 +250,6 @@ public class Controls {
       DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
       return;
     }
-
-    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
 
     driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
