@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "LT-NeutralLeft"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-NeutralLeft"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
@@ -17,9 +30,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "LB-NeutralLeft-Back"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LB-NeutralLeft-Back"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
           }
         },
         {
@@ -41,9 +67,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "LT-Climb-ZOOM"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-Climb-ZOOM"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
           }
         },
         {

@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "RB-Outpost"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RB-Outpost"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
@@ -29,10 +42,16 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "launch"
+                  "name": "aim"
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
           }
         },
         {

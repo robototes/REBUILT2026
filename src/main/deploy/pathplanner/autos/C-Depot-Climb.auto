@@ -9,34 +9,28 @@
           "data": {
             "commands": [
               {
-                "type": "path",
+                "type": "parallel",
                 "data": {
-                  "pathName": "CENTER DEPOT"
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "CENTER DEPOT"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "intake"
+                      }
+                    }
+                  ]
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "launch"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "DEPOT DEPT"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
+                  "name": "aim"
                 }
               }
             ]
@@ -45,7 +39,19 @@
         {
           "type": "path",
           "data": {
+            "pathName": "DEPOT DEPT"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "Depot-Climb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
           }
         },
         {

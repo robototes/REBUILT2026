@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "RT-NeutralRight"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RT-NeutralRight"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
@@ -29,15 +42,28 @@
           }
         },
         {
-          "type": "named",
+          "type": "deadline",
           "data": {
-            "name": "launch"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RT-Climb"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "RT-Climb"
+            "name": "launch"
           }
         },
         {
