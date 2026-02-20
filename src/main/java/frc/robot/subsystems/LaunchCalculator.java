@@ -6,6 +6,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
@@ -15,16 +16,20 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.AllianceUtils;
 
 
 public class LaunchCalculator {
   private static LaunchCalculator instance;
 
+  // These filters are here to reduce noise when grabbing turret and hood angles
   private final LinearFilter turretAngleFilter =
       LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
   private final LinearFilter hoodAngleFilter =
       LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
 
+    // Turret transform
+    private final Transform2d turretTransfom = new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
   private Rotation2d lastTurretAngle;
   private double lastHoodAngle;
   private Rotation2d turretAngle;
@@ -111,14 +116,14 @@ public class LaunchCalculator {
                 robotRelativeVelocity.vyMetersPerSecond * phaseDelay,
                 robotRelativeVelocity.omegaRadiansPerSecond * phaseDelay));
 
-    // Calculate distance from turret to target
-    Translation2d target =
-        AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d());
-    Pose2d turretPosition = estimatedPose.transformBy(robotToTurret.toTransform2d());
+    // - Calculate distance from turret to target - //
+    Translation2d target = AllianceUtils.getHubTranslation2d();
+    Pose2d turretPosition = estimatedPose.transformBy(turretTransfom);
+    //grab distance between turret and center of hub
     double turretToTargetDistance = target.getDistance(turretPosition.getTranslation());
 
     // Calculate field relative turret velocity
-    ChassisSpeeds robotVelocity = RobotState.getInstance().getFieldVelocity();
+    ChassisSpeeds robotVelocity = robotState.Speeds;
     double robotAngle = estimatedPose.getRotation().getRadians();
     double turretVelocityX =
         robotVelocity.vxMetersPerSecond
