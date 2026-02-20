@@ -13,6 +13,8 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.Kinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -29,7 +31,7 @@ public class LaunchCalculator {
       LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
 
     // Turret transform
-    private final Transform2d turretTransfom = new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+  private final Transform2d turretTransfom = new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
   private Rotation2d lastTurretAngle;
   private double lastHoodAngle;
   private Rotation2d turretAngle;
@@ -123,7 +125,7 @@ public class LaunchCalculator {
     double turretToTargetDistance = target.getDistance(turretPosition.getTranslation());
 
     // Calculate field relative turret velocity
-    ChassisSpeeds robotVelocity = robotState.Speeds;
+    ChassisSpeeds robotVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRelativeVelocity, robotState.Pose.getRotation());
     double robotAngle = estimatedPose.getRotation().getRadians();
     double turretVelocityX =
         robotVelocity.vxMetersPerSecond
