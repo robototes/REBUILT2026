@@ -18,11 +18,13 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.Launcher.TurretSubsystem;
-import frc.robot.subsystems.auto.AutoAim;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.launcher.TurretSubsystem;
+import frc.robot.util.robotType.RobotType;
+import frc.robot.util.robotType.RobotTypesEnum;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -40,6 +42,7 @@ public class Controls {
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
   private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
+  private static final int VISION_TEST_CONTROLLER_PORT = 5;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
 
@@ -51,13 +54,20 @@ public class Controls {
 
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
+
   private final CommandXboxController intakeTestController =
       new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController turretTestController =
       new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
 
-  public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+  private final CommandXboxController visionTestController =
+      new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+
+  public static final double MaxSpeed =
+      (RobotType.type == RobotTypesEnum.ALPHA)
+          ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
+          : CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)
@@ -192,7 +202,7 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
-    driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+    visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLauncherBindings() {
@@ -206,24 +216,12 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                s.turretSubsystem.rotateToHub(),
-                Commands.sequence(
-                        AutoAim.autoAim(s.drivebaseSubsystem, s.hood, s.flywheels),
-                        Commands.parallel(
-                            s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))
-                    .withName("Autorotate, Autoaim done, feeder and spindexer started")))
-        .toggleOnFalse(
-            Commands.parallel(
-                s.hood.hoodPositionCommand(0.0), s.flywheels.setVelocityCommand(0.0)));
-    driverController
-        .y()
-        .onTrue(
-            Commands.parallel(
-                    s.hood.zeroHoodCommand(),
-                    s.turretSubsystem.zeroTurret(),
-                    s.intakePivot.zeroPivot())
-                .withName("Zero subsystems")
-                .ignoringDisable(true));
+                    s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(s.indexerSubsystem.runIndexer()))
+                .withName("Aim turret then feeder and spindexer started"));
+    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
+
     if (s.flywheels.TUNER_CONTROLLED) {
       launcherTuningController
           .leftBumper()
@@ -285,7 +283,7 @@ public class Controls {
 
   private void configureVisionBindings() {
     if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      driverController
+      visionTestController
           .leftBumper()
           .onTrue(
               s.drivebaseSubsystem
@@ -330,14 +328,16 @@ public class Controls {
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
-    turretTestController
-        .leftTrigger()
-        .whileTrue(Commands.run(() -> System.out.println("Stick Pressed")));
     turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
     turretTestController
         .rightBumper()
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            s.turretSubsystem.pointFacingJoystick(
+                () -> driverController.getLeftX(), () -> driverController.getLeftY()));
   }
 }
