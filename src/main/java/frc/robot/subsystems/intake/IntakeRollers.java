@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -15,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.robotType.RobotType;
 
 public class IntakeRollers extends SubsystemBase {
   // motors
@@ -33,7 +35,10 @@ public class IntakeRollers extends SubsystemBase {
 
   public IntakeRollers() {
     // define motors and configs
-    leftRoller = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID, CompTunerConstants.kCANBus);
+    leftRoller =
+        new TalonFX(
+            Hardware.INTAKE_MOTOR_ONE_ID,
+            (RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     networktables();
