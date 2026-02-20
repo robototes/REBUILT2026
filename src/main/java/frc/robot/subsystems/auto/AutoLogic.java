@@ -70,7 +70,6 @@ public class AutoLogic {
           new AutoPath("RT-NeutralRight-Shallow-Middle", "RT-NeutralRight-Shallow-Middle"),
           new AutoPath(
               "RT-NeutralRight-Shallow-Middle-Climb", "RT-NeutralRight-Shallow-Middle-Climb"),
-          new AutoPath("Straight", "Straight"),
           new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
@@ -211,7 +210,7 @@ public class AutoLogic {
                 .andThen(
                     Commands.parallel(
                         s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
-        .withTimeout(7.0);
+        .withTimeout(4.5);
   }
 
   public static Command launcherSimCommand() {
