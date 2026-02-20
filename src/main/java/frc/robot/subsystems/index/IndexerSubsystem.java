@@ -15,12 +15,12 @@ public class IndexerSubsystem {
   public Command runIndexer() {
     return Commands.runEnd(
         () -> {
-          feeder.startMotor();
-          spindexerSubsystem.startMotor();
+          feeder.setVoltage(FeederSubsystem.FEEDER_VOLTAGE);
+          spindexerSubsystem.setSpeed(SpindexerSubsystem.SPINDEXER_SPEED);
         },
         () -> {
-          feeder.stopMotor();
-          spindexerSubsystem.stopMotor();
+          feeder.stopMotorCommand();
+          spindexerSubsystem.stopMotorCommand();
         });
   }
 }
