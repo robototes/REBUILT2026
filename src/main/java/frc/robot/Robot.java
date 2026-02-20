@@ -211,8 +211,5 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     robotSim.updateFuelSim();
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.updateSim();
-    }
   }
 }

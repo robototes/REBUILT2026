@@ -105,6 +105,7 @@ public class VisionSubsystem extends SubsystemBase {
         }
       }
     }
+    updateCameraView();
   }
 
   private void processLimelight(
@@ -205,7 +206,7 @@ public class VisionSubsystem extends SubsystemBase {
     return lastFieldPose;
   }
 
-  public void updateSim() {
+  private void updateCameraView() {
     Pose2d robotPose2d = drivetrain.getState().Pose;
     Pose3d robotPose3d = new Pose3d(robotPose2d);
     compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
