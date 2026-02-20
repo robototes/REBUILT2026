@@ -21,7 +21,7 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
-import frc.robot.subsystems.LEDSubsystem;
+import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.Launcher.Flywheels;
 import frc.robot.subsystems.Launcher.Hood;
 import frc.robot.subsystems.Launcher.TurretSubsystem;
@@ -66,7 +66,7 @@ public class Subsystems {
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final LauncherSubsystem launcherSubsystem;
   public final VisionSubsystem visionSubsystem;
-  public final LEDSubsystem ledSubsystem;
+  public final LedSubsystem ledSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
   public final DetectionSubsystem detectionSubsystem;
@@ -110,7 +110,7 @@ public class Subsystems {
     }
 
     if (LEDS_ENABLED) {
-      ledSubsystem = new LEDSubsystem();
+      ledSubsystem = new LedSubsystem();
     } else {
       ledSubsystem = null;
     }

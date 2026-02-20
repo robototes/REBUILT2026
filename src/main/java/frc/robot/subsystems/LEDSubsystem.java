@@ -210,36 +210,37 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   /**
- * Scales the brightness of a given RGBW color.
- *
- * <p>This method multiplies each color channel (Red, Green, Blue, White) by the specified
- * {@code brightness} factor.
- *
- * <p>The brightness value is <b>clamped</b> to the range {@code 0.0–1.0} using:
- *
- * <pre>{@code
- * brightness = Math.max(0.0, Math.min(1.0, brightness));
- * }</pre>
- *
- * <p>Which ensures:
- * <ul>
- *   <li>Values greater than {@code 1.0} become {@code 1.0}</li>
- *   <li>Values less than {@code 0.0} become {@code 0.0}</li>
- *   <li>Values between {@code 0.0} and {@code 1.0} remain unchanged</li>
- * </ul>
- *
- * <p>Example usage:
- *
- * <pre>{@code
- * RGBWColor red = new RGBWColor(255, 0, 0, 0);
- * RGBWColor dimRed = scaleBrightness(red, 0.5); // Results in (127, 0, 0, 0)
- * }</pre>
- *
- * @param color the original {@link RGBWColor} to scale
- * @param brightness a value ideally between {@code 0.0} and {@code 1.0}
- * @return a new {@link RGBWColor} with each channel scaled by the clamped brightness factor
- */
-private RGBWColor scaleBrightness(RGBWColor color, double brightness) {
+   * Scales the brightness of a given RGBW color.
+   *
+   * <p>This method multiplies each color channel (Red, Green, Blue, White) by the specified {@code
+   * brightness} factor.
+   *
+   * <p>The brightness value is <b>clamped</b> to the range {@code 0.0–1.0} using:
+   *
+   * <pre>{@code
+   * brightness = Math.max(0.0, Math.min(1.0, brightness));
+   * }</pre>
+   *
+   * <p>Which ensures:
+   *
+   * <ul>
+   *   <li>Values greater than {@code 1.0} become {@code 1.0}
+   *   <li>Values less than {@code 0.0} become {@code 0.0}
+   *   <li>Values between {@code 0.0} and {@code 1.0} remain unchanged
+   * </ul>
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * RGBWColor red = new RGBWColor(255, 0, 0, 0);
+   * RGBWColor dimRed = scaleBrightness(red, 0.5); // Results in (127, 0, 0, 0)
+   * }</pre>
+   *
+   * @param color the original {@link RGBWColor} to scale
+   * @param brightness a value ideally between {@code 0.0} and {@code 1.0}
+   * @return a new {@link RGBWColor} with each channel scaled by the clamped brightness factor
+   */
+  private RGBWColor scaleBrightness(RGBWColor color, double brightness) {
     brightness = Math.max(0.0, Math.min(1.0, brightness)); // clamp 0–1
 
     return new RGBWColor(
@@ -247,7 +248,7 @@ private RGBWColor scaleBrightness(RGBWColor color, double brightness) {
         (int) (color.Green * brightness),
         (int) (color.Blue * brightness),
         (int) (color.White * brightness));
-}
+  }
 
   // public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
   //   String value =

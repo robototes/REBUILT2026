@@ -235,57 +235,58 @@ public class Controls {
   }
 
   private void configureLEDBindings() {
-    LEDSubsystem LEDs = s.ledSubsystem;
-    final RGBWColor[] colors =
-        new RGBWColor[] {
-          LEDSubsystem.DEFAULT_COLOR,
-          LEDSubsystem.INTAKE_COLOR,
-          LEDSubsystem.OUTTAKE_COLOR,
-          LEDSubsystem.CLIMB_COLOR,
-          LEDSubsystem.OFF_COLOR
-        };
     if (s.ledSubsystem == null) {
       // Stop running this method
       return;
     }
+
+    LedSubsystem LEDs = s.ledSubsystem;
+    final RGBWColor[] colors =
+        new RGBWColor[] {
+          LedSubsystem.DEFAULT_COLOR,
+          LedSubsystem.INTAKE_COLOR,
+          LedSubsystem.OUTTAKE_COLOR,
+          LedSubsystem.CLIMB_COLOR,
+          LedSubsystem.OFF_COLOR
+        };
     ledTestController
         .a()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
+            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.INTAKE_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
+                    LEDs.setLEDsCommand(LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set intake color")); // blue
 
     ledTestController
         .b()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
+            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
+                    LEDs.setLEDsCommand(LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set climb color")); // cyan
 
     ledTestController
         .x()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
+            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
                     LEDs.setLEDsCommand(
-                        LEDSubsystem.OUTTAKE_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
+                        LedSubsystem.OUTTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set outtake color")); // green
 
     ledTestController
         .y()
         .onTrue(
-            LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
+            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
                     LEDs.setLEDsCommand(
-                        LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
+                        LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set default color")); // red
 
     ledTestController
         .leftBumper()
         .whileTrue(
-            LEDs.alternateColors(LEDSubsystem.CLIMB_COLOR, LEDSubsystem.OUTTAKE_COLOR, 0.5)
+            LEDs.alternateColors(LedSubsystem.CLIMB_COLOR, LedSubsystem.OUTTAKE_COLOR, 0.5)
                 .withName("Alternate climb and outtake colors with 0.5s delay"));
 
     ledTestController
