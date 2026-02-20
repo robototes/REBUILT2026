@@ -28,13 +28,13 @@ public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
-  public static final Transform3d COMP_BOT_LEFT_CAMERA =
+  private static final Transform3d COMP_BOT_LEFT_CAMERA =
       new Transform3d(
           0.114,
           0.368,
           0.235,
           new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
-  public static final Transform3d COMP_BOT_FRONT_CAMERA =
+  private static final Transform3d COMP_BOT_FRONT_CAMERA =
       new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
 
   private final Field2d robotField;
