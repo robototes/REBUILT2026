@@ -24,8 +24,6 @@ public class RollerSim extends SubsystemBase {
   private final TalonFXSimState leftRollerSimState;
   private final TalonFXSimState rightRollerSimState;
 
-  private final MechanismLigament2d roller;
-
   private final double ROLLERS_GEAR_RATIO = 1.0; // tune this
 
   // flywheel system variable
@@ -51,7 +49,7 @@ public class RollerSim extends SubsystemBase {
     Mechanism2d mech = new Mechanism2d(40, 40);
     MechanismRoot2d root = mech.getRoot("root", 20, 20);
 
-    roller = root.append(new MechanismLigament2d("roller", 2, 0));
+    root.append(new MechanismLigament2d("roller", 2, 0));
 
     SmartDashboard.putData("Roller", mech);
   }
