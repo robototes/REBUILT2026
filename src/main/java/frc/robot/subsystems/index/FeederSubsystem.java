@@ -18,7 +18,7 @@ import frc.robot.generated.CompTunerConstants;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  public static final double feederSpeed = 1;
+  public static final double feederSpeed = 0.7;
   public static final int feederRumbleThreshold = 67;
 
   private static final double FEEDMOTOR_KP = 38.5;

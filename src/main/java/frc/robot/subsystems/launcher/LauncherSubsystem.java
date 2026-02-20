@@ -53,6 +53,7 @@ public class LauncherSubsystem extends SubsystemBase {
 
           hood.setHoodPosition(hoodGoal);
           flywheels.setVelocityRPS(flywheelsGoal);
+
           turret.setTurretRawPosition(turretGoal);
         },
         () -> CommandScheduler.getInstance().schedule(stowCommand()));

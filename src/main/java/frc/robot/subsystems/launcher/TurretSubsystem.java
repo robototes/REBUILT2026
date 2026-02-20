@@ -54,16 +54,16 @@ public class TurretSubsystem extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 5;
-  private static final double ACCELERATION = 5;
-  private static final double JERK = 20;
+  private static final double CRUISE_VELOCITY = 20;
+  private static final double ACCELERATION = 20;
+  private static final double JERK = 50;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 72;
 
   // Soft Limits
   private static final double TURRET_MAX = 190; // degrees
-  private static final double TURRET_MIN = 0; // degrees
+  private static final double TURRET_MIN = -45; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()

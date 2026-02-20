@@ -65,10 +65,11 @@ public class Flywheels extends SubsystemBase {
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
     TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
+    TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 20;
+    config.CurrentLimits.SupplyCurrentLimit = 40;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.StatorCurrentLimit = 40;
+    config.CurrentLimits.StatorCurrentLimit = 80;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create coast mode for motors
@@ -76,7 +77,7 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.1;
+    config.Slot0.kP = 0.2;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
@@ -84,9 +85,10 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
-    config.MotionMagic.MotionMagicAcceleration = 40; // RPS^2
+    config.MotionMagic.MotionMagicAcceleration = 60; // RPS^2
 
     flConfigurator.apply(config);
+    frConfigurator.apply(config);
   }
 
   public Command setVelocityCommand(double rps) {
