@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -15,40 +15,49 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
-public class SpindexerSubsystem extends SubsystemBase {
+public class FeederSubsystem extends SubsystemBase {
+  private int ballsDetectedNum = 0;
+  public static final double feederSpeed = 0.4;
+  public static final int feederRumbleThreshold = 67;
 
-  public static final double serializerSpeed = 1.0;
+  private static final double FEEDMOTOR_KP = 38.5;
+  private static final double FEEDMOTOR_KI = 0;
+  private static final double FEEDMOTOR_KD = 0;
+  private static final double FEEDMOTOR_KS = 0;
+  private static final double FEEDMOTOR_KV = 0;
+  private static final double FEEDMOTOR_KG = 0;
+  private static final double FEEDMOTOR_KA = 0;
 
-  private final TalonFX serialMotor;
+  private final TalonFX feedMotor;
 
   private final FlywheelSim motorSim;
 
-  public SpindexerSubsystem() {
-    serialMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
-    spindexerConfig();
+  public FeederSubsystem() {
+    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
+    feederConfig();
 
     if (RobotBase.isSimulation()) {
-      LinearSystem serialMotorSystem =
+      LinearSystem feedMotorSystem =
           LinearSystemId.createFlywheelSystem(
               DCMotor.getKrakenX60(1),
               0.001,
-              1.0); // TODO: Update to final moment of inertia and gear ratio
+              1.0); // TODO: Update to final moment of intertia and gear ratio
       motorSim =
           new FlywheelSim(
-              serialMotorSystem, DCMotor.getKrakenX60(1), 1.0); // TODO: Update to final gear ratio
+              feedMotorSystem, DCMotor.getKrakenX60(1), 1.0); // TODO Update to final gear ratio
     } else {
       motorSim = null;
     }
   }
 
-  public void spindexerConfig() {
+  public void feederConfig() {
     // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
-    TalonFXConfigurator cfg = serialMotor.getConfigurator();
+    TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
@@ -62,18 +71,18 @@ public class SpindexerSubsystem extends SubsystemBase {
   }
 
   public void setSpeed(double speed) {
-    serialMotor.set(speed);
+    feedMotor.set(speed);
   }
 
   public Command startMotor() {
     return runEnd(
             () -> {
-              setSpeed(serializerSpeed);
+              setSpeed(feederSpeed);
             },
             () -> {
               setSpeed(0);
             })
-        .withName("Start Spindexer Motor");
+        .withName("Start Feeder Motor");
   }
 
   public Command stopMotor() {
@@ -81,12 +90,25 @@ public class SpindexerSubsystem extends SubsystemBase {
             () -> {
               setSpeed(0);
             })
-        .withName("Stop Spindexer Motor");
+        .withName("Stop Feeder Motor");
+  }
+
+  // PLACEHOLDER FOR SENSOR CHECK
+  public Command checkSensor() {
+    return runOnce(
+            () -> {
+              // TODO: add logic for ballNum going up after sensor triggers
+            })
+        .withName("Check Feeder Sensor");
+  }
+
+  public int getBallsDetectedNum() {
+    return ballsDetectedNum;
   }
 
   @Override
   public void simulationPeriodic() {
-    motorSim.setInput(serialMotor.getSimState().getMotorVoltage());
-    motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
+    motorSim.setInput(feedMotor.getSimState().getMotorVoltage());
+    motorSim.update(TimedRobot.kDefaultPeriod);
   }
 }
