@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
-public class LEDSubsystem extends SubsystemBase {
+public class LedSubsystem extends SubsystemBase {
   /** CAN ID for the CANdle LED controller. */
   private static final int CAN_ID = Hardware.CANdle_ID;
 
@@ -109,7 +109,7 @@ public class LEDSubsystem extends SubsystemBase {
   // private final StringPublisher alternatingColorsPub;
 
   /** */
-  public LEDSubsystem() {
+  public void LEDSubsystem() {
     setRainbowAnimation(0, 0.25, AnimationDirectionValue.Forward, Units.Hertz.of(100));
 
     // var nt = NetworkTableInstance.getDefault();

@@ -19,15 +19,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
-<<<<<<< LEDS
-import frc.robot.subsystems.LEDSubsystem;
-import frc.robot.subsystems.auto.AutoAim;
-=======
->>>>>>> main
-import frc.robot.subsystems.Launcher.TurretSubsystem;
+import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
-import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 
@@ -43,15 +37,14 @@ public class Controls {
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
-<<<<<<< LEDS
-  // private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
-  // private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
-  // private static final int INDEXING_TEST_CONTROLLER_PORT = 3; // for now
-  // private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 4; // for now
+  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
+  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int INDEXING_TEST_CONTROLLER_PORT = 3; // for now
+  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 4; // for now
   private static final int LED_CONTROLLER_PORT = 5; // keep this one at 5 plz
-  // private static final int TURRET_TEST_CONTROLLER_PORT = 3; // not sure what to do about this
-  // because Driver Station allows only 6 controllers.
->>>>>>>>> Temporary merge branch 2
+  // private static final int VISION_TEST_CONTROLLER_PORT = 1;
+  // private static final int INTAKE_TEST_CONTROLLER_PORT = 2;
+  // private static final int TURRET_TEST_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -60,11 +53,11 @@ public class Controls {
   private final CommandXboxController ledTestController =
       new CommandXboxController(LED_CONTROLLER_PORT);
 
-  // private final CommandXboxController feederTestController =
-  // new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+  private final CommandXboxController feederTestController =
+      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
 
-  // private final CommandXboxController spindexerTestController =
-  // new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
+  private final CommandXboxController spindexerTestController =
+      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController indexingTestController =
       new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
@@ -75,8 +68,11 @@ public class Controls {
   // private final CommandXboxController turretTestController =
   // new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
 
-  private final CommandXboxController visionTestController =
-      new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+  // private final CommandXboxController visionTestController =
+      // new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+
+  // private final CommandXboxController intakeTestController =
+      // new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed =
       (RobotType.type == RobotTypesEnum.ALPHA)
@@ -108,7 +104,7 @@ public class Controls {
     configureIndexingBindings();
     configureIntakeBindings();
     configureAutoAlignBindings();
-    configureVisionBindings();
+    // configureVisionBindings();
     // configureTurretBindings();
   }
 
@@ -233,7 +229,7 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
-    visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+    // visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLEDBindings() {
@@ -344,9 +340,9 @@ public class Controls {
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
-    intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
-    intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
-    intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
+    // intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
+    // intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    // intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**
@@ -373,24 +369,23 @@ public class Controls {
         .withTimeout(seconds);
   }
 
-  private void configureVisionBindings() {
-    if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      visionTestController
-          .leftBumper()
-          .onTrue(
-              s.drivebaseSubsystem
-                  .runOnce(
-                      () -> {
-                        Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
-                        if (referenceVisionPose != null) {
-                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
-                        }
-                      })
-                  .withName("Now Drive Pose is Vision Pose"));
-    }
-  }
+  // private void configureVisionBindings() {
+  //   if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
+  //     visionTestController
+  //         .leftBumper()
+  //         .onTrue(
+  //             s.drivebaseSubsystem
+  //                 .runOnce(
+  //                     () -> {
+  //                       Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
+  //                       if (referenceVisionPose != null) {
+  //                         s.drivebaseSubsystem.resetPose(referenceVisionPose);
+  //                       }
+  //                     })
+  //                 .withName("Now Drive Pose is Vision Pose"));
+  //   }
+  // }
 
-<<<<<<< LEDS
   // private void configureTurretBindings() {
   //   if (s.turretSubsystem == null) {
   //     return;
@@ -434,6 +429,4 @@ public class Controls {
   //   driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
   //   driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
   // }
-=======
->>>>>>> main
 }
