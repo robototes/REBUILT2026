@@ -17,12 +17,18 @@ public class LEDSubsystem extends SubsystemBase {
   /** CAN ID for the CANdle LED controller. */
   private static final int CAN_ID = Hardware.CANdle_ID;
 
+  /** The number of LED modules connected in the strip. */
+  private static final int NUMBER_OF_MODULES = 1;
+
   /**
-   * Last LED index in the strip (inclusive).
+   * The last valid LED index in the strip (inclusive).
    *
-   * <p>Currently set for testing with a single module (8 LEDs total), which are zero-indexed (0–7).
+   * <p>Each module contains 8 LEDs. Since the strip is zero-indexed, the total LED count is {@code
+   * 8 * NUMBER_OF_MODULES}, and the final valid index is one less than that total.
+   *
+   * <p>For example, with one module (8 LEDs), valid indices range from {@code 0} to {@code 7}.
    */
-  private static final int END_INDEX = 7;
+  private static final int END_INDEX = (8 * NUMBER_OF_MODULES) - 1;
 
   /** Default brightness applied to all SolidColor operations (0.0–1.0). */
   public static final double DEFAULT_BRIGHTNESS = 0.25;
@@ -38,6 +44,9 @@ public class LEDSubsystem extends SubsystemBase {
    */
   private final SolidColor solid = new SolidColor(0, END_INDEX);
 
+  /** Empty animation used to clear animation slot 0 and stop active animations. */
+  private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
+
   /**
    * Preconfigured rainbow animation assigned to animation slot 0.
    *
@@ -45,9 +54,6 @@ public class LEDSubsystem extends SubsystemBase {
    * create animated rainbow effects.
    */
   private final RainbowAnimation rainbowAnimation = new RainbowAnimation(0, END_INDEX);
-
-  /** Empty animation used to clear animation slot 0 and stop active animations. */
-  private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
 
   /** Default robot LED color (Red). */
   public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0);
@@ -147,12 +153,13 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   /**
-   * Sets the physical CANdle LED controller to a solid color.
+   * Sets the CANdle LED controller to a solid color at the specified brightness.
    *
-   * <p>This directly updates the hardware output and should generally only be called internally by
-   * commands that manage LED state.
+   * <p>This method directly updates the physical hardware output. It is intended to be called
+   * internally by higher-level commands that manage LED behavior.
    *
    * @param color the {@link RGBWColor} to apply to the LED strip
+   * @param brightness the brightness scalar (0.0–1.0) applied to the color
    */
   public void setHardwareColor(RGBWColor color, double brightness) {
     RGBWColor scaled = scaleBrightness(color, brightness);
@@ -164,64 +171,75 @@ public class LEDSubsystem extends SubsystemBase {
     candle.setControl(solid);
   }
 
+  /**
+   * Sets the CANdle LED controller to a solid color using the default brightness.
+   *
+   * @param color the {@link RGBWColor} to apply to the LED strip
+   */
   public void setHardwareColor(RGBWColor color) {
     setHardwareColor(color, DEFAULT_BRIGHTNESS);
   }
 
   /**
-   * Creates a command that sets the LEDs to the specified color while scheduled.
+   * Creates a {@link Command} that sets the LEDs to the specified color and brightness.
    *
-   * <p>This command uses the {@link #setHardwareColor} function
+   * <p>The returned command runs once and immediately updates the hardware using {@link
+   * #setHardwareColor(RGBWColor, double)}.
    *
    * @param color the {@link RGBWColor} to display
-   * @param brightness the brightness  to set the CANdle
-   * @return a {@link Command} that sets the LEDs to the given color once
+   * @param brightness the brightness scalar (0.0–1.0)
+   * @return a command that sets the LEDs once when scheduled
    */
   public Command setLEDsCommand(RGBWColor color, double brightness) {
-    return Commands.runOnce(
-            () -> {
-              RGBWColor scaled = scaleBrightness(color, brightness);
-              setHardwareColor(scaled);
-            },
-            this)
+    return Commands.runOnce(() -> setHardwareColor(color, brightness), this)
         .withName("SetLEDsWithBrightness");
   }
+
   /**
-   * Creates a command that sets the LEDs to the specified color while scheduled.
+   * Creates a {@link Command} that sets the LEDs to the specified color using full (1.0)
+   * brightness.
    *
-   * <p>This command uses the {@link #setHardwareColor} function
+   * <p>The returned command runs once and immediately updates the hardware.
    *
    * @param color the {@link RGBWColor} to display
-   * @return a {@link Command} that sets the LEDs to the given color once
+   * @return a command that sets the LEDs once when scheduled
    */
   public Command setLEDsCommand(RGBWColor color) {
-    return Commands.runOnce(
-            () -> {
-              RGBWColor scaled = scaleBrightness(color);
-              setHardwareColor(scaled);
-            },
-            this)
-        .withName("Set LEDS with default Brightness");
+    return Commands.runOnce(() -> setHardwareColor(color), this)
+        .withName("SetLEDsDefaultBrightness");
   }
+
   /**
-   * Scales the brightness of a given RGBW color.
-   *
-   * <p>This method multiplies each color channel (Red, Green, Blue, White) by the specified
-   * brightness factor. The brightness factor is clamped between 0.0 (off) and 1.0 (full brightness)
-   * to prevent invalid values.
-   *
-   * <p>Example usage:
-   *
-   * <pre>{@code
-   * RGBWColor red = new RGBWColor(255, 0, 0, 0);
-   * RGBWColor dimRed = scaleBrightness(red, 0.5); // Results in (127, 0, 0, 0)
-   * }</pre>
-   *
-   * @param color the original {@link RGBWColor} to scale
-   * @param brightness a value from 0.0 to 1.0 representing the desired brightness
-   * @return a new {@link RGBWColor} with each channel scaled by the brightness factor
-   */
-  private RGBWColor scaleBrightness(RGBWColor color, double brightness) {
+ * Scales the brightness of a given RGBW color.
+ *
+ * <p>This method multiplies each color channel (Red, Green, Blue, White) by the specified
+ * {@code brightness} factor.
+ *
+ * <p>The brightness value is <b>clamped</b> to the range {@code 0.0–1.0} using:
+ *
+ * <pre>{@code
+ * brightness = Math.max(0.0, Math.min(1.0, brightness));
+ * }</pre>
+ *
+ * <p>Which ensures:
+ * <ul>
+ *   <li>Values greater than {@code 1.0} become {@code 1.0}</li>
+ *   <li>Values less than {@code 0.0} become {@code 0.0}</li>
+ *   <li>Values between {@code 0.0} and {@code 1.0} remain unchanged</li>
+ * </ul>
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * RGBWColor red = new RGBWColor(255, 0, 0, 0);
+ * RGBWColor dimRed = scaleBrightness(red, 0.5); // Results in (127, 0, 0, 0)
+ * }</pre>
+ *
+ * @param color the original {@link RGBWColor} to scale
+ * @param brightness a value ideally between {@code 0.0} and {@code 1.0}
+ * @return a new {@link RGBWColor} with each channel scaled by the clamped brightness factor
+ */
+private RGBWColor scaleBrightness(RGBWColor color, double brightness) {
     brightness = Math.max(0.0, Math.min(1.0, brightness)); // clamp 0–1
 
     return new RGBWColor(
@@ -229,7 +247,7 @@ public class LEDSubsystem extends SubsystemBase {
         (int) (color.Green * brightness),
         (int) (color.Blue * brightness),
         (int) (color.White * brightness));
-  }
+}
 
   // public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
   //   String value =

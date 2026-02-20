@@ -249,7 +249,8 @@ public class Controls {
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.OUTTAKE_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
+                    LEDs.setLEDsCommand(
+                        LEDSubsystem.OUTTAKE_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set outtake color")); // green
 
     ledTestController
@@ -257,7 +258,8 @@ public class Controls {
         .onTrue(
             LEDs.setLEDsCommand(LEDSubsystem.OFF_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS)
                 .andThen(
-                    LEDs.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
+                    LEDs.setLEDsCommand(
+                        LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.DEFAULT_BRIGHTNESS))
                 .withName("Set default color")); // red
 
     ledTestController
