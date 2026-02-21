@@ -6,6 +6,7 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
+
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -82,7 +83,9 @@ public class LedSubsystem extends SubsystemBase {
   /** LED color representing LEDs turned off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
 
-  /** NetworkTable topics and publishers for LED state information. */
+  /**
+   * NetworkTable topics and publishers for LED state information.
+   */
 
   /** NetworkTable topic that indicates whether the rainbow animation is currently enabled. */
   private BooleanTopic isRainbow;
@@ -115,32 +118,28 @@ public class LedSubsystem extends SubsystemBase {
    * dashboards.
    */
   private StringPublisher alternatingColorsPub;
-
   public LedSubsystem() {
-    rainbowAnimation
-        .withBrightness(DEFAULT_BRIGHTNESS)
-        .withDirection(AnimationDirectionValue.Forward)
-        .withFrameRate(Units.Hertz.of(100));
+  rainbowAnimation.withBrightness(DEFAULT_BRIGHTNESS).withDirection(AnimationDirectionValue.Forward).withFrameRate(Units.Hertz.of(100));
 
-    NetworkTableInstance nt = NetworkTableInstance.getDefault();
 
-    isRainbow = nt.getBooleanTopic("/color/isRainbow");
-    isRainbowPub = isRainbow.publish();
-    isRainbowPub.set(false);
+  NetworkTableInstance nt = NetworkTableInstance.getDefault();
 
-    currentColor = nt.getStringTopic("/color/currentColor");
-    currentColorPub = currentColor.publish();
-    currentColorPub.set("None");
+  isRainbow = nt.getBooleanTopic("/color/isRainbow");
+  isRainbowPub = isRainbow.publish();
+  isRainbowPub.set(false);
 
-    currentAnimation = nt.getStringTopic("/color/currentAnimation");
-    currentAnimationPub = currentAnimation.publish();
-    currentAnimationPub.set("None");
+  currentColor = nt.getStringTopic("/color/currentColor");
+  currentColorPub = currentColor.publish();
+  currentColorPub.set("None");
 
-    alternatingColors = nt.getStringTopic("/color/alternatingColors");
-    alternatingColorsPub = alternatingColors.publish();
-    alternatingColorsPub.set("A:None | B:None");
+  currentAnimation = nt.getStringTopic("/color/currentAnimation");
+  currentAnimationPub = currentAnimation.publish();
+  currentAnimationPub.set("None");
+
+  alternatingColors = nt.getStringTopic("/color/alternatingColors");
+  alternatingColorsPub = alternatingColors.publish();
+  alternatingColorsPub.set("A:None | B:None");
   }
-
   /**
    * Sets the CANdle LED controller to a solid color at the specified brightness.
    *
@@ -200,38 +199,13 @@ public class LedSubsystem extends SubsystemBase {
 
   /**
    * Scales the brightness of a given RGBW color.
-   *
-   * <p>This method multiplies each color channel (Red, Green, Blue, White) by the specified {@code
-   * brightness} factor.
-   *
-   * <p>The brightness value is <b>clamped</b> to the range {@code 0.0–1.0} using:
-   *
-   * <pre>{@code
-   * brightness = Math.max(0.0, Math.min(1.0, brightness));
-   * }</pre>
-   *
-   * <p>Which ensures:
-   *
-   * <ul>
-   *   <li>Values greater than {@code 1.0} become {@code 1.0}
-   *   <li>Values less than {@code 0.0} become {@code 0.0}
-   *   <li>Values between {@code 0.0} and {@code 1.0} remain unchanged
-   * </ul>
-   *
-   * <p>Example usage:
-   *
-   * <pre>{@code
-   * RGBWColor red = new RGBWColor(255, 0, 0, 0);
-   * RGBWColor dimRed = scaleBrightness(red, 0.5); // Results in (127, 0, 0, 0)
-   * }</pre>
+   * <p>Each channel (red, green, blue, white) is multiplied by the {@code brightness} factor
    *
    * @param color the original {@link RGBWColor} to scale
    * @param brightness a value ideally between {@code 0.0} and {@code 1.0}
    * @return a new {@link RGBWColor} with each channel scaled by the clamped brightness factor
    */
   private RGBWColor scaleBrightness(RGBWColor color, double brightness) {
-    brightness = Math.max(0.0, Math.min(1.0, brightness)); // clamp 0–1
-
     return new RGBWColor(
         (int) (color.Red * brightness),
         (int) (color.Green * brightness),
