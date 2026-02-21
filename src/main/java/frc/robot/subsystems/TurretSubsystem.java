@@ -131,6 +131,10 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   private double wrapDegreesToSoftLimits(double targetDegrees, double currentDegrees) {
+    // This is essentially "find the shortest error to the target". I add an additional 360 to make
+    // sure that large negative values don't mess this up.
+    // It technically isn't needed because current degrees will never exceed the soft limits but
+    // it's just there as a precaution. ranges from -180 to 180
     return MathUtil.clamp(
         currentDegrees + ((targetDegrees - currentDegrees + 540) % 360) - 180,
         TURRET_MIN,
