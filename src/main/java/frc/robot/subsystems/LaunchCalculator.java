@@ -1,24 +1,22 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.TimedRobot;
 import frc.robot.util.AllianceUtils;
 
 public class LaunchCalculator {
   private static LaunchCalculator instance;
 
   // These filters are here to reduce noise when grabbing turret and hood angles
-  private final LinearFilter ROC__target_turret_filter =
-      LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
-  private final LinearFilter ROC__target_hood_filter =
-      LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
+  // private final LinearFilter ROC__target_turret_filter =
+  //     LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
+  // private final LinearFilter ROC__target_hood_filter =
+  //     LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
 
   // Turret transform
   private final Transform2d turretTransfom =
