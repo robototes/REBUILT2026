@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
+import javax.xml.crypto.Data;
+
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -32,7 +34,7 @@ import frc.robot.util.robotType.RobotTypesEnum;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
-  private LedSubsystem.LEDMode mode;
+  private LedSubsystem.LedMode mode;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
@@ -107,7 +109,7 @@ public class Controls {
     // configureTurretBindings();
 
     mode =
-        LedSubsystem.LEDMode
+        LedSubsystem.LedMode
             .DEFAULT; // make sure to change this value when using the drive xbox control port
   }
 
@@ -237,7 +239,7 @@ public class Controls {
 
   private void configureLEDBindings() {
     if (s.ledSubsystem == null) {
-      // Stop running this method
+      DataLogManager.log("LED subsystem is disabled, LED bindings skipped");
       return;
     }
 
@@ -246,52 +248,65 @@ public class Controls {
         new RGBWColor[] {
           LedSubsystem.DEFAULT_COLOR,
           LedSubsystem.INTAKE_COLOR,
-          LedSubsystem.OUTTAKE_COLOR,
+          LedSubsystem.SHOOT_COLOR,
           LedSubsystem.CLIMB_COLOR,
           LedSubsystem.OFF_COLOR
         };
-    
-    driveController
-    .rightTrigger()
-    .whileTrue(
-        Commands.runOnce(
-          () -> {
-            mode = LEDMode.OUTTAKE_IN_PROGRESS;
-          });
-    )
-    
-    driveController
-    .leftTrigger()
-    .whileTrue(
-        Commands.runOnce(
-          () -> {
-            mode = LEDMode.INTAKE_IN_PROGRESS;
-          });
-    )
-    // TODO: Add button to set climb and set default
-    
-    if (mode == LedSubsystem.LEDMode.INTAKE_IN_PROGRESS) { // blue
+
+    driverController
+        .leftBumper()
+        .whileTrue(
+            Commands.runOnce(
+                () -> {
+                  mode = LedSubsystem.LedMode.DEFAULT;
+                }));
+
+    driverController
+        .rightBumper()
+        .whileTrue(
+            Commands.runOnce(
+                () -> {
+                  mode = LedSubsystem.LedMode.CLIMB_IN_PROGRESS;
+                }));
+
+    driverController
+        .leftTrigger()
+        .whileTrue(
+            Commands.runOnce(
+                () -> {
+                  mode = LedSubsystem.LedMode.INTAKE_IN_PROGRESS;
+                }));
+
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            Commands.runOnce(
+                () -> {
+                  mode = LedSubsystem.LedMode.SHOOT_IN_PROGRESS;
+                }));
+
+    if (mode == LedSubsystem.LedMode.INTAKE_IN_PROGRESS) { // blue
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
           .andThen(LEDs.setLEDsCommand(LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
           .withName("Set intake color");
-    } else if (mode == LedSubsystem.LEDMode.CLIMB_IN_PROGRESS) { // cyan
+    } else if (mode == LedSubsystem.LedMode.CLIMB_IN_PROGRESS) { // cyan
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
           .andThen(LEDs.setLEDsCommand(LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
           .withName("Set climb color");
-    } else if (mode == LedSubsystem.LEDMode.OUTTAKE_IN_PROGRESS) { // green
+    } else if (mode == LedSubsystem.LedMode.SHOOT_IN_PROGRESS) { // green
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-          .andThen(LEDs.setLEDsCommand(LedSubsystem.OUTTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-          .withName("Set outtake color");
-    } else if (mode == LedSubsystem.LEDMode.DEFAULT) {
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.SHOOT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set shoot color");
+    } else if (mode == LedSubsystem.LedMode.DEFAULT) { // red
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
           .andThen(LEDs.setLEDsCommand(LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
           .withName("Set default color");
-    } // red
+    }
 
     ledTestController
         .leftBumper()
         .whileTrue(
-            LEDs.alternateColors(LedSubsystem.CLIMB_COLOR, LedSubsystem.OUTTAKE_COLOR, 0.5)
+            LEDs.alternateColors(LedSubsystem.CLIMB_COLOR, LedSubsystem.SHOOT_COLOR, 0.5)
                 .withName("Alternate climb and outtake colors with 0.5s delay"));
 
     ledTestController

@@ -14,65 +14,65 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class LedSubsystem extends SubsystemBase {
-  public enum LEDMode {
+  public enum LedMode {
     CLIMB_IN_PROGRESS(),
     INTAKE_IN_PROGRESS(),
-    OUTTAKE_IN_PROGRESS(),
+    SHOOT_IN_PROGRESS(),
     DEFAULT();
   }
 
-  /** CAN ID for the CANdle LED controller. */
+  /** CAN device ID for the {@link CANdle} LED controller. */
   private static final int CAN_ID = Hardware.CANdle_ID;
 
-
-  /** The number of LED modules connected in the strip. */
-  private static final int NUMBER_OF_MODULES = 1;
+  /**
+   * Last valid LED index in the strip (inclusive).
+   *
+   * <p>For example, if the strip contains 8 LEDs, valid indices range from {@code 0} to {@code 7}.
+   */
+  private static final int END_INDEX = 7;
 
   /**
-   * The last valid LED index in the strip (inclusive).
+   * Default brightness applied to {@link #candle} operations.
    *
-   * <p>Each module contains 8 LEDs. Since the strip is zero-indexed, the total LED count is {@code
-   * 8 * NUMBER_OF_MODULES}, and the final valid index is one less than that total.
-   *
-   * <p>For example, with one module (8 LEDs), valid indices range from {@code 0} to {@code 7}.
+   * <p>Valid range: {@code 0.0} (off) to {@code 1.0} (full brightness).
    */
-  private static final int END_INDEX = (8 * NUMBER_OF_MODULES) - 1;
+  public static final double DEFAULT_BRIGHTNESS = 1.0;
 
-  /** Default brightness applied to all SolidColor operations (0.0–1.0). */
-  public static final double DEFAULT_BRIGHTNESS = 0.25;
+  /** Animation slot index used for LED animations. */
+  private static final int SLOT = 0;
 
-  /** Instance of the CTRE CANdle LED controller used to control the LED strip. */
+  /** Instance of the {@link CANdle} LED controller used to control the LED strip. */
   private final CANdle candle = new CANdle(CAN_ID);
 
   /**
-   * Solid color control object.
+   * Solid color controller applied to LEDs from index {@code 0} through {@link #END_INDEX}.
    *
-   * <p>Configured to control LEDs from index 0 through {@link #END_INDEX}. Use this object to
-   * directly set a single color across the strip.
+   * <p>Used to set a single static color across the entire strip.
    */
   private final SolidColor solid = new SolidColor(0, END_INDEX);
 
-  /** Empty animation used to clear animation slot 0 and stop active animations. */
-  private final EmptyAnimation emptyAnimation = new EmptyAnimation(0);
-
   /**
-   * Preconfigured rainbow animation assigned to animation slot 0.
+   * Preconfigured rainbow animation assigned to {@link #SLOT}.
    *
-   * <p>Applies to LEDs from index 0 through {@link #END_INDEX}. This can be enabled or disabled to
-   * create animated rainbow effects.
+   * <p>Applies to LEDs from index {@code 0} through {@link #END_INDEX}. Can be enabled or disabled
+   * to create an animated rainbow effect.
    */
-  private final RainbowAnimation rainbowAnimation = new RainbowAnimation(0, END_INDEX);
+  private final RainbowAnimation rainbowAnimation =
+      new RainbowAnimation(0, END_INDEX).withSlot(SLOT);
 
-  /** Default robot LED color (Red). */
+  /** Animation used to stop animations on {@link #SLOT}. */
+  private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
+
+  /** Default robot LED color (red). */
   public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0);
 
-  /** LED color used while intaking (Blue). */
+  /** LED color used while intaking (blue). */
   public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
 
-  /** LED color used while outtaking (Green). */
-  public static final RGBWColor OUTTAKE_COLOR = new RGBWColor(0, 255, 0);
+  /** LED color used while outtaking (green). */
+  public static final RGBWColor SHOOT_COLOR = new RGBWColor(0, 255, 0);
 
-  /** LED color used during climb mode (Cyan). */
+  /** LED color used during climb mode (cyan). */
   public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 255, 255);
 
   /** LED color representing LEDs turned off. */
@@ -118,7 +118,7 @@ public class LedSubsystem extends SubsystemBase {
 
   /** */
   public void LEDSubsystem() {
-    setRainbowAnimation(0, 0.25, AnimationDirectionValue.Forward, Units.Hertz.of(100));
+    setRainbowAnimation(DEFAULT_BRIGHTNESS, AnimationDirectionValue.Forward, Units.Hertz.of(100));
 
     // var nt = NetworkTableInstance.getDefault();
 
@@ -151,13 +151,9 @@ public class LedSubsystem extends SubsystemBase {
    * @param frameRate the update frequency of the animation
    */
   public void setRainbowAnimation(
-      int slot, double brightness, AnimationDirectionValue direction, Frequency frameRate) {
+      double brightness, AnimationDirectionValue direction, Frequency frameRate) {
 
-    rainbowAnimation
-        .withSlot(slot)
-        .withBrightness(brightness)
-        .withDirection(direction)
-        .withFrameRate(frameRate);
+    rainbowAnimation.withBrightness(brightness).withDirection(direction).withFrameRate(frameRate);
   }
 
   /**
