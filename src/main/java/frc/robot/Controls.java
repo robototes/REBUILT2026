@@ -258,7 +258,7 @@ public class Controls {
           () -> {
             mode = LEDMode.OUTTAKE_IN_PROGRESS;
           });
-    );
+    )
     
     driveController
     .leftTrigger()
@@ -267,7 +267,7 @@ public class Controls {
           () -> {
             mode = LEDMode.INTAKE_IN_PROGRESS;
           });
-    );
+    )
     // TODO: Add button to set climb and set default
     
     if (mode == LedSubsystem.LEDMode.INTAKE_IN_PROGRESS) { // blue
