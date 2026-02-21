@@ -94,13 +94,12 @@ public class IntakeRollers extends SubsystemBase {
 
   public Command runSingleRoller() {
     return Commands.runEnd(
-      () -> {
-        leftRoller.set(-INTAKE_SPEED);
-      },
-      () -> {
-        leftRoller.stopMotor();
-      }
-    );
+        () -> {
+          leftRoller.set(-INTAKE_SPEED);
+        },
+        () -> {
+          leftRoller.stopMotor();
+        });
   }
 
   public void stopMotor() {

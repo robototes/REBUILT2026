@@ -32,13 +32,12 @@ public class AutoLogic {
   /* ---------------- Start positions ---------------- */
 
   public enum StartPosition {
-    LEFT_TRENCH(
-        "Left Trench", new Pose2d(4.354, 7.465, new Rotation2d(Units.degreesToRadians(90)))),
+    LEFT_TRENCH("Left Trench", new Pose2d(3.7, 7.465, new Rotation2d(Units.degreesToRadians(90)))),
     LEFT_BUMP("Left Bump", new Pose2d(3.664, 5.411, new Rotation2d(Units.degreesToRadians(90)))),
     CENTER("Center", new Pose2d(3.62, 4.008, new Rotation2d(Units.degreesToRadians(90)))),
     RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(-90)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(4.291, 0.55, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Right Trench", new Pose2d(3.691, 0.55, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
@@ -202,22 +201,24 @@ public class AutoLogic {
 
   public static Command aimCommand() {
     return s.turretSubsystem.rotateToHub();
-   // return empty();
+    // return empty();
   }
-public static Command rollerCommand() {
-  return empty();
- // return s.intakeRollers.runSingleRoller();
-}
+
+  public static Command rollerCommand() {
+    return empty();
+    // return s.intakeRollers.runSingleRoller();
+  }
+
   public static Command launcherCommand() {
 
-   /*  return Commands.parallel(
-            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(
-                    Commands.parallel(
-                      s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
-        .withTimeout(4.5); */
-        return empty();
+    /*  return Commands.parallel(
+        s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+        Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+            .andThen(
+                Commands.parallel(
+                  s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+    .withTimeout(4.5); */
+    return empty();
   }
 
   public static Command launcherSimCommand() {
@@ -236,8 +237,8 @@ public static Command rollerCommand() {
   }
 
   public static Command intakeCommand() {
-return empty();
-    //return s.intakeSubsystem.deployPivot();
+    return empty();
+    // return s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {
