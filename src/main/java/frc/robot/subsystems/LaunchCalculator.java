@@ -25,8 +25,9 @@ public class LaunchCalculator {
   private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
-  private double turret_target_velocity;
-  private double hood_target_velocity;
+
+  // private double turret_target_velocity;
+  // private double hood_target_velocity;
 
   public static LaunchCalculator getInstance() {
     if (instance == null) instance = new LaunchCalculator();
@@ -41,7 +42,7 @@ public class LaunchCalculator {
       // double hood_target_velocity,
       double flywheelSpeed) {}
 
-  // Cache parameters
+  // Cache parametersZ
   private LaunchingParameters finalParameters = null;
 
   private static double minDistance;
