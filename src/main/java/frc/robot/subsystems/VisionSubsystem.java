@@ -55,6 +55,7 @@ public class VisionSubsystem extends SubsystemBase {
   private double tagAmbiguity = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
+  private static final double DISTANCE_TOLERANCE = 1.5;
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
@@ -144,7 +145,10 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
-          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())) {
+          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
+          || lastFieldPose != null
+              && getDistanceToTargetViaPoseEstimation(lastFieldPose, fieldPose3d.toPose2d())
+                  > DISTANCE_TOLERANCE) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
       }

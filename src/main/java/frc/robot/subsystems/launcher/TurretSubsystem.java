@@ -123,8 +123,7 @@ public class TurretSubsystem extends SubsystemBase {
     System.out.println(pos);
   }
 
-  public Command
-  zeroTurret() {
+  public Command zeroTurret() {
     return runOnce(
         () -> {
           turretMotor.setPosition(0);
