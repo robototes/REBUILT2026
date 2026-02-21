@@ -250,26 +250,39 @@ public class Controls {
           LedSubsystem.CLIMB_COLOR,
           LedSubsystem.OFF_COLOR
         };
-
-    if (mode == LedSubsystem.LEDMode.INTAKE_IN_PROGRESS) {
+    
+    driveController
+    .rightTrigger()
+    .whileTrue(
+        Commands.runOnce(
+          () -> {
+            mode = LEDMode.OUTTAKE_IN_PROGRESS
+          });
+    );
+    
+    driveController
+    .leftTrigger()
+    .whileTrue(
+        Commands.runOnce(
+          () -> {
+            mode = LEDMode.INTAKE_IN_PROGRESS
+          });
+    );
+    // TODO: Add button to set climb and set default
+    
+    if (mode == LedSubsystem.LEDMode.INTAKE_IN_PROGRESS) { // blue
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
           .andThen(LEDs.setLEDsCommand(LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
           .withName("Set intake color");
-    } // blue
-
-    if (mode == LedSubsystem.LEDMode.CLIMB_IN_PROGRESS) {
+    } else if (mode == LedSubsystem.LEDMode.CLIMB_IN_PROGRESS) { // cyan
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
           .andThen(LEDs.setLEDsCommand(LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
           .withName("Set climb color");
-    } // cyan
-
-    if (mode == LedSubsystem.LEDMode.OUTTAKE_IN_PROGRESS) {
+    } else if (mode == LedSubsystem.LEDMode.OUTTAKE_IN_PROGRESS) { // green
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
           .andThen(LEDs.setLEDsCommand(LedSubsystem.OUTTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
           .withName("Set outtake color");
-    } // green
-
-    if (mode == LedSubsystem.LEDMode.DEFAULT) {
+    } else if (mode == LedSubsystem.LEDMode.DEFAULT) {
       LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
           .andThen(LEDs.setLEDsCommand(LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
           .withName("Set default color");
