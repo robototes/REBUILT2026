@@ -10,6 +10,7 @@ import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ARM_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.LAUNCHER_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
+import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.FeederSubsystem;
@@ -42,6 +44,7 @@ public class Subsystems {
     public static final boolean INTAKE_ROLLERS_ENABLED = true;
     public static final boolean INTAKE_ARM_ENABLED = true;
     public static final boolean VISION_ENABLED = true;
+    public static final boolean LEDS_ENABLED = true;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
@@ -58,6 +61,7 @@ public class Subsystems {
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final LauncherSubsystem launcherSubsystem;
   public final VisionSubsystem visionSubsystem;
+  public final LedSubsystem ledSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
   public final DetectionSubsystem detectionSubsystem;
@@ -98,6 +102,12 @@ public class Subsystems {
       SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;
+    }
+
+    if (LEDS_ENABLED) {
+      ledSubsystem = new LedSubsystem();
+    } else {
+      ledSubsystem = null;
     }
 
     if (FLYWHEELS_ENABLED) {

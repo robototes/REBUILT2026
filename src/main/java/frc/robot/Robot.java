@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -33,6 +34,7 @@ import frc.robot.util.simulation.RobotSim;
 public class Robot extends TimedRobot {
 
   private final Controls controls;
+
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
@@ -167,6 +169,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    subsystems.ledSubsystem.setRainbowEnabled(true);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -186,6 +189,8 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    subsystems.ledSubsystem.setRainbowEnabled(false);
+    subsystems.ledSubsystem.setHardwareColor(LedSubsystem.DEFAULT_COLOR);
   }
 
   /** This function is called periodically during operator control. */

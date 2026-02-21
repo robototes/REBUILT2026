@@ -4,13 +4,11 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -20,9 +18,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.intake.IntakePivot;
-import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 
@@ -35,18 +32,31 @@ import frc.robot.util.robotType.RobotTypesEnum;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
+  private LedSubsystem.LEDMode mode;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
-  private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
-  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
-  private static final int TURRET_TEST_CONTROLLER_PORT = 3;
-  private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
-  private static final int VISION_TEST_CONTROLLER_PORT = 5;
+  private static final int FEEDER_TEST_CONTROLLER_PORT = 1;
+  private static final int SPINDEXER_TEST_CONTROLLER_PORT = 2;
+  private static final int INDEXING_TEST_CONTROLLER_PORT = 3; // for now
+  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 4; // for now
+  private static final int LED_CONTROLLER_PORT = 5; // keep this one at 5 plz
+  // private static final int VISION_TEST_CONTROLLER_PORT = 1;
+  // private static final int INTAKE_TEST_CONTROLLER_PORT = 2;
+  // private static final int TURRET_TEST_CONTROLLER_PORT = 3;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
+
+  private final CommandXboxController ledTestController =
+      new CommandXboxController(LED_CONTROLLER_PORT);
+
+  private final CommandXboxController feederTestController =
+      new CommandXboxController(FEEDER_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController spindexerTestController =
+      new CommandXboxController(SPINDEXER_TEST_CONTROLLER_PORT);
 
   private final CommandXboxController indexingTestController =
       new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
@@ -54,14 +64,14 @@ public class Controls {
   private final CommandXboxController launcherTuningController =
       new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
 
-  private final CommandXboxController intakeTestController =
-      new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
+  // private final CommandXboxController turretTestController =
+  // new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
 
-  private final CommandXboxController turretTestController =
-      new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
+  // private final CommandXboxController visionTestController =
+  // new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
-  private final CommandXboxController visionTestController =
-      new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+  // private final CommandXboxController intakeTestController =
+  // new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed =
       (RobotType.type == RobotTypesEnum.ALPHA)
@@ -88,12 +98,17 @@ public class Controls {
     // Configure the trigger bindings
     s = subsystems;
     configureDrivebaseBindings();
+    configureLEDBindings();
     configureLauncherBindings();
     configureIndexingBindings();
     configureIntakeBindings();
     configureAutoAlignBindings();
-    configureVisionBindings();
-    configureTurretBindings();
+    // configureVisionBindings();
+    // configureTurretBindings();
+
+    mode =
+        LedSubsystem.LEDMode
+            .DEFAULT; // make sure to change this value when using the drive xbox control port
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -217,7 +232,72 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
-    visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+    // visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+  }
+
+  private void configureLEDBindings() {
+    if (s.ledSubsystem == null) {
+      // Stop running this method
+      return;
+    }
+
+    LedSubsystem LEDs = s.ledSubsystem;
+    final RGBWColor[] colors =
+        new RGBWColor[] {
+          LedSubsystem.DEFAULT_COLOR,
+          LedSubsystem.INTAKE_COLOR,
+          LedSubsystem.OUTTAKE_COLOR,
+          LedSubsystem.CLIMB_COLOR,
+          LedSubsystem.OFF_COLOR
+        };
+    
+    driveController
+    .rightTrigger()
+    .whileTrue(
+        Commands.runOnce(
+          () -> {
+            mode = LEDMode.OUTTAKE_IN_PROGRESS;
+          });
+    )
+    
+    driveController
+    .leftTrigger()
+    .whileTrue(
+        Commands.runOnce(
+          () -> {
+            mode = LEDMode.INTAKE_IN_PROGRESS;
+          });
+    )
+    // TODO: Add button to set climb and set default
+    
+    if (mode == LedSubsystem.LEDMode.INTAKE_IN_PROGRESS) { // blue
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set intake color");
+    } else if (mode == LedSubsystem.LEDMode.CLIMB_IN_PROGRESS) { // cyan
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set climb color");
+    } else if (mode == LedSubsystem.LEDMode.OUTTAKE_IN_PROGRESS) { // green
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.OUTTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set outtake color");
+    } else if (mode == LedSubsystem.LEDMode.DEFAULT) {
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set default color");
+    } // red
+
+    ledTestController
+        .leftBumper()
+        .whileTrue(
+            LEDs.alternateColors(LedSubsystem.CLIMB_COLOR, LedSubsystem.OUTTAKE_COLOR, 0.5)
+                .withName("Alternate climb and outtake colors with 0.5s delay"));
+
+    ledTestController
+        .rightBumper()
+        .whileTrue(
+            LEDs.cycleColors(colors, 0.5).withName("Cycle through all colors with 0.5s delay"));
   }
 
   private void configureLauncherBindings() {
@@ -267,9 +347,9 @@ public class Controls {
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
-    intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
-    intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
-    intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
+    // intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
+    // intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    // intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**
@@ -296,63 +376,64 @@ public class Controls {
         .withTimeout(seconds);
   }
 
-  private void configureVisionBindings() {
-    if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      visionTestController
-          .leftBumper()
-          .onTrue(
-              s.drivebaseSubsystem
-                  .runOnce(
-                      () -> {
-                        Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
-                        if (referenceVisionPose != null) {
-                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
-                        }
-                      })
-                  .withName("Now Drive Pose is Vision Pose"));
-    }
-  }
+  // private void configureVisionBindings() {
+  //   if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
+  //     visionTestController
+  //         .leftBumper()
+  //         .onTrue(
+  //             s.drivebaseSubsystem
+  //                 .runOnce(
+  //                     () -> {
+  //                       Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
+  //                       if (referenceVisionPose != null) {
+  //                         s.drivebaseSubsystem.resetPose(referenceVisionPose);
+  //                       }
+  //                     })
+  //                 .withName("Now Drive Pose is Vision Pose"));
+  //   }
+  // }
 
-  private void configureTurretBindings() {
-    if (s.turretSubsystem == null) {
-      return;
-    }
-    // use static position constants from TurretSubsystem
-    turretTestController
-        .povUp()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
-    turretTestController
-        .povLeft()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
-    turretTestController
-        .povRight()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
-    turretTestController
-        .povDown()
-        .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
-    turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
-    turretTestController
-        .rightStick()
-        .whileTrue(
-            s.turretSubsystem.manualMovingVoltage(
-                () ->
-                    Volts.of(
-                        TurretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
-    turretTestController
-        .leftStick()
-        .whileTrue(
-            s.turretSubsystem.pointFacingJoystick(
-                () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
-    turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
-    turretTestController
-        .rightBumper()
-        .onTrue(
-            s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
-    driverController
-        .rightTrigger()
-        .whileTrue(
-            s.turretSubsystem.pointFacingJoystick(
-                () -> driverController.getLeftX(), () -> driverController.getLeftY()));
-  }
+  // private void configureTurretBindings() {
+  //   if (s.turretSubsystem == null) {
+  //     return;
+  //   }
+  //   // use static position constants from TurretSubsystem
+  //   turretTestController
+  //       .povUp()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
+  //   turretTestController
+  //       .povLeft()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
+  //   turretTestController
+  //       .povRight()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
+  //   turretTestController
+  //       .povDown()
+  //       .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
+  //   turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
+  //   turretTestController
+  //       .rightStick()
+  //       .whileTrue(
+  //           s.turretSubsystem.manualMovingVoltage(
+  //               () ->
+  //                   Volts.of(
+  //                       TurretSubsystem.TURRET_MANUAL_SPEED *
+  // turretTestController.getRightY())));
+  //   turretTestController
+  //       .leftStick()
+  //       .whileTrue(
+  //           s.turretSubsystem.pointFacingJoystick(
+  //               () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
+  //   turretTestController
+  //       .leftTrigger()
+  //       .whileTrue(Commands.run(() -> System.out.println("Stick Pressed")));
+  //   turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
+  //   turretTestController
+  //       .rightBumper()
+  //       .onTrue(
+  //           s.drivebaseSubsystem.runOnce(
+  //               () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+  //   driverController.povUp().whileTrue(s.turretSubsystem.rotateToHub());
+  //   driverController.povDown().onTrue(s.turretSubsystem.zeroTurret());
+  // }
 }
