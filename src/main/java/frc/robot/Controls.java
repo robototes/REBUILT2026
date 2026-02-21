@@ -5,8 +5,6 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
-import javax.xml.crypto.Data;
-
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -34,7 +32,6 @@ import frc.robot.util.robotType.RobotTypesEnum;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
-  private LedSubsystem.LedMode mode;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
@@ -108,9 +105,6 @@ public class Controls {
     // configureVisionBindings();
     // configureTurretBindings();
 
-    mode =
-        LedSubsystem.LedMode
-            .DEFAULT; // make sure to change this value when using the drive xbox control port
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -255,53 +249,52 @@ public class Controls {
 
     driverController
         .leftBumper()
-        .whileTrue(
+        .onTrue(
             Commands.runOnce(
-                () -> {
-                  mode = LedSubsystem.LedMode.DEFAULT;
-                }));
+                () ->
+                    LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+                        .andThen(
+                            LEDs.setLEDsCommand(
+                                LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+                        .withName("Set default color") // red
+                        .schedule()
+                ));
 
     driverController
         .rightBumper()
-        .whileTrue(
+        .onTrue(
             Commands.runOnce(
-                () -> {
-                  mode = LedSubsystem.LedMode.CLIMB_IN_PROGRESS;
-                }));
+                () ->
+                    LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+                        .andThen(
+                            LEDs.setLEDsCommand(
+                                LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+                        .withName("Set climb color") // cyan
+                        .schedule()));
 
     driverController
         .leftTrigger()
-        .whileTrue(
+        .onTrue(
             Commands.runOnce(
-                () -> {
-                  mode = LedSubsystem.LedMode.INTAKE_IN_PROGRESS;
-                }));
+                () ->
+                    LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+                        .andThen(
+                            LEDs.setLEDsCommand(
+                                LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+                        .withName("Set intake color") // blue
+                        .schedule()));
 
     driverController
         .rightTrigger()
-        .whileTrue(
+        .onTrue(
             Commands.runOnce(
-                () -> {
-                  mode = LedSubsystem.LedMode.SHOOT_IN_PROGRESS;
-                }));
-
-    if (mode == LedSubsystem.LedMode.INTAKE_IN_PROGRESS) { // blue
-      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-          .andThen(LEDs.setLEDsCommand(LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-          .withName("Set intake color");
-    } else if (mode == LedSubsystem.LedMode.CLIMB_IN_PROGRESS) { // cyan
-      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-          .andThen(LEDs.setLEDsCommand(LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-          .withName("Set climb color");
-    } else if (mode == LedSubsystem.LedMode.SHOOT_IN_PROGRESS) { // green
-      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-          .andThen(LEDs.setLEDsCommand(LedSubsystem.SHOOT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-          .withName("Set shoot color");
-    } else if (mode == LedSubsystem.LedMode.DEFAULT) { // red
-      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-          .andThen(LEDs.setLEDsCommand(LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-          .withName("Set default color");
-    }
+                () ->
+                    LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+                        .andThen(
+                            LEDs.setLEDsCommand(
+                                LedSubsystem.SHOOT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+                        .withName("Set shoot color") // green
+                        .schedule()));
 
     ledTestController
         .leftBumper()
