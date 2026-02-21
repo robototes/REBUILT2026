@@ -77,7 +77,7 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.2;
+    config.Slot0.kP = 0.8;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;

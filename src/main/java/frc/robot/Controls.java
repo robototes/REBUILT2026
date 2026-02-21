@@ -230,7 +230,7 @@ public class Controls {
                         .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
     driverController
-        .y()
+        .start()
         .onTrue(
             Commands.parallel(s.launcherSubsystem.zeroSubsystemCommand(), s.intakePivot.zeroPivot())
                 .ignoringDisable(true));
