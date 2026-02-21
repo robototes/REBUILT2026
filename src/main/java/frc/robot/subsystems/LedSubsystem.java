@@ -6,8 +6,12 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.BooleanTopic;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.networktables.StringTopic;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -78,82 +82,63 @@ public class LedSubsystem extends SubsystemBase {
   /** LED color representing LEDs turned off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
 
-  /**
-   * NetworkTable topics and publishers for LED state information.
-   *
-   * <p>These were commented out for now but can be used to publish LED states to Shuffleboard or
-   * other dashboards.
-   */
+  /** NetworkTable topics and publishers for LED state information. */
+
   /** NetworkTable topic that indicates whether the rainbow animation is currently enabled. */
-  // private final BooleanTopic isRainbow;
+  private BooleanTopic isRainbow;
 
   /** Publisher for {@link #isRainbow}, used to send the current rainbow state to NetworkTables. */
-  // private final BooleanPublisher isRainbowPub;
+  private BooleanPublisher isRainbowPub;
 
   /** NetworkTable topic that stores the currently displayed LED color as a string. */
-  // private final StringTopic currentColor;
+  private StringTopic currentColor;
 
   /** Publisher for {@link #currentColor}, used to send the current LED color to dashboards. */
-  // private final StringPublisher currentColorPub;
+  private StringPublisher currentColorPub;
 
   /** NetworkTable topic that stores the name of the currently running LED animation. */
-  // private final StringTopic currentAnimation;
+  private StringTopic currentAnimation;
 
   /**
    * Publisher for {@link #currentAnimation}, used to send the current animation name to dashboards.
    */
-  // private final StringPublisher currentAnimationPub;
+  private StringPublisher currentAnimationPub;
 
   /**
    * NetworkTable topic that stores the two alternating colors for flashing or cycling effects.
    * Formatted as: "A:R{red},G{green},B{blue},W{white} | B:R{red},G{green},B{blue},W{white}"
    */
-  // private final StringTopic alternatingColors;
+  private StringTopic alternatingColors;
 
   /**
    * Publisher for {@link #alternatingColors}, used to send the current alternating colors to
    * dashboards.
    */
-  // private final StringPublisher alternatingColorsPub;
+  private StringPublisher alternatingColorsPub;
 
-  /** */
-  public void LEDSubsystem() {
-    setRainbowAnimation(DEFAULT_BRIGHTNESS, AnimationDirectionValue.Forward, Units.Hertz.of(100));
+  public LedSubsystem() {
+    rainbowAnimation
+        .withBrightness(DEFAULT_BRIGHTNESS)
+        .withDirection(AnimationDirectionValue.Forward)
+        .withFrameRate(Units.Hertz.of(100));
 
-    // var nt = NetworkTableInstance.getDefault();
+    NetworkTableInstance nt = NetworkTableInstance.getDefault();
 
-    // isRainbow = nt.getBooleanTopic("/color/isRainbow");
-    // isRainbowPub = isRainbow.publish();
-    // isRainbowPub.set(false);
+    isRainbow = nt.getBooleanTopic("/color/isRainbow");
+    isRainbowPub = isRainbow.publish();
+    isRainbowPub.set(false);
 
-    // currentColor = nt.getStringTopic("/color/currentColor");
-    // currentColorPub = currentColor.publish();
-    // currentColorPub.set("None");
+    currentColor = nt.getStringTopic("/color/currentColor");
+    currentColorPub = currentColor.publish();
+    currentColorPub.set("None");
 
-    // currentAnimation = nt.getStringTopic("/color/currentAnimation");
-    // currentAnimationPub = currentAnimation.publish();
-    // currentAnimationPub.set("None");
+    currentAnimation = nt.getStringTopic("/color/currentAnimation");
+    currentAnimationPub = currentAnimation.publish();
+    currentAnimationPub.set("None");
 
-    // alternatingColors = nt.getStringTopic("/color/alternatingColors");
-    // alternatingColorsPub = alternatingColors.publish();
-    // alternatingColorsPub.set("A:None | B:None");
-  }
-
-  /**
-   * Configures a {@link RainbowAnimation} on the specified animation slot.
-   *
-   * <p>This method sets the {@code slot}, {@code brightness}, {@code direction}, and {@code frame
-   * rate} for the rainbow animation.
-   *
-   * @param slot the animation slot to run the rainbow animation on
-   * @param brightness the brightness level of the LEDs (0.0-1.0)
-   * @param direction the direction the rainbow animation moves
-   * @param frameRate the update frequency of the animation
-   */
-  public void setRainbowAnimation(
-      double brightness, AnimationDirectionValue direction, Frequency frameRate) {
-
-    rainbowAnimation.withBrightness(brightness).withDirection(direction).withFrameRate(frameRate);
+    alternatingColors = nt.getStringTopic("/color/alternatingColors");
+    alternatingColorsPub = alternatingColors.publish();
+    alternatingColorsPub.set("A:None | B:None");
   }
 
   /**
@@ -254,20 +239,20 @@ public class LedSubsystem extends SubsystemBase {
         (int) (color.White * brightness));
   }
 
-  // public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
-  //   String value =
-  //       String.format(
-  //           "A:R%d,G%d,B%d,W%d | B:R%d,G%d,B%d,W%d",
-  //           colorA.Red,
-  //           colorA.Green,
-  //           colorA.Blue,
-  //           colorA.White,
-  //           colorB.Red,
-  //           colorB.Green,
-  //           colorB.Blue,
-  //           colorB.White);
-  //   alternatingColorsPub.set(value);
-  // }
+  public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
+    String value =
+        String.format(
+            "A:R%d,G%d,B%d,W%d | B:R%d,G%d,B%d,W%d",
+            colorA.Red,
+            colorA.Green,
+            colorA.Blue,
+            colorA.White,
+            colorB.Red,
+            colorB.Green,
+            colorB.Blue,
+            colorB.White);
+    alternatingColorsPub.set(value);
+  }
 
   /**
    * Alternates the LED strip between two colors, switching every {@code interval} seconds.
@@ -343,13 +328,13 @@ public class LedSubsystem extends SubsystemBase {
   public void setRainbowEnabled(boolean enabled) {
     if (enabled) {
       candle.setControl(rainbowAnimation);
-      // isRainbowPub.set(true);
-      // currentAnimationPub.set("Rainbow");
-      // currentColorPub.set("None"); / always set to None
+      isRainbowPub.set(true);
+      currentAnimationPub.set("Rainbow");
+      currentColorPub.set("None"); // always set to None
     } else {
       candle.setControl(emptyAnimation);
-      // isRainbowPub.set(false);
-      // currentAnimationPub.set("None");
+      isRainbowPub.set(false);
+      currentAnimationPub.set("None");
     }
   }
 }

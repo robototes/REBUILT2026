@@ -257,8 +257,7 @@ public class Controls {
                             LEDs.setLEDsCommand(
                                 LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
                         .withName("Set default color") // red
-                        .schedule()
-                ));
+                        .schedule()));
 
     driverController
         .rightBumper()
