@@ -9,7 +9,6 @@ import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -20,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.LedSubsystem;
-import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
@@ -34,6 +32,7 @@ import frc.robot.util.robotType.RobotTypesEnum;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
+  private LedSubsystem.LEDMode mode;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
@@ -69,10 +68,10 @@ public class Controls {
   // new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
 
   // private final CommandXboxController visionTestController =
-      // new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+  // new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
   // private final CommandXboxController intakeTestController =
-      // new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
+  // new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed =
       (RobotType.type == RobotTypesEnum.ALPHA)
@@ -106,6 +105,10 @@ public class Controls {
     configureAutoAlignBindings();
     // configureVisionBindings();
     // configureTurretBindings();
+
+    mode =
+        LedSubsystem.LEDMode
+            .DEFAULT; // make sure to change this value when using the drive xbox control port
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -247,39 +250,30 @@ public class Controls {
           LedSubsystem.CLIMB_COLOR,
           LedSubsystem.OFF_COLOR
         };
-    ledTestController
-        .a()
-        .onTrue(
-            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-                .andThen(
-                    LEDs.setLEDsCommand(LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-                .withName("Set intake color")); // blue
 
-    ledTestController
-        .b()
-        .onTrue(
-            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-                .andThen(
-                    LEDs.setLEDsCommand(LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-                .withName("Set climb color")); // cyan
+    if (mode == LedSubsystem.LEDMode.INTAKE_IN_PROGRESS) {
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.INTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set intake color");
+    } // blue
 
-    ledTestController
-        .x()
-        .onTrue(
-            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-                .andThen(
-                    LEDs.setLEDsCommand(
-                        LedSubsystem.OUTTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-                .withName("Set outtake color")); // green
+    if (mode == LedSubsystem.LEDMode.CLIMB_IN_PROGRESS) {
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.CLIMB_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set climb color");
+    } // cyan
 
-    ledTestController
-        .y()
-        .onTrue(
-            LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
-                .andThen(
-                    LEDs.setLEDsCommand(
-                        LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
-                .withName("Set default color")); // red
+    if (mode == LedSubsystem.LEDMode.OUTTAKE_IN_PROGRESS) {
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.OUTTAKE_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set outtake color");
+    } // green
+
+    if (mode == LedSubsystem.LEDMode.DEFAULT) {
+      LEDs.setLEDsCommand(LedSubsystem.OFF_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS)
+          .andThen(LEDs.setLEDsCommand(LedSubsystem.DEFAULT_COLOR, LedSubsystem.DEFAULT_BRIGHTNESS))
+          .withName("Set default color");
+    } // red
 
     ledTestController
         .leftBumper()

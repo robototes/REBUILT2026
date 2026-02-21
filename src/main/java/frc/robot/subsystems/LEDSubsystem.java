@@ -14,8 +14,16 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class LedSubsystem extends SubsystemBase {
+  public enum LEDMode {
+    CLIMB_IN_PROGRESS(),
+    INTAKE_IN_PROGRESS(),
+    OUTTAKE_IN_PROGRESS(),
+    DEFAULT();
+  }
+
   /** CAN ID for the CANdle LED controller. */
   private static final int CAN_ID = Hardware.CANdle_ID;
+
 
   /** The number of LED modules connected in the strip. */
   private static final int NUMBER_OF_MODULES = 1;
