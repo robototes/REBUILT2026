@@ -41,9 +41,9 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = 20;
+  private static final double kP = 1000;
   private static final double kI = 0;
-  private static final double kD = 0.1;
+  private static final double kD = 0;
   private static final double kG = 0;
   private static final double kS = 0.41;
   private static final double kV = 0.9;
@@ -54,9 +54,9 @@ public class TurretSubsystem extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 20;
-  private static final double ACCELERATION = 20;
-  private static final double JERK = 50;
+  private static final double CRUISE_VELOCITY = 200;
+  private static final double ACCELERATION = 600;
+  private static final double JERK = 2000;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 72;
@@ -123,8 +123,7 @@ public class TurretSubsystem extends SubsystemBase {
     System.out.println(pos);
   }
 
-  public Command
-  zeroTurret() {
+  public Command zeroTurret() {
     return runOnce(
         () -> {
           turretMotor.setPosition(0);
