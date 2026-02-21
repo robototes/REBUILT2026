@@ -38,9 +38,9 @@ public class LaunchCalculator {
   public record LaunchingParameters(
       boolean isValid,
       Rotation2d turretAngle,
-      double turret_target_velocity,
+      // double turret_target_velocity,
       double hoodAngle,
-      double hood_target_velocity,
+      // double hood_target_velocity,
       double flywheelSpeed) {}
 
   // Cache parameters
@@ -116,34 +116,34 @@ public class LaunchCalculator {
 
     // Calculate parameters accounted for imparted velocity
 
-    // Target turret angle
+    // // Target turret angle
     targetTurretAngle = target.minus(lookaheadPose.getTranslation()).getAngle();
-    // Target hood angle
+    // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
 
-    // Set last turret angle to the currrent turret Angle and the last hood angle to current hood
-    // angle
-    if (lastTurretAngle == null) lastTurretAngle = targetTurretAngle;
-    if (Double.isNaN(lastHoodAngle)) lastHoodAngle = targetHoodAngle;
+    // // Set last turret angle to the currrent turret Angle and the last hood angle to current hood
+    // // angle
+    // if (lastTurretAngle == null) lastTurretAngle = targetTurretAngle;
+    // if (Double.isNaN(lastHoodAngle)) lastHoodAngle = targetHoodAngle;
 
-    // Calculate the angular velocity of the target angle. We're using filters to eliminate noise
-    // from the derivative for infinitsimal values
-    turret_target_velocity =
-        ROC__target_turret_filter.calculate(
-            targetTurretAngle.minus(lastTurretAngle).getRadians() / TimedRobot.kDefaultPeriod);
-    hood_target_velocity =
-        ROC__target_hood_filter.calculate(
-            (targetHoodAngle - lastHoodAngle) / TimedRobot.kDefaultPeriod);
-    lastTurretAngle = targetTurretAngle;
-    lastHoodAngle = targetHoodAngle;
+    // // Calculate the angular velocity of the target angle. We're using filters to eliminate noise
+    // // from the derivative for infinitsimal values
+    // turret_target_velocity =
+    //     ROC__target_turret_filter.calculate(
+    //         targetTurretAngle.minus(lastTurretAngle).getRadians() / TimedRobot.kDefaultPeriod);
+    // hood_target_velocity =
+    //     ROC__target_hood_filter.calculate(
+    //         (targetHoodAngle - lastHoodAngle) / TimedRobot.kDefaultPeriod);
+    // lastTurretAngle = targetTurretAngle;
+    // lastHoodAngle = targetHoodAngle;
     finalParameters =
         new LaunchingParameters(
             lookaheadTurretToTargetDistance >= minDistance
                 && lookaheadTurretToTargetDistance <= maxDistance,
             targetTurretAngle,
-            turret_target_velocity,
+            // turret_target_velocity,
             targetHoodAngle,
-            hood_target_velocity,
+            // hood_target_velocity,
             LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
 
     // // Log calculated values
