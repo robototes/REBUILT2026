@@ -5,7 +5,7 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "sequential",
           "data": {
             "commands": [
               {
@@ -30,19 +30,13 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-RT-intake-post"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "RT-NeutralRight-Back"
+                  "pathName": "NeutralRight-RT-intake-post"
                 }
               },
               {
@@ -69,7 +63,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-NeutralLeftTWO-Special"
+            "pathName": "NeutralRight-NeutralLeftTWO"
           }
         },
         {

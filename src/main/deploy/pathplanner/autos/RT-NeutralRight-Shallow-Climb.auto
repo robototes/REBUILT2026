@@ -36,12 +36,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "RT-NeutralRight-Back"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [

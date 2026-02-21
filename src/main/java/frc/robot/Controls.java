@@ -263,7 +263,7 @@ public class Controls {
 
     s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
 
-    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    driverController.leftTrigger().whileTrue(s.intakeRollers.runSingleRoller());
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 

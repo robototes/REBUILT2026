@@ -38,7 +38,7 @@ public class AutoLogic {
     CENTER("Center", new Pose2d(3.62, 4.008, new Rotation2d(Units.degreesToRadians(90)))),
     RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(-90)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(4.291, 0.5, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Right Trench", new Pose2d(4.291, 0.55, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
@@ -193,6 +193,7 @@ public class AutoLogic {
     NamedCommands.registerCommand("aim", aimCommand());
     NamedCommands.registerCommand("intake", intakeCommand());
     NamedCommands.registerCommand("climb", climbCommand());
+    NamedCommands.registerCommand("rollers", rollerCommand());
   }
 
   public static final Command empty() {
@@ -201,16 +202,22 @@ public class AutoLogic {
 
   public static Command aimCommand() {
     return s.turretSubsystem.rotateToHub();
+   // return empty();
   }
-
+public static Command rollerCommand() {
+  return empty();
+ // return s.intakeRollers.runSingleRoller();
+}
   public static Command launcherCommand() {
-    return Commands.parallel(
+
+   /*  return Commands.parallel(
             s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(
                     Commands.parallel(
-                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
-        .withTimeout(4.5);
+                      s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+        .withTimeout(4.5); */
+        return empty();
   }
 
   public static Command launcherSimCommand() {
@@ -229,8 +236,8 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-
-    return s.intakeSubsystem.deployPivot();
+return empty();
+    //return s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {
