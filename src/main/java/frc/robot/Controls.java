@@ -256,7 +256,7 @@ public class Controls {
     .whileTrue(
         Commands.runOnce(
           () -> {
-            mode = LEDMode.OUTTAKE_IN_PROGRESS
+            mode = LEDMode.OUTTAKE_IN_PROGRESS;
           });
     );
     
@@ -265,7 +265,7 @@ public class Controls {
     .whileTrue(
         Commands.runOnce(
           () -> {
-            mode = LEDMode.INTAKE_IN_PROGRESS
+            mode = LEDMode.INTAKE_IN_PROGRESS;
           });
     );
     // TODO: Add button to set climb and set default
