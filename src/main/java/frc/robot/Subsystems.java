@@ -66,7 +66,6 @@ public class Subsystems {
   // Subsystems go here
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final LauncherSubsystem launcherSubsystem;
-  public final LauncherSubsystem launcherSubsystem;
   public final VisionSubsystem visionSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
@@ -77,7 +76,6 @@ public class Subsystems {
   public final IntakePivot intakePivot;
   public final IntakeSubsystem intakeSubsystem;
   public final TurretSubsystem turretSubsystem;
-  public final IndexerSubsystem indexerSubsystem;
   public final IndexerSubsystem indexerSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
@@ -150,18 +148,6 @@ public class Subsystems {
       turretSubsystem = new TurretSubsystem(drivebaseSubsystem);
     } else {
       turretSubsystem = null;
-    }
-
-    if (LAUNCHER_ENABLED) {
-      launcherSubsystem = new LauncherSubsystem(hood, flywheels, turretSubsystem);
-    } else {
-      launcherSubsystem = null;
-    }
-
-    if (INDEXER_ENABLED) {
-      indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
-    } else {
-      indexerSubsystem = null;
     }
 
     if (LAUNCHER_ENABLED) {

@@ -43,7 +43,6 @@ public class Controls {
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
   private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
   private static final int VISION_TEST_CONTROLLER_PORT = 5;
-  private static final int VISION_TEST_CONTROLLER_PORT = 5;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -297,7 +296,6 @@ public class Controls {
 
   private void configureVisionBindings() {
     if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      visionTestController
       visionTestController
           .leftBumper()
           .onTrue(
