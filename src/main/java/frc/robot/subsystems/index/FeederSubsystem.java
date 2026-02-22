@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -75,9 +75,12 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public Command startMotor() {
-    return runOnce(
+    return runEnd(
             () -> {
               setSpeed(feederSpeed);
+            },
+            () -> {
+              setSpeed(0);
             })
         .withName("Start Feeder Motor");
   }

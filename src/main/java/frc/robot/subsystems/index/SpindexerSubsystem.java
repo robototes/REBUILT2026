@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -66,9 +66,12 @@ public class SpindexerSubsystem extends SubsystemBase {
   }
 
   public Command startMotor() {
-    return runOnce(
+    return runEnd(
             () -> {
               setSpeed(serializerSpeed);
+            },
+            () -> {
+              setSpeed(0);
             })
         .withName("Start Spindexer Motor");
   }
