@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -26,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
+import java.util.function.DoubleSupplier;
 
 public class ClimbSubsystem extends SubsystemBase {
   // Climb states
@@ -40,8 +42,10 @@ public class ClimbSubsystem extends SubsystemBase {
 
   private static ClimbState climbState = ClimbState.Idle;
 
-  // Motion magic request
+  // Motor requests
   private MotionMagicVoltage request;
+  private VoltageOut volts;
+  private double MAX_VOLTS = 5;
 
   // hardware objects
   CommandSwerveDrivetrain driveTrain;
@@ -62,8 +66,8 @@ public class ClimbSubsystem extends SubsystemBase {
   private static double k_A = 0;
   private static double STATOR_CURRENT_LIMIT = 40;
   private static double SUPPLY_CURRENT_LIMIT = 30;
-  private static double FORWARD_SOFT_LIMIT = 5;
-  private static double REVERSE_SOFT_LIMIT = -5;
+  private static double FORWARD_SOFT_LIMIT = 20; // Rotations
+  private static double REVERSE_SOFT_LIMIT = 0; // Rotations
   private static double MM_CRUISE_VELOCITY = 1;
   private static double MM_ACCEL = 1;
   private static double MM_JERK = 5;
@@ -92,6 +96,11 @@ public class ClimbSubsystem extends SubsystemBase {
   // Helpers
   public void setMotorPosition(double position) {
     climb_motor.setControl(request.withPosition(position));
+  }
+
+  public void manualMove(DoubleSupplier joystick) {
+    double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1) * MAX_VOLTS;
+    climb_motor.setControl(volts.withOutput(cmd));
   }
 
   public void zeroMotor() {
