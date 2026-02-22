@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -187,7 +188,7 @@ public class Controls {
 
   private void configureAutoAlignBindings() {
     if (s.detectionSubsystem == null) {
-      System.out.println("Game piece detection is disabled");
+      DataLogManager.log("Game piece detection is disabled");
       return;
     }
     driverController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
@@ -196,7 +197,7 @@ public class Controls {
   private void configureLauncherBindings() {
     if (s.flywheels == null || s.hood == null) {
       // Stop running this method
-      System.out.println("Flywheels and/or Hood are disabled");
+      DataLogManager.log("Flywheels and/or Hood are disabled");
       return;
     }
 
