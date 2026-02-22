@@ -100,7 +100,11 @@ public class ClimbSubsystem extends SubsystemBase {
   public Command Climb(ClimbLevel state) {
     return Commands.run(
             () -> {
-              if (state == ClimbLevel.L1) setMotorPosition(L1);
+              switch (state) {
+                case L1:
+                  setMotorPosition(L1);
+                  break;
+              }
             },
             this)
         .until(() -> Math.abs(climb_motor.getPosition().getValueAsDouble() - L1) < 0.1)
