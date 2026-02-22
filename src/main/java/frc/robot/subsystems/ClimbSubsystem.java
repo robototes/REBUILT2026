@@ -32,10 +32,12 @@ public class ClimbSubsystem extends SubsystemBase {
   public enum ClimbLevel {
     L1;
   }
+
   public enum ClimbState {
     Climbing,
     Idle
   }
+
   private static ClimbState climbState = ClimbState.Idle;
 
   // Motion magic request
@@ -94,23 +96,18 @@ public class ClimbSubsystem extends SubsystemBase {
     climb_motor.setPosition(0);
   }
 
-  // -- CLIMB ROUTINE -- //
+  // -- CLIMB -- //
   public Command Climb(ClimbLevel state) {
     return Commands.run(
             () -> {
-              switch (state) {
-                case L1:
-                  setMotorPosition(L1);
-                  break;
-              }
+              if (state == ClimbLevel.L1) setMotorPosition(L1);
             },
             this)
-        .until(
-            () -> {
-              return Math.abs(climb_motor.getPosition().getValueAsDouble() - L1) < 0.1;
-            }).andThen(() -> {
-              climbState = ClimbState.Idle;
-            });
+        .until(() -> Math.abs(climb_motor.getPosition().getValueAsDouble() - L1) < 0.1)
+        // This ensures the check happens every time the command tries to start
+        .onlyIf(() -> climbState == ClimbState.Idle)
+        .beforeStarting(() -> climbState = ClimbState.Climbing)
+        .finallyDo(() -> climbState = ClimbState.Idle);
   }
 
   // -------- AUTO ALIGN -------- //
