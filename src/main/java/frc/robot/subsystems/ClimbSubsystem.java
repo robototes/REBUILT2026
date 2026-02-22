@@ -73,6 +73,8 @@ public class ClimbSubsystem extends SubsystemBase {
       new Transform2d(new Translation2d(0, ROBOT_LENGTH / 2), Rotation2d.k180deg);
   private static final Transform2d climbOffSet =
       new Transform2d(new Translation2d(0, CLIMB_X_OFFSET), Rotation2d.kZero);
+
+  // Motor positions
   private static double L1 = 5; // rotations
 
   // Simulation
