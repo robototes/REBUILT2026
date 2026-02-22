@@ -40,12 +40,13 @@ public class ClimbSubsystem extends SubsystemBase {
     Idle
   }
 
+  private static boolean isZeroed = false;
   private static ClimbState climbState = ClimbState.Idle;
 
   // Motor requests
   private MotionMagicVoltage request;
   private VoltageOut volts;
-  private double MAX_VOLTS = 5;
+  private double MAX_VOLTS = 3;
 
   // hardware objects
   CommandSwerveDrivetrain driveTrain;
@@ -56,6 +57,11 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double ROBOT_LENGTH = Units.inchesToMeters(35); // Inches
   private static final double CLIMB_X_OFFSET = Units.inchesToMeters(43.51); // Inches
   private static final double GEAR_RATIO = 15;
+
+  // Auto Zero constants
+  private static final double STALL_CURRENT = 30; // Amps
+  private static final double MAX_HITS = 10;
+  private static final double MAX_OMEGA = 0.1;
 
   // Motor Tunables
   private static double k_P = 0;
@@ -78,7 +84,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final Transform2d climbOffSet =
       new Transform2d(new Translation2d(0, CLIMB_X_OFFSET), Rotation2d.kZero);
 
-  // Motor positions
+  // Climb level positions
   private static double L1 = 5; // rotations
 
   // Simulation
@@ -86,6 +92,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private DoublePublisher ntMotorCurrent;
   private DoublePublisher ntVoltage;
 
+  // Constructor
   public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
     // Setup
     this.driveTrain = driveTrain;
@@ -100,7 +107,7 @@ public class ClimbSubsystem extends SubsystemBase {
     ntVoltage = table.getDoubleTopic("Voltage:").publish();
   }
 
-  // Helpers
+  // Helper functions
   public void setMotorPosition(double position) {
     climb_motor.setControl(request.withPosition(position));
   }
@@ -112,6 +119,40 @@ public class ClimbSubsystem extends SubsystemBase {
 
   public void zeroMotor() {
     climb_motor.setPosition(0);
+  }
+
+  public void stop() {
+    climb_motor.setControl(volts.withOutput(0));
+  }
+
+  // ---------- COMMANDS ----------- //
+  public Command AutoZeroRoutine(boolean runAutoZero) {
+    final int[] hits = {0};
+
+    return Commands.run(
+            () -> {
+              climb_motor.setControl(volts.withOutput(-MAX_VOLTS)); // Move down
+
+              // Until it has stalled
+              if (Math.abs(climb_motor.getStatorCurrent().getValueAsDouble()) >= STALL_CURRENT
+                  && Math.abs(climb_motor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
+                hits[0]++;
+              } else {
+                hits[0] = 0;
+              }
+            },
+            this)
+        .until(() -> hits[0] >= MAX_HITS)
+        .finallyDo(
+            (interrupted) -> {
+              climb_motor.stopMotor();
+              if (!interrupted) {
+                climb_motor.setPosition(0);
+                isZeroed = true;
+              }
+            })
+        .onlyIf(() -> runAutoZero && !isZeroed)
+        .withTimeout(5);
   }
 
   // -- CLIMB -- //
@@ -196,6 +237,7 @@ public class ClimbSubsystem extends SubsystemBase {
     }
   }
 
+  // ------ Motor configuration ------ //
   private void configureMotors() {
     TalonFXConfiguration configs = new TalonFXConfiguration();
     Slot0Configs slot0 = configs.Slot0;
