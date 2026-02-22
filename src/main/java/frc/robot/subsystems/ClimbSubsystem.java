@@ -83,14 +83,21 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Simulation
   private DoublePublisher ntMotorPos;
+  private DoublePublisher ntMotorCurrent;
+  private DoublePublisher ntVoltage;
 
   public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
+    // Setup
     this.driveTrain = driveTrain;
     climb_motor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
     configureMotors();
+
+    // Network tables
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable table = inst.getTable("Climb");
     ntMotorPos = table.getDoubleTopic("Motor Pos (rotations): ").publish();
+    ntMotorCurrent = table.getDoubleTopic("Current (amps):").publish();
+    ntVoltage = table.getDoubleTopic("Voltage:").publish();
   }
 
   // Helpers
@@ -229,6 +236,8 @@ public class ClimbSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // set motor position in network tables
+    ntVoltage.set(climb_motor.getMotorVoltage().getValueAsDouble());
     ntMotorPos.set(climb_motor.getPosition().getValueAsDouble());
+    ntMotorCurrent.set(climb_motor.getStatorCurrent().getValueAsDouble());
   }
 }
