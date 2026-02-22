@@ -29,9 +29,14 @@ import frc.robot.util.AllianceUtils;
 
 public class ClimbSubsystem extends SubsystemBase {
   // Climb states
-  public enum ClimbState {
-    L1
+  public enum ClimbLevel {
+    L1;
   }
+  public enum ClimbState {
+    Climbing,
+    Idle
+  }
+  private static ClimbState climbState = ClimbState.Idle;
 
   // Motion magic request
   private MotionMagicVoltage request;
@@ -66,6 +71,7 @@ public class ClimbSubsystem extends SubsystemBase {
       new Transform2d(new Translation2d(0, ROBOT_LENGTH / 2), Rotation2d.k180deg);
   private static final Transform2d climbOffSet =
       new Transform2d(new Translation2d(0, CLIMB_X_OFFSET), Rotation2d.kZero);
+  private static double L1 = 5; // rotations
 
   // Simulation
   private DoublePublisher ntMotorPos;
@@ -88,16 +94,23 @@ public class ClimbSubsystem extends SubsystemBase {
     climb_motor.setPosition(0);
   }
 
-  // -------- CLIMB --------- //
-  public Command Climb(ClimbState state) {
-    switch (state) {
-      case L1:
-        {
-          return Commands.runOnce(() -> setMotorPosition(5), this).andThen();
-        }
-      default:
-        return Commands.none();
-    }
+  // -- CLIMB ROUTINE -- //
+  public Command Climb(ClimbLevel state) {
+    return Commands.run(
+            () -> {
+              switch (state) {
+                case L1:
+                  setMotorPosition(L1);
+                  break;
+              }
+            },
+            this)
+        .until(
+            () -> {
+              return Math.abs(climb_motor.getPosition().getValueAsDouble() - L1) < 0.1;
+            }).andThen(() -> {
+              climbState = ClimbState.Idle;
+            });
   }
 
   // -------- AUTO ALIGN -------- //
