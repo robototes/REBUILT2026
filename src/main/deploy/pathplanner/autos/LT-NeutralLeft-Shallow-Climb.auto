@@ -54,6 +54,12 @@
                       "data": {
                         "name": "launch"
                       }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "climb"
+                      }
                     }
                   ]
                 }
@@ -61,16 +67,10 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "rollers"
+                  "name": "intake"
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climb"
           }
         }
       ]

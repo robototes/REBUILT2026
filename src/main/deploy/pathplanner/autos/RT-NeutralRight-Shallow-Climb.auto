@@ -9,9 +9,59 @@
           "data": {
             "commands": [
               {
-                "type": "path",
+                "type": "sequential",
                 "data": {
-                  "pathName": "RT-NeutralRight"
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "RT-NeutralRight"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralRight-RT-intake"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralRight-RT-intake-post"
+                      }
+                    },
+                    {
+                      "type": "deadline",
+                      "data": {
+                        "commands": [
+                          {
+                            "type": "path",
+                            "data": {
+                              "pathName": "RT-Climb"
+                            }
+                          },
+                          {
+                            "type": "named",
+                            "data": {
+                              "name": "aim"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "launch"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "climb"
+                      }
+                    }
+                  ]
                 }
               },
               {
@@ -21,49 +71,6 @@
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-RT-intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-RT-intake-post"
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "RT-Climb"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climb"
           }
         }
       ]

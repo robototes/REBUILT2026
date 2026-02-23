@@ -9,9 +9,78 @@
           "data": {
             "commands": [
               {
-                "type": "path",
+                "type": "sequential",
                 "data": {
-                  "pathName": "RT-NeutralRight"
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "RT-NeutralRight"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralRight-RT-intake"
+                      }
+                    },
+                    {
+                      "type": "deadline",
+                      "data": {
+                        "commands": [
+                          {
+                            "type": "path",
+                            "data": {
+                              "pathName": "NeutralRight-RT-intake-post"
+                            }
+                          },
+                          {
+                            "type": "named",
+                            "data": {
+                              "name": "aim"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "launch"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralRight-NeutralLeftTHREE"
+                      }
+                    },
+                    {
+                      "type": "deadline",
+                      "data": {
+                        "commands": [
+                          {
+                            "type": "path",
+                            "data": {
+                              "pathName": "NeutralRight-NeutralLeftTWO"
+                            }
+                          },
+                          {
+                            "type": "named",
+                            "data": {
+                              "name": "aim"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "launch"
+                      }
+                    }
+                  ]
                 }
               },
               {
@@ -21,68 +90,6 @@
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-RT-intake"
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "NeutralRight-RT-intake-post"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-NeutralLeftTHREE"
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "NeutralRight-NeutralLeftTWO"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
           }
         }
       ]
