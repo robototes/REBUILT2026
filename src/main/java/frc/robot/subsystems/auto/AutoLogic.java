@@ -200,11 +200,12 @@ public class AutoLogic {
   }
 
   public static Command aimCommand() {
+
     return s.turretSubsystem.rotateToHub();
     // return empty();
   }
 
-  public static Command rollerCommand() {
+  public static Command rollerCommand() { // Mainly AlphaBot Thing
     return empty();
     // return s.intakeRollers.runSingleRoller();
   }
@@ -217,7 +218,7 @@ public class AutoLogic {
             .andThen(
                 Commands.parallel(
                   s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
-    .withTimeout(4.5); */
+    .withTimeout(4.5);   */
     return empty();
   }
 
