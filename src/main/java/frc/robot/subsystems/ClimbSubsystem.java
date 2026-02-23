@@ -275,6 +275,7 @@ public class ClimbSubsystem extends SubsystemBase {
     climb_motor.getConfigurator().apply(configs);
   }
 
+  // Periodic
   @Override
   public void periodic() {
     // set motor position in network tables
