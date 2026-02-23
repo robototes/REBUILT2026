@@ -21,8 +21,8 @@ public class LaunchCalculator {
   // Turret transform
   private final Transform2d turretTransfom =
       new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
-  private Rotation2d lastTurretAngle;
-  private double lastHoodAngle;
+  // private Rotation2d lastTurretAngle;
+  // private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
 
@@ -125,8 +125,8 @@ public class LaunchCalculator {
     // if (lastTurretAngle == null) lastTurretAngle = targetTurretAngle;
     // if (Double.isNaN(lastHoodAngle)) lastHoodAngle = targetHoodAngle;
 
-    // // Calculate the angular velocity of the target angle. We're using filters to eliminate noise
-    // // from the derivative for infinitsimal values
+    // Calculate the angular velocity of the target angle. We're using filters to eliminate noise
+    // from the derivative for infinitsimal values
     // turret_target_velocity =
     //     ROC__target_turret_filter.calculate(
     //         targetTurretAngle.minus(lastTurretAngle).getRadians() / TimedRobot.kDefaultPeriod);
@@ -144,11 +144,6 @@ public class LaunchCalculator {
             targetHoodAngle,
             // hood_target_velocity,
             LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
-
-    // // Log calculated values
-    // Logger.recordOutput("LaunchCalculator/LookaheadPose", lookaheadPose);
-    // Logger.recordOutput("LaunchCalculator/TurretToTargetDistance",
-    // lookaheadTurretToTargetDistance);
 
     // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
     // speed
