@@ -49,6 +49,7 @@ public class LaunchCalculator {
   private static double maxDistance;
   private static double phaseDelay;
 
+  // Static initializer
   static {
     minDistance = 1.34;
     maxDistance = 5.60;
@@ -115,8 +116,9 @@ public class LaunchCalculator {
 
     // Calculate parameters accounted for imparted velocity
 
-    // // Target turret angle
-    targetTurretAngle = target.minus(lookaheadPose.getTranslation()).getAngle();
+    // // Target turret angle robot relative
+    Rotation2d targetAngleFieldRelative = target.minus(lookaheadPose.getTranslation()).getAngle();
+    targetTurretAngle = targetAngleFieldRelative.minus(lookaheadPose.getRotation());
     // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
 
