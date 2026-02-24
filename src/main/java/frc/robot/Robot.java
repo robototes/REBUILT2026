@@ -22,8 +22,11 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.simulation.FuelSim;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
+import frc.robot.util.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -51,6 +54,7 @@ public class Robot extends TimedRobot {
   protected Robot() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
+
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
@@ -132,6 +136,9 @@ public class Robot extends TimedRobot {
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
     }
+    var robotState = subsystems.drivebaseSubsystem.getState();
+    LauncherConstants.update(
+        robotState.Pose, robotState.Speeds, AllianceUtils.getHubTranslation2d());
     CommandScheduler.getInstance().run();
   }
 

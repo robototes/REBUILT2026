@@ -30,7 +30,7 @@ public class Flywheels extends SubsystemBase {
 
   private FlywheelsSim flywheelSim;
 
-  private final MotionMagicVelocityVoltage request = new MotionMagicVelocityVoltage(0);
+  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
@@ -81,11 +81,11 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 11.825 / 99;
+    config.Slot0.kV = 8.73 / 74;
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
-    config.MotionMagic.MotionMagicAcceleration = 60; // RPS^2
+    config.MotionMagic.MotionMagicAcceleration = 74 / 0.246; // RPS^2
 
     flConfigurator.apply(config);
     frConfigurator.apply(config);
@@ -94,8 +94,8 @@ public class Flywheels extends SubsystemBase {
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
-              request.Velocity = rps;
-              FlywheelOne.setControl(request);
+              motionMagicRequest.Velocity = rps;
+              FlywheelOne.setControl(motionMagicRequest);
               FlywheelTwo.setControl(follow);
             },
             () -> {
@@ -108,8 +108,8 @@ public class Flywheels extends SubsystemBase {
   public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
     return runEnd(
             () -> {
-              request.Velocity = rps.getAsDouble();
-              FlywheelOne.setControl(request);
+              motionMagicRequest.Velocity = rps.getAsDouble();
+              FlywheelOne.setControl(motionMagicRequest);
               FlywheelTwo.setControl(follow);
             },
             () -> {
@@ -120,8 +120,8 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void setVelocityRPS(double rps) {
-    request.Velocity = rps;
-    FlywheelOne.setControl(request);
+    motionMagicRequest.Velocity = rps;
+    FlywheelOne.setControl(motionMagicRequest);
     FlywheelTwo.setControl(follow);
   }
 

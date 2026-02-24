@@ -53,7 +53,6 @@ public class LauncherSubsystem extends SubsystemBase {
 
           hood.setHoodPosition(hoodGoal);
           flywheels.setVelocityRPS(flywheelsGoal);
-
           turret.setTurretRawPosition(turretGoal);
         },
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
@@ -61,10 +60,9 @@ public class LauncherSubsystem extends SubsystemBase {
 
   // TODO: add tolerance range calculation
   public boolean isAtTarget() {
-
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
         && hood.atTargetPosition()
-        && turret.atTarget(50);
+        && turret.atTarget(2);
   }
 
   public Command zeroSubsystemCommand() {
