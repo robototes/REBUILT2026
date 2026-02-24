@@ -232,7 +232,8 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                    //s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                    s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
