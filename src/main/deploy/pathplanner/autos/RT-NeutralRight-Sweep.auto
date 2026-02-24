@@ -5,12 +5,6 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "deploy"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [
@@ -21,13 +15,13 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "New Depot"
+                        "pathName": "RT-NeutralRight"
                       }
                     },
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "New Depot Left"
+                        "pathName": "NeutralRight-RT-intake"
                       }
                     }
                   ]
@@ -49,7 +43,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "New Depot Climb"
+                  "pathName": "NeutralRight-RT-intake-back"
                 }
               },
               {
@@ -68,9 +62,54 @@
           }
         },
         {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralRight-NeutralLeft-Sweep"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "NeutralRight-NeutralLeftTWO"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "named",
           "data": {
-            "name": "climb"
+            "name": "launch"
           }
         }
       ]

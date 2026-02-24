@@ -5,12 +5,6 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "deploy"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [
@@ -21,13 +15,13 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "New Depot"
+                        "pathName": "RT-NeutralRight"
                       }
                     },
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "New Depot Left"
+                        "pathName": "NeutralRight-RT-intake"
                       }
                     }
                   ]
@@ -43,13 +37,19 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-RT-intake-back"
+          }
+        },
+        {
           "type": "deadline",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "New Depot Climb"
+                  "pathName": "RT-Climb"
                 }
               },
               {

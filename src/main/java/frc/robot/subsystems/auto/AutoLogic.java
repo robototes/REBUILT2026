@@ -186,13 +186,22 @@ public class AutoLogic {
     return AutoBuilder.followPath(path);
   }
 
-  public static void registerCommands() {
-
-    NamedCommands.registerCommand("launch", launcherCommand());
-    NamedCommands.registerCommand("aim", aimCommand());
-    NamedCommands.registerCommand("intake", intakeCommand());
-    NamedCommands.registerCommand("climb", climbCommand());
-    NamedCommands.registerCommand("rollers", rollerCommand());
+  public static void registerCommands(boolean enabled) {
+    if (enabled) {
+      NamedCommands.registerCommand("launch", launcherCommand());
+      NamedCommands.registerCommand("aim", aimCommand());
+      NamedCommands.registerCommand("intake", intakeCommand());
+      NamedCommands.registerCommand("deploy", deployCommand());
+      NamedCommands.registerCommand("climb", climbCommand());
+      NamedCommands.registerCommand("rollers", rollerCommand());
+    }
+    NamedCommands.registerCommand("launch", empty());
+    NamedCommands.registerCommand("aim", empty());
+    NamedCommands.registerCommand("intake", empty());
+    NamedCommands.registerCommand("deploy", empty());
+    NamedCommands.registerCommand("climb", empty());
+    NamedCommands.registerCommand("rollers", empty());
+    NamedCommands.registerCommand("deploy", empty());
   }
 
   public static final Command empty() {
@@ -239,6 +248,13 @@ public class AutoLogic {
 
   public static Command intakeCommand() {
     return empty();
+
+    // return s.intakeSubsystem.smartIntake();
+  }
+
+  public static Command deployCommand() {
+    return empty();
+
     // return s.intakeSubsystem.deployPivot();
   }
 

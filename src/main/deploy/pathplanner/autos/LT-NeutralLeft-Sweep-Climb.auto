@@ -5,12 +5,6 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "deploy"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [
@@ -21,13 +15,13 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "New Depot"
+                        "pathName": "LT-NeutralLeft"
                       }
                     },
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "New Depot Left"
+                        "pathName": "LT-NeutralLeft-Intake"
                       }
                     }
                   ]
@@ -49,7 +43,64 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "New Depot Climb"
+                  "pathName": "LB-NeutralLeft-Back"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-NeutralLeft-TWO"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-NeutralLeft-back-preclimb"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-Quick-Climb"
                 }
               },
               {

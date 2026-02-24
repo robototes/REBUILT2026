@@ -5,7 +5,19 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "named",
+          "data": {
+            "name": "deploy"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CENTER DEPOT"
+          }
+        },
+        {
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -15,44 +27,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LB-Depot"
-                      }
-                    },
-                    {
-                      "type": "deadline",
-                      "data": {
-                        "commands": [
-                          {
-                            "type": "path",
-                            "data": {
-                              "pathName": "DEPOT DEPT"
-                            }
-                          },
-                          {
-                            "type": "named",
-                            "data": {
-                              "name": "aim"
-                            }
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "launch"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Depot-Climb"
-                      }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "climb"
+                        "pathName": "DEPOT DEPT"
                       }
                     }
                   ]
@@ -65,6 +40,37 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Depot-Climb"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
           }
         }
       ]
