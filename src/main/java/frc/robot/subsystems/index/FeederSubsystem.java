@@ -18,7 +18,7 @@ import frc.robot.Hardware;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  private static final double FEEDER_VOLTAGE = 12;
+  public static final double FEEDER_VOLTAGE = 12;
   private static final int feederRumbleThreshold = 67;
   private VoltageOut voltReq = new VoltageOut(0);
 
@@ -78,6 +78,10 @@ public class FeederSubsystem extends SubsystemBase {
 
   public Command stopMotorCommand() {
     return runOnce(() -> feedMotor.stopMotor());
+  }
+
+  public void stopMotorVoid() {
+    feedMotor.stopMotor();
   }
 
   // PLACEHOLDER FOR SENSOR CHECK
