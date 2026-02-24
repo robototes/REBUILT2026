@@ -61,13 +61,14 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command launcherAimV2(CommandSwerveDrivetrain drive) {
-    return Commands.runEnd(() -> {
-    LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
-    hood.setHoodPosition(para.hoodAngle());
-    flywheels.setVelocityRPS(para.flywheelSpeed());
-    turret.setTurretRawPosition(para.turretAngle().getRotations());
-    },
-    () -> CommandScheduler.getInstance().schedule(stowCommand()));
+    return Commands.runEnd(
+        () -> {
+          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
+          hood.setHoodPosition(para.hoodAngle());
+          flywheels.setVelocityRPS(para.flywheelSpeed());
+          turret.setTurretRawPosition(para.turretAngle().getRotations());
+        },
+        () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
 
   // TODO: add tolerance range calculation

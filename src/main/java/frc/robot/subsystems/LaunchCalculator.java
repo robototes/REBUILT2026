@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -85,7 +84,8 @@ public class LaunchCalculator {
 
     // Calculate field relative turret velocity
     ChassisSpeeds robotVelocity =
-        ChassisSpeeds.fromRobotRelativeSpeeds(robotRelativeVelocity, robotState.getState().Pose.getRotation());
+        ChassisSpeeds.fromRobotRelativeSpeeds(
+            robotRelativeVelocity, robotState.getState().Pose.getRotation());
     // Grab robot angle
     double robotAngle = estimatedPose.getRotation().getRadians();
     // calculate the turret's velocity field relative
