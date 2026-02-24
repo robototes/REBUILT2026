@@ -33,6 +33,7 @@ import frc.robot.util.simulation.RobotSim;
 public class Robot extends TimedRobot {
 
   private final Controls controls;
+  private final Controllers controllers;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
@@ -54,7 +55,8 @@ public class Robot extends TimedRobot {
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
-    controls = new Controls(subsystems);
+    controllers = new Controllers();
+    controls = new Controls(subsystems, controllers);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);

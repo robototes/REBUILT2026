@@ -33,14 +33,15 @@ import frc.robot.subsystems.launcher.TurretSubsystem;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
+  private final Controllers c;
 
   // Controller Ports
-  private static final int DRIVER_CONTROLLER_PORT = 0;
-  private static final int INDEXING_TEST_CONTROLLER_PORT = 1;
-  private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
-  private static final int TURRET_TEST_CONTROLLER_PORT = 3;
-  private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
-  private static final int VISION_TEST_CONTROLLER_PORT = 5;
+  public static final int DRIVER_CONTROLLER_PORT = 0;
+  public static final int INDEXING_TEST_CONTROLLER_PORT = 1;
+  public static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
+  public static final int TURRET_TEST_CONTROLLER_PORT = 3;
+  public static final int INTAKE_TEST_CONTROLLER_PORT = 4;
+  public static final int VISION_TEST_CONTROLLER_PORT = 5;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
@@ -79,9 +80,10 @@ public class Controls {
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls(Subsystems subsystems) {
+  public Controls(Subsystems subsystems, Controllers controllers) {
     // Configure the trigger bindings
     s = subsystems;
+    c = controllers;
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
@@ -89,6 +91,8 @@ public class Controls {
     configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
+
+    DriverStation.silenceJoystickConnectionWarning(true); // this doesn't work during competitions
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -207,7 +211,7 @@ public class Controls {
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on back button press
-    driverController
+    c.driverControllerTest
         .back()
         .onTrue(
             s.drivebaseSubsystem
@@ -224,9 +228,7 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
-    connected(visionTestController)
-        .and(visionTestController.rightBumper())
-        .whileTrue(FuelAutoAlign.autoAlign(this, s));
+    c.visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLauncherBindings() {
@@ -236,7 +238,7 @@ public class Controls {
       return;
     }
 
-    driverController
+    c.driverControllerTest
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
@@ -244,34 +246,21 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
-    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
+    c.driverControllerTest.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.leftBumper())
+      c.launcherTestController.leftBumper()
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
     }
     if (s.hood.TUNER_CONTROLLED) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.rightBumper())
-          .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
+      c.launcherTestController.rightBumper().onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
     }
-    connected(launcherTuningController)
-        .and(launcherTuningController.start())
-        .onTrue(s.hood.autoZeroCommand());
-    connected(launcherTuningController)
-        .and(launcherTuningController.a())
-        .onTrue(s.hood.hoodPositionCommand(0.5));
-    connected(launcherTuningController)
-        .and(launcherTuningController.b())
-        .onTrue(s.hood.hoodPositionCommand(1));
+    c.launcherTestController.start().onTrue(s.hood.autoZeroCommand());
+    c.launcherTestController.a().onTrue(s.hood.hoodPositionCommand(0.5));
+    c.launcherTestController.b().onTrue(s.hood.hoodPositionCommand(1));
 
-    connected(launcherTuningController)
-        .and(launcherTuningController.x())
-        .onTrue(s.flywheels.setVelocityCommand(50));
-    connected(launcherTuningController)
-        .and(launcherTuningController.y())
-        .onTrue(s.flywheels.setVelocityCommand(60));
+    c.launcherTestController.x().onTrue(s.flywheels.setVelocityCommand(50));
+    c.launcherTestController.y().onTrue(s.flywheels.setVelocityCommand(60));
   }
 
   private void configureIntakeBindings() {
@@ -282,19 +271,13 @@ public class Controls {
 
     s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
 
-    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
-    driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
-    driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
+    c.driverControllerTest.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    c.driverControllerTest.povUp().onTrue(s.intakeSubsystem.deployPivot());
+    c.driverControllerTest.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
-    connected(intakeTestController)
-        .and(intakeTestController.a())
-        .whileTrue(s.intakeRollers.runRollers());
-    connected(intakeTestController)
-        .and(intakeTestController.x())
-        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
-    connected(intakeTestController)
-        .and(intakeTestController.y())
-        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
+    c.intakeController.a().whileTrue(s.intakeRollers.runRollers());
+    c.intakeController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    c.intakeController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
   }
 
   /**
@@ -323,8 +306,7 @@ public class Controls {
 
   private void configureVisionBindings() {
     if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      connected(visionTestController)
-          .and(visionTestController.leftBumper())
+        c.visionTestController.leftBumper()
           .onTrue(
               s.drivebaseSubsystem
                   .runOnce(
@@ -343,30 +325,23 @@ public class Controls {
       return;
     }
     // use static position constants from TurretSubsystem
-    connected(turretTestController)
-        .and(turretTestController.povUp())
+    c.turretTestController.povUp()
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
-    connected(turretTestController)
-        .and(turretTestController.povLeft())
+    c.turretTestController.povLeft()
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
-    connected(turretTestController)
-        .and(turretTestController.povRight())
+    c.turretTestController.povRight()
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
-    connected(turretTestController)
-        .and(turretTestController.povDown())
+    c.turretTestController.povDown()
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
-    connected(turretTestController)
-        .and(turretTestController.y())
+    c.turretTestController.y()
         .onTrue(s.turretSubsystem.zeroTurret());
-    connected(turretTestController)
-        .and(turretTestController.rightStick())
+    c.turretTestController.rightStick()
         .whileTrue(
             s.turretSubsystem.manualMovingVoltage(
                 () ->
                     Volts.of(
                         TurretSubsystem.TURRET_MANUAL_SPEED * turretTestController.getRightY())));
-    connected(turretTestController)
-        .and(turretTestController.leftStick())
+    c.turretTestController.leftStick()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
