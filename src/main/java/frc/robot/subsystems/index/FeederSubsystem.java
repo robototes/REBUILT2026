@@ -18,9 +18,9 @@ import frc.robot.Hardware;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  public static final double FEEDER_VOLTAGE = 12;
+  private static final double FEEDER_VOLTAGE = 12;
   private static final int feederRumbleThreshold = 67;
-  public VoltageOut voltReq = new VoltageOut(0);
+  private VoltageOut voltReq = new VoltageOut(0);
 
   private final TalonFX feedMotor;
 
