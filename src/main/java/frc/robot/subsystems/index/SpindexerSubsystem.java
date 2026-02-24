@@ -2,6 +2,7 @@ package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -17,7 +18,8 @@ import frc.robot.Hardware;
 
 public class SpindexerSubsystem extends SubsystemBase {
 
-  public static final double SPINDEXER_SPEED = 1.0;
+  private static final double SPINDEXER_VOLTAGE = 12;
+  private VoltageOut voltReq = new VoltageOut(0);
 
   private final TalonFX spindexerMotor;
 
@@ -32,12 +34,12 @@ public class SpindexerSubsystem extends SubsystemBase {
           LinearSystemId.createFlywheelSystem(
               DCMotor.getKrakenX60(1),
               0.001,
-              1.0); // TODO: Update to final moment of inertia and gear ratio
+              1.0);
       motorSim =
           new FlywheelSim(
               spindexerMotorSystem,
               DCMotor.getKrakenX60(1),
-              1.0); // TODO: Update to final gear ratio
+              1.0);
     } else {
       motorSim = null;
     }
@@ -63,14 +65,14 @@ public class SpindexerSubsystem extends SubsystemBase {
     cfg.apply(talonFXConfiguration);
   }
 
-  public void setSpeed(double speed) {
-    spindexerMotor.set(speed);
+  public void setVoltage(double voltage) {
+    spindexerMotor.setControl(voltReq.withOutput(voltage));
   }
 
   public Command startMotor() {
     return runEnd(
             () -> {
-              setSpeed(SPINDEXER_SPEED);
+              setVoltage(SPINDEXER_VOLTAGE);
             },
             () -> spindexerMotor.stopMotor())
         .withName("Start Spindexer Motor");
