@@ -27,7 +27,7 @@ public class FeederSubsystem extends SubsystemBase {
   private static final double FEEDMOTOR_KS = 0;
   private static final double FEEDMOTOR_KV = 0;
   private static final double FEEDMOTOR_KG = 0;
-  
+
   private static final double FEEDMOTOR_KA = 0;
 
   private final TalonFX feedMotor;

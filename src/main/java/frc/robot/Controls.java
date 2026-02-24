@@ -218,7 +218,6 @@ public class Controls {
       return;
     }
     visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
-    visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLauncherBindings() {
