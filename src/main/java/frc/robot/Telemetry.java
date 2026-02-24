@@ -45,7 +45,7 @@ public class Telemetry {
   private final StructPublisher<Translation2d> turretTranslation =
       driveStateTable.getStructTopic("Turret Pose", Translation2d.struct).publish();
   private final DoublePublisher turretToHubDistance =
-      driveStateTable.getDoubleTopic("Tuuret to hub distance").publish();
+      driveStateTable.getDoubleTopic("Turret to hub distance").publish();
   private final StructPublisher<ChassisSpeeds> driveSpeeds =
       driveStateTable.getStructTopic("Speeds", ChassisSpeeds.struct).publish();
   private final StructArrayPublisher<SwerveModuleState> driveModuleStates =

@@ -67,7 +67,6 @@ public class Controls {
       (RobotType.type == RobotTypesEnum.ALPHA)
           ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
           : CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)
@@ -218,6 +217,7 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
+    visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
     visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 

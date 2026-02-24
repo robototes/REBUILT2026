@@ -20,7 +20,6 @@ public class IndexerSubsystem {
         },
         () -> {
           feeder.setSpeed(0);
-          ;
           spindexerSubsystem.setSpeed(0);
         });
   }
