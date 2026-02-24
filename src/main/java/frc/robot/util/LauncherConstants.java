@@ -12,7 +12,7 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 public class LauncherConstants {
   private static final double TURRET_Y_OFFSET = 0.2159;
   private static final double TURRET_X_OFFSET = 0.1397;
-  private static final Translation2d LAUNCHER_OFFSET =
+  public static final Translation2d LAUNCHER_OFFSET =
       new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
   private static final StructArrayPublisher<Pose2d> turretToTarget =
       NetworkTableInstance.getDefault()

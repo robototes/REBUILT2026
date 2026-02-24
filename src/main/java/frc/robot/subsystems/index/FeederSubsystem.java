@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.robotType.RobotType;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
@@ -28,7 +29,13 @@ public class FeederSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID, CompTunerConstants.kCANBus);
+    if (RobotType.isComp()) {
+      feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID, CompTunerConstants.kCANBus);
+    } else if (RobotType.isAlpha()) {
+      feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
+    } else {
+      feedMotor = null;
+    }
     feederConfig();
 
     if (RobotBase.isSimulation()) {
@@ -49,9 +56,12 @@ public class FeederSubsystem extends SubsystemBase {
 
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-
-    // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    if (RobotType.isComp()) {
+      // Inverting motor output direction
+      talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    } else if (RobotType.isAlpha()) {
+      talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    }
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 

@@ -69,11 +69,14 @@ public class LauncherSubsystem extends SubsystemBase {
           hood.setHoodPosition(para.hoodAngle());
           flywheels.setVelocityRPS(para.flywheelSpeed());
 
+          double currentTurretDegrees = Units.rotationsToDegrees(turret.getTurretPosition());
+          double targetTurretDegrees = para.turretAngle().getDegrees();
+          double shortestAngle =
+              MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -180, 180);
+
           double turretDegrees =
               MathUtil.clamp(
-                  turret.getTurretPosition()
-                      + ((para.turretAngle().getDegrees() - turret.getTurretPosition() + 540) % 360)
-                      - 180,
+                  currentTurretDegrees + shortestAngle,
                   TurretSubsystem.TURRET_MIN,
                   TurretSubsystem.TURRET_MAX);
           turret.setTurretRawPosition(Units.degreesToRotations(turretDegrees));

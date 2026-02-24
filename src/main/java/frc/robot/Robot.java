@@ -222,8 +222,8 @@ public class Robot extends TimedRobot {
     robotSim.updateFuelSim();
   }
 
-  private void setupLimelightForAprilTags(String limelightName, boolean isRobotInit) {
-    if (isRobotInit) {
+  private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
+    if (isEnteringDisabled) {
       // Throttle to reduce heat
       LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
       // seed internal limelight imu for mt2

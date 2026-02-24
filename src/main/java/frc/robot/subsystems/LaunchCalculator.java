@@ -21,13 +21,14 @@ public class LaunchCalculator {
 
   // Turret transform
   private final Transform2d turretTransfom =
-      new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+      new Transform2d(LauncherConstants.LAUNCHER_OFFSET, Rotation2d.kZero);
   // private Rotation2d lastTurretAngle;
   // private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
+  private int LOOKAHEAD_ITERATIONS = 20;
 
-  // private double turret_target_velocity;
+  // private double turret_target_velocity;+
   // private double hood_target_velocity;
 
   public static LaunchCalculator getInstance() {
@@ -105,7 +106,7 @@ public class LaunchCalculator {
     Pose2d lookaheadPose = turretPosition;
     // the distance from the turret to the hub. This will be updated in the for loop
     double lookaheadTurretToTargetDistance = turretToTargetDistance;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < LOOKAHEAD_ITERATIONS; i++) {
       timeOfFlight = LauncherConstants.getTimeFromDistance(lookaheadTurretToTargetDistance);
       double offsetX = turretVelocityX * timeOfFlight;
       double offsetY = turretVelocityY * timeOfFlight;

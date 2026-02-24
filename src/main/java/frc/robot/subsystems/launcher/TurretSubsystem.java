@@ -203,7 +203,7 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to clockwise positive
     degrees = -degrees;
 
-    // Normalize to [0, 360)
+    // Normalize to [-180, 180]
     degrees = MathUtil.inputModulus(degrees, -180, 180);
 
     // Clamp to turret limits
