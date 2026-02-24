@@ -1,6 +1,8 @@
 package frc.robot.subsystems.launcher;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -66,7 +68,15 @@ public class LauncherSubsystem extends SubsystemBase {
           LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
           hood.setHoodPosition(para.hoodAngle());
           flywheels.setVelocityRPS(para.flywheelSpeed());
-          turret.setTurretRawPosition(para.turretAngle().getRotations());
+
+          double turretDegrees =
+              MathUtil.clamp(
+                  turret.getTurretPosition()
+                      + ((para.turretAngle().getDegrees() - turret.getTurretPosition() + 540) % 360)
+                      - 180,
+                  TurretSubsystem.TURRET_MIN,
+                  TurretSubsystem.TURRET_MAX);
+          turret.setTurretRawPosition(Units.degreesToRotations(turretDegrees));
         },
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
