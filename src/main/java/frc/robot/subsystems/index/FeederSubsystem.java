@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -57,9 +57,9 @@ public class FeederSubsystem extends SubsystemBase {
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
-    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
@@ -75,25 +75,31 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public Command startMotor() {
-    return runOnce(
-        () -> {
-          setSpeed(feederSpeed);
-        });
+    return runEnd(
+            () -> {
+              setSpeed(feederSpeed);
+            },
+            () -> {
+              setSpeed(0);
+            })
+        .withName("Start Feeder Motor");
   }
 
   public Command stopMotor() {
     return runOnce(
-        () -> {
-          setSpeed(0);
-        });
+            () -> {
+              setSpeed(0);
+            })
+        .withName("Stop Feeder Motor");
   }
 
   // PLACEHOLDER FOR SENSOR CHECK
   public Command checkSensor() {
     return runOnce(
-        () -> {
-          // TODO: add logic for ballNum going up after sensor triggers
-        });
+            () -> {
+              // TODO: add logic for ballNum going up after sensor triggers
+            })
+        .withName("Check Feeder Sensor");
   }
 
   public int getBallsDetectedNum() {
