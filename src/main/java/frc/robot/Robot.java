@@ -23,10 +23,9 @@ import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.simulation.FuelSim;
+import frc.robot.util.LauncherConstants;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
-import frc.robot.util.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -146,16 +145,8 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_A, 1);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, APRILTAG_PIPELINE);
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_B, THROTTLE_ON);
-      // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_B, 1);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_B, APRILTAG_PIPELINE);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
@@ -168,14 +159,8 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
-      // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_A, 4);
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_B, THROTTLE_OFF);
-      // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_B, 4);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
     }
     if (subsystems.detectionSubsystem != null) {
       // get rid of throttle to get rid of throttle "glazing"
@@ -235,5 +220,21 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     robotSim.updateFuelSim();
+  }
+
+  private void setupLimelightForAprilTags(String limelightName, boolean isRobotInit) {
+    if (isRobotInit) {
+      // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(limelightName, 1);
+      LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
+
+    } else {
+      // get rid of throttle to get rid of throttle "glazing"
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(limelightName, 4);
+    }
   }
 }

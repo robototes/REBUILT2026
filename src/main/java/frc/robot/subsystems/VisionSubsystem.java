@@ -100,30 +100,34 @@ public class VisionSubsystem extends SubsystemBase {
     if (rawFiducialsA != null) {
       if (rawFiducialsA.length != 1) {
         BetterPoseEstimate estimatemt1 = ACamera.getBetterPoseEstimate();
+        processLimelight(estimatemt1, rawFieldPose3dEntryA);
         for (RawFiducial rf : rawFiducialsA) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt1, rawFieldPose3dEntryA, rf);
+          processTags(rf);
         }
       } else {
         BetterPoseEstimate estimatemt2 = ACamera.getPoseEstimateMegatag2();
+        processLimelight(estimatemt2, rawFieldPose3dEntryA);
         for (RawFiducial rf : rawFiducialsA) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt2, rawFieldPose3dEntryA, rf);
+          processTags(rf);
         }
       }
     }
     if (rawFiducialsB != null) {
       if (rawFiducialsB.length != 1) {
         BetterPoseEstimate estimatemt1 = BCamera.getBetterPoseEstimate();
+        processLimelight(estimatemt1, rawFieldPose3dEntryB);
         for (RawFiducial rf : rawFiducialsB) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt1, rawFieldPose3dEntryB, rf);
+          processTags(rf);
         }
       } else {
         BetterPoseEstimate estimatemt2 = BCamera.getPoseEstimateMegatag2();
+        processLimelight(estimatemt2, rawFieldPose3dEntryB);
         for (RawFiducial rf : rawFiducialsB) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt2, rawFieldPose3dEntryB, rf);
+          processTags(rf);
         }
       }
     }
@@ -131,7 +135,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
+      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry) {
     if (getDisableVision()) {
       return;
     }
@@ -144,16 +148,6 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-      if (tagPose.isEmpty()) {
-        DriverStation.reportWarning(
-            "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-            false);
-        return;
-      }
-      this.distance =
-          getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), tagPose.get().toPose2d());
-      this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
       //   DataLogManager.log("got new data");
@@ -186,6 +180,18 @@ public class VisionSubsystem extends SubsystemBase {
         // DataLogManager.log("updated time");
       }
     }
+  }
+
+  private void processTags(RawFiducial rf) {
+    var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
+    if (tagPose.isEmpty()) {
+      DriverStation.reportWarning(
+          "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
+          false);
+      return;
+    }
+    this.distance = getDistanceToTargetViaPoseEstimation(lastFieldPose, tagPose.get().toPose2d());
+    this.tagAmbiguity = rf.ambiguity;
   }
 
   public int getNumTargets() {

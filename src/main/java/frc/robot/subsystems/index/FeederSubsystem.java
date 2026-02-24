@@ -2,9 +2,11 @@ package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -18,17 +20,9 @@ import frc.robot.generated.CompTunerConstants;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  public static final double feederSpeed = 0.7;
-  public static final int feederRumbleThreshold = 67;
-
-  private static final double FEEDMOTOR_KP = 38.5;
-  private static final double FEEDMOTOR_KI = 0;
-  private static final double FEEDMOTOR_KD = 0;
-  private static final double FEEDMOTOR_KS = 0;
-  private static final double FEEDMOTOR_KV = 0;
-  private static final double FEEDMOTOR_KG = 0;
-  
-  private static final double FEEDMOTOR_KA = 0;
+  public static final double FEEDER_VOLTAGE = 12;
+  private static final int feederRumbleThreshold = 67;
+  private VoltageOut voltReq = new VoltageOut(0);
 
   private final TalonFX feedMotor;
 
@@ -53,7 +47,6 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public void feederConfig() {
-    // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
@@ -72,27 +65,25 @@ public class FeederSubsystem extends SubsystemBase {
     cfg.apply(talonFXConfiguration);
   }
 
-  public void setSpeed(double speed) {
-    feedMotor.set(speed);
+  public void setVoltage(double voltage) {
+    feedMotor.setControl(voltReq.withOutput(voltage));
   }
 
   public Command startMotor() {
     return runEnd(
             () -> {
-              setSpeed(feederSpeed);
+              setVoltage(FEEDER_VOLTAGE);
             },
-            () -> {
-              setSpeed(0);
-            })
+            () -> feedMotor.stopMotor())
         .withName("Start Feeder Motor");
   }
 
-  public Command stopMotor() {
-    return runOnce(
-            () -> {
-              setSpeed(0);
-            })
-        .withName("Stop Feeder Motor");
+  public Command stopMotorCommand() {
+    return runOnce(() -> feedMotor.stopMotor());
+  }
+
+  public void stopMotorVoid() {
+    feedMotor.stopMotor();
   }
 
   // PLACEHOLDER FOR SENSOR CHECK
