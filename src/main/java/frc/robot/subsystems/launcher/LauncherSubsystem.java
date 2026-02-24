@@ -7,6 +7,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
@@ -56,6 +58,16 @@ public class LauncherSubsystem extends SubsystemBase {
           turret.setTurretRawPosition(turretGoal);
         },
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
+  }
+
+  public Command launcherAimV2(CommandSwerveDrivetrain drive) {
+    return Commands.runEnd(() -> {
+    LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
+    hood.setHoodPosition(para.hoodAngle());
+    flywheels.setVelocityRPS(para.flywheelSpeed());
+    turret.setTurretRawPosition(para.turretAngle().getRotations());
+    },
+    () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
 
   // TODO: add tolerance range calculation

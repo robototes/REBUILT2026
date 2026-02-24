@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 
@@ -57,14 +58,14 @@ public class LaunchCalculator {
     phaseDelay = 0.03;
   }
 
-  public LaunchingParameters getParameters(SwerveDriveState robotState) {
+  public LaunchingParameters getParameters(CommandSwerveDrivetrain robotState) {
     if (finalParameters != null) {
       return finalParameters;
     }
 
     // Calculate estimated pose while accounting for phase delay
-    Pose2d estimatedPose = robotState.Pose;
-    ChassisSpeeds robotRelativeVelocity = robotState.Speeds;
+    Pose2d estimatedPose = robotState.getState().Pose;
+    ChassisSpeeds robotRelativeVelocity = robotState.getState().Speeds;
     /* This takes dX /s and dY /s, both multiplied by the estimated delta T (in this case it's the phase delay) to get the real dX dY for the Twist2d object.
     Twist 2d objects gives us a transformation result that tells us where the robot will end up accounting for a continuous change in rotation
     in field frame by multiplying the integral of cos and sin (integral of the x and y components with the x and y components of the velocity). Then
@@ -84,7 +85,7 @@ public class LaunchCalculator {
 
     // Calculate field relative turret velocity
     ChassisSpeeds robotVelocity =
-        ChassisSpeeds.fromRobotRelativeSpeeds(robotRelativeVelocity, robotState.Pose.getRotation());
+        ChassisSpeeds.fromRobotRelativeSpeeds(robotRelativeVelocity, robotState.getState().Pose.getRotation());
     // Grab robot angle
     double robotAngle = estimatedPose.getRotation().getRadians();
     // calculate the turret's velocity field relative
