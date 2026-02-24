@@ -34,12 +34,12 @@ public class SpindexerSubsystem extends SubsystemBase {
           LinearSystemId.createFlywheelSystem(
               DCMotor.getKrakenX60(1),
               0.001,
-              1.0);
+              ((52 / 12) * (52 / 18)));
       motorSim =
           new FlywheelSim(
               spindexerMotorSystem,
               DCMotor.getKrakenX60(1),
-              1.0);
+              ((52 / 12) * (52 / 18)));
     } else {
       motorSim = null;
     }
