@@ -19,6 +19,9 @@ public class Hardware {
   // Climb Motor (35-39)
   public static final int CLIMB_MOTOR_ID = 35;
 
+  // CANdle
+  public static final int CANDLE_ID  = 40;
+
   public static final int PDH_ID = 1;
   // Swerve: 1-12
   // Check CompTunerConstants
