@@ -13,6 +13,7 @@ import frc.robot.util.LauncherConstants;
 public class LaunchCalculator {
   private static LaunchCalculator instance;
   public static Pose2d estimatedPose;
+  public static double estimatedDist;
 
   // These filters are here to reduce noise when grabbing turret and hood angles
   // private final LinearFilter ROC__target_turret_filter =
@@ -65,11 +66,11 @@ public class LaunchCalculator {
 
     // Calculate estimated pose while accounting for phase delay
     Pose2d estimatedPose = robotState.getState().Pose;
-    LaunchCalculator.estimatedPose = estimatedPose;
     ChassisSpeeds robotRelativeVelocity = robotState.getState().Speeds;
     /* This takes dX /s and dY /s, both multiplied by the estimated delta T (in this case it's the phase delay) to get the real dX dY for the Twist2d object.
-    Twist 2d objects gives us a transformation result that tells us where the robot will end up accounting for a continuous change in rotation
-    in field frame by multiplying the integral of cos and sin (integral of the x and y components with the x and y components of the velocity). Then
+    Twist 2d objects gives us a transformation result that tells us where the robot will end up (individually by each component). We then integrate the velocity of the x and
+    y components (field relative) from 0 to delta T. This gives us a delta X and delta Y, which we will then apply to the previous robot pose to get a new pose2d that
+    accurately represents the robot's position accounting in for angular velocity.
     */
     estimatedPose =
         estimatedPose.exp(
@@ -81,6 +82,7 @@ public class LaunchCalculator {
     // - Calculate distance from turret to target - //
     Translation2d target = AllianceUtils.getHubTranslation2d();
     Pose2d turretPosition = estimatedPose.transformBy(turretTransfom);
+    LaunchCalculator.estimatedPose = turretPosition;
     // grab distance between turret and center of hub
     double turretToTargetDistance = target.getDistance(turretPosition.getTranslation());
 
@@ -90,7 +92,9 @@ public class LaunchCalculator {
             robotRelativeVelocity, robotState.getState().Pose.getRotation());
     // Grab robot angle
     double robotAngle = estimatedPose.getRotation().getRadians();
-    // calculate the turret's tangetial velocity field relative
+    // calculate the turret's tangetial velocity field relative.
+    // take the turret's field relative position function, take the derivative of it and plug in
+    // your velocities.
     double turretVelocityX =
         robotVelocity.vxMetersPerSecond
             + robotVelocity.omegaRadiansPerSecond
@@ -117,7 +121,7 @@ public class LaunchCalculator {
               turretPosition.getRotation());
       lookaheadTurretToTargetDistance = target.getDistance(lookaheadPose.getTranslation());
     }
-
+    LaunchCalculator.estimatedDist = lookaheadTurretToTargetDistance;
     // Calculate parameters accounted for imparted velocity
 
     // // Target turret angle robot relative
