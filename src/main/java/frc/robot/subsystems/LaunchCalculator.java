@@ -90,7 +90,7 @@ public class LaunchCalculator {
             robotRelativeVelocity, robotState.getState().Pose.getRotation());
     // Grab robot angle
     double robotAngle = estimatedPose.getRotation().getRadians();
-    // calculate the turret's velocity field relative
+    // calculate the turret's tangetial velocity field relative
     double turretVelocityX =
         robotVelocity.vxMetersPerSecond
             + robotVelocity.omegaRadiansPerSecond
