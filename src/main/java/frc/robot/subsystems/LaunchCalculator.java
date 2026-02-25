@@ -12,6 +12,7 @@ import frc.robot.util.LauncherConstants;
 
 public class LaunchCalculator {
   private static LaunchCalculator instance;
+  public static Pose2d estimatedPose;
 
   // These filters are here to reduce noise when grabbing turret and hood angles
   // private final LinearFilter ROC__target_turret_filter =
@@ -64,6 +65,7 @@ public class LaunchCalculator {
 
     // Calculate estimated pose while accounting for phase delay
     Pose2d estimatedPose = robotState.getState().Pose;
+    LaunchCalculator.estimatedPose = estimatedPose;
     ChassisSpeeds robotRelativeVelocity = robotState.getState().Speeds;
     /* This takes dX /s and dY /s, both multiplied by the estimated delta T (in this case it's the phase delay) to get the real dX dY for the Twist2d object.
     Twist 2d objects gives us a transformation result that tells us where the robot will end up accounting for a continuous change in rotation
@@ -123,6 +125,7 @@ public class LaunchCalculator {
     targetTurretAngle = targetAngleFieldRelative.minus(lookaheadPose.getRotation());
     // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
+    System.out.println(targetTurretAngle.getDegrees());
 
     // // Set last turret angle to the currrent turret Angle and the last hood angle to current hood
     // // angle

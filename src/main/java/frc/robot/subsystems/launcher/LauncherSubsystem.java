@@ -77,6 +77,7 @@ public class LauncherSubsystem extends SubsystemBase {
                   TurretSubsystem.TURRET_MIN,
                   TurretSubsystem.TURRET_MAX);
           turret.setTurretRawPosition(Units.degreesToRotations(turretDegrees));
+          LaunchCalculator.getInstance().clearLaunchingParameters();
         },
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
