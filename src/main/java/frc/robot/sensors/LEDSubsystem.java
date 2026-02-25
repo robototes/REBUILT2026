@@ -25,6 +25,10 @@ public class LEDSubsystem extends SubsystemBase {
     DEFAULT();
   }
 
+  // Internal state (THIS is what commands modify)
+  private RGBWColor desiredColor = DEFAULT_COLOR;
+  private double desiredBrightness = DEFAULT_BRIGHTNESS;
+
   /** CAN device ID for the {@link CANdle} LED controller. */
   private static final int CAN_ID = Hardware.CANDLE_ID;
 
@@ -144,32 +148,28 @@ public class LEDSubsystem extends SubsystemBase {
     alternatingColorsPub.set("A:None | B:None");
   }
 
-  /**
-   * Sets the CANdle LED controller to a solid color at the specified brightness.
-   *
-   * <p>This method directly updates the physical hardware output. It is intended to be called
-   * internally by higher-level commands that manage LED behavior.
-   *
-   * @param color the {@link RGBWColor} to apply to the LED strip
-   * @param brightness the brightness scalar (0.0–1.0) applied to the color
-   */
-  public void setHardwareColor(RGBWColor color, double brightness) {
+  /** Low-level hardware method. This should NEVER schedule commands. */
+  private void applyHardwareColor(RGBWColor color, double brightness) {
     RGBWColor scaled = scaleBrightness(color, brightness);
-
-    // currentColorPub.set(scaled.toHexString());
-    System.out.println("Color: " + scaled.toHexString());
 
     solid.withColor(scaled);
     candle.setControl(solid);
   }
 
-  /**
-   * Sets the CANdle LED controller to a solid color using the default brightness.
-   *
-   * @param color the {@link RGBWColor} to apply to the LED strip
-   */
+  /** Public setter for desired LED state. Commands should call this. */
+  public void setHardwareColor(RGBWColor color, double brightness) {
+    desiredColor = color;
+    desiredBrightness = brightness;
+  }
+  // default method
   public void setHardwareColor(RGBWColor color) {
     setHardwareColor(color, DEFAULT_BRIGHTNESS);
+  }
+
+  /** Periodic pushes state to hardware. Only ONE place touches CANdle hardware. */
+  @Override
+  public void periodic() {
+    applyHardwareColor(desiredColor, desiredBrightness);
   }
 
   /**
@@ -244,23 +244,11 @@ public class LEDSubsystem extends SubsystemBase {
    * @param interval time between each color in seconds
    * @return a {@link Command} that continuously alternates LED colors
    */
-  public Command alternateColors(RGBWColor colorA, RGBWColor colorB, double interval) {
+  public Command alternateColors(RGBWColor a, RGBWColor b, double interval) {
     return Commands.sequence(
-            Commands.runOnce(
-                () -> {
-                  System.out.println("Switching to Color A: " + colorA);
-                  setHardwareColor(colorA);
-                },
-                this),
-            // Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
+            Commands.runOnce(() -> setHardwareColor(a), this),
             Commands.waitSeconds(interval),
-            Commands.runOnce(
-                () -> {
-                  System.out.println("Switching to Color B: " + colorB);
-                  setHardwareColor(colorB);
-                },
-                this),
-            // Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
+            Commands.runOnce(() -> setHardwareColor(b), this),
             Commands.waitSeconds(interval))
         .repeatedly();
   }
