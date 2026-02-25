@@ -28,6 +28,6 @@ public class IntakeSubsystem {
     return Commands.either(
         runRollersCommand(),
         Commands.sequence(deployPivot(), runRollersCommand()),
-        () -> intakePivot.isDeployed(5));
+        () -> intakePivot.isDeployed(5)).withName("Smart intake");
   }
 }

@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.FUEL_SIM_ENABLED;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.commands.FollowPathCommand;
@@ -213,6 +214,8 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    robotSim.updateFuelSim();
+    if (FUEL_SIM_ENABLED) {
+          robotSim.updateFuelSim();
+    } // FUEL_SIM_ENABLED is in Subsystems.java
   }
 }

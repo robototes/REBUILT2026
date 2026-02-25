@@ -5,9 +5,13 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
+import static frc.robot.Controllers.ControllerConstants.INDEXING_TEST_CONTROLLER_ENABLED;
 import static frc.robot.Controllers.ControllerConstants.INTAKE_TEST_CONTROLLER_ENABLED;
 import static frc.robot.Controllers.ControllerConstants.LAUNCHER_TUNING_CONTROLLER_ENABLED;
+import static frc.robot.Controllers.ControllerConstants.TURRET_TEST_CONTROLLER_ENABLED;
 import static frc.robot.Controllers.ControllerConstants.VISION_TEST_CONTROLLER_ENABLED;
+
+import java.io.Console;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -53,8 +57,8 @@ public class Controls {
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
 
-  private final CommandXboxController driverController =
-      new CommandXboxController(DRIVER_CONTROLLER_PORT);
+  // private final CommandXboxController driverController =
+  //     new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
   // private final CommandXboxController indexingTestController =
   //     new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
@@ -104,7 +108,8 @@ public class Controls {
     configureVisionBindings();
     configureTurretBindings();
 
-    DriverStation.silenceJoystickConnectionWarning(true); // this doesn't work during competitions
+    // DriverStation.silenceJoystickConnectionWarning(true); // this doesn't work during competitions
+
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -114,9 +119,9 @@ public class Controls {
         });
   }
 
-  private Trigger connected(CommandXboxController controller) {
-    return new Trigger(() -> controller.isConnected());
-  }
+  // private Trigger connected(CommandXboxController controller) {
+  //   return new Trigger(() -> controller.isConnected());
+  // }
 
   private void configureIndexingBindings() {
     if (s.feederSubsystem == null || s.spindexerSubsystem == null) {
@@ -126,16 +131,21 @@ public class Controls {
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
     // run feeder motor
-    indexingTestController.a().whileTrue(s.feederSubsystem.startMotor());
+    if (!INDEXING_TEST_CONTROLLER_ENABLED) {
+      DataLogManager.log("Controllers.java: indexing test controller is disabled");
+      return;
+    } else {
+    c.indexingTestController.a().whileTrue(s.feederSubsystem.startMotor());
 
     // run spindexer motor
-    indexingTestController.x().whileTrue(s.spindexerSubsystem.startMotor());
+    c.indexingTestController.x().whileTrue(s.spindexerSubsystem.startMotor());
 
     // run both while left trigger is held
     c.indexingTestController.leftTrigger()
         .whileTrue(
             Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
-  }
+    }
+          }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
     return Commands.startEnd(
@@ -215,7 +225,11 @@ public class Controls {
       DataLogManager.log("Game piece detection is disabled");
       return;
     }
-    c.visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+    if (!VISION_TEST_CONTROLLER_ENABLED) {
+      DataLogManager.log("Controllers.java: vision test controller is disabled");
+    } else {
+      c.visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
+    }
   }
 
   private void configureLauncherBindings() {
@@ -224,7 +238,10 @@ public class Controls {
       DataLogManager.log("Flywheels and/or Hood are disabled");
       return;
     }
-
+if (!LAUNCHER_TUNING_CONTROLLER_ENABLED) {
+      DataLogManager.log("Controllers.java: launcher test controller doesn't exist");
+      return;
+    } else {
     c.driverControllerTest
         .rightTrigger()
         .whileTrue(
@@ -247,17 +264,13 @@ public class Controls {
           .rightBumper()
           .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
     }
-    if (!LAUNCHER_TUNING_CONTROLLER_ENABLED) {
-      DataLogManager.log("Controllers.java: launcher test controller doesn't exist");
-      return;
-    } else {
     c.launcherTestController.start().onTrue(s.hood.autoZeroCommand());
     c.launcherTestController.a().onTrue(s.hood.hoodPositionCommand(0.5));
     c.launcherTestController.b().onTrue(s.hood.hoodPositionCommand(1));
 
     c.launcherTestController.x().onTrue(s.flywheels.setVelocityCommand(50));
     c.launcherTestController.y().onTrue(s.flywheels.setVelocityCommand(60));
-    }
+  }
   }
 
   private void configureIntakeBindings() {
@@ -333,6 +346,10 @@ public class Controls {
       return;
     }
     // use static position constants from TurretSubsystem
+    if (!TURRET_TEST_CONTROLLER_ENABLED) {
+      DataLogManager.log("Controllers.java: turret test controller is disabled");
+      return;
+    } else {
     c.turretTestController
         .povUp()
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
@@ -364,6 +381,7 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+    }
     c.driverControllerTest
         .rightTrigger()
         .whileTrue(
