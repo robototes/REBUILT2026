@@ -161,7 +161,7 @@ public class LEDSubsystem extends SubsystemBase {
     desiredColor = color;
     desiredBrightness = brightness;
   }
-  // default method
+  // default methoda
   public void setHardwareColor(RGBWColor color) {
     setHardwareColor(color, DEFAULT_BRIGHTNESS);
   }
