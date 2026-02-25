@@ -80,7 +80,7 @@ public class TurretSubsystem extends SubsystemBase {
   public void turretConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -200,9 +200,6 @@ public class TurretSubsystem extends SubsystemBase {
 
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
-
-    // Convert to clockwise positive
-    degrees = -degrees;
 
     // Normalize to [-180, 180]
     degrees = MathUtil.inputModulus(degrees, -180, 180);
