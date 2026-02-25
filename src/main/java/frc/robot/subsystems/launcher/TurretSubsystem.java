@@ -171,7 +171,8 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public boolean atTarget(double degreeTolerance) {
-    return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
+    return Math.abs(
+            turretMotor.getPosition().getValueAsDouble() - targetPos)
         < Units.degreesToRotations(degreeTolerance);
   }
 

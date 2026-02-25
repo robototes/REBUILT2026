@@ -1,5 +1,6 @@
 package frc.robot.subsystems.index;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -29,13 +30,7 @@ public class FeederSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    if (RobotType.isComp()) {
-      feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID, CompTunerConstants.kCANBus);
-    } else if (RobotType.isAlpha()) {
-      feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
-    } else {
-      feedMotor = null;
-    }
+    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID, (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
@@ -56,12 +51,12 @@ public class FeederSubsystem extends SubsystemBase {
 
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-    if (RobotType.isComp()) {
-      // Inverting motor output direction
-      talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-    } else if (RobotType.isAlpha()) {
-      talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    }
+
+    talonFXConfiguration.MotorOutput.Inverted =
+        (RobotType.isAlpha())
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
+
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 

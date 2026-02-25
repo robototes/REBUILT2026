@@ -27,6 +27,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
+
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
   private static final Transform3d COMP_BOT_LEFT_CAMERA =
@@ -73,6 +74,7 @@ public class VisionSubsystem extends SubsystemBase {
   private double tagAmbiguity = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
+  private static final double DISTANCE_TOLERANCE = 1.5;
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
@@ -157,7 +159,8 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
-          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())) {
+          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
+          ) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
       }

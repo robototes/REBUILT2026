@@ -62,6 +62,7 @@ public class LauncherSubsystem extends SubsystemBase {
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
 
+
   public Command launcherAimV2(CommandSwerveDrivetrain drive) {
     return Commands.runEnd(
         () -> {
@@ -88,7 +89,7 @@ public class LauncherSubsystem extends SubsystemBase {
   public boolean isAtTarget() {
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
         && hood.atTargetPosition()
-        && turret.atTarget(2);
+        && turret.atTarget(50);
   }
 
   public Command zeroSubsystemCommand() {
