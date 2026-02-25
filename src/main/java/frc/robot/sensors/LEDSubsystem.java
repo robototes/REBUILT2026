@@ -21,7 +21,7 @@ public class LEDSubsystem extends SubsystemBase {
   public enum LedMode {
     CLIMB_IN_PROGRESS(),
     INTAKE_IN_PROGRESS(),
-    SHOOT_IN_PROGRESS(),
+    LAUNCH_IN_PROGRESS(),
     DEFAULT();
   }
 
@@ -73,8 +73,11 @@ public class LEDSubsystem extends SubsystemBase {
   /** LED color used while intaking (blue). */
   public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
 
-  /** LED color used while outtaking (green). */
-  public static final RGBWColor SHOOT_COLOR = new RGBWColor(0, 255, 0);
+  /** LED color used while launching (green). */
+  public static final RGBWColor LAUNCH_COLOR = new RGBWColor(0, 255, 0);
+
+  /** LED color used while preping for launch (yellow) */
+  public static final RGBWColor LAUNCH_PREP_COLOR = new RGBWColor(255, 255, 0);
 
   /** LED color used during climb mode (cyan). */
   public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 255, 255);

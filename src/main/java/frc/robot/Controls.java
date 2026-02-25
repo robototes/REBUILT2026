@@ -218,11 +218,18 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    s.ledSubsystem.setLEDsCommand(LEDSubsystem.SHOOT_COLOR),
+                    s.ledSubsystem
+                        .alternateColors(
+                            LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5)
+                        .unless(() -> s.launcherSubsystem.isAtTarget()),
                     s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
                     // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(s.indexerSubsystem.runIndexer()))
+                        .andThen(
+                            s.indexerSubsystem
+                                .runIndexer()
+                                .alongWith(
+                                    s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR))))
                 .withName("Aim turret then feeder and spindexer started"));
     driverController
         .start()
@@ -346,10 +353,11 @@ public class Controls {
             s.turretSubsystem.pointFacingJoystick(
                 () -> driverController.getRightX(), () -> driverController.getRightY()));
   }
-  public void configureLedBindings(){
-    if(s.ledSubsystem == null){
+
+  public void configureLedBindings() {
+    if (s.ledSubsystem == null) {
       return;
     }
-    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.OFF_COLOR));
+    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR));
   }
 }
