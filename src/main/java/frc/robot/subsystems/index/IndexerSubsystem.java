@@ -14,13 +14,13 @@ public class IndexerSubsystem {
 
   public Command runIndexer() {
     return Commands.runEnd(
-            () -> {
-              feeder.setVoltage(FeederSubsystem.FEEDER_VOLTAGE);
-              spindexerSubsystem.setVoltage(SpindexerSubsystem.SPINDEXER_VOLTAGE);
-            },
-            () -> {
-              feeder.stopMotorVoid();
-              spindexerSubsystem.stopMotorVoid();
-            });
-    }
+        () -> {
+          feeder.setVoltage(FeederSubsystem.FEEDER_VOLTAGE);
+          spindexerSubsystem.setVoltage(SpindexerSubsystem.SPINDEXER_VOLTAGE);
+        },
+        () -> {
+          feeder.stopMotorVoid();
+          spindexerSubsystem.stopMotorVoid();
+        });
+  }
 }

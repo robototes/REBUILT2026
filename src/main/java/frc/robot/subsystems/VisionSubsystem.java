@@ -159,8 +159,7 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
-          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
-          ) {
+          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
       }

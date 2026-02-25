@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
-import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.robotType.RobotType;
 
 public class IntakeRollers extends SubsystemBase {

@@ -62,7 +62,6 @@ public class LauncherSubsystem extends SubsystemBase {
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
 
-
   public Command launcherAimV2(CommandSwerveDrivetrain drive) {
     return Commands.runEnd(
         () -> {
