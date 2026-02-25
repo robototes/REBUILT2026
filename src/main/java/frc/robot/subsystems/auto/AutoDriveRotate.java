@@ -54,7 +54,6 @@ public class AutoDriveRotate {
       pidRotate.setTolerance(TOLERANCE, VELOCITY_TOLERANCE);
       setName("Auto Align");
       addRequirements(drive);
-
     }
 
     // TODO: Add auto rotate for launching game pieces to corners + climb alignment
