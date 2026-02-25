@@ -1,4 +1,4 @@
-package frc.robot.sensors;
+package frc.robot.subsystems;
 
 import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
@@ -21,23 +21,19 @@ public class LEDSubsystem extends SubsystemBase {
   public enum LedMode {
     CLIMB_IN_PROGRESS(),
     INTAKE_IN_PROGRESS(),
-    LAUNCH_IN_PROGRESS(),
+    SHOOT_IN_PROGRESS(),
     DEFAULT();
   }
 
-  // Internal state (THIS is what commands modify)
-  private RGBWColor desiredColor = DEFAULT_COLOR;
-  private double desiredBrightness = DEFAULT_BRIGHTNESS;
-
   /** CAN device ID for the {@link CANdle} LED controller. */
-  private static final int CAN_ID = Hardware.CANDLE_ID;
+  private static final int CAN_ID = Hardware.CANdle_ID;
 
   /**
    * Last valid LED index in the strip (inclusive).
    *
    * <p>For example, if the strip contains 8 LEDs, valid indices range from {@code 0} to {@code 7}.
    */
-  private static final int END_INDEX = 200;
+  private static final int END_INDEX = 7;
 
   /**
    * Default brightness applied to {@link #candle} operations.
@@ -77,11 +73,8 @@ public class LEDSubsystem extends SubsystemBase {
   /** LED color used while intaking (blue). */
   public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
 
-  /** LED color used while launching (green). */
-  public static final RGBWColor LAUNCH_COLOR = new RGBWColor(0, 255, 0);
-
-  /** LED color used while preping for launch (yellow) */
-  public static final RGBWColor LAUNCH_PREP_COLOR = new RGBWColor(255, 255, 0);
+  /** LED color used while outtaking (green). */
+  public static final RGBWColor SHOOT_COLOR = new RGBWColor(0, 255, 0);
 
   /** LED color used during climb mode (cyan). */
   public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 255, 255);
@@ -148,28 +141,32 @@ public class LEDSubsystem extends SubsystemBase {
     alternatingColorsPub.set("A:None | B:None");
   }
 
-  /** Low-level hardware method. This should NEVER schedule commands. */
-  private void applyHardwareColor(RGBWColor color, double brightness) {
+  /**
+   * Sets the CANdle LED controller to a solid color at the specified brightness.
+   *
+   * <p>This method directly updates the physical hardware output. It is intended to be called
+   * internally by higher-level commands that manage LED behavior.
+   *
+   * @param color the {@link RGBWColor} to apply to the LED strip
+   * @param brightness the brightness scalar (0.0–1.0) applied to the color
+   */
+  public void setHardwareColor(RGBWColor color, double brightness) {
     RGBWColor scaled = scaleBrightness(color, brightness);
+
+    // currentColorPub.set(scaled.toHexString());
+    System.out.println("Color: " + scaled.toHexString());
 
     solid.withColor(scaled);
     candle.setControl(solid);
   }
 
-  /** Public setter for desired LED state. Commands should call this. */
-  public void setHardwareColor(RGBWColor color, double brightness) {
-    desiredColor = color;
-    desiredBrightness = brightness;
-  }
-  // default method
+  /**
+   * Sets the CANdle LED controller to a solid color using the default brightness.
+   *
+   * @param color the {@link RGBWColor} to apply to the LED strip
+   */
   public void setHardwareColor(RGBWColor color) {
     setHardwareColor(color, DEFAULT_BRIGHTNESS);
-  }
-
-  /** Periodic pushes state to hardware. Only ONE place touches CANdle hardware. */
-  @Override
-  public void periodic() {
-    applyHardwareColor(desiredColor, desiredBrightness);
   }
 
   /**
@@ -244,11 +241,23 @@ public class LEDSubsystem extends SubsystemBase {
    * @param interval time between each color in seconds
    * @return a {@link Command} that continuously alternates LED colors
    */
-  public Command alternateColors(RGBWColor a, RGBWColor b, double interval) {
+  public Command alternateColors(RGBWColor colorA, RGBWColor colorB, double interval) {
     return Commands.sequence(
-            Commands.runOnce(() -> setHardwareColor(a), this),
+            Commands.runOnce(
+                () -> {
+                  System.out.println("Switching to Color A: " + colorA);
+                  setHardwareColor(colorA);
+                },
+                this),
+            // Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
             Commands.waitSeconds(interval),
-            Commands.runOnce(() -> setHardwareColor(b), this),
+            Commands.runOnce(
+                () -> {
+                  System.out.println("Switching to Color B: " + colorB);
+                  setHardwareColor(colorB);
+                },
+                this),
+            // Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
             Commands.waitSeconds(interval))
         .repeatedly();
   }
