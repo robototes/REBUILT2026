@@ -22,10 +22,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.launcher.TurretSubsystem;
+import frc.robot.util.robotType.RobotType;
+import frc.robot.util.robotType.RobotTypesEnum;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -49,8 +52,9 @@ public class Controls {
   // Check Controllers.java for this stuff
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  // private final CommandXboxController driverController =
-  //     new CommandXboxController(DRIVER_CONTROLLER_PORT);
+
+  private final CommandXboxController driverController =
+      new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
   // private final CommandXboxController indexingTestController =
   //     new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
@@ -67,7 +71,10 @@ public class Controls {
   // private final CommandXboxController visionTestController =
   //     new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
-  public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+  public static final double MaxSpeed =
+      (RobotType.type == RobotTypesEnum.ALPHA)
+          ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
+          : CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)
@@ -118,34 +125,16 @@ public class Controls {
     }
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
-    // start feeder motor
-    c.indexingTestController.a().onTrue(s.feederSubsystem.startMotor());
+    // run feeder motor
+    indexingTestController.a().whileTrue(s.feederSubsystem.startMotor());
 
-    // stop feeder motor
-    c.indexingTestController.b().onTrue(s.feederSubsystem.stopMotor());
-
-    // start spindexer motor
-    c.indexingTestController.x()
-        .onTrue(s.spindexerSubsystem.startMotor());
-
-    // stop spindexer motor
-    c.indexingTestController.y()
-        .onTrue(s.spindexerSubsystem.stopMotor());
+    // run spindexer motor
+    indexingTestController.x().whileTrue(s.spindexerSubsystem.startMotor());
 
     // run both while left trigger is held
     c.indexingTestController.leftTrigger()
         .whileTrue(
-            Commands.startEnd(
-                () -> {
-                  s.feederSubsystem.startMotor();
-                  s.spindexerSubsystem.startMotor();
-                },
-                () -> {
-                  s.feederSubsystem.stopMotor();
-                  s.spindexerSubsystem.stopMotor();
-                },
-                s.feederSubsystem,
-                s.spindexerSubsystem));
+            Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
