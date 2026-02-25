@@ -218,13 +218,11 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    s.ledSubsystem
-                        .alternateColors(
-                            LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5)
-                        .unless(() -> s.launcherSubsystem.isAtTarget()),
                     s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
                     // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
-                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                    s.ledSubsystem
+                        .alternateColors(
+                            LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5).until(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             s.indexerSubsystem
                                 .runIndexer()
