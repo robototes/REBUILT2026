@@ -6,7 +6,6 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
-
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -83,9 +82,7 @@ public class LedSubsystem extends SubsystemBase {
   /** LED color representing LEDs turned off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
 
-  /**
-   * NetworkTable topics and publishers for LED state information.
-   */
+  /** NetworkTable topics and publishers for LED state information. */
 
   /** NetworkTable topic that indicates whether the rainbow animation is currently enabled. */
   private BooleanTopic isRainbow;
@@ -118,28 +115,32 @@ public class LedSubsystem extends SubsystemBase {
    * dashboards.
    */
   private StringPublisher alternatingColorsPub;
+
   public LedSubsystem() {
-  rainbowAnimation.withBrightness(DEFAULT_BRIGHTNESS).withDirection(AnimationDirectionValue.Forward).withFrameRate(Units.Hertz.of(100));
+    rainbowAnimation
+        .withBrightness(DEFAULT_BRIGHTNESS)
+        .withDirection(AnimationDirectionValue.Forward)
+        .withFrameRate(Units.Hertz.of(100));
 
+    NetworkTableInstance nt = NetworkTableInstance.getDefault();
 
-  NetworkTableInstance nt = NetworkTableInstance.getDefault();
+    isRainbow = nt.getBooleanTopic("/color/isRainbow");
+    isRainbowPub = isRainbow.publish();
+    isRainbowPub.set(false);
 
-  isRainbow = nt.getBooleanTopic("/color/isRainbow");
-  isRainbowPub = isRainbow.publish();
-  isRainbowPub.set(false);
+    currentColor = nt.getStringTopic("/color/currentColor");
+    currentColorPub = currentColor.publish();
+    currentColorPub.set("None");
 
-  currentColor = nt.getStringTopic("/color/currentColor");
-  currentColorPub = currentColor.publish();
-  currentColorPub.set("None");
+    currentAnimation = nt.getStringTopic("/color/currentAnimation");
+    currentAnimationPub = currentAnimation.publish();
+    currentAnimationPub.set("None");
 
-  currentAnimation = nt.getStringTopic("/color/currentAnimation");
-  currentAnimationPub = currentAnimation.publish();
-  currentAnimationPub.set("None");
-
-  alternatingColors = nt.getStringTopic("/color/alternatingColors");
-  alternatingColorsPub = alternatingColors.publish();
-  alternatingColorsPub.set("A:None | B:None");
+    alternatingColors = nt.getStringTopic("/color/alternatingColors");
+    alternatingColorsPub = alternatingColors.publish();
+    alternatingColorsPub.set("A:None | B:None");
   }
+
   /**
    * Sets the CANdle LED controller to a solid color at the specified brightness.
    *
@@ -199,6 +200,7 @@ public class LedSubsystem extends SubsystemBase {
 
   /**
    * Scales the brightness of a given RGBW color.
+   *
    * <p>Each channel (red, green, blue, white) is multiplied by the {@code brightness} factor
    *
    * @param color the original {@link RGBWColor} to scale
