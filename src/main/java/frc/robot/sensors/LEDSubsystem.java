@@ -37,7 +37,7 @@ public class LEDSubsystem extends SubsystemBase {
    *
    * <p>For example, if the strip contains 8 LEDs, valid indices range from {@code 0} to {@code 7}.
    */
-  private static final int END_INDEX = 7;
+  private static final int END_INDEX = 200;
 
   /**
    * Default brightness applied to {@link #candle} operations.
