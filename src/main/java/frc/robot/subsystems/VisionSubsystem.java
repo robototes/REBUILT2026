@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -159,7 +160,7 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
-          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
+          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d()) || !MathUtil.isNear(drivetrain.getState().Pose.getRotation().getDegrees(), Units.radiansToDegrees(fieldPose3d.getRotation().getAngle()), 2)
           ) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
@@ -168,6 +169,7 @@ public class VisionSubsystem extends SubsystemBase {
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
+        // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds, VecBuilder.fill(0.1, 0.1, 99999));
         drivetrain.resetPose(fieldPose3d.toPose2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
