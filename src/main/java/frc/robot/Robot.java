@@ -23,6 +23,8 @@ import frc.robot.subsystems.LedSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.LauncherConstants;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 
@@ -115,7 +117,15 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
       LimelightHelpers.SetRobotOrientation(
-          Hardware.LIMELIGHT_C,
+          Hardware.LIMELIGHT_A,
+          swerveState.Pose.getRotation().getDegrees(),
+          swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+          0,
+          0,
+          0,
+          0);
+      LimelightHelpers.SetRobotOrientation(
+          Hardware.LIMELIGHT_B,
           swerveState.Pose.getRotation().getDegrees(),
           swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
           0,
@@ -127,6 +137,9 @@ public class Robot extends TimedRobot {
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
     }
+    var robotState = subsystems.drivebaseSubsystem.getState();
+    LauncherConstants.update(
+        robotState.Pose, robotState.Speeds, AllianceUtils.getHubTranslation2d());
     CommandScheduler.getInstance().run();
   }
 
@@ -134,32 +147,27 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_ON);
-      // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
       // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
+      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_OFF);
-      // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
     }
     if (subsystems.detectionSubsystem != null) {
       // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
+      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
 
@@ -217,5 +225,21 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     robotSim.updateFuelSim();
+  }
+
+  private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
+    if (isEnteringDisabled) {
+      // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(limelightName, 1);
+      LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
+
+    } else {
+      // get rid of throttle to get rid of throttle "glazing"
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(limelightName, 4);
+    }
   }
 }

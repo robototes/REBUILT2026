@@ -1,12 +1,16 @@
 package frc.robot.subsystems.launcher;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
@@ -58,6 +62,28 @@ public class LauncherSubsystem extends SubsystemBase {
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
 
+  public Command launcherAimV2(CommandSwerveDrivetrain drive) {
+    return Commands.runEnd(
+        () -> {
+          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
+          hood.setHoodPosition(para.hoodAngle());
+          flywheels.setVelocityRPS(para.flywheelSpeed());
+
+          double currentTurretDegrees = Units.rotationsToDegrees(turret.getTurretPosition());
+          double targetTurretDegrees = para.turretAngle().getDegrees();
+          double shortestAngle =
+              MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -180, 180);
+
+          double turretDegrees =
+              MathUtil.clamp(
+                  currentTurretDegrees + shortestAngle,
+                  TurretSubsystem.TURRET_MIN,
+                  TurretSubsystem.TURRET_MAX);
+          turret.setTurretRawPosition(Units.degreesToRotations(turretDegrees));
+        },
+        () -> CommandScheduler.getInstance().schedule(stowCommand()));
+  }
+
   // TODO: add tolerance range calculation
   public boolean isAtTarget() {
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
@@ -70,6 +96,6 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command stowCommand() {
-    return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.setVelocityCommand(0.0));
+    return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.stopCommand());
   }
 }

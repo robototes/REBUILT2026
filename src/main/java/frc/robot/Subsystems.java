@@ -50,8 +50,8 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
-    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean TURRET_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean LAUNCHER_ENABLED =
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
@@ -90,7 +90,6 @@ public class Subsystems {
     } else {
       intakeRollers = null;
     }
-
     if (INTAKE_ARM_ENABLED) {
       intakePivot = new IntakePivot();
     } else {

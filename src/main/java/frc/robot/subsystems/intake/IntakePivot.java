@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.util.Units;
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
+import frc.robot.generated.CompTunerConstants;
 import java.util.function.Supplier;
 
 public class IntakePivot extends SubsystemBase {
@@ -24,21 +26,20 @@ public class IntakePivot extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = -0.28;
-  public static final double RETRACTED_POS = 0.0;
+  public static final double DEPLOYED_POS = 0.0;
+  public static final double RETRACTED_POS = 0.283;
 
   // PID variables
-  private static final double kP = 2.97;
+  private static final double kP = 20;
   private static final double kI = 0;
-  private static final double kD = 1;
-  private static final double kG = 0;
-  private static final double kS = 0.41;
-  private static final double kV = 0.9;
-  private static final double kA = 0.12;
-
+  private static final double kD = 0;
+  private static final double kG = 0.6;
+  private static final double kS = 0.4101;
+  private static final double kV = 0;
+  private static final double kA = 0;
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 20; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 10; // amps
+  private static final int STATOR_CURRENT_LIMIT = 40; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 25;
@@ -49,8 +50,8 @@ public class IntakePivot extends SubsystemBase {
   private static final double GEAR_RATIO = 36;
 
   // Soft Limits
-  private static final double PIVOT_MIN = -0.30; // rotations
-  private static final double PIVOT_MAX = 0.0;
+  private static final double PIVOT_MIN = 0.0; // rotations
+  private static final double PIVOT_MAX = 0.29;
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
@@ -60,10 +61,9 @@ public class IntakePivot extends SubsystemBase {
   private DoubleTopic targetPosTopic;
 
   public IntakePivot() {
-    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID);
+    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     pivotConfig();
     networktables();
-    pivotMotor.setPosition(0);
     if (Robot.isSimulation()) {
       pivotSim = new PivotSim(pivotMotor);
     }
@@ -72,7 +72,7 @@ public class IntakePivot extends SubsystemBase {
   public void pivotConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -97,6 +97,7 @@ public class IntakePivot extends SubsystemBase {
     config.Slot0.kS = kS;
     config.Slot0.kV = kV;
     config.Slot0.kA = kA;
+    config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     pivotMotor.getConfigurator().apply(config);
   }
@@ -124,8 +125,8 @@ public class IntakePivot extends SubsystemBase {
   public Command zeroPivot() {
     return runOnce(
         () -> {
-          pivotMotor.setPosition(0);
-          targetPos = 0;
+          pivotMotor.setPosition(RETRACTED_POS);
+          targetPos = RETRACTED_POS;
         });
   }
 

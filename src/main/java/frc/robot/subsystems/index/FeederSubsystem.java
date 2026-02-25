@@ -2,6 +2,7 @@ package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -14,26 +15,27 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.robotType.RobotType;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  public static final double feederSpeed = 0.4;
-  public static final int feederRumbleThreshold = 67;
-
-  private static final double FEEDMOTOR_KP = 38.5;
-  private static final double FEEDMOTOR_KI = 0;
-  private static final double FEEDMOTOR_KD = 0;
-  private static final double FEEDMOTOR_KS = 0;
-  private static final double FEEDMOTOR_KV = 0;
-  private static final double FEEDMOTOR_KG = 0;
-  private static final double FEEDMOTOR_KA = 0;
+  public static final double FEEDER_VOLTAGE = 12;
+  private static final int feederRumbleThreshold = 67;
+  private VoltageOut voltReq = new VoltageOut(0);
 
   private final TalonFX feedMotor;
 
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
+    if (RobotType.isComp()) {
+      feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID, CompTunerConstants.kCANBus);
+    } else if (RobotType.isAlpha()) {
+      feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
+    } else {
+      feedMotor = null;
+    }
     feederConfig();
 
     if (RobotBase.isSimulation()) {
@@ -51,46 +53,46 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public void feederConfig() {
-    // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
-
-    // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    if (RobotType.isComp()) {
+      // Inverting motor output direction
+      talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    } else if (RobotType.isAlpha()) {
+      talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    }
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     cfg.apply(talonFXConfiguration);
   }
 
-  public void setSpeed(double speed) {
-    feedMotor.set(speed);
+  public void setVoltage(double voltage) {
+    feedMotor.setControl(voltReq.withOutput(voltage));
   }
 
   public Command startMotor() {
     return runEnd(
             () -> {
-              setSpeed(feederSpeed);
+              setVoltage(FEEDER_VOLTAGE);
             },
-            () -> {
-              setSpeed(0);
-            })
+            () -> feedMotor.stopMotor())
         .withName("Start Feeder Motor");
   }
 
-  public Command stopMotor() {
-    return runOnce(
-            () -> {
-              setSpeed(0);
-            })
-        .withName("Stop Feeder Motor");
+  public Command stopMotorCommand() {
+    return runOnce(() -> feedMotor.stopMotor());
+  }
+
+  public void stopMotorVoid() {
+    feedMotor.stopMotor();
   }
 
   // PLACEHOLDER FOR SENSOR CHECK
