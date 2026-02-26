@@ -30,7 +30,10 @@ public class FeederSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID, (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+    feedMotor =
+        new TalonFX(
+            Hardware.FEEDER_MOTOR_ID,
+            (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
