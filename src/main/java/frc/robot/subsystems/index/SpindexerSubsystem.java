@@ -2,6 +2,7 @@ package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -17,25 +18,23 @@ import frc.robot.Hardware;
 
 public class SpindexerSubsystem extends SubsystemBase {
 
-  public static final double serializerSpeed = 1.0;
+  public static final double SPINDEXER_VOLTAGE = 12;
+  private VoltageOut voltReq = new VoltageOut(0);
 
-  private final TalonFX serialMotor;
+  private final TalonFX spindexerMotor;
 
   private final FlywheelSim motorSim;
 
   public SpindexerSubsystem() {
-    serialMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
+    spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
 
     if (RobotBase.isSimulation()) {
-      LinearSystem serialMotorSystem =
+      LinearSystem spindexerMotorSystem =
           LinearSystemId.createFlywheelSystem(
-              DCMotor.getKrakenX60(1),
-              0.001,
-              1.0); // TODO: Update to final moment of inertia and gear ratio
+              DCMotor.getKrakenX60(1), 0.001, ((52 / 12) * (52 / 18)));
       motorSim =
-          new FlywheelSim(
-              serialMotorSystem, DCMotor.getKrakenX60(1), 1.0); // TODO: Update to final gear ratio
+          new FlywheelSim(spindexerMotorSystem, DCMotor.getKrakenX60(1), ((52 / 12) * (52 / 18)));
     } else {
       motorSim = null;
     }
@@ -44,7 +43,7 @@ public class SpindexerSubsystem extends SubsystemBase {
   public void spindexerConfig() {
     // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
-    TalonFXConfigurator cfg = serialMotor.getConfigurator();
+    TalonFXConfigurator cfg = spindexerMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
@@ -61,32 +60,30 @@ public class SpindexerSubsystem extends SubsystemBase {
     cfg.apply(talonFXConfiguration);
   }
 
-  public void setSpeed(double speed) {
-    serialMotor.set(speed);
+  public void setVoltage(double voltage) {
+    spindexerMotor.setControl(voltReq.withOutput(voltage));
   }
 
   public Command startMotor() {
     return runEnd(
             () -> {
-              setSpeed(serializerSpeed);
+              setVoltage(SPINDEXER_VOLTAGE);
             },
-            () -> {
-              setSpeed(0);
-            })
+            () -> spindexerMotor.stopMotor())
         .withName("Start Spindexer Motor");
   }
 
-  public Command stopMotor() {
-    return runOnce(
-            () -> {
-              setSpeed(0);
-            })
-        .withName("Stop Spindexer Motor");
+  public Command stopMotorCommand() {
+    return runOnce(() -> spindexerMotor.stopMotor());
+  }
+
+  public void stopMotorVoid() {
+    spindexerMotor.stopMotor();
   }
 
   @Override
   public void simulationPeriodic() {
-    motorSim.setInput(serialMotor.getSimState().getMotorVoltage());
+    motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
   }
 }
