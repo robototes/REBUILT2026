@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -8,6 +9,9 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class LauncherConstants {
   private static final double TURRET_Y_OFFSET = 0.2159;
@@ -81,6 +85,21 @@ public class LauncherConstants {
 
     var array2 = new Pose2d[] {turret, turretVelocity};
     turretRotationalVelocity.set(array2, 0);
+  }
+
+  public static void update2(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
+    Pose2d turret = LaunchCalculator.estimatedPose;
+    double turret_to_hub_dist = LaunchCalculator.estimatedDist;
+    LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
+    double turretAngle = params.turretAngle().getRadians();
+    Pose2d updatedTarget =
+        new Pose2d(
+            new Translation2d(
+                turret_to_hub_dist * Math.cos(turretAngle),
+                turret_to_hub_dist * Math.sin(turretAngle)),
+            Rotation2d.kZero);
+    var array = new Pose2d[] {turret, updatedTarget};
+    turretToTarget.set(array, 0);
   }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
