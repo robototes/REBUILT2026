@@ -126,7 +126,8 @@ public class LaunchCalculator {
 
     // // Target turret angle robot relative
     Rotation2d targetAngleFieldRelative = target.minus(lookaheadPose.getTranslation()).getAngle();
-    targetTurretAngle = targetAngleFieldRelative.minus(lookaheadPose.getRotation());
+    targetTurretAngle =
+        targetAngleFieldRelative.minus(lookaheadPose.getRotation()).rotateBy(Rotation2d.k180deg);
     // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
     System.out.println(targetTurretAngle.getDegrees());
