@@ -190,14 +190,14 @@ public class AutoLogic {
       NamedCommands.registerCommand("deploy", deployCommand());
       NamedCommands.registerCommand("climb", climbCommand());
       NamedCommands.registerCommand("rollers", rollerCommand());
+    } else {
+      NamedCommands.registerCommand("launch", empty());
+      NamedCommands.registerCommand("aim", empty());
+      NamedCommands.registerCommand("intake", empty());
+      NamedCommands.registerCommand("deploy", empty());
+      NamedCommands.registerCommand("climb", empty());
+      NamedCommands.registerCommand("rollers", empty());
     }
-    NamedCommands.registerCommand("launch", empty());
-    NamedCommands.registerCommand("aim", empty());
-    NamedCommands.registerCommand("intake", empty());
-    NamedCommands.registerCommand("deploy", empty());
-    NamedCommands.registerCommand("climb", empty());
-    NamedCommands.registerCommand("rollers", empty());
-    NamedCommands.registerCommand("deploy", empty());
   }
 
   public static final Command empty() {
@@ -217,14 +217,13 @@ public class AutoLogic {
 
   public static Command launcherCommand() {
 
-    /*  return Commands.parallel(
-        s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-        Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-            .andThen(
-                Commands.parallel(
-                  s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
-    .withTimeout(4.5);   */
-    return empty();
+    return Commands.parallel(
+            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(
+                    Commands.parallel(
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+        .withTimeout(4.5);
   }
 
   public static Command launcherSimCommand() {
@@ -243,15 +242,13 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return empty();
 
-    // return s.intakeSubsystem.smartIntake();
+    return s.intakeSubsystem.smartIntake();
   }
 
   public static Command deployCommand() {
-    return empty();
 
-    // return s.intakeSubsystem.deployPivot();
+    return s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {
