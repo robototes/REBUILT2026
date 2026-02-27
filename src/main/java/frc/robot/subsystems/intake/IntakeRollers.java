@@ -82,14 +82,15 @@ public class IntakeRollers extends SubsystemBase {
 
   public Command runRollers() {
     return Commands.runEnd(
-        () -> {
-          leftRoller.set(INTAKE_SPEED);
-          rightRoller.setControl(followRequest);
-        },
-        () -> {
-          leftRoller.stopMotor();
-          rightRoller.stopMotor();
-        });
+            () -> {
+              leftRoller.set(INTAKE_SPEED);
+              rightRoller.setControl(followRequest);
+            },
+            () -> {
+              leftRoller.stopMotor();
+              rightRoller.stopMotor();
+            })
+        .withName("Run intake rollers");
   }
 
   public void stopMotor() {
