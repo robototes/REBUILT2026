@@ -74,7 +74,7 @@ public class VisionSubsystem extends SubsystemBase {
   private double tagAmbiguity = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
-  private static final double DISTANCE_TOLERANCE = 1.5;
+  private static final double DISTANCE_TOLERANCE = 1;
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
@@ -168,11 +168,9 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       if (!pose_bad) {
-        // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
-        // to not need kalman filtering
         // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
         // VecBuilder.fill(0.1, 0.1, 99999));
-        drivetrain.resetTranslation((fieldPose3d.toPose2d().getTranslation()));
+        drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds);
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
