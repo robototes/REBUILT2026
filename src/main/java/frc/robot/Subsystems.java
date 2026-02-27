@@ -1,5 +1,6 @@
 package frc.robot;
 
+import static frc.robot.Subsystems.SubsystemConstants.CLIMB_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
@@ -18,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -47,6 +49,7 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
+    public static final boolean CLIMB_ENABLED = true;
     public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean TURRET_ENABLED = true;
     public static final boolean LAUNCHER_ENABLED =
@@ -63,6 +66,7 @@ public class Subsystems {
   public final DetectionSubsystem detectionSubsystem;
   public final SpindexerSubsystem spindexerSubsystem;
   public final FeederSubsystem feederSubsystem;
+  public final ClimbSubsystem climbSubsystem;
   public final IntakeRollers intakeRollers;
   public final IntakePivot intakePivot;
   public final IntakeSubsystem intakeSubsystem;
@@ -129,6 +133,10 @@ public class Subsystems {
     } else {
       feederSubsystem = null;
     }
+    if (CLIMB_ENABLED) {
+      climbSubsystem = new ClimbSubsystem(drivebaseSubsystem);
+    } else {
+      climbSubsystem = null;
 
     if (INTAKE_ENABLED) {
       intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
