@@ -54,6 +54,7 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
+  // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
@@ -144,8 +145,7 @@ public class Robot extends TimedRobot {
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
     }
-    CommandScheduler.getInstance()
-        .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
+    CommandScheduler.getInstance().cancelAll(); //Prevent auto commands from persisting past auto or during testing.
   }
 
   @Override

@@ -205,18 +205,15 @@ public class AutoLogic {
   }
 
   public static Command aimCommand() {
-
-    return s.turretSubsystem.rotateToHub();
+      return s.turretSubsystem.rotateToHub();
   }
 
   public static Command rollerCommand() { // Mainly AlphaBot Thing
-
     return s.intakeRollers.runSingleRoller();
   }
 
   public static Command launcherCommand() {
-
-    return Commands.parallel(
+      return Commands.parallel(
             s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(
@@ -226,8 +223,7 @@ public class AutoLogic {
   }
 
   public static Command launcherSimCommand() {
-
-    return Commands.sequence(
+      return Commands.sequence(
         AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), // SIM PURPOSES ONLY
         Commands.run(
                 () ->
@@ -241,12 +237,10 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-
     return s.intakeSubsystem.smartIntake();
   }
 
   public static Command deployCommand() {
-
     return s.intakeSubsystem.deployPivot();
   }
 

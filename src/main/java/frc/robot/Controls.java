@@ -199,7 +199,7 @@ public class Controls {
 
   private void configureAutoAlignBindings() {
     if (s.detectionSubsystem == null) {
-      System.out.println("Game piece detection is disabled");
+      DataLogManager.log("Game piece detection is disabled");
       return;
     }
     visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
@@ -208,7 +208,7 @@ public class Controls {
   private void configureLauncherBindings() {
     if (s.flywheels == null || s.hood == null) {
       // Stop running this method
-      System.out.println("Flywheels and/or Hood are disabled");
+      DataLogManager.log("Flywheels and/or Hood are disabled");
       return;
     }
 

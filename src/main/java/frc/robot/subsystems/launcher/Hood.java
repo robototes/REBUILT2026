@@ -129,7 +129,6 @@ public class Hood extends SubsystemBase {
 
   @Override
   public void periodic() {
-
     positionPub.set(hood.getPosition().getValueAsDouble());
     goalPub.set(request.Position);
     if (TUNER_CONTROLLED) {

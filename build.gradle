@@ -39,7 +39,7 @@ deploy {
 
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
                 }
-
+// Uncomment this and comment the thing above to allow for VisualVM Support
                 // frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
                 //     // Enable VisualVM connection
                 //     jvmArgs.add("-Dcom.sun.management.jmxremote=true")

@@ -49,9 +49,9 @@ public class TurretSubsystemSim {
     this.maxMechRad = Math.max(turretMinRad, turretMaxRad);
 
     LinearSystem<N1, N1, N1> sys =
-        LinearSystemId.createFlywheelSystem(DCMotor.getFalcon500(1), moiKgM2, gearRatio);
+        LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(1), moiKgM2, gearRatio);
 
-    this.plant = new FlywheelSim(sys, DCMotor.getFalcon500(1));
+    this.plant = new FlywheelSim(sys, DCMotor.getKrakenX60(1));
 
     mech2d = new Mechanism2d(1.0, 1.0);
     MechanismRoot2d root = mech2d.getRoot("TurretRoot", 0.5, 0.5);
