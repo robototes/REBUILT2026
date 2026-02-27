@@ -16,6 +16,7 @@ import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -30,6 +31,8 @@ import frc.robot.subsystems.launcher.Flywheels;
 import frc.robot.subsystems.launcher.Hood;
 import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
+import frc.robot.util.robotType.RobotType;
+import frc.robot.util.robotType.RobotTypesEnum;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -38,7 +41,7 @@ public class Subsystems {
     public static final boolean DRIVEBASE_ENABLED = true;
     public static final boolean INTAKE_ROLLERS_ENABLED = true;
     public static final boolean INTAKE_ARM_ENABLED = true;
-    public static final boolean VISION_ENABLED = true;
+    public static final boolean VISION_ENABLED = false;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
@@ -70,7 +73,10 @@ public class Subsystems {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
     if (DRIVEBASE_ENABLED) {
-      drivebaseSubsystem = CompTunerConstants.createDrivetrain();
+      drivebaseSubsystem =
+          (RobotType.type == RobotTypesEnum.ALPHA)
+              ? AlphaTunerConstants.createDrivetrain()
+              : CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
     }
@@ -84,13 +90,6 @@ public class Subsystems {
       intakePivot = new IntakePivot();
     } else {
       intakePivot = null;
-    }
-
-    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystem);
-    } else {
-      visionSubsystem = null;
     }
 
     if (FLYWHEELS_ENABLED) {
@@ -145,6 +144,13 @@ public class Subsystems {
       indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
     } else {
       indexerSubsystem = null;
+    }
+
+    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
+      SmartDashboard.putData(visionSubsystem);
+    } else {
+      visionSubsystem = null;
     }
   }
 }

@@ -62,8 +62,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = 72;
 
   // Soft Limits
-  private static final double TURRET_MAX = 190; // degrees
-  private static final double TURRET_MIN = -45; // degrees
+  public static final double TURRET_MAX = 190; // degrees
+  public static final double TURRET_MIN = -45; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
@@ -118,9 +118,8 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setTurretRawPosition(double pos) {
-    turretMotor.setControl(request.withPosition(pos));
-    targetPos = pos;
-    System.out.println(pos);
+    turretMotor.setControl(request.withPosition(-pos));
+    targetPos = -pos;
   }
 
   public Command zeroTurret() {
@@ -201,10 +200,7 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
 
-    // Convert to clockwise positive
-    degrees = -degrees;
-
-    // Normalize to [0, 360)
+    // Normalize to [-180, 180]
     degrees = MathUtil.inputModulus(degrees, -180, 180);
 
     // Clamp to turret limits

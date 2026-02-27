@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -25,8 +27,17 @@ public class VisionSubsystem extends SubsystemBase {
 
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
+
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
+  private static final Transform3d COMP_BOT_LEFT_CAMERA =
+      new Transform3d(
+          0.114,
+          0.368,
+          0.235,
+          new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
+  private static final Transform3d COMP_BOT_FRONT_CAMERA =
+      new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
@@ -46,6 +57,14 @@ public class VisionSubsystem extends SubsystemBase {
   private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/rawFieldPose3dB", Pose3d.struct)
+          .publish();
+  private final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/compBotLeftCameraView", Pose3d.struct)
+          .publish();
+  private final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
           .publish();
 
   // state
@@ -83,37 +102,42 @@ public class VisionSubsystem extends SubsystemBase {
     if (rawFiducialsA != null) {
       if (rawFiducialsA.length != 1) {
         BetterPoseEstimate estimatemt1 = ACamera.getBetterPoseEstimate();
+        processLimelight(estimatemt1, rawFieldPose3dEntryA);
         for (RawFiducial rf : rawFiducialsA) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt1, rawFieldPose3dEntryA, rf);
+          processTags(rf);
         }
       } else {
         BetterPoseEstimate estimatemt2 = ACamera.getPoseEstimateMegatag2();
+        processLimelight(estimatemt2, rawFieldPose3dEntryA);
         for (RawFiducial rf : rawFiducialsA) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt2, rawFieldPose3dEntryA, rf);
+          processTags(rf);
         }
       }
     }
     if (rawFiducialsB != null) {
       if (rawFiducialsB.length != 1) {
         BetterPoseEstimate estimatemt1 = BCamera.getBetterPoseEstimate();
+        processLimelight(estimatemt1, rawFieldPose3dEntryB);
         for (RawFiducial rf : rawFiducialsB) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt1, rawFieldPose3dEntryB, rf);
+          processTags(rf);
         }
       } else {
         BetterPoseEstimate estimatemt2 = BCamera.getPoseEstimateMegatag2();
+        processLimelight(estimatemt2, rawFieldPose3dEntryB);
         for (RawFiducial rf : rawFiducialsB) {
           // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt2, rawFieldPose3dEntryB, rf);
+          processTags(rf);
         }
       }
     }
+    updateCameraView();
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
+      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry) {
     if (getDisableVision()) {
       return;
     }
@@ -126,16 +150,6 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-      if (tagPose.isEmpty()) {
-        DriverStation.reportWarning(
-            "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-            false);
-        return;
-      }
-      this.distance =
-          getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), tagPose.get().toPose2d());
-      this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
       //   DataLogManager.log("got new data");
@@ -156,7 +170,9 @@ public class VisionSubsystem extends SubsystemBase {
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        drivetrain.resetPose(fieldPose3d.toPose2d());
+        // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
+        // VecBuilder.fill(0.1, 0.1, 99999));
+        drivetrain.resetTranslation((fieldPose3d.toPose2d().getTranslation()));
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
@@ -171,6 +187,18 @@ public class VisionSubsystem extends SubsystemBase {
         // DataLogManager.log("updated time");
       }
     }
+  }
+
+  private void processTags(RawFiducial rf) {
+    var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
+    if (tagPose.isEmpty()) {
+      DriverStation.reportWarning(
+          "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
+          false);
+      return;
+    }
+    this.distance = getDistanceToTargetViaPoseEstimation(lastFieldPose, tagPose.get().toPose2d());
+    this.tagAmbiguity = rf.ambiguity;
   }
 
   public int getNumTargets() {
@@ -208,5 +236,12 @@ public class VisionSubsystem extends SubsystemBase {
 
   public Pose2d getLastVisionPose2d() {
     return lastFieldPose;
+  }
+
+  private void updateCameraView() {
+    Pose2d robotPose2d = drivetrain.getState().Pose;
+    Pose3d robotPose3d = new Pose3d(robotPose2d);
+    compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
+    compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
   }
 }
