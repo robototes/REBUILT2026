@@ -1,3 +1,4 @@
+
 {
   "version": "2025.0",
   "command": {
@@ -15,13 +16,13 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LT-NeutralLeft"
+                        "pathName": "RT-NeutralRight"
                       }
                     },
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LT-NeutralLeft-Intake"
+                        "pathName": "NeutralRight-RT-intake"
                       }
                     }
                   ]
@@ -37,13 +38,19 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-RT-intake-back"
+          }
+        },
+        {
           "type": "deadline",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Copy of LB-NeutralLeft-Back"
+                  "pathName": "RT-Climb"
                 }
               },
               {
@@ -62,54 +69,9 @@
           }
         },
         {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "LT-NeutralLeft-TWO"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Copy of LT-NeutralLeft-back-preclimb"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
-          }
-        },
-        {
           "type": "named",
           "data": {
-            "name": "launch"
+            "name": "climb"
           }
         }
       ]
