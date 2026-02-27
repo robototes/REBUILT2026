@@ -11,7 +11,7 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class Controllers {
-  public final CommandXboxController driverControllerTest;
+  public final CommandXboxController driverController;
   public final CommandXboxController indexingTestController;
   public final CommandXboxController launcherTestController;
   public final CommandXboxController turretTestController;
@@ -29,9 +29,9 @@ public class Controllers {
 
   public Controllers() {
     if (DRIVER_CONTROLLER_ENABLED) {
-      driverControllerTest = new CommandXboxController(Controls.DRIVER_CONTROLLER_PORT);
+      driverController = new CommandXboxController(Controls.DRIVER_CONTROLLER_PORT);
     } else {
-      driverControllerTest = null;
+      driverController = null;
     }
     if (INDEXING_TEST_CONTROLLER_ENABLED) {
       indexingTestController = new CommandXboxController(Controls.INDEXING_TEST_CONTROLLER_PORT);

@@ -89,7 +89,7 @@ public class Controls {
   public Command setRumble(RumbleType type, double value) {
     return Commands.runOnce(
         () -> {
-          c.driverControllerTest.setRumble(type, value);
+          c.driverController.setRumble(type, value);
         });
   }
 
@@ -130,7 +130,7 @@ public class Controls {
   private double getDriveX() {
     // Joystick +Y is back
     // Robot +X is forward
-    double input = MathUtil.applyDeadband(-c.driverControllerTest.getLeftY(), 0.1);
+    double input = MathUtil.applyDeadband(-c.driverController.getLeftY(), 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
@@ -138,7 +138,7 @@ public class Controls {
   private double getDriveY() {
     // Joystick +X is right
     // Robot +Y is left
-    double input = MathUtil.applyDeadband(-c.driverControllerTest.getLeftX(), 0.1);
+    double input = MathUtil.applyDeadband(-c.driverController.getLeftX(), 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
@@ -146,7 +146,7 @@ public class Controls {
   private double getDriveRotate() {
     // Joystick +X is right
     // Robot +angle is CCW (left)
-    double input = MathUtil.applyDeadband(-c.driverControllerTest.getRightX(), 0.1);
+    double input = MathUtil.applyDeadband(-c.driverController.getRightX(), 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
@@ -179,12 +179,12 @@ public class Controls {
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on back button press
-    c.driverControllerTest
+    c.driverController
         .back()
         .onTrue(
             s.drivebaseSubsystem
                 .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
-                .alongWith(rumble(c.driverControllerTest, 0.5, Seconds.of(0.3)))
+                .alongWith(rumble(c.driverController, 0.5, Seconds.of(0.3)))
                 .withName("Reset gyro"));
 
     // logging the telemetry
@@ -198,6 +198,7 @@ public class Controls {
     }
     if (!VISION_TEST_CONTROLLER_ENABLED) {
       DataLogManager.log("Controllers.java: vision test controller is disabled");
+      return;
     } else {
       c.visionTestController.rightBumper().whileTrue(FuelAutoAlign.autoAlign(this, s));
     }
@@ -209,21 +210,20 @@ public class Controls {
       DataLogManager.log("Flywheels and/or Hood are disabled");
       return;
     }
+    c.driverController
+        .rightTrigger()
+        .whileTrue(
+            Commands.parallel(
+                    s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(s.indexerSubsystem.runIndexer()))
+                .withName("Aim turret then feeder and spindexer started"));
+    c.driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
+
     if (!LAUNCHER_TUNING_CONTROLLER_ENABLED) {
-      DataLogManager.log("Controllers.java: launcher test controller doesn't exist");
+      DataLogManager.log("Controllers.java: launcher test controller is disabled");
       return;
     } else {
-      c.driverControllerTest
-          .rightTrigger()
-          .whileTrue(
-              Commands.parallel(
-                      s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                      Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                          .andThen(s.indexerSubsystem.runIndexer()))
-                  .withName("Aim turret then feeder and spindexer started"));
-      c.driverControllerTest
-          .y()
-          .onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
 
       if (s.flywheels.TUNER_CONTROLLED) {
         c.launcherTestController
@@ -252,12 +252,12 @@ public class Controls {
 
     s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
 
-    c.driverControllerTest.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
-    c.driverControllerTest.povUp().onTrue(s.intakeSubsystem.deployPivot());
-    c.driverControllerTest.povDown().onTrue(s.intakeSubsystem.retractPivot());
+    c.driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    c.driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
+    c.driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
     if (!INTAKE_TEST_CONTROLLER_ENABLED) {
-      DataLogManager.log("Controllers.java: intake test controller doesn't exist");
+      DataLogManager.log("Controllers.java: intake test controller is disabled");
       return;
     } else {
       c.intakeController.a().whileTrue(s.intakeRollers.runRollers());
@@ -278,7 +278,7 @@ public class Controls {
 
   public void vibrateDriveController(double vibration) {
     if (!DriverStation.isAutonomous()) {
-      c.driverControllerTest.getHID().setRumble(RumbleType.kBothRumble, vibration);
+      c.driverController.getHID().setRumble(RumbleType.kBothRumble, vibration);
     }
   }
 
@@ -356,10 +356,10 @@ public class Controls {
               s.drivebaseSubsystem.runOnce(
                   () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
     }
-    c.driverControllerTest
+    c.driverController
         .rightTrigger()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
-                () -> c.driverControllerTest.getLeftX(), () -> c.driverControllerTest.getLeftY()));
+                () -> c.driverController.getLeftX(), () -> c.driverController.getLeftY()));
   }
 }
