@@ -186,7 +186,7 @@ public class AutoLogic {
     if (enabled) {
       NamedCommands.registerCommand("launch", launcherCommand());
       NamedCommands.registerCommand("aim", aimCommand());
-      NamedCommands.registerCommand("intake", intakeCommand());
+      NamedCommands.registerCommand("intake", rollerCommand());
       NamedCommands.registerCommand("deploy", deployCommand());
       NamedCommands.registerCommand("climb", climbCommand());
       NamedCommands.registerCommand("rollers", rollerCommand());
@@ -207,12 +207,11 @@ public class AutoLogic {
   public static Command aimCommand() {
 
     return s.turretSubsystem.rotateToHub();
-    // return empty();
   }
 
   public static Command rollerCommand() { // Mainly AlphaBot Thing
-    return empty();
-    // return s.intakeRollers.runSingleRoller();
+
+    return s.intakeRollers.runSingleRoller();
   }
 
   public static Command launcherCommand() {
