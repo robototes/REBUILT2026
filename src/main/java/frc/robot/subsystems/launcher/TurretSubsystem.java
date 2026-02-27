@@ -80,7 +80,7 @@ public class TurretSubsystem extends SubsystemBase {
   public void turretConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -118,8 +118,8 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setTurretRawPosition(double pos) {
-    turretMotor.setControl(request.withPosition(pos));
-    targetPos = pos;
+    turretMotor.setControl(request.withPosition(-pos));
+    targetPos = -pos;
   }
 
   public Command zeroTurret() {
