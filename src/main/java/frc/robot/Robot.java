@@ -144,6 +144,8 @@ public class Robot extends TimedRobot {
       // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
     }
+    CommandScheduler.getInstance()
+        .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
   }
 
   @Override

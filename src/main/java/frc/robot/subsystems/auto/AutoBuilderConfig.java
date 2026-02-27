@@ -6,7 +6,6 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DataLogManager;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.io.IOException;
@@ -26,9 +25,9 @@ public class AutoBuilderConfig {
           }, // Method to reset odometry (will be called if your auto has a starting
           // pose)
           () -> {
-            DataLogManager.log(" Chassis Speeds");
             return drivebase.getState().Speeds;
-          }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+          },
+          // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
           (speeds, feedforwards) ->
               drivebase.setControl(
                   new SwerveRequest.ApplyRobotSpeeds()

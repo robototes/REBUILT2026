@@ -882,6 +882,7 @@ public class LimelightHelpers {
       System.out.printf("  Distance to Camera: %.2f meters%n", fiducial.distToCamera);
       System.out.printf("  Distance to Robot: %.2f meters%n", fiducial.distToRobot);
       System.out.printf("  Ambiguity: %.2f%n", fiducial.ambiguity);
+      System.out.println();
     }
   }
 
