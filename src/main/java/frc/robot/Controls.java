@@ -45,6 +45,7 @@ public class Controls {
   private static final int VISION_TEST_CONTROLLER_PORT = 5;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
+
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
@@ -110,33 +111,17 @@ public class Controls {
     }
     // TODO: wait for sensor to reach threshold, and trigger rumble
 
-    // start feeder motor
-    indexingTestController.a().onTrue(s.feederSubsystem.startMotor());
+    // run feeder motor
+    indexingTestController.a().whileTrue(s.feederSubsystem.startMotor());
 
-    // stop feeder motor
-    indexingTestController.b().onTrue(s.feederSubsystem.stopMotor());
-
-    // start spindexer motor
-    indexingTestController.x().onTrue(s.spindexerSubsystem.startMotor());
-
-    // stop spindexer motor
-    indexingTestController.y().onTrue(s.spindexerSubsystem.stopMotor());
+    // run spindexer motor
+    indexingTestController.x().whileTrue(s.spindexerSubsystem.startMotor());
 
     // run both while left trigger is held
     indexingTestController
         .leftTrigger()
         .whileTrue(
-            Commands.startEnd(
-                () -> {
-                  s.feederSubsystem.startMotor();
-                  s.spindexerSubsystem.startMotor();
-                },
-                () -> {
-                  s.feederSubsystem.stopMotor();
-                  s.spindexerSubsystem.stopMotor();
-                },
-                s.feederSubsystem,
-                s.spindexerSubsystem));
+            Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
