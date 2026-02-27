@@ -26,8 +26,9 @@ public class IntakeSubsystem {
 
   public Command smartIntake() {
     return Commands.either(
-        runRollersCommand(),
-        Commands.sequence(deployPivot(), runRollersCommand()),
-        () -> intakePivot.isDeployed(5)).withName("Smart intake");
+            runRollersCommand(),
+            Commands.sequence(deployPivot(), runRollersCommand()),
+            () -> intakePivot.isDeployed(5))
+        .withName("Smart intake");
   }
 }

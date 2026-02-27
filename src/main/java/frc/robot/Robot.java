@@ -215,7 +215,7 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     if (FUEL_SIM_ENABLED) {
-          robotSim.updateFuelSim();
+      robotSim.updateFuelSim();
     } // FUEL_SIM_ENABLED is in Subsystems.java
   }
 }
