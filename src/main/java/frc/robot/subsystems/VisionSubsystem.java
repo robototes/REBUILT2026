@@ -167,7 +167,7 @@ public class VisionSubsystem extends SubsystemBase {
         // DataLogManager.log(("pose bad");
       }
 
-      if (!pose_bad) {
+      if (!pose_bad && Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond) < 2.0) {
         // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
         // VecBuilder.fill(0.1, 0.1, 99999));
         drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds);
