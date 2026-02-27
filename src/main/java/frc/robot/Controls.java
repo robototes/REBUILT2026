@@ -50,28 +50,6 @@ public class Controls {
   public static final int INTAKE_TEST_CONTROLLER_PORT = 4;
   public static final int VISION_TEST_CONTROLLER_PORT = 5;
 
-  // Check Controllers.java for this stuff
-
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-
-  // private final CommandXboxController driverController =
-  //     new CommandXboxController(DRIVER_CONTROLLER_PORT);
-
-  // private final CommandXboxController indexingTestController =
-  //     new CommandXboxController(INDEXING_TEST_CONTROLLER_PORT);
-
-  // private final CommandXboxController launcherTuningController =
-  //     new CommandXboxController(LAUNCHER_TUNING_CONTROLLER_PORT);
-
-  // private final CommandXboxController intakeTestController =
-  //     new CommandXboxController(INTAKE_TEST_CONTROLLER_PORT);
-
-  // private final CommandXboxController turretTestController =
-  //     new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
-
-  // private final CommandXboxController visionTestController =
-  //     new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
-
   public static final double MaxSpeed =
       (RobotType.type == RobotTypesEnum.ALPHA)
           ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
@@ -114,10 +92,6 @@ public class Controls {
           c.driverControllerTest.setRumble(type, value);
         });
   }
-
-  // private Trigger connected(CommandXboxController controller) {
-  //   return new Trigger(() -> controller.isConnected());
-  // }
 
   private void configureIndexingBindings() {
     if (s.feederSubsystem == null || s.spindexerSubsystem == null) {
