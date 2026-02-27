@@ -108,7 +108,7 @@ public class Controls {
     configureVisionBindings();
     configureTurretBindings();
 
-    // DriverStation.silenceJoystickConnectionWarning(true); // this doesn't work during competitions
+    DriverStation.silenceJoystickConnectionWarning(true); // this doesn't work during competitions
 
   }
 
