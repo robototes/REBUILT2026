@@ -35,6 +35,7 @@ public class Hood extends SubsystemBase {
   private DoublePublisher positionPub;
   private DoubleTopic goalTopic; // hood pose in rotations
   private DoublePublisher goalPub;
+
   @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);

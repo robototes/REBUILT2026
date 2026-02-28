@@ -5,21 +5,35 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "deadline",
           "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LT-NeutralLeft"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LT-NeutralLeft-Intake"
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-NeutralLeft"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-NeutralLeft-Intake"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
@@ -29,15 +43,28 @@
           }
         },
         {
-          "type": "named",
+          "type": "deadline",
           "data": {
-            "name": "launch"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-Climb"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "LT-Climb"
+            "name": "launch"
           }
         },
         {

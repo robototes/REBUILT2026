@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Angle;
@@ -355,6 +356,16 @@ public class FuelSim {
         NetworkTableInstance.getDefault()
             .getStructArrayTopic(tableKey + "/Fuels", Translation3d.struct)
             .publish();
+    scorePublisher =
+        NetworkTableInstance.getDefault()
+            .getTable("Fuel Simulation")
+            .getDoubleTopic("Score")
+            .publish();
+    fuelHeld =
+        NetworkTableInstance.getDefault()
+            .getTable("Fuel Simulation")
+            .getDoubleTopic("Hopper Fuel")
+            .publish();
   }
 
   /** Creates a new instance of FuelSim with log path "/Fuel Simulation" */
@@ -427,9 +438,15 @@ public class FuelSim {
 
   protected StructArrayPublisher<Translation3d> fuelPublisher;
 
+  protected DoublePublisher scorePublisher;
+
+  protected DoublePublisher fuelHeld;
+
   /** Adds array of `Translation3d`'s to NetworkTables at tableKey + "/Fuels" */
   public void logFuels() {
     fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
+    scorePublisher.accept(Hub.score);
+    fuelHeld.accept(Hub.fuelsHeld);
   }
 
   /** Start the simulation. `updateSim` must still be called every loop */
@@ -572,6 +589,10 @@ public class FuelSim {
 
     xVel += fieldSpeeds.vxMetersPerSecond;
     yVel += fieldSpeeds.vyMetersPerSecond;
+    if (Hub.fuelsHeld > 0) {
+      Hub.fuelsHeld--;
+      spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    }
 
     spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
   }
@@ -635,6 +656,9 @@ public class FuelSim {
       for (int i = 0; i < fuels.size(); i++) {
         if (intake.shouldIntake(fuels.get(i), robot)) {
           fuels.remove(i);
+          if (Hub.fuelsHeld < Hub.CAPACITY) {
+            Hub.fuelsHeld++;
+          }
           i--;
         }
       }
@@ -845,7 +869,9 @@ public class FuelSim {
     protected final Translation3d exit;
     protected final int exitVelXMult;
 
-    protected int score = 0;
+    protected static int score = 0;
+    protected static int CAPACITY = 60; // Presumed max holding limit for hopper
+    protected static int fuelsHeld = 8; // Defaults to 8 for preload
 
     protected Hub(Translation2d center, Translation3d exit, int exitVelXMult) {
       this.center = center;
@@ -875,6 +901,7 @@ public class FuelSim {
     /** Reset this hub's score to 0 */
     public void resetScore() {
       score = 0;
+      fuelsHeld = 8;
     }
 
     /**

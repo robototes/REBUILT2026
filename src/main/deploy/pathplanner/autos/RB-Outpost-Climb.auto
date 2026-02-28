@@ -7,13 +7,38 @@
         {
           "type": "named",
           "data": {
-            "name": "launch"
+            "name": "deploy"
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "RB-Outpost"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 2.5
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Outpost-Shoot"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
           }
         },
         {

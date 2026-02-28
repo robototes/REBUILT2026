@@ -1,5 +1,9 @@
 package frc.robot.subsystems.auto;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radians;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -13,7 +17,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.util.robotType.RobotType;
+import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -27,13 +34,12 @@ public class AutoLogic {
   /* ---------------- Start positions ---------------- */
 
   public enum StartPosition {
-    LEFT_TRENCH(
-        "Left Trench", new Pose2d(4.014, 7.382, new Rotation2d(Units.degreesToRadians(90)))),
+    LEFT_TRENCH("Left Trench", new Pose2d(3.7, 7.465, new Rotation2d(Units.degreesToRadians(90)))),
     LEFT_BUMP("Left Bump", new Pose2d(3.664, 5.411, new Rotation2d(Units.degreesToRadians(90)))),
-    CENTER("Center", new Pose2d(3.595, 4.008, new Rotation2d(Units.degreesToRadians(180)))),
+    CENTER("Center", new Pose2d(3.62, 4.008, new Rotation2d(Units.degreesToRadians(90)))),
     RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(-90)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(3.641, 0.576, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Right Trench", new Pose2d(3.691, 0.55, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
@@ -52,20 +58,15 @@ public class AutoLogic {
   private static final List<AutoPath> rebuiltPaths =
       List.of(
           new AutoPath("C-Climb", "C-Climb"),
-          new AutoPath("C-Outpost-Climb", "C-Outpost-Climb"),
           new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
           new AutoPath("Default", "Default"),
-          new AutoPath("LB-NeutralLeft-right", "LB-NeutralLeft"),
-          new AutoPath("LB-NeutralLeft-Climb", "LB-NeutralLeft-Climb"),
           new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
-          new AutoPath("LT-NeutralLeft-right", "LT-NeutralLeft"),
           new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
+          new AutoPath("LT-NeutralLeft-Sweep", "LT-NeutralLeft-Sweep"),
           new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
-          new AutoPath("RB-NeutralRight-Climb", "RB-NeutralRight-Climb"),
-          new AutoPath("RB-NeutralRight-NeutralLeft", "RB-NeutralRight-NeutralLeft"),
           new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-NeutralRight-NeutralLeft", "RT-NeutralRight-NeutralLeft"),
+          new AutoPath("RT-NeutralRight-Sweep", "RT-NeutralRight-Sweep"),
           new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
@@ -94,6 +95,14 @@ public class AutoLogic {
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
+
+  public static List<AutoPath> getAutos() {
+    if (rebuiltPaths != null) {
+      return rebuiltPaths;
+    }
+    System.out.println("fail");
+    return List.of();
+  }
 
   /* ---------------- Init ---------------- */
   public static void init(Subsystems subsystems) {
@@ -175,21 +184,90 @@ public class AutoLogic {
     return AutoBuilder.followPath(path);
   }
 
-  public static void registerCommands() {
-    NamedCommands.registerCommand("launch", launcherCommand());
-    NamedCommands.registerCommand("intake", intakeCommand());
-    NamedCommands.registerCommand("climb", climbCommand());
+  public static void registerCommands(boolean enabled) {
+
+    if (enabled) {
+
+      if (Robot.isSimulation()) {
+        NamedCommands.registerCommand("launch", launcherSimCommand());
+      } else {
+        NamedCommands.registerCommand("launch", launcherCommand());
+      }
+
+      if (RobotType.isAlpha()) {
+        NamedCommands.registerCommand("intake", rollerCommand());
+      } else {
+        NamedCommands.registerCommand("intake", intakeCommand());
+      }
+
+      NamedCommands.registerCommand("aim", aimCommand());
+      NamedCommands.registerCommand("deploy", deployCommand());
+      NamedCommands.registerCommand("climb", climbCommand());
+      NamedCommands.registerCommand("rollers", rollerCommand());
+
+    } else {
+
+      NamedCommands.registerCommand("launch", empty());
+      NamedCommands.registerCommand("aim", empty());
+      NamedCommands.registerCommand("intake", empty());
+      NamedCommands.registerCommand("deploy", empty());
+      NamedCommands.registerCommand("climb", empty());
+      NamedCommands.registerCommand("rollers", empty());
+    }
+  }
+
+  public static final Command empty() {
+    return Commands.none();
+  }
+
+  public static Command aimCommand() {
+
+    return s.turretSubsystem.rotateToHub();
+    // return empty();
+  }
+
+  public static Command rollerCommand() { // Mainly AlphaBot Thing
+    return s.intakeRollers.runSingleRoller();
   }
 
   public static Command launcherCommand() {
-    return Commands.none();
+
+    return Commands.parallel(
+            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(
+                    Commands.parallel(
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+        .withTimeout(4.5);
+  }
+
+  public static Command launcherSimCommand() {
+
+    return Commands.sequence(
+        AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), // SIM PURPOSES ONLY
+        Commands.run(
+                () ->
+                    FuelSim.getInstance()
+                        .launchFuel(
+                            MetersPerSecond.of(6),
+                            Radians.of(s.hood.getHoodPosition()),
+                            Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                            Meters.of(1.45)))
+            .withTimeout(3));
   }
 
   public static Command intakeCommand() {
-    return Commands.none();
+
+    return s.intakeSubsystem.smartIntake();
+  }
+
+  public static Command deployCommand() {
+
+    return s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {
     return Commands.none();
+    // return s.climbSubsystem.autoAlignRoutine(ClimbState.Climbing);
   }
 }

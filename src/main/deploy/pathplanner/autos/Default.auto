@@ -7,13 +7,32 @@
         {
           "type": "named",
           "data": {
-            "name": "launch"
+            "name": "deploy"
           }
         },
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "Drive"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Drive"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "aim"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
           }
         }
       ]

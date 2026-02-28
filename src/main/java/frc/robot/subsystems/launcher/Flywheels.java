@@ -152,6 +152,7 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
+
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
     if (TUNER_CONTROLLED) {

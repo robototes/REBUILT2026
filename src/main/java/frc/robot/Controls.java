@@ -247,8 +247,14 @@ public class Controls {
     }
 
     s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    // CHANGE AFTER ALPHA IS DONE!
+    if (RobotType.isAlpha()) {
+      driverController.leftTrigger().whileTrue(s.intakeRollers.runSingleRoller());
+    }
+    if (RobotType.isComp()) {
+      driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    }
 
-    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
@@ -335,7 +341,7 @@ public class Controls {
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
     driverController
-        .rightTrigger()
+        .rightStick() // Unsure if this is supposed to be rightstick but I think so?
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> driverController.getLeftX(), () -> driverController.getLeftY()));

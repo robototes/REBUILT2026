@@ -22,6 +22,7 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 
@@ -49,9 +50,12 @@ public class Robot extends TimedRobot {
    * initialization code.
    */
   protected Robot() {
+
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
+    // Loads the field layout before auto  to prevent any delay
+    AllianceUtils.getHubTranslation2d();
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
@@ -83,7 +87,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(CommandScheduler.getInstance());
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      AutoLogic.registerCommands();
+      AutoLogic.registerCommands(true);
       AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
       AutoLogic.initSmartDashBoard();
@@ -140,23 +144,23 @@ public class Robot extends TimedRobot {
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // ViewFinder Pipeline Switch to reduce Limelight heat
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, VIEWFINDER_PIPELINE);
     }
+    CommandScheduler.getInstance()
+        .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
   }
 
   @Override
   public void disabledExit() {
+
     if (subsystems.visionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_OFF);
+      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
     }
     if (subsystems.detectionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
+      // ViewFinder Pipeline Switch to reduce Limelight heat
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
   }
@@ -167,6 +171,10 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -186,6 +194,10 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    if (subsystems.visionSubsystem != null) {
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    }
   }
 
   /** This function is called periodically during operator control. */
