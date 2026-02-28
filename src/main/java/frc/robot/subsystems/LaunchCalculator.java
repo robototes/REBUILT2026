@@ -11,12 +11,14 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 
 public class LaunchCalculator {
-  private static class Holder{
+  private static class Holder {
     private static final LaunchCalculator INSTANCE = new LaunchCalculator();
   }
+
   public static LaunchCalculator getInstance() {
     return Holder.INSTANCE;
   }
+
   public static Pose2d estimatedPose;
   public static double estimatedDist;
 
