@@ -16,8 +16,11 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
@@ -182,47 +185,69 @@ public class AutoLogic {
     return AutoBuilder.followPath(path);
   }
 
-  public static void registerCommands(boolean enabled) {
-    if (enabled) {
-      NamedCommands.registerCommand("launch", launcherCommand());
-      NamedCommands.registerCommand("aim", aimCommand());
-      NamedCommands.registerCommand("intake", rollerCommand());
-      NamedCommands.registerCommand("deploy", deployCommand());
-      NamedCommands.registerCommand("climb", climbCommand());
-      NamedCommands.registerCommand("rollers", rollerCommand());
-    } else {
-      NamedCommands.registerCommand("launch", empty());
-      NamedCommands.registerCommand("aim", empty());
-      NamedCommands.registerCommand("intake", empty());
-      NamedCommands.registerCommand("deploy", empty());
-      NamedCommands.registerCommand("climb", empty());
-      NamedCommands.registerCommand("rollers", empty());
-    }
-  }
+ public static void registerCommands(boolean enabled) {
 
+  if (enabled) {
+
+    if (Robot.isSimulation()) {
+      NamedCommands.registerCommand("launch", launcherSimCommand());
+    } else {
+      NamedCommands.registerCommand("launch", launcherCommand());
+    }
+
+    if (RobotType.isAlpha()) {
+      NamedCommands.registerCommand("intake", rollerCommand());
+    } else if (RobotType.isComp()) {
+      NamedCommands.registerCommand("intake", intakeCommand());
+    } else {
+      NamedCommands.registerCommand("intake", empty());
+    }
+
+    NamedCommands.registerCommand("aim", aimCommand());
+    NamedCommands.registerCommand("deploy", deployCommand());
+    NamedCommands.registerCommand("climb", climbCommand());
+    NamedCommands.registerCommand("rollers", rollerCommand());
+
+  } else {
+
+    NamedCommands.registerCommand("launch", empty());
+    NamedCommands.registerCommand("aim", empty());
+    NamedCommands.registerCommand("intake", empty());
+    NamedCommands.registerCommand("deploy", empty());
+    NamedCommands.registerCommand("climb", empty());
+    NamedCommands.registerCommand("rollers", empty());
+  }
+}
   public static final Command empty() {
     return Commands.none();
   }
 
   public static Command aimCommand() {
+
+
     return s.turretSubsystem.rotateToHub();
+    // return empty();
   }
 
   public static Command rollerCommand() { // Mainly AlphaBot Thing
-    return s.intakeRollers.runSingleRoller();
+    //return empty();
+     return s.intakeRollers.runSingleRoller();
   }
 
   public static Command launcherCommand() {
-    return Commands.parallel(
-            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(
-                    Commands.parallel(
-                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
-        .withTimeout(4.5);
+
+      return Commands.parallel(
+        s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+        Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+            .andThen(
+                Commands.parallel(
+                  s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+    .withTimeout(4.5);
+    // empty();
   }
 
   public static Command launcherSimCommand() {
+
     return Commands.sequence(
         AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), // SIM PURPOSES ONLY
         Commands.run(
@@ -237,15 +262,19 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return s.intakeSubsystem.smartIntake();
+   // return empty();
+
+     return s.intakeSubsystem.smartIntake();
   }
 
   public static Command deployCommand() {
-    return s.intakeSubsystem.deployPivot();
+    //return empty();
+
+     return s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {
     return Commands.none();
-    // return s.climbSubsystem.autoAlignRoutine(ClimbState.Climbing);
+   // return s.climbSubsystem.autoAlignRoutine(ClimbState.Climbing);
   }
 }
