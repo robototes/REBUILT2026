@@ -136,6 +136,8 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null) {
+          // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_ON);
       // seed internal limelight imu for mt2
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
