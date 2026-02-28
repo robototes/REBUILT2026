@@ -356,6 +356,16 @@ public class FuelSim {
         NetworkTableInstance.getDefault()
             .getStructArrayTopic(tableKey + "/Fuels", Translation3d.struct)
             .publish();
+    scorePublisher =
+        NetworkTableInstance.getDefault()
+            .getTable("Fuel Simulation")
+            .getDoubleTopic("Score")
+            .publish();
+    fuelHeld =
+        NetworkTableInstance.getDefault()
+            .getTable("Fuel Simulation")
+            .getDoubleTopic("Hopper Fuel")
+            .publish();
   }
 
   /** Creates a new instance of FuelSim with log path "/Fuel Simulation" */
@@ -427,16 +437,10 @@ public class FuelSim {
   }
 
   protected StructArrayPublisher<Translation3d> fuelPublisher;
-  protected DoublePublisher scorePublisher =
-      NetworkTableInstance.getDefault()
-          .getTable("Fuel Simulation")
-          .getDoubleTopic("Score")
-          .publish();
-  protected DoublePublisher fuelHeld =
-      NetworkTableInstance.getDefault()
-          .getTable("Fuel Simulation")
-          .getDoubleTopic("Hopper Fuel")
-          .publish();
+
+  protected DoublePublisher scorePublisher;
+
+  protected DoublePublisher fuelHeld;
 
   /** Adds array of `Translation3d`'s to NetworkTables at tableKey + "/Fuels" */
   public void logFuels() {
@@ -589,6 +593,8 @@ public class FuelSim {
       Hub.fuelsHeld--;
       spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
     }
+
+    spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
   }
 
   protected void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {

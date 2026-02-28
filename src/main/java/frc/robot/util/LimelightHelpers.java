@@ -857,13 +857,13 @@ public class LimelightHelpers {
       return;
     }
 
-     DataLogManager.log(String.format("Pose Estimate Information:%n"));
-     DataLogManager.log(String.format("Timestamp (Seconds): %.3f%n", pose.timestampSeconds));
-   DataLogManager.log(String.format("Latency: %.3f ms%n", pose.latency));
-     DataLogManager.log(String.format("Tag Count: %d%n", pose.tagCount));
-      DataLogManager.log(String.format("Tag Span: %.2f meters%n", pose.tagSpan));
-  DataLogManager.log(String.format("Average Tag Distance: %.2f meters", pose.avgTagDist));
-     DataLogManager.log(String.format("Average Tag Area: %.2f%% of image%n", pose.avgTagArea));
+    DataLogManager.log(String.format("Pose Estimate Information:%n"));
+    DataLogManager.log(String.format("Timestamp (Seconds): %.3f%n", pose.timestampSeconds));
+    DataLogManager.log(String.format("Latency: %.3f ms%n", pose.latency));
+    DataLogManager.log(String.format("Tag Count: %d%n", pose.tagCount));
+    DataLogManager.log(String.format("Tag Span: %.2f meters%n", pose.tagSpan));
+    DataLogManager.log(String.format("Average Tag Distance: %.2f meters", pose.avgTagDist));
+    DataLogManager.log(String.format("Average Tag Area: %.2f%% of image%n", pose.avgTagArea));
     DataLogManager.log(String.format("Is MegaTag2: %b%n", pose.isMegaTag2));
 
     if (pose.rawFiducials == null || pose.rawFiducials.length == 0) {
@@ -874,14 +874,15 @@ public class LimelightHelpers {
     DataLogManager.log("Raw Fiducials Details:");
     for (int i = 0; i < pose.rawFiducials.length; i++) {
       RawFiducial fiducial = pose.rawFiducials[i];
-       DataLogManager.log(String.format(" Fiducial #%d:%n", i + 1));
-     DataLogManager.log(String.format("  ID: %d%n", fiducial.id));
-        DataLogManager.log(String.format("  TXNC: %.2f%n", fiducial.txnc));
+      DataLogManager.log(String.format(" Fiducial #%d:%n", i + 1));
+      DataLogManager.log(String.format("  ID: %d%n", fiducial.id));
+      DataLogManager.log(String.format("  TXNC: %.2f%n", fiducial.txnc));
       DataLogManager.log(String.format("  TYNC: %.2f%n", fiducial.tync));
       DataLogManager.log(String.format("  TA: %.2f%n", fiducial.ta));
-        DataLogManager.log(String.format("  Distance to Camera: %.2f meters%n", fiducial.distToCamera));
-     DataLogManager.log(String.format("  Distance to Robot: %.2f meters%n", fiducial.distToRobot));
-       DataLogManager.log(String.format("  Ambiguity: %.2f%n", fiducial.ambiguity));
+      DataLogManager.log(
+          String.format("  Distance to Camera: %.2f meters%n", fiducial.distToCamera));
+      DataLogManager.log(String.format("  Distance to Robot: %.2f meters%n", fiducial.distToRobot));
+      DataLogManager.log(String.format("  Ambiguity: %.2f%n", fiducial.ambiguity));
       System.out.println();
     }
   }
@@ -1739,7 +1740,7 @@ public class LimelightHelpers {
     double millis = (end - start) * .000001;
     results.latency_jsonParse = millis;
     if (profileJSON) {
-       DataLogManager.log(String.format("lljson: %.2f\r\n", millis));
+      DataLogManager.log(String.format("lljson: %.2f\r\n", millis));
     }
 
     return results;
