@@ -167,6 +167,10 @@ public class Robot extends TimedRobot {
       // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
       // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
+
+    if (subsystems.turretSubsystem != null) {
+      subsystems.turretSubsystem.brakeTurret();
+    }
   }
 
   @Override

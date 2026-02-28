@@ -242,4 +242,12 @@ public class TurretSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Turret/Velocity", turretMotor.getVelocity().getValueAsDouble());
     SmartDashboard.putNumber("Turret/Current", turretMotor.getStatorCurrent().getValueAsDouble());
   }
+
+  public void brakeTurret() {
+    turretMotor.setNeutralMode(NeutralModeValue.Brake);
+  }
+
+  public void coastTurret() {
+    turretMotor.setNeutralMode(NeutralModeValue.Coast);
+  }
 }
