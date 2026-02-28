@@ -216,14 +216,28 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
+                    // s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                    s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(s.indexerSubsystem.runIndexer()))
+                .withName("Aim turret then feeder and spindexer started"));
+
+    driverController
+        .rightBumper()
+        .whileTrue(
+            Commands.parallel(
                     s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
-    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
+    driverController
+        .start()
+        .onTrue(
+            Commands.parallel(s.launcherSubsystem.zeroSubsystemCommand(), s.intakePivot.zeroPivot())
+                .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
-      launcherTuningController
+      driverController
           .leftBumper()
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
     }
@@ -233,11 +247,6 @@ public class Controls {
           .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
     }
     launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
-    launcherTuningController.a().onTrue(s.hood.hoodPositionCommand(0.5));
-    launcherTuningController.b().onTrue(s.hood.hoodPositionCommand(1));
-
-    launcherTuningController.x().onTrue(s.flywheels.setVelocityCommand(50));
-    launcherTuningController.y().onTrue(s.flywheels.setVelocityCommand(60));
   }
 
   private void configureIntakeBindings() {
@@ -245,8 +254,6 @@ public class Controls {
       DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
       return;
     }
-
-    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
 
     driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
@@ -335,9 +342,9 @@ public class Controls {
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
     driverController
-        .rightTrigger()
+        .rightStick()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
-                () -> driverController.getLeftX(), () -> driverController.getLeftY()));
+                () -> driverController.getRightX(), () -> driverController.getRightY()));
   }
 }

@@ -30,7 +30,7 @@ public class Flywheels extends SubsystemBase {
 
   private FlywheelsSim flywheelSim;
 
-  private final MotionMagicVelocityVoltage request = new MotionMagicVelocityVoltage(0);
+  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
@@ -65,35 +65,37 @@ public class Flywheels extends SubsystemBase {
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
     TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
+    TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 20;
+    config.CurrentLimits.SupplyCurrentLimit = 40;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.StatorCurrentLimit = 40;
+    config.CurrentLimits.StatorCurrentLimit = 80;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create coast mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.1;
+    config.Slot0.kP = 0.8;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 11.825 / 99;
+    config.Slot0.kV = 8.73 / 74;
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
-    config.MotionMagic.MotionMagicAcceleration = 40; // RPS^2
+    config.MotionMagic.MotionMagicAcceleration = 74 / 0.246; // RPS^2
 
     flConfigurator.apply(config);
+    frConfigurator.apply(config);
   }
 
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
-              request.Velocity = rps;
-              FlywheelOne.setControl(request);
+              motionMagicRequest.Velocity = rps;
+              FlywheelOne.setControl(motionMagicRequest);
               FlywheelTwo.setControl(follow);
             },
             () -> {
@@ -106,8 +108,8 @@ public class Flywheels extends SubsystemBase {
   public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
     return runEnd(
             () -> {
-              request.Velocity = rps.getAsDouble();
-              FlywheelOne.setControl(request);
+              motionMagicRequest.Velocity = rps.getAsDouble();
+              FlywheelOne.setControl(motionMagicRequest);
               FlywheelTwo.setControl(follow);
             },
             () -> {
@@ -118,8 +120,8 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void setVelocityRPS(double rps) {
-    request.Velocity = rps;
-    FlywheelOne.setControl(request);
+    motionMagicRequest.Velocity = rps;
+    FlywheelOne.setControl(motionMagicRequest);
     FlywheelTwo.setControl(follow);
   }
 

@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.generated.CompTunerConstants;
+import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
 
 public class IntakeRollers extends SubsystemBase {
@@ -24,7 +24,7 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private static final double INTAKE_SPEED = 1.0; // full speed
+  private static final double INTAKE_SPEED = 0.5; // full speed
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -38,7 +38,7 @@ public class IntakeRollers extends SubsystemBase {
     leftRoller =
         new TalonFX(
             Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus));
+            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     networktables();

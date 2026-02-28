@@ -1,5 +1,6 @@
 package frc.robot.subsystems.index;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -15,6 +16,8 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.robotType.RobotType;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
@@ -27,7 +30,10 @@ public class FeederSubsystem extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   public FeederSubsystem() {
-    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID);
+    feedMotor =
+        new TalonFX(
+            Hardware.FEEDER_MOTOR_ID,
+            (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     feederConfig();
 
     if (RobotBase.isSimulation()) {
@@ -49,15 +55,18 @@ public class FeederSubsystem extends SubsystemBase {
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
-    // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted =
+        (RobotType.isAlpha())
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
+
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     cfg.apply(talonFXConfiguration);

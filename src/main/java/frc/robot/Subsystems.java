@@ -41,14 +41,14 @@ public class Subsystems {
     public static final boolean DRIVEBASE_ENABLED = true;
     public static final boolean INTAKE_ROLLERS_ENABLED = true;
     public static final boolean INTAKE_ARM_ENABLED = true;
-    public static final boolean VISION_ENABLED = true;
+    public static final boolean VISION_ENABLED = false;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
-    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean TURRET_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean LAUNCHER_ENABLED =
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
@@ -86,18 +86,10 @@ public class Subsystems {
     } else {
       intakeRollers = null;
     }
-
     if (INTAKE_ARM_ENABLED) {
       intakePivot = new IntakePivot();
     } else {
       intakePivot = null;
-    }
-
-    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystem);
-    } else {
-      visionSubsystem = null;
     }
 
     if (FLYWHEELS_ENABLED) {
@@ -152,6 +144,13 @@ public class Subsystems {
       indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
     } else {
       indexerSubsystem = null;
+    }
+
+    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
+      SmartDashboard.putData(visionSubsystem);
+    } else {
+      visionSubsystem = null;
     }
   }
 }
