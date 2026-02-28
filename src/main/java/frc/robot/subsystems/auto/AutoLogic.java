@@ -229,7 +229,6 @@ public class AutoLogic {
   }
 
   public static Command rollerCommand() { // Mainly AlphaBot Thing
-    // return empty();
     return s.intakeRollers.runSingleRoller();
   }
 
@@ -242,7 +241,6 @@ public class AutoLogic {
                     Commands.parallel(
                         s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
         .withTimeout(4.5);
-    // empty();
   }
 
   public static Command launcherSimCommand() {
@@ -261,13 +259,11 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    // return empty();
 
     return s.intakeSubsystem.smartIntake();
   }
 
   public static Command deployCommand() {
-    // return empty();
 
     return s.intakeSubsystem.deployPivot();
   }
