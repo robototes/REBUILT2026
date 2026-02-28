@@ -11,7 +11,12 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 
 public class LaunchCalculator {
-  private static LaunchCalculator instance;
+  private static class Holder{
+    private static final LaunchCalculator INSTANCE = new LaunchCalculator();
+  }
+  public static LaunchCalculator getInstance() {
+    return Holder.INSTANCE;
+  }
   public static Pose2d estimatedPose;
   public static double estimatedDist;
 
@@ -32,11 +37,6 @@ public class LaunchCalculator {
 
   // private double turret_target_velocity;+
   // private double hood_target_velocity;
-
-  public static LaunchCalculator getInstance() {
-    if (instance == null) instance = new LaunchCalculator();
-    return instance;
-  }
 
   public record LaunchingParameters(
       boolean isValid,
