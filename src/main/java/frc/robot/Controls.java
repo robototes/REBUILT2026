@@ -341,7 +341,7 @@ public class Controls {
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
     driverController
-        .rightStick()
+        .rightTrigger() // Unsure if this is supposed to be rightstick but I think so?
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> driverController.getLeftX(), () -> driverController.getLeftY()));
