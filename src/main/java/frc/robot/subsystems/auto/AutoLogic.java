@@ -196,10 +196,8 @@ public class AutoLogic {
 
       if (RobotType.isAlpha()) {
         NamedCommands.registerCommand("intake", rollerCommand());
-      } else if (RobotType.isComp()) {
-        NamedCommands.registerCommand("intake", intakeCommand());
       } else {
-        NamedCommands.registerCommand("intake", empty());
+        NamedCommands.registerCommand("intake", intakeCommand());
       }
 
       NamedCommands.registerCommand("aim", aimCommand());
