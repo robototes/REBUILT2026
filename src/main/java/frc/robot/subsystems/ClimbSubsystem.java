@@ -172,7 +172,7 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                // case L2: ... (Future proofing)
+                  // case L2: ... (Future proofing)
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
