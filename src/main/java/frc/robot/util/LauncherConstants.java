@@ -6,25 +6,11 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
-import frc.robot.subsystems.LaunchCalculator;
-import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
-  private static final double TURRET_X_OFFSET = 0.2159;
-  private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
-      new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
-  private static final StructArrayPublisher<Pose2d> turretToTarget =
-      NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretToTarget", Pose2d.struct)
-          .publish();
-  private static final StructArrayPublisher<Pose2d> turretRotationalVelocity =
-      NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
-          .publish();
+      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -48,10 +34,18 @@ public class LauncherConstants {
     }
   }
 
-  private static final LauncherDistanceDataPoint[] distanceData = {
-    new LauncherDistanceDataPoint(2.0, 0.1, 2300, 0.7),
-    new LauncherDistanceDataPoint(3.0, 0.1, 3300, 0.75),
-    new LauncherDistanceDataPoint(4.0, 0.1, 4300, 0.8),
+  private static final LauncherDistanceDataPoint[] alphaDistanceData = {
+    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
+    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
+    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
+    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
+  };
+
+  private static final LauncherDistanceDataPoint[] compDistanceData = {
+    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
+    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
+    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
+    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
   };
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
@@ -59,6 +53,8 @@ public class LauncherConstants {
   private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
+    LauncherDistanceDataPoint[] distanceData =
+        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
