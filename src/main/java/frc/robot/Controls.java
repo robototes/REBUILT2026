@@ -44,6 +44,7 @@ public class Controls {
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
   private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
   private static final int VISION_TEST_CONTROLLER_PORT = 5;
+  private static final int LED_TEST_CONTROLLER_PORT = 0;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
 
@@ -64,6 +65,9 @@ public class Controls {
 
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+
+  private final CommandXboxController ledTestController =
+      new CommandXboxController(LED_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed =
       (RobotType.type == RobotTypesEnum.ALPHA)
@@ -356,6 +360,7 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR));
+s.ledSubsystem.setDefaultCommand(s.ledSubsystem.defaultLEDCommand);
+    ledTestController.leftBumper().whileTrue(s.ledSubsystem.alternateColors(LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5));
   }
 }
