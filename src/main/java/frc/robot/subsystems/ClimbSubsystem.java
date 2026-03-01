@@ -49,8 +49,10 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // hardware objects
   CommandSwerveDrivetrain driveTrain;
-  private final TalonFX climb_motor;
+  private final TalonFX climbMotor;
   private static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AllianceUtils.FIELD_LAYOUT;
+  private static final int BLUE_CLIMB_TAG_ID = 31;
+  private static final int RED_CLIMB_TAG_ID = 15;
 
   // Magic Numbers
   private static final double ROBOT_LENGTH = Units.inchesToMeters(35); // Inches
@@ -64,12 +66,12 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double MAX_OMEGA = 0.1;
 
   // Motor Tunables
-  private static final double k_P = 0;
+  private static final double k_P = 3;
   private static final double k_I = 0;
-  private static final double k_D = 0;
-  private static final double k_S = 0;
-  private static final double k_V = 0;
-  private static final double k_A = 0;
+  private static final double k_D = 3;
+  private static final double k_S = 3;
+  private static final double k_V = 2;
+  private static final double k_A = 2;
   private static final double STATOR_CURRENT_LIMIT = 40;
   private static final double SUPPLY_CURRENT_LIMIT = 30;
   private static final double FORWARD_SOFT_LIMIT = 20; // Rotations
@@ -96,7 +98,7 @@ public class ClimbSubsystem extends SubsystemBase {
   public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
     // Setup
     this.driveTrain = driveTrain;
-    climb_motor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
+    climbMotor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
     configureMotors();
     // Initialize
     request = new MotionMagicVoltage(0);
@@ -112,20 +114,20 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Helper functions
   public void setMotorPosition(double position) {
-    climb_motor.setControl(request.withPosition(position));
+    climbMotor.setControl(request.withPosition(position));
   }
 
   public void manualMove(DoubleSupplier joystick) {
     double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1) * MAX_VOLTS;
-    climb_motor.setControl(volts.withOutput(cmd));
+    climbMotor.setControl(volts.withOutput(cmd));
   }
 
   public void zeroMotor() {
-    climb_motor.setPosition(0);
+    climbMotor.setPosition(0);
   }
 
   public void stop() {
-    climb_motor.setControl(volts.withOutput(0));
+    climbMotor.setControl(volts.withOutput(0));
   }
 
   // ---------- COMMANDS ----------- //
@@ -135,11 +137,10 @@ public class ClimbSubsystem extends SubsystemBase {
 
     return Commands.run(
             () -> {
-              climb_motor.setControl(volts.withOutput(-MAX_VOLTS)); // Move down
-
+              climbMotor.setControl(volts.withOutput(-MAX_VOLTS)); // Move down
               // Until it has stalled
-              if (Math.abs(climb_motor.getStatorCurrent().getValueAsDouble()) >= STALL_CURRENT
-                  && Math.abs(climb_motor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
+              if (Math.abs(climbMotor.getStatorCurrent().getValueAsDouble()) >= STALL_CURRENT
+                  && Math.abs(climbMotor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
                 hits.incrementAndGet();
               } else {
                 hits.set(0);
@@ -149,9 +150,9 @@ public class ClimbSubsystem extends SubsystemBase {
         .until(() -> hits.get() >= MAX_HITS)
         .finallyDo(
             (interrupted) -> {
-              climb_motor.stopMotor();
+              climbMotor.stopMotor();
               if (!interrupted) {
-                climb_motor.setPosition(0);
+                climbMotor.setPosition(0);
                 isZeroed = true;
               }
             })
@@ -161,16 +162,20 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // -- CLIMB -- //
   public Command Climb(ClimbLevel state) {
+    double targetPosition;
+    switch (state) {
+      case L1:
+        targetPosition = L1;
+        break;
+      default:
+        targetPosition = climbMotor.getPosition().getValueAsDouble();
+    }
     return Commands.run(
             () -> {
-              switch (state) {
-                case L1:
-                  setMotorPosition(L1);
-                  break;
-              }
+              setMotorPosition(targetPosition);
             },
             this)
-        .until(() -> Math.abs(climb_motor.getPosition().getValueAsDouble() - L1) < 0.1)
+        .until(() -> Math.abs(climbMotor.getPosition().getValueAsDouble() - L1) < 0.1)
         // This ensures the check happens every time the command tries to start
         .onlyIf(() -> climbState == ClimbState.Idle)
         .beforeStarting(() -> climbState = ClimbState.Climbing)
@@ -202,8 +207,16 @@ public class ClimbSubsystem extends SubsystemBase {
     public void initialize() {
       targetPose =
           (AllianceUtils.isBlue())
-              ? APRIL_TAG_FIELD_LAYOUT.getTagPose(31).get().toPose2d().transformBy(climbOffSet)
-              : APRIL_TAG_FIELD_LAYOUT.getTagPose(15).get().toPose2d().transformBy(climbOffSet);
+              ? APRIL_TAG_FIELD_LAYOUT
+                  .getTagPose(BLUE_CLIMB_TAG_ID)
+                  .get()
+                  .toPose2d()
+                  .transformBy(climbOffSet)
+              : APRIL_TAG_FIELD_LAYOUT
+                  .getTagPose(RED_CLIMB_TAG_ID)
+                  .get()
+                  .toPose2d()
+                  .transformBy(climbOffSet);
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
       // Robot bumper must face parallel to the climb thing
@@ -277,15 +290,15 @@ public class ClimbSubsystem extends SubsystemBase {
     configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     configs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-    climb_motor.getConfigurator().apply(configs);
+    climbMotor.getConfigurator().apply(configs);
   }
 
   // Periodic
   @Override
   public void periodic() {
     // set motor position in network tables
-    ntVoltage.set(climb_motor.getMotorVoltage().getValueAsDouble());
-    ntMotorPos.set(climb_motor.getPosition().getValueAsDouble());
-    ntMotorCurrent.set(climb_motor.getStatorCurrent().getValueAsDouble());
+    ntVoltage.set(climbMotor.getMotorVoltage().getValueAsDouble());
+    ntMotorPos.set(climbMotor.getPosition().getValueAsDouble());
+    ntMotorCurrent.set(climbMotor.getStatorCurrent().getValueAsDouble());
   }
 }
