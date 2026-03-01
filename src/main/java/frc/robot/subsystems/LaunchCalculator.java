@@ -30,7 +30,7 @@ public class LaunchCalculator {
 
   // Turret transform
   private final Transform2d turretTransfom =
-      new Transform2d(LauncherConstants.LAUNCHER_OFFSET, Rotation2d.kZero);
+      new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
   // private Rotation2d lastTurretAngle;
   // private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
