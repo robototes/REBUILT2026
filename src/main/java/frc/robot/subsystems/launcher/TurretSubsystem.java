@@ -26,7 +26,6 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 import frc.robot.util.robotType.RobotType;
-
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -48,7 +47,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kI = 0;
   private static final double kD = 0;
   private static final double kG = 0;
-  private static final double kS = 0.41;
+  private static final double kS = 0.82;
   private static final double kV = 0.9;
   private static final double kA = 0.12;
 
@@ -75,7 +74,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+    turretMotor =
+        new TalonFX(
+            Hardware.TURRET_MOTOR_ID,
+            RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     turretConfig();
     turretRotation.set(new Pose2d[2]);
   }
@@ -202,6 +204,9 @@ public class TurretSubsystem extends SubsystemBase {
 
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
+
+    // Convert to ccw
+    degrees = -degrees;
 
     // Normalize to [-180, 180]
     // degrees = MathUtil.inputModulus(degrees, -180, 180);
