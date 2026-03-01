@@ -22,8 +22,7 @@ public class LaunchCalculator {
   //     LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
 
   // Turret transform
-  private final Transform2d turretTransfom =
-      new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+  private static final Transform2d turretTransfom;
   // private Rotation2d lastTurretAngle;
   // private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
@@ -54,6 +53,8 @@ public class LaunchCalculator {
 
   // Static initializer
   static {
+    turretTransfom =
+        new Transform2d(LauncherConstants.launcherFromRobot(estimatedPose), Rotation2d.kZero);
     minDistance = 1.34;
     maxDistance = 5.60;
     phaseDelay = 0.03;

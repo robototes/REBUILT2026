@@ -1,6 +1,5 @@
 package frc.robot.util;
 
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -14,8 +13,8 @@ import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class LauncherConstants {
-  private static final double TURRET_Y_OFFSET = 0.2159;
-  private static final double TURRET_X_OFFSET = 0.1397;
+  private static final double TURRET_X_OFFSET = 0.2159;
+  private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
       new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
   private static final StructArrayPublisher<Pose2d> turretToTarget =
@@ -69,23 +68,23 @@ public class LauncherConstants {
     turretRotationalVelocity.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
   }
 
-  public static void update(Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target) {
-    Pose2d turret = new Pose2d(launcherFromRobot(robot), Rotation2d.kZero);
-    Pose2d updatedTarget =
-        new Pose2d(
-            iterativeMovingShotFromFunnelClearance(robot, fieldSpeeds, target, 3),
-            Rotation2d.kZero);
-    Pose2d turretVelocity =
-        turret.plus(new Transform2d(angularVelocity(robot, fieldSpeeds), Rotation2d.kZero));
+  // public static void update(Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target) {
+  //   Pose2d turret = new Pose2d(launcherFromRobot(robot), Rotation2d.kZero);
+  //   Pose2d updatedTarget =
+  //       new Pose2d(
+  //           iterativeMovingShotFromFunnelClearance(robot, fieldSpeeds, target, 3),
+  //           Rotation2d.kZero);
+  //   Pose2d turretVelocity =
+  //       turret.plus(new Transform2d(angularVelocity(robot, fieldSpeeds), Rotation2d.kZero));
 
-    var array = new Pose2d[] {turret, updatedTarget};
-    turretToTarget.set(array, 0);
+  //   var array = new Pose2d[] {turret, updatedTarget};
+  //   turretToTarget.set(array, 0);
 
-    var array2 = new Pose2d[] {turret, turretVelocity};
-    turretRotationalVelocity.set(array2, 0);
-  }
+  //   var array2 = new Pose2d[] {turret, turretVelocity};
+  //   turretRotationalVelocity.set(array2, 0);
+  // }
 
-  public static void update2(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
+  public static void update(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
     Pose2d turret = LaunchCalculator.estimatedPose;
     double turret_to_hub_dist = LaunchCalculator.estimatedDist;
     LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
