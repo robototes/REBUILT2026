@@ -63,7 +63,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Magic Numbers
   private static final double ROBOT_LENGTH = Units.inchesToMeters(35); // Inches
-  private static final double CLIMB_X_OFFSET = Units.inchesToMeters(43.51); // Inches
+  private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51); // Inches
   private static final double GEAR_RATIO = 15;
   private static final double POWER_COEFFICIENT = .05;
 
@@ -89,9 +89,9 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Poses and trasnforms
   private static final Transform2d frontBumperOffset =
-      new Transform2d(new Translation2d(0, ROBOT_LENGTH / 2), Rotation2d.kZero);
+      new Transform2d(new Translation2d(ROBOT_LENGTH / 2, 0), Rotation2d.kZero);
   private static final Transform2d climbOffSet =
-      new Transform2d(new Translation2d(0, CLIMB_X_OFFSET), Rotation2d.kZero);
+      new Transform2d(new Translation2d(0, CLIMB_Y_OFFSET), Rotation2d.kZero);
 
   // Climb level positions
   private static final double L1 = 5; // rotations
@@ -164,6 +164,16 @@ public class ClimbSubsystem extends SubsystemBase {
     final java.util.concurrent.atomic.AtomicInteger hits =
         new java.util.concurrent.atomic.AtomicInteger(0);
 
+    if (!runAutoZero) {
+      return Commands.runOnce(
+              () -> {
+                zeroMotor();
+                isZeroed = true;
+              },
+              this)
+          .withName("Manual Zero")
+          .onlyIf(() -> !isZeroed);
+    }
     return Commands.run(
             () -> {
               climbMotor.setControl(volts.withOutput(-MAX_VOLTS)); // Move down
@@ -249,7 +259,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
     public AutoAlignCommand() {
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
-      if (driveTrain != null && ClimbSubsystem.this != null) {
+      if (driveTrain != null) {
         addRequirements(ClimbSubsystem.this, driveTrain);
       } else {
         m_isInvalid = true;
@@ -260,8 +270,12 @@ public class ClimbSubsystem extends SubsystemBase {
     @Override
     public void initialize() {
       int tagId = AllianceUtils.isBlue() ? BLUE_CLIMB_TAG_ID : RED_CLIMB_TAG_ID;
-      targetPose =
-          APRIL_TAG_FIELD_LAYOUT.getTagPose(tagId).get().toPose2d().transformBy(climbOffSet);
+      var tagPose = APRIL_TAG_FIELD_LAYOUT.getTagPose(tagId);
+      if (tagPose.isEmpty()) {
+        m_isInvalid = true;
+        return;
+      }
+      targetPose = tagPose.get().toPose2d().transformBy(climbOffSet);
 
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
@@ -271,6 +285,10 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public void execute() {
+      if (m_isInvalid) {
+        return;
+      }
+      climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
       climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
       // X and Y pid calculations
       double powerX = pidX.calculate(climbBumper.getX());
@@ -290,9 +308,6 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public boolean isFinished() {
-      if (m_isInvalid) {
-        return m_isInvalid;
-      }
       if (climbBumper == null) {
         return false;
       }
