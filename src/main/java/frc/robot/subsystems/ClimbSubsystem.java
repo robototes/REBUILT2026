@@ -207,7 +207,7 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                  // case L2: ... (Future proofing)
+                // case L2: ... (Future proofing)
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
@@ -220,13 +220,7 @@ public class ClimbSubsystem extends SubsystemBase {
                             < 0.1;
                       })
                   .andThen(
-                      () -> {
-                        new AutoAlignCommand();
-                      })
-                  .andThen(
-                      () -> {
-                        setMotorPosition(0);
-                      })
+                      new AutoAlignCommand(), Commands.runOnce(() -> setMotorPosition(0), this))
                   .beforeStarting(() -> climbState = ClimbState.Climbing)
                   .finallyDo((interrupted) -> climbState = ClimbState.Idle);
             },
@@ -250,9 +244,16 @@ public class ClimbSubsystem extends SubsystemBase {
     private final SwerveRequest stop =
         driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
 
+    // is null
+    private boolean m_isInvalid = false;
+
     public AutoAlignCommand() {
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
-      addRequirements(ClimbSubsystem.this, driveTrain);
+      if (driveTrain != null && ClimbSubsystem.this != null) {
+        addRequirements(ClimbSubsystem.this, driveTrain);
+      } else {
+        m_isInvalid = true;
+      }
       setName("Climb Align");
     }
 
@@ -289,6 +290,9 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public boolean isFinished() {
+      if (m_isInvalid) {
+        return m_isInvalid;
+      }
       if (climbBumper == null) {
         return false;
       }
