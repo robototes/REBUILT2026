@@ -190,8 +190,6 @@ public class ClimbSubsystem extends SubsystemBase {
                   && Math.abs(climbMotor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
                 hits.incrementAndGet();
               } else {
-                // This pulls the robot up. At this stage we're assuming the climb subsystem is
-                // already hooked on
                 hits.set(0);
               }
             },
@@ -227,7 +225,7 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                  // case L2: ... (Future proofing)
+                // case L2: ... (Future proofing)
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
@@ -240,6 +238,8 @@ public class ClimbSubsystem extends SubsystemBase {
                             < CLIMB_POSITION_TOLERANCE;
                       })
                   .andThen(
+                      // This pulls the aligns the robot, then pulls up. At this stage we're
+                      // assuming the climb subsystem is already hooked on
                       new AutoAlignCommand(), Commands.runOnce(() -> setMotorPosition(0), this))
                   .beforeStarting(() -> climbState = ClimbState.Climbing)
                   .finallyDo((interrupted) -> climbState = ClimbState.Idle);
@@ -289,7 +289,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
-      // Robot bumper must face parallel to the climb thing
+      // Robot bumper with the climb on it must face to the climb tower
       pidRotate.setSetpoint(targetPose.getRotation().getRadians() + Math.PI);
     }
 
