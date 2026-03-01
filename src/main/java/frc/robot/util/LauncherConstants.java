@@ -9,10 +9,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
-  private static final double TURRET_X_OFFSET = 0.2159;
-  private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
-      new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
+      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
