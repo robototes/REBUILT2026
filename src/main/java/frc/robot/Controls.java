@@ -246,10 +246,9 @@ public class Controls {
       return;
     }
 
-    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
     // CHANGE AFTER ALPHA IS DONE!
     if (RobotType.isAlpha()) {
-      driverController.leftTrigger().whileTrue(s.intakeRollers.runSingleRoller());
+      driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
     }
     if (RobotType.isComp()) {
       driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
