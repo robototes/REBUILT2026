@@ -10,8 +10,7 @@ import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
   private static final Translation2d LAUNCHER_OFFSET =
-  RobotType.isAlpha()?
-      new Translation2d(0.2159, -0.1397): new Translation2d(0.2159, 0.1397);
+      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
