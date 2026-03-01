@@ -26,14 +26,14 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   /** CAN device ID for the {@link CANdle} LED controller. */
-  private static final int CAN_ID = Hardware.CANdle_ID;
+  private static final int CAN_ID = Hardware.CANDLE_ID;
 
   /**
    * Last valid LED index in the strip (inclusive).
    *
    * <p>For example, if the strip contains 8 LEDs, valid indices range from {@code 0} to {@code 7}.
    */
-  private static final int END_INDEX = 7;
+  private static final int END_INDEX = 200;
 
   /**
    * Default brightness applied to {@link #candle} operations.
@@ -53,7 +53,7 @@ public class LEDSubsystem extends SubsystemBase {
    *
    * <p>Used to set a single static color across the entire strip.
    */
-  private final SolidColor solid = new SolidColor(0, END_INDEX);
+  private final SolidColor solidController = new SolidColor(0, END_INDEX);
 
   /**
    * Preconfigured rainbow animation assigned to {@link #SLOT}.
@@ -70,17 +70,20 @@ public class LEDSubsystem extends SubsystemBase {
   /** Default robot LED color (red). */
   public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0);
 
-  /** LED color used while intaking (blue). */
-  public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
+  /** LED color used while intaking (green flashing). */
+  public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 255, 0);
 
-  /** LED color used while outtaking (green). */
-  public static final RGBWColor SHOOT_COLOR = new RGBWColor(0, 255, 0);
-
-  /** LED color used during climb mode (cyan). */
+  /** LED color used during climb mode (blue). */
   public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 255, 255);
 
   /** LED color representing LEDs turned off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
+
+  /** LED color used while launching (green). */
+  public static final RGBWColor LAUNCH_COLOR = new RGBWColor(0, 255, 0);
+  
+  /** LED color used while preparing to launch (yellow flashing). */
+  public static final RGBWColor LAUNCH_PREP_COLOR = new RGBWColor(255, 255, 0);
 
   /** NetworkTable topics and publishers for LED state information. */
 
@@ -151,13 +154,13 @@ public class LEDSubsystem extends SubsystemBase {
    * @param brightness the brightness scalar (0.0–1.0) applied to the color
    */
   public void setHardwareColor(RGBWColor color, double brightness) {
-    RGBWColor scaled = scaleBrightness(color, brightness);
+    RGBWColor scaled = color.scaleBrightness(brightness);
 
-    // currentColorPub.set(scaled.toHexString());
+    currentColorPub.set(scaled.toHexString());
     System.out.println("Color: " + scaled.toHexString());
 
-    solid.withColor(scaled);
-    candle.setControl(solid);
+    solidController.withColor(scaled);
+    candle.setControl(solidController);
   }
 
   /**
@@ -181,7 +184,7 @@ public class LEDSubsystem extends SubsystemBase {
    */
   public Command setLEDsCommand(RGBWColor color, double brightness) {
     return Commands.runOnce(() -> setHardwareColor(color, brightness), this)
-        .withName("SetLEDsWithBrightness");
+        .withName("Set LEDs With Brightness");
   }
 
   /**
@@ -195,24 +198,12 @@ public class LEDSubsystem extends SubsystemBase {
    */
   public Command setLEDsCommand(RGBWColor color) {
     return Commands.runOnce(() -> setHardwareColor(color), this)
-        .withName("SetLEDsDefaultBrightness");
+        .withName("Set LEDs Default Brightness");
   }
 
-  /**
-   * Scales the brightness of a given RGBW color.
-   *
-   * <p>Each channel (red, green, blue, white) is multiplied by the {@code brightness} factor
-   *
-   * @param color the original {@link RGBWColor} to scale
-   * @param brightness a value ideally between {@code 0.0} and {@code 1.0}
-   * @return a new {@link RGBWColor} with each channel scaled by the clamped brightness factor
-   */
-  private RGBWColor scaleBrightness(RGBWColor color, double brightness) {
-    return new RGBWColor(
-        (int) (color.Red * brightness),
-        (int) (color.Green * brightness),
-        (int) (color.Blue * brightness),
-        (int) (color.White * brightness));
+  public Command defaultLEDCommand() {
+    return Commands.run(() -> setHardwareColor(DEFAULT_COLOR), this)
+        .withName("Set Default LEDs");
   }
 
   public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
@@ -257,7 +248,7 @@ public class LEDSubsystem extends SubsystemBase {
                   setHardwareColor(colorB);
                 },
                 this),
-            // Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
+            Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
             Commands.waitSeconds(interval))
         .repeatedly();
   }
