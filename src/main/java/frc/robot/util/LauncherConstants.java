@@ -55,7 +55,8 @@ public class LauncherConstants {
   private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
-        LauncherDistanceDataPoint[] distanceData = RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+    LauncherDistanceDataPoint[] distanceData =
+        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
