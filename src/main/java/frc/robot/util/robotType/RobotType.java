@@ -20,7 +20,11 @@ public class RobotType {
         DataLogManager.log("Running on Comp-bot");
       } else if (serialNumber.equals(alpha)) {
         type = RobotTypesEnum.ALPHA;
+<<<<<<< HEAD
          DataLogManager.log("Running on Alpha-bot");
+=======
+        DataLogManager.log("Running on Alpha-bot");
+>>>>>>> main
       } else {
         type = RobotTypesEnum.OTHER;
         DataLogManager.log("Unknown robot detected serial number is " + serialNumber);
