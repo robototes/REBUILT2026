@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
   private static final double TURRET_X_OFFSET = 0.2159;
@@ -35,7 +36,14 @@ public class LauncherConstants {
     }
   }
 
-  private static final LauncherDistanceDataPoint[] distanceData = {
+  private static final LauncherDistanceDataPoint[] alphaDistanceData = {
+    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
+    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
+    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
+    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
+  };
+
+  private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
     new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
     new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
@@ -47,10 +55,18 @@ public class LauncherConstants {
   private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
-    for (var point : distanceData) {
-      flywheelMap.put(point.distance, point.flywheelPower);
-      hoodMap.put(point.distance, point.hoodAngle);
-      timeMap.put(point.distance, point.time);
+    if (RobotType.isAlpha()) {
+      for (var point : alphaDistanceData) {
+        flywheelMap.put(point.distance, point.flywheelPower);
+        hoodMap.put(point.distance, point.hoodAngle);
+        timeMap.put(point.distance, point.time);
+      }
+    } else {
+      for (var point : compDistanceData) {
+        flywheelMap.put(point.distance, point.flywheelPower);
+        hoodMap.put(point.distance, point.hoodAngle);
+        timeMap.put(point.distance, point.time);
+      }
     }
   }
 
