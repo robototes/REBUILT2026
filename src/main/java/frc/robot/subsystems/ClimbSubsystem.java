@@ -134,7 +134,8 @@ public class ClimbSubsystem extends SubsystemBase {
   /**
    * This method is meant to Manually move the climb subsystem up and down with a voltage output
    *
-   * @param joystick A double supplier that supplies the method with the joystick's Y axis value
+   * @param joystick A double supplier that supplies the method with the joystick's Y axis value. It
+   *     cannot exceed -1 and 1
    */
   public void manualMove(DoubleSupplier joystick) {
     double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1) * MAX_VOLTS;
@@ -182,6 +183,8 @@ public class ClimbSubsystem extends SubsystemBase {
                   && Math.abs(climbMotor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
                 hits.incrementAndGet();
               } else {
+                // This pulls the robot up. At this stage we're assuming the climb subsystem is
+                // already hooked on
                 hits.set(0);
               }
             },
@@ -307,6 +310,9 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public boolean isFinished() {
+      if (m_isInvalid) {
+        return true;
+      }
       if (climbBumper == null) {
         return false;
       }
@@ -317,7 +323,9 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public void end(boolean interrupted) {
-      driveTrain.setControl(stop);
+      if (driveTrain != null) {
+        driveTrain.setControl(stop);
+      }
     }
   }
 
