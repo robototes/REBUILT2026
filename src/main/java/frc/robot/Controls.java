@@ -360,7 +360,7 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-s.ledSubsystem.setDefaultCommand(s.ledSubsystem.defaultLEDCommand);
+s.ledSubsystem.setDefaultCommand(s.ledSubsystem.defaultLEDCommand());
     ledTestController.leftBumper().whileTrue(s.ledSubsystem.alternateColors(LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5));
   }
 }
