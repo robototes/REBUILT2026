@@ -54,7 +54,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private final VoltageOut volts;
   private final double MAX_VOLTS = 3;
 
-  // hardware objects
+  // hardware and physical objects
   private final CommandSwerveDrivetrain driveTrain;
   private final TalonFX climbMotor;
   private static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AllianceUtils.FIELD_LAYOUT;
@@ -65,7 +65,14 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double ROBOT_LENGTH = Units.inchesToMeters(35); // Inches
   private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51); // Inches
   private static final double GEAR_RATIO = 15;
+  private static final double CLIMB_POSITION_TOLERANCE = 0.1;
+
+  // PID Controller magic numbers
   private static final double POWER_COEFFICIENT = .05;
+  private static final double MAX_TRANSLATIONAL_POWER = 2.0;
+  private static final double MAX_ROTATIONAL_POWER = 4.0;
+  private static final double TRANSLATION_TOLERANCE_METERS = 0.01;
+  private static final double ROTATION_TOLERANCE_DEGREES = 1.0;
 
   // Auto Zero constants
   private static final double STALL_CURRENT = 30; // Amps
@@ -198,7 +205,7 @@ public class ClimbSubsystem extends SubsystemBase {
                 isZeroed = true;
               }
             })
-        .onlyIf(() -> runAutoZero && !isZeroed)
+        .onlyIf(() -> !isZeroed)
         .withTimeout(5);
   }
 
@@ -230,7 +237,7 @@ public class ClimbSubsystem extends SubsystemBase {
                       () -> {
                         return Math.abs(
                                 climbMotor.getPosition().getValueAsDouble() - targetPosition)
-                            < 0.1;
+                            < CLIMB_POSITION_TOLERANCE;
                       })
                   .andThen(
                       new AutoAlignCommand(), Commands.runOnce(() -> setMotorPosition(0), this))
@@ -296,11 +303,22 @@ public class ClimbSubsystem extends SubsystemBase {
       double powerX = pidX.calculate(climbBumper.getX());
       double powerY = pidY.calculate(climbBumper.getY());
       // Overcome static friction if PID outputs are small
-      powerX = MathUtil.clamp(powerX + POWER_COEFFICIENT * Math.signum(powerX), -2, 2);
-      powerY = MathUtil.clamp(powerY + POWER_COEFFICIENT * Math.signum(powerY), -2, 2);
+      powerX =
+          MathUtil.clamp(
+              powerX + POWER_COEFFICIENT * Math.signum(powerX),
+              -MAX_TRANSLATIONAL_POWER,
+              MAX_TRANSLATIONAL_POWER);
+      powerY =
+          MathUtil.clamp(
+              powerY + POWER_COEFFICIENT * Math.signum(powerY),
+              -MAX_TRANSLATIONAL_POWER,
+              MAX_TRANSLATIONAL_POWER);
       // Rotational pid calculation
       double powerRotate =
-          MathUtil.clamp(pidRotate.calculate(climbBumper.getRotation().getRadians()), -4, 4);
+          MathUtil.clamp(
+              pidRotate.calculate(climbBumper.getRotation().getRadians()),
+              -MAX_ROTATIONAL_POWER,
+              MAX_ROTATIONAL_POWER);
 
       // Apply request
       SwerveRequest request =
@@ -317,8 +335,8 @@ public class ClimbSubsystem extends SubsystemBase {
         return false;
       }
       Transform2d robotToClimb = climbBumper.minus(targetPose);
-      return robotToClimb.getTranslation().getNorm() < 0.01
-          && Math.abs(robotToClimb.getRotation().getDegrees()) < 1;
+      return robotToClimb.getTranslation().getNorm() < TRANSLATION_TOLERANCE_METERS
+          && Math.abs(robotToClimb.getRotation().getDegrees()) < ROTATION_TOLERANCE_DEGREES;
     }
 
     @Override
