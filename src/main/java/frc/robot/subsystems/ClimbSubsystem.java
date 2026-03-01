@@ -49,13 +49,14 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // hardware objects
   CommandSwerveDrivetrain driveTrain;
-  private static TalonFX climb_motor;
+  private final TalonFX climb_motor;
   private static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AllianceUtils.FIELD_LAYOUT;
 
   // Magic Numbers
   private static final double ROBOT_LENGTH = Units.inchesToMeters(35); // Inches
   private static final double CLIMB_X_OFFSET = Units.inchesToMeters(43.51); // Inches
   private static final double GEAR_RATIO = 15;
+  private static final double POWER_COEFFICIENT = .05;
 
   // Auto Zero constants
   private static final double STALL_CURRENT = 30; // Amps
@@ -63,28 +64,28 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double MAX_OMEGA = 0.1;
 
   // Motor Tunables
-  private static double k_P = 0;
-  private static double k_I = 0;
-  private static double k_D = 0;
-  private static double k_S = 0;
-  private static double k_V = 0;
-  private static double k_A = 0;
-  private static double STATOR_CURRENT_LIMIT = 40;
-  private static double SUPPLY_CURRENT_LIMIT = 30;
-  private static double FORWARD_SOFT_LIMIT = 20; // Rotations
-  private static double REVERSE_SOFT_LIMIT = 0; // Rotations
-  private static double MM_CRUISE_VELOCITY = 1;
-  private static double MM_ACCEL = 1;
-  private static double MM_JERK = 5;
+  private static final double k_P = 0;
+  private static final double k_I = 0;
+  private static final double k_D = 0;
+  private static final double k_S = 0;
+  private static final double k_V = 0;
+  private static final double k_A = 0;
+  private static final double STATOR_CURRENT_LIMIT = 40;
+  private static final double SUPPLY_CURRENT_LIMIT = 30;
+  private static final double FORWARD_SOFT_LIMIT = 20; // Rotations
+  private static final double REVERSE_SOFT_LIMIT = 0; // Rotations
+  private static final double MM_CRUISE_VELOCITY = 1;
+  private static final double MM_ACCEL = 1;
+  private static final double MM_JERK = 5;
 
   // Poses and trasnforms
   private static final Transform2d frontBumperOffset =
-      new Transform2d(new Translation2d(0, ROBOT_LENGTH / 2), Rotation2d.k180deg);
+      new Transform2d(new Translation2d(0, ROBOT_LENGTH / 2), Rotation2d.kZero);
   private static final Transform2d climbOffSet =
       new Transform2d(new Translation2d(0, CLIMB_X_OFFSET), Rotation2d.kZero);
 
   // Climb level positions
-  private static double L1 = 5; // rotations
+  private static final double L1 = 5; // rotations
 
   // Simulation
   private DoublePublisher ntMotorPos;
@@ -129,7 +130,8 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // ---------- COMMANDS ----------- //
   public Command AutoZeroRoutine(boolean runAutoZero) {
-    final int[] hits = {0};
+    final java.util.concurrent.atomic.AtomicInteger hits =
+        new java.util.concurrent.atomic.AtomicInteger(0);
 
     return Commands.run(
             () -> {
@@ -138,13 +140,13 @@ public class ClimbSubsystem extends SubsystemBase {
               // Until it has stalled
               if (Math.abs(climb_motor.getStatorCurrent().getValueAsDouble()) >= STALL_CURRENT
                   && Math.abs(climb_motor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
-                hits[0]++;
+                hits.incrementAndGet();
               } else {
-                hits[0] = 0;
+                hits.set(0);
               }
             },
             this)
-        .until(() -> hits[0] >= MAX_HITS)
+        .until(() -> hits.get() >= MAX_HITS)
         .finallyDo(
             (interrupted) -> {
               climb_motor.stopMotor();
@@ -192,6 +194,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
     public AutoAlignCommand() {
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
+      addRequirements(ClimbSubsystem.this, driveTrain);
       setName("Climb Align");
     }
 
@@ -214,8 +217,8 @@ public class ClimbSubsystem extends SubsystemBase {
       double powerX = MathUtil.clamp(pidX.calculate(climbBumper.getX()), -2, 2);
       double powerY = MathUtil.clamp(pidY.calculate(climbBumper.getY()), -2, 2);
       // Overcome static friction if PID outputs are small
-      powerX += .05 * Math.signum(powerX);
-      powerY += .05 * Math.signum(powerY);
+      powerX += POWER_COEFFICIENT * Math.signum(powerX);
+      powerY += POWER_COEFFICIENT * Math.signum(powerY);
       // Rotational pid calculation
       double powerRotate =
           MathUtil.clamp(pidRotate.calculate(climbBumper.getRotation().getRadians()), -4, 4);
