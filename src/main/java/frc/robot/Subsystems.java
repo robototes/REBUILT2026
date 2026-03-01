@@ -137,30 +137,29 @@ public class Subsystems {
       climbSubsystem = new ClimbSubsystem(drivebaseSubsystem);
     } else {
       climbSubsystem = null;
+    }
+    if (INTAKE_ENABLED) {
+      intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
+    } else {
+      intakeSubsystem = null;
+    }
 
-      if (INTAKE_ENABLED) {
-        intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
-      } else {
-        intakeSubsystem = null;
-      }
+    if (TURRET_ENABLED) {
+      turretSubsystem = new TurretSubsystem(drivebaseSubsystem);
+    } else {
+      turretSubsystem = null;
+    }
 
-      if (TURRET_ENABLED) {
-        turretSubsystem = new TurretSubsystem(drivebaseSubsystem);
-      } else {
-        turretSubsystem = null;
-      }
+    if (LAUNCHER_ENABLED) {
+      launcherSubsystem = new LauncherSubsystem(hood, flywheels, turretSubsystem);
+    } else {
+      launcherSubsystem = null;
+    }
 
-      if (LAUNCHER_ENABLED) {
-        launcherSubsystem = new LauncherSubsystem(hood, flywheels, turretSubsystem);
-      } else {
-        launcherSubsystem = null;
-      }
-
-      if (INDEXER_ENABLED) {
-        indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
-      } else {
-        indexerSubsystem = null;
-      }
+    if (INDEXER_ENABLED) {
+      indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
+    } else {
+      indexerSubsystem = null;
     }
   }
 }
