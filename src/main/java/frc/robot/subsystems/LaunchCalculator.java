@@ -133,7 +133,7 @@ public class LaunchCalculator {
         targetAngleFieldRelative.minus(lookaheadPose.getRotation()).rotateBy(Rotation2d.k180deg);
     // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
-    System.out.println(targetTurretAngle.getDegrees());
+    //System.out.println(targetTurretAngle.getDegrees());
 
     // // Set last turret angle to the currrent turret Angle and the last hood angle to current hood
     // // angle

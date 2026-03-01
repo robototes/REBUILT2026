@@ -2,6 +2,7 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -24,6 +25,8 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
+import frc.robot.util.robotType.RobotType;
+
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -59,11 +62,11 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double JERK = 2000;
 
   // Gear Ratio
-  private static final double GEAR_RATIO = 72;
+  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
   public static final double TURRET_MAX = 190; // degrees
-  public static final double TURRET_MIN = -45; // degrees
+  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -45; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
@@ -72,7 +75,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, CompTunerConstants.kCANBus);
+    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     turretConfig();
     turretRotation.set(new Pose2d[2]);
   }
@@ -80,7 +83,7 @@ public class TurretSubsystem extends SubsystemBase {
   public void turretConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
@@ -218,7 +221,6 @@ public class TurretSubsystem extends SubsystemBase {
           double targetRotations = calculateTurretAngle();
           turretMotor.setControl(request.withPosition(targetRotations));
           targetPos = targetRotations;
-          System.out.println(Units.rotationsToDegrees(targetRotations));
           Transform2d fieldRelativeOffset =
               new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
           Pose2d turretPose2 =

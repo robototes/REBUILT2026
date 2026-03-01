@@ -89,7 +89,7 @@ public class LauncherSubsystem extends SubsystemBase {
   public boolean isAtTarget() {
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
         && hood.atTargetPosition()
-        && turret.atTarget(50);
+        && turret.atTarget(10);
   }
 
   public Command zeroSubsystemCommand() {
