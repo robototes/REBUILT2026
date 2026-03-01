@@ -9,7 +9,6 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -187,9 +186,7 @@ public class ClimbSubsystem extends SubsystemBase {
     private final PIDController pidRotate = new PIDController(0, 0, 8);
     // Request
     private final SwerveRequest.FieldCentric driveRequest =
-        new SwerveRequest.FieldCentric()
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
-            .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+        new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
     private final SwerveRequest stop =
         driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
 
@@ -207,7 +204,7 @@ public class ClimbSubsystem extends SubsystemBase {
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
       // Robot bumper must face parallel to the climb thing
-      pidRotate.setSetpoint(targetPose.getRotation().getDegrees() + 180);
+      pidRotate.setSetpoint(targetPose.getRotation().getRadians() + Math.PI);
     }
 
     @Override
