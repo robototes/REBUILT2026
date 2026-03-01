@@ -208,7 +208,7 @@ public class ClimbSubsystem extends SubsystemBase {
    * @param state an enum value that represents the desired climb level
    * @return returns a Command that provides instructions on how to Climb
    */
-  public Command ClimbRoutine(ClimbLevel state) {
+  public Command climbRoutine(ClimbLevel state) {
     return Commands.defer(
             () -> {
               final double targetPosition;
@@ -217,7 +217,7 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                  // case L2: ... (Future proofing)
+                // case L2: ... (Future proofing)
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
