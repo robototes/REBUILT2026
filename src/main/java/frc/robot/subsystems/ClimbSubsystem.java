@@ -24,8 +24,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.subsystems.ClimbSubsystem.ClimbState;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 
 public class ClimbSubsystem extends SubsystemBase {
@@ -162,24 +164,29 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // -- CLIMB -- //
   public Command Climb(ClimbLevel state) {
-    double targetPosition;
-    switch (state) {
-      case L1:
-        targetPosition = L1;
-        break;
-      default:
-        targetPosition = climbMotor.getPosition().getValueAsDouble();
-    }
-    return Commands.run(
+    return Commands.defer(
             () -> {
-              setMotorPosition(targetPosition);
+              final double targetPosition;
+
+              switch (state) {
+                case L1:
+                  targetPosition = L1;
+                  break;
+                // case L2: ... (Future proofing)
+                default:
+                  throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
+              }
+
+              return Commands.run(() -> setMotorPosition(targetPosition), this)
+                  .until(
+                      () ->
+                          Math.abs(climbMotor.getPosition().getValueAsDouble() - targetPosition)
+                              < 0.1)
+                  .beforeStarting(() -> climbState = ClimbState.Climbing)
+                  .finallyDo((interrupted) -> climbState = ClimbState.Idle);
             },
-            this)
-        .until(() -> Math.abs(climbMotor.getPosition().getValueAsDouble() - targetPosition) < 0.1)
-        // This ensures the check happens every time the command tries to start
-        .onlyIf(() -> climbState == ClimbState.Idle)
-        .beforeStarting(() -> climbState = ClimbState.Climbing)
-        .finallyDo(() -> climbState = ClimbState.Idle);
+            Set.of(this)) // Requirements for the deferred command
+        .onlyIf(() -> climbState == ClimbState.Idle);
   }
 
   // -------- AUTO ALIGN -------- //
@@ -205,33 +212,27 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public void initialize() {
+      int tagId = AllianceUtils.isBlue() ? BLUE_CLIMB_TAG_ID : RED_CLIMB_TAG_ID;
       targetPose =
-          (AllianceUtils.isBlue())
-              ? APRIL_TAG_FIELD_LAYOUT
-                  .getTagPose(BLUE_CLIMB_TAG_ID)
-                  .get()
-                  .toPose2d()
-                  .transformBy(climbOffSet)
-              : APRIL_TAG_FIELD_LAYOUT
-                  .getTagPose(RED_CLIMB_TAG_ID)
-                  .get()
-                  .toPose2d()
-                  .transformBy(climbOffSet);
+          APRIL_TAG_FIELD_LAYOUT.getTagPose(tagId).get().toPose2d().transformBy(climbOffSet);
+
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
       // Robot bumper must face parallel to the climb thing
       pidRotate.setSetpoint(targetPose.getRotation().getRadians() + Math.PI);
+      // Repeated so that isFinished() can run before execute()
+      climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
     }
 
     @Override
     public void execute() {
       climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
       // X and Y pid calculations
-      double powerX = MathUtil.clamp(pidX.calculate(climbBumper.getX()), -2, 2);
-      double powerY = MathUtil.clamp(pidY.calculate(climbBumper.getY()), -2, 2);
+      double powerX = pidX.calculate(climbBumper.getX());
+      double powerY = pidY.calculate(climbBumper.getY());
       // Overcome static friction if PID outputs are small
-      powerX += POWER_COEFFICIENT * Math.signum(powerX);
-      powerY += POWER_COEFFICIENT * Math.signum(powerY);
+      powerX = MathUtil.clamp(powerX + POWER_COEFFICIENT * Math.signum(powerX), -2, 2);
+      powerY = MathUtil.clamp(powerY + POWER_COEFFICIENT * Math.signum(powerY), -2, 2);
       // Rotational pid calculation
       double powerRotate =
           MathUtil.clamp(pidRotate.calculate(climbBumper.getRotation().getRadians()), -4, 4);
