@@ -8,7 +8,7 @@ public class RobotType {
   private static final String comp = ""; // Comp bot serial number
   private static final String alpha = "032B4B88"; // Alpha bot serial number
 
-  public static final RobotTypesEnum type;
+  public static final RobotTypesEnum TYPE;
 
   static {
     if (RobotBase.isSimulation()) {
