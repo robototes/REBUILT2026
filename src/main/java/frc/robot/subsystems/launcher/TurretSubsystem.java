@@ -26,7 +26,6 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
 import frc.robot.util.robotType.RobotType;
-
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -75,7 +74,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+    turretMotor =
+        new TalonFX(
+            Hardware.TURRET_MOTOR_ID,
+            RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     turretConfig();
     turretRotation.set(new Pose2d[2]);
   }
