@@ -65,8 +65,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = 190; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -45; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 400; // degrees
+  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -200; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
@@ -204,7 +204,7 @@ public class TurretSubsystem extends SubsystemBase {
     double degrees = turretAngle.getDegrees();
 
     // Normalize to [-180, 180]
-    degrees = MathUtil.inputModulus(degrees, -180, 180);
+    // degrees = MathUtil.inputModulus(degrees, -180, 180);
 
     // Clamp to turret limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
