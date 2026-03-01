@@ -217,7 +217,7 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                  // case L2: ... (Future proofing)
+                // case L2: ... (Future proofing)
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
@@ -288,7 +288,6 @@ public class ClimbSubsystem extends SubsystemBase {
       if (m_isInvalid) {
         return;
       }
-      climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
       climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
       // X and Y pid calculations
       double powerX = pidX.calculate(climbBumper.getX());
