@@ -205,6 +205,9 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
 
+    // Convert to ccw
+    degrees = -degrees;
+
     // Normalize to [-180, 180]
     degrees = MathUtil.inputModulus(degrees, -180, 180);
 
