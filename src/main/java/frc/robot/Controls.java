@@ -208,9 +208,9 @@ public class Controls {
   }
 
   private void configureLauncherBindings() {
-    if (s.flywheels == null || s.hood == null) {
+    if (s.flywheels == null || s.hood == null s.ledSubsystem == null) {
       // Stop running this method
-      DataLogManager.log("Flywheels and/or Hood are disabled");
+      DataLogManager.log("Flywheels and/or Hood and/or LEDs are disabled");
       return;
     }
 
@@ -218,18 +218,16 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                    // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
-                    s.ledSubsystem
-                        .alternateColors(
-                            LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5)
-                        .until(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(
-                            s.indexerSubsystem
-                                .runIndexer()
-                                .alongWith(
-                                    s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR))))
-
+                s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
+                s.ledSubsystem
+                    .alternateColors(
+                        LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5)
+                    .until(() -> s.launcherSubsystem.isAtTarget())
+                    .andThen(
+                        s.indexerSubsystem
+                            .runIndexer()
+                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR)))));
 
     driverController
         .rightBumper()
@@ -259,8 +257,8 @@ public class Controls {
   }
 
   private void configureIntakeBindings() {
-    if (s.intakeRollers == null || s.intakePivot == null) {
-      DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
+    if (s.intakeRollers == null || s.intakePivot == null || s.ledSubsystem == null) {
+      DataLogManager.log("Controls.java: intakeRollers or intakeArm or LEDs is disabled, bindings skipped");
       return;
     }
 

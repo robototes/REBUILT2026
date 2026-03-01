@@ -197,12 +197,15 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a command that sets the LEDs once when scheduled
    */
   public Command setLEDsCommand(RGBWColor color) {
-    return Commands.runOnce(() -> setHardwareColor(color), this)
-        .withName("Set LEDs Default Brightness");
-  }
+    Command command;
 
-  public Command defaultLEDCommand() {
-    return Commands.run(() -> setHardwareColor(DEFAULT_COLOR), this).withName("Set Default LEDs");
+    if (DEFAULT_COLOR.equals(color)) {
+      command = Commands.run(() -> setHardwareColor(color), this);
+    } else {
+      command = Commands.runOnce(() -> setHardwareColor(color), this);
+    }
+
+    return command.withName("Set LEDs Default Brightness");
   }
 
   public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
