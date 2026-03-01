@@ -205,11 +205,57 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
 
-    // Convert to ccw
+    // Convert to clockwise positive
     degrees = -degrees;
 
     // Normalize to [-180, 180]
     // degrees = MathUtil.inputModulus(degrees, -180, 180);
+
+    // Clamp to turret limits
+    degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
+
+    // Convert to rotations
+    double rotations = Units.degreesToRotations(degrees);
+
+    return rotations;
+  }
+
+  public double calculateTurretAngleWithShortestPath() {
+    // Get current turret pose
+    Translation2d turretTranslation =
+        LauncherConstants.launcherFromRobot(driveTrain.getState().Pose);
+
+    // Add 180 degrees to account for 0 posistion
+    Rotation2d turretRotation = driveTrain.getState().Pose.getRotation().plus(Rotation2d.k180deg);
+
+    // Get hub position
+    Translation2d hubTranslation = AllianceUtils.getHubTranslation2d();
+
+    // Calculate vector from turret to hub
+    Translation2d turretToHub = hubTranslation.minus(turretTranslation);
+
+    // Calculate absolute field angle to hub
+    Rotation2d absoluteAngleToHub =
+        new Rotation2d(Math.atan2(turretToHub.getY(), turretToHub.getX()));
+
+    // Calculate turret angle relative to robot's forward direction
+    // Subtract turret's rotation to get robot-relative angle
+    Rotation2d turretAngle = absoluteAngleToHub.minus(turretRotation);
+
+    // Convert to degrees
+    double degrees = turretAngle.getDegrees();
+
+    // Convert to clockwise positive
+    degrees = -degrees;
+
+    double currentDeg = Units.rotationsToDegrees(turretMotor.getPosition().getValueAsDouble());
+
+    while (degrees - currentDeg > 180.0) {
+      degrees -= 360.0;
+    }
+    while (degrees - currentDeg < -180.0) {
+      degrees += 360.0;
+    }
 
     // Clamp to turret limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);

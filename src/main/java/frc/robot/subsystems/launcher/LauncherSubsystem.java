@@ -50,6 +50,7 @@ public class LauncherSubsystem extends SubsystemBase {
           flywheelsGoal =
               LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
           turretGoal = turret.calculateTurretAngle();
+          // turretGoal = turret.calculateTurretAngleWithShortestPath();
 
           hoodGoalPub.set(hoodGoal);
           flywheelGoalPub.set(flywheelsGoal);

@@ -67,7 +67,6 @@ public class LEDSubsystem extends SubsystemBase {
   /** Animation used to stop animations on {@link #SLOT}. */
   private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
 
-
   /** LED color representing LEDs turned off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
 

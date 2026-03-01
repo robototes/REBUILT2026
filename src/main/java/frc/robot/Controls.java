@@ -228,15 +228,6 @@ public class Controls {
                         s.indexerSubsystem
                             .runIndexer()
                             .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR)))));
-
-    driverController
-        .rightBumper()
-        .whileTrue(
-            Commands.parallel(
-                    s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(s.indexerSubsystem.runIndexer()))
-                .withName("Aim turret then feeder and spindexer started"));
     driverController
         .start()
         .onTrue(
