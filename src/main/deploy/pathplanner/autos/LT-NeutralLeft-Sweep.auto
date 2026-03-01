@@ -78,6 +78,12 @@
                     {
                       "type": "path",
                       "data": {
+                        "pathName": "Half-LT-NeutralLeft-TWO"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
                         "pathName": "Copy of LT-NeutralLeft-TWO"
                       }
                     },
