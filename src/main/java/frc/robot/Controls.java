@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.launcher.TurretSubsystem;
@@ -95,6 +96,7 @@ public class Controls {
     configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
+    configureLedBindings();
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -206,9 +208,9 @@ public class Controls {
   }
 
   private void configureLauncherBindings() {
-    if (s.flywheels == null || s.hood == null) {
+    if (s.flywheels == null || s.hood == null || s.ledSubsystem == null) {
       // Stop running this method
-      DataLogManager.log("Flywheels and/or Hood are disabled");
+      DataLogManager.log("Flywheels and/or Hood and/or LEDs are disabled");
       return;
     }
 
@@ -216,11 +218,16 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    // s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                    s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
-                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(s.indexerSubsystem.runIndexer()))
-                .withName("Aim turret then feeder and spindexer started"));
+                s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
+                s.ledSubsystem
+                    .alternateColors(
+                        LEDSubsystem.LAUNCH_PREP_COLOR_TWO, LEDSubsystem.LAUNCH_PREP_COLOR, 0.2)
+                    .until(() -> s.launcherSubsystem.isAtTarget())
+                    .andThen(
+                        s.indexerSubsystem
+                            .runIndexer()
+                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR)))));
 
     driverController
         .rightBumper()
@@ -250,12 +257,18 @@ public class Controls {
   }
 
   private void configureIntakeBindings() {
-    if (s.intakeRollers == null || s.intakePivot == null) {
-      DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
+    if (s.intakeRollers == null || s.intakePivot == null || s.ledSubsystem == null) {
+      DataLogManager.log(
+          "Controls.java: intakeRollers or intakeArm or LEDs is disabled, bindings skipped");
       return;
     }
 
-    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
+    driverController
+        .leftTrigger()
+        .whileTrue(
+            s.intakeSubsystem
+                .smartIntake()
+                .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.INTAKE_COLOR)));
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
@@ -346,5 +359,12 @@ public class Controls {
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> driverController.getRightX(), () -> driverController.getRightY()));
+  }
+
+  public void configureLedBindings() {
+    if (s.ledSubsystem == null) {
+      return;
+    }
+    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR));
   }
 }
