@@ -67,23 +67,27 @@ public class LEDSubsystem extends SubsystemBase {
   /** Animation used to stop animations on {@link #SLOT}. */
   private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
 
-  /** Default robot LED color (red). */
-  public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 0);
-
-  /** LED color used while intaking (green flashing). */
-  public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 255, 0);
-
-  /** LED color used during climb mode (blue). */
-  public static final RGBWColor CLIMB_COLOR = new RGBWColor(0, 255, 255);
 
   /** LED color representing LEDs turned off. */
   public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
+
+  /** Default robot LED color (purple). */
+  public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 255);
+
+  /** LED color used while intaking (blue). */
+  public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
+
+  /** LED color used during climb mode (orange). */
+  public static final RGBWColor CLIMB_COLOR = new RGBWColor(255, 128, 0);
 
   /** LED color used while launching (green). */
   public static final RGBWColor LAUNCH_COLOR = new RGBWColor(0, 255, 0);
 
   /** LED color used while preparing to launch (yellow flashing). */
   public static final RGBWColor LAUNCH_PREP_COLOR = new RGBWColor(255, 255, 0);
+
+  /** Another LED color used while preparing to launch (red). */
+  public static final RGBWColor LAUNCH_PREP_COLOR_TWO = new RGBWColor(255, 0, 0);
 
   /** NetworkTable topics and publishers for LED state information. */
 
@@ -235,7 +239,7 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a {@link Command} that continuously alternates LED colors
    */
   public Command alternateColors(RGBWColor colorA, RGBWColor colorB, double interval) {
-    return Commands.sequence(
+    return Commands.repeatingSequence(
             Commands.runOnce(
                 () -> {
                   System.out.println("Switching to Color A: " + colorA);

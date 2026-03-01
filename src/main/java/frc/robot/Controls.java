@@ -208,7 +208,7 @@ public class Controls {
   }
 
   private void configureLauncherBindings() {
-    if (s.flywheels == null || s.hood == null s.ledSubsystem == null) {
+    if (s.flywheels == null || s.hood == null || s.ledSubsystem == null) {
       // Stop running this method
       DataLogManager.log("Flywheels and/or Hood and/or LEDs are disabled");
       return;
@@ -222,7 +222,7 @@ public class Controls {
                 // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
                 s.ledSubsystem
                     .alternateColors(
-                        LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5)
+                        LEDSubsystem.LAUNCH_PREP_COLOR_TWO, LEDSubsystem.LAUNCH_PREP_COLOR, 0.2)
                     .until(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
                         s.indexerSubsystem
@@ -258,7 +258,8 @@ public class Controls {
 
   private void configureIntakeBindings() {
     if (s.intakeRollers == null || s.intakePivot == null || s.ledSubsystem == null) {
-      DataLogManager.log("Controls.java: intakeRollers or intakeArm or LEDs is disabled, bindings skipped");
+      DataLogManager.log(
+          "Controls.java: intakeRollers or intakeArm or LEDs is disabled, bindings skipped");
       return;
     }
 
@@ -364,6 +365,6 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.defaultLEDCommand());
+    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR));
   }
 }

@@ -76,6 +76,15 @@ public class Subsystems {
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
+
+    // Pattern is
+
+    // if (SUBSYSTEM_ENABLED){
+    //   subsystem = new SubsystemName();
+    // } else {
+    //   subsystem = null;
+    // }
+
     if (DRIVEBASE_ENABLED) {
       drivebaseSubsystem =
           (RobotType.type == RobotTypesEnum.ALPHA)
@@ -90,6 +99,7 @@ public class Subsystems {
     } else {
       intakeRollers = null;
     }
+
     if (INTAKE_ARM_ENABLED) {
       intakePivot = new IntakePivot();
     } else {
