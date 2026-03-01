@@ -24,12 +24,17 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.subsystems.ClimbSubsystem.ClimbState;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
 
+/**
+ * This class is designed to handle all things related to Climbing, including auto aligning with the
+ * clibing structure and climbing itself.
+ *
+ * @author Sean Le Nguyen
+ */
 public class ClimbSubsystem extends SubsystemBase {
   // Climb states
   public enum ClimbLevel {
@@ -115,24 +120,46 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   // Helper functions
+
+  /**
+   * sets the motor's position
+   *
+   * @param position A double representing the absolut target motor rotation, relative to the
+   *     motor's zero position
+   */
   public void setMotorPosition(double position) {
     climbMotor.setControl(request.withPosition(position));
   }
 
+  /**
+   * This method is meant to Manually move the climb subsystem up and down with a voltage output
+   *
+   * @param joystick A double supplier that supplies the method with the joystick's Y axis value
+   */
   public void manualMove(DoubleSupplier joystick) {
     double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1) * MAX_VOLTS;
     climbMotor.setControl(volts.withOutput(cmd));
   }
 
+  /** zeroes the motor */
   public void zeroMotor() {
     climbMotor.setPosition(0);
   }
 
+  /** stops the motor completely by setting the output voltage to 0 */
   public void stop() {
     climbMotor.setControl(volts.withOutput(0));
   }
 
   // ---------- COMMANDS ----------- //
+  /**
+   * This is meant to give the user the option to automatically zero the climb, providing
+   * contactless zeroeing.
+   *
+   * @param runAutoZero a boolean that determines whether to run the routine or not. If no, then
+   *     this will just zero the motor where the climb is at
+   * @return returns a Command that gives the instructions on how to run AutoZeroRoutine
+   */
   public Command AutoZeroRoutine(boolean runAutoZero) {
     final java.util.concurrent.atomic.AtomicInteger hits =
         new java.util.concurrent.atomic.AtomicInteger(0);
@@ -163,7 +190,15 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   // -- CLIMB -- //
-  public Command Climb(ClimbLevel state) {
+
+  /**
+   * This is the Climb routine that will automatically climb if the robot is close enough to the
+   * climb
+   *
+   * @param state an enum value that represents the desired climb level
+   * @return returns a Command that provides instructions on how to Climb
+   */
+  public Command ClimbRoutine(ClimbLevel state) {
     return Commands.defer(
             () -> {
               final double targetPosition;
@@ -172,16 +207,26 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                  // case L2: ... (Future proofing)
+                // case L2: ... (Future proofing)
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
 
               return Commands.run(() -> setMotorPosition(targetPosition), this)
                   .until(
-                      () ->
-                          Math.abs(climbMotor.getPosition().getValueAsDouble() - targetPosition)
-                              < 0.1)
+                      () -> {
+                        return Math.abs(
+                                climbMotor.getPosition().getValueAsDouble() - targetPosition)
+                            < 0.1;
+                      })
+                  .andThen(
+                      () -> {
+                        new AutoAlignCommand();
+                      })
+                  .andThen(
+                      () -> {
+                        setMotorPosition(0);
+                      })
                   .beforeStarting(() -> climbState = ClimbState.Climbing)
                   .finallyDo((interrupted) -> climbState = ClimbState.Idle);
             },
@@ -190,6 +235,7 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   // -------- AUTO ALIGN -------- //
+  /** AutoAlign command that auto aligns the bumper with the climb to the climb */
   public class AutoAlignCommand extends Command {
     // Poses
     private Pose2d climbBumper;
@@ -220,8 +266,6 @@ public class ClimbSubsystem extends SubsystemBase {
       pidY.setSetpoint(targetPose.getY());
       // Robot bumper must face parallel to the climb thing
       pidRotate.setSetpoint(targetPose.getRotation().getRadians() + Math.PI);
-      // Repeated so that isFinished() can run before execute()
-      climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
     }
 
     @Override
@@ -245,6 +289,9 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public boolean isFinished() {
+      if (climbBumper == null) {
+        return false;
+      }
       Transform2d robotToClimb = climbBumper.minus(targetPose);
       return robotToClimb.getTranslation().getNorm() < 0.01
           && Math.abs(robotToClimb.getRotation().getDegrees()) < 1;
