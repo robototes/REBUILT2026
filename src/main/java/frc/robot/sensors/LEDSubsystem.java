@@ -249,7 +249,7 @@ public class LEDSubsystem extends SubsystemBase {
                   setHardwareColor(colorA);
                 },
                 this),
-            // Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
+            Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
             Commands.waitSeconds(interval),
             Commands.runOnce(
                 () -> {
