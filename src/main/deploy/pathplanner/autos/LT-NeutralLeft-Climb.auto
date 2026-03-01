@@ -39,6 +39,12 @@
         {
           "type": "path",
           "data": {
+            "pathName": "Copy of LB-NeutralLeft-Back"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "LB-NeutralLeft-Back"
           }
         },

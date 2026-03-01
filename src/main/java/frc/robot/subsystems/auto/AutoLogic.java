@@ -57,17 +57,14 @@ public class AutoLogic {
 
   private static final List<AutoPath> rebuiltPaths =
       List.of(
-          new AutoPath("C-Climb", "C-Climb"),
-          new AutoPath("C-Depot-Climb", "C-Depot-Climb"),
-          new AutoPath("Default", "Default"),
-          new AutoPath("LB-Depot-Climb", "LB-Depot-Climb"),
+
+          new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
+             new AutoPath("ORBIT-LT-NeutralLeft-Sweep-Climb", "ORBIT-LT-NeutralLeft-Sweep-Climb"),
+
           new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
           new AutoPath("LT-NeutralLeft-Sweep", "LT-NeutralLeft-Sweep"),
-          new AutoPath("LT-Depot-Climb", "LT-Depot-Climb"),
-          new AutoPath("RB-Outpost-Climb", "RB-Outpost-Climb"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
-          new AutoPath("RT-NeutralRight-Sweep", "RT-NeutralRight-Sweep"),
-          new AutoPath("RT-Outpost-Climb", "RT-Outpost-Climb"));
+          new AutoPath("RT-NeutralRight-Sweep", "RT-NeutralRight-Sweep"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 

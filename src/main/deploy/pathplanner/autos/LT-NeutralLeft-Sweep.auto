@@ -37,13 +37,19 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "Copy of LB-NeutralLeft-Back"
+          }
+        },
+        {
           "type": "deadline",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "stop-LB-NeutralLeft-Back"
+                  "pathName": "LT-n-aim"
                 }
               },
               {
@@ -72,7 +78,19 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LT-NeutralLeft-TWO"
+                        "pathName": "Copy of LT-NeutralLeft-TWO"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "stop-LT-NeutralLeft-back-preclimb"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Copy of stop-LT-NeutralLeft-back-preclimb"
                       }
                     }
                   ]
@@ -82,25 +100,6 @@
                 "type": "named",
                 "data": {
                   "name": "intake"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "stop-LT-NeutralLeft-back-preclimb"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
                 }
               }
             ]

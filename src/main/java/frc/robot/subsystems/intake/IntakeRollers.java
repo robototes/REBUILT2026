@@ -1,6 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -25,7 +24,7 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private static final double INTAKE_SPEED = 1.0; // full speed
+  private static final double INTAKE_SPEED = 0.6; // full speed
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -54,7 +53,10 @@ public class IntakeRollers extends SubsystemBase {
   private void motorConfigs() {
     var talonFXConfigs = new TalonFXConfiguration();
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
-    talonFXConfigs.MotorOutput.Inverted = (RobotType.isAlpha() ? InvertedValue.CounterClockwise_Positive : InvertedValue.Clockwise_Positive);
+    talonFXConfigs.MotorOutput.Inverted =
+        (RobotType.isAlpha()
+            ? InvertedValue.CounterClockwise_Positive
+            : InvertedValue.Clockwise_Positive);
 
     // motor limits idk if i need to add anymore
     talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
@@ -96,7 +98,7 @@ public class IntakeRollers extends SubsystemBase {
   public Command runSingleRoller() {
     return Commands.runEnd(
         () -> {
-          leftRoller.set(-INTAKE_SPEED);
+          leftRoller.set(INTAKE_SPEED);
         },
         () -> {
           leftRoller.stopMotor();
