@@ -55,18 +55,11 @@ public class LauncherConstants {
   private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
-    if (RobotType.isAlpha()) {
-      for (var point : alphaDistanceData) {
-        flywheelMap.put(point.distance, point.flywheelPower);
-        hoodMap.put(point.distance, point.hoodAngle);
-        timeMap.put(point.distance, point.time);
-      }
-    } else {
-      for (var point : compDistanceData) {
-        flywheelMap.put(point.distance, point.flywheelPower);
-        hoodMap.put(point.distance, point.hoodAngle);
-        timeMap.put(point.distance, point.time);
-      }
+        LauncherDistanceDataPoint[] distanceData = RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+    for (var point : distanceData) {
+      flywheelMap.put(point.distance, point.flywheelPower);
+      hoodMap.put(point.distance, point.hoodAngle);
+      timeMap.put(point.distance, point.time);
     }
   }
 
