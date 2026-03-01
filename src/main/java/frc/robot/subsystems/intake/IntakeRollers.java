@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.robotType.RobotType;
 
@@ -38,7 +39,7 @@ public class IntakeRollers extends SubsystemBase {
     leftRoller =
         new TalonFX(
             Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus));
+            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CompTunerConstants.kCANBus));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     networktables();
@@ -53,7 +54,7 @@ public class IntakeRollers extends SubsystemBase {
   private void motorConfigs() {
     var talonFXConfigs = new TalonFXConfiguration();
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
-    talonFXConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfigs.MotorOutput.Inverted = (RobotType.isAlpha() ? InvertedValue.CounterClockwise_Positive : InvertedValue.Clockwise_Positive);
 
     // motor limits idk if i need to add anymore
     talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
