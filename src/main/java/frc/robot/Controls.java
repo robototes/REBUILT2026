@@ -226,7 +226,8 @@ public class Controls {
                     // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
                     s.ledSubsystem
                         .alternateColors(
-                            LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5).until(() -> s.launcherSubsystem.isAtTarget())
+                            LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5)
+                        .until(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             s.indexerSubsystem
                                 .runIndexer()
@@ -360,7 +361,11 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-s.ledSubsystem.setDefaultCommand(s.ledSubsystem.defaultLEDCommand());
-    ledTestController.leftBumper().whileTrue(s.ledSubsystem.alternateColors(LEDSubsystem.DEFAULT_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5));
+    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.defaultLEDCommand());
+    ledTestController
+        .leftBumper()
+        .whileTrue(
+            s.ledSubsystem.alternateColors(
+                LEDSubsystem.OFF_COLOR, LEDSubsystem.LAUNCH_PREP_COLOR, 0.5));
   }
 }

@@ -81,7 +81,7 @@ public class LEDSubsystem extends SubsystemBase {
 
   /** LED color used while launching (green). */
   public static final RGBWColor LAUNCH_COLOR = new RGBWColor(0, 255, 0);
-  
+
   /** LED color used while preparing to launch (yellow flashing). */
   public static final RGBWColor LAUNCH_PREP_COLOR = new RGBWColor(255, 255, 0);
 
@@ -202,8 +202,7 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   public Command defaultLEDCommand() {
-    return Commands.run(() -> setHardwareColor(DEFAULT_COLOR), this)
-        .withName("Set Default LEDs");
+    return Commands.run(() -> setHardwareColor(DEFAULT_COLOR), this).withName("Set Default LEDs");
   }
 
   public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {

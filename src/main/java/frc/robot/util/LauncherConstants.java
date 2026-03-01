@@ -8,6 +8,7 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
   private static final double TURRET_Y_OFFSET = 0.2159;
@@ -22,6 +23,10 @@ public class LauncherConstants {
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
           .publish();
+
+public class LauncherConstants {
+  private static final Translation2d LAUNCHER_OFFSET =
+      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -45,12 +50,18 @@ public class LauncherConstants {
     }
   }
 
-  private static final LauncherDistanceDataPoint[] distanceData = {
-    new LauncherDistanceDataPoint(2.05, 1, 74, 0.6),
-    new LauncherDistanceDataPoint(3.1, 2, 74, 1.3),
-    new LauncherDistanceDataPoint(3.83, 2.5, 78, 1.7),
-    new LauncherDistanceDataPoint(3.9, 2.6, 78, 1.9),
-    new LauncherDistanceDataPoint(4.88, 4.5, 80, 2)
+  private static final LauncherDistanceDataPoint[] alphaDistanceData = {
+    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
+    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
+    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
+    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
+  };
+
+  private static final LauncherDistanceDataPoint[] compDistanceData = {
+    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
+    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
+    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
+    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
   };
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
@@ -58,6 +69,8 @@ public class LauncherConstants {
   private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
+    LauncherDistanceDataPoint[] distanceData =
+        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
