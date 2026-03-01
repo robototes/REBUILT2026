@@ -40,8 +40,8 @@ public class ClimbSubsystem extends SubsystemBase {
     Idle
   }
 
-  private static boolean isZeroed = false;
-  private static ClimbState climbState = ClimbState.Idle;
+  private boolean isZeroed = false;
+  private ClimbState climbState = ClimbState.Idle;
 
   // Motor requests
   private MotionMagicVoltage request;
@@ -98,6 +98,9 @@ public class ClimbSubsystem extends SubsystemBase {
     this.driveTrain = driveTrain;
     climb_motor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
     configureMotors();
+    // Initialize
+    request = new MotionMagicVoltage(0);
+    volts = new VoltageOut(0);
 
     // Network tables
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -203,6 +206,8 @@ public class ClimbSubsystem extends SubsystemBase {
               : APRIL_TAG_FIELD_LAYOUT.getTagPose(15).get().toPose2d().transformBy(climbOffSet);
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
+      // Robot bumper must face parallel to the climb thing
+      pidRotate.setSetpoint(targetPose.getRotation().getDegrees() + 180);
     }
 
     @Override
