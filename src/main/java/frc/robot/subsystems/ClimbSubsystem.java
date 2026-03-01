@@ -43,12 +43,12 @@ public class ClimbSubsystem extends SubsystemBase {
   private ClimbState climbState = ClimbState.Idle;
 
   // Motor requests
-  private MotionMagicVoltage request;
-  private VoltageOut volts;
-  private double MAX_VOLTS = 3;
+  private final MotionMagicVoltage request;
+  private final VoltageOut volts;
+  private final double MAX_VOLTS = 3;
 
   // hardware objects
-  CommandSwerveDrivetrain driveTrain;
+  private final CommandSwerveDrivetrain driveTrain;
   private final TalonFX climbMotor;
   private static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AllianceUtils.FIELD_LAYOUT;
   private static final int BLUE_CLIMB_TAG_ID = 31;
@@ -175,7 +175,7 @@ public class ClimbSubsystem extends SubsystemBase {
               setMotorPosition(targetPosition);
             },
             this)
-        .until(() -> Math.abs(climbMotor.getPosition().getValueAsDouble() - L1) < 0.1)
+        .until(() -> Math.abs(climbMotor.getPosition().getValueAsDouble() - targetPosition) < 0.1)
         // This ensures the check happens every time the command tries to start
         .onlyIf(() -> climbState == ClimbState.Idle)
         .beforeStarting(() -> climbState = ClimbState.Climbing)
@@ -190,7 +190,7 @@ public class ClimbSubsystem extends SubsystemBase {
     // PIDControllers
     private final PIDController pidX = new PIDController(4, 0, 0);
     private final PIDController pidY = new PIDController(4, 0, 0);
-    private final PIDController pidRotate = new PIDController(0, 0, 8);
+    private final PIDController pidRotate = new PIDController(8, 0, 0);
     // Request
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
