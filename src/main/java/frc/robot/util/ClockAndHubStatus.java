@@ -1,10 +1,30 @@
 package frc.robot.util;
 import java.util.Optional;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 
 class ClockAndHubStatus {
     public double matchLength = 2.5;
+    public double pointAX = 2.0;
+    public double pointAY = 2.0;
+
+    public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain){
+        if(isHubActive(0)){
+            return AllianceUtils.getHubTranslation2d();
+        }
+        else{
+            if(drivetrain.getState().Pose.getX() <= Units.inchesToMeters(158.6)){
+                return AllianceUtils.getHubTranslation2d();
+            }
+            else if(drivetrain.getState().Pose.getY() >= Units.inchesToMeters(177)){
+                return
+            }
+        }
+    }
 
     public boolean isHubActive(double lookAheadTime) {
         Optional<Alliance> alliance = DriverStation.getAlliance();
