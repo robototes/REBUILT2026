@@ -9,22 +9,46 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 class ClockAndHubStatus {
     public double matchLength = 2.5;
-    public double pointAX = 2.0;
-    public double pointAY = 2.0;
+
+private Translation2d pointLeftFieldTop = new Translation2d(2,2);
+private Translation2d pointLeftFieldBottom = new Translation2d(2,6);
+private Translation2d pointRightFieldTop = new Translation2d(14,2);
+private Translation2d pointRightFieldBottom = new Translation2d(14,6);
 
     public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain){
         if(isHubActive(0)){
             return AllianceUtils.getHubTranslation2d();
         }
         else{
-            if(drivetrain.getState().Pose.getX() <= Units.inchesToMeters(158.6)){
+            if(AllianceUtils.isRed()){
+                if(drivetrain.getState().Pose.getX() <= Units.inchesToMeters(158.6)){
+                    return AllianceUtils.getHubTranslation2d();
+                }
+                else if(drivetrain.getState().Pose.getY() >= Units.inchesToMeters(317.7/2)){
+                    return pointLeftFieldTop;
+                }
+                else{
+                    return pointLeftFieldBottom;
+                }
+                }
+            }
+            if (AllianceUtils.isBlue()){
+
+                if(drivetrain.getState().Pose.getX() >= Units.inchesToMeters(651.2-158.6)){
+                    return AllianceUtils.getHubTranslation2d();
+                }
+                else if(drivetrain.getState().Pose.getY() >= Units.inchesToMeters(317.7/2)){
+                    return pointRightFieldBottom;
+                }
+                else{
+                    return pointRightFieldTop;
+                }
+            }
+            else{
                 return AllianceUtils.getHubTranslation2d();
             }
-            else if(drivetrain.getState().Pose.getY() >= Units.inchesToMeters(177)){
-                return
-            }
         }
-    }
+
 
     public boolean isHubActive(double lookAheadTime) {
         Optional<Alliance> alliance = DriverStation.getAlliance();
@@ -44,9 +68,8 @@ class ClockAndHubStatus {
         // We're teleop enabled, compute.
         double matchTime = DriverStation.getMatchTime() + lookAheadTime;
         String gameData = DriverStation.getGameSpecificMessage();
-        // If we have no game data, we cannot compute, assume hub is active, as its likely early in teleop.
         if (gameData.isEmpty()) {
-            return true;
+            return false;
         }
         boolean redInactiveFirst = false;
         switch (gameData.charAt(0)) {
