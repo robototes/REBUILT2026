@@ -80,6 +80,7 @@ public class LauncherSubsystem extends SubsystemBase {
                   TurretSubsystem.TURRET_MIN,
                   TurretSubsystem.TURRET_MAX);
           turret.setTurretRawPosition(Units.degreesToRotations(turretDegrees));
+          LaunchCalculator.getInstance().clearLaunchingParameters();
         },
         () -> CommandScheduler.getInstance().schedule(stowCommand()));
   }
@@ -88,7 +89,7 @@ public class LauncherSubsystem extends SubsystemBase {
   public boolean isAtTarget() {
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
         && hood.atTargetPosition()
-        && turret.atTarget(50);
+        && turret.atTarget(10);
   }
 
   public Command zeroSubsystemCommand() {

@@ -8,13 +8,15 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
-  private static final double TURRET_Y_OFFSET = 0.2159;
-  private static final double TURRET_X_OFFSET = 0.1397;
-  public static final Translation2d LAUNCHER_OFFSET =
-      new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
+  private static final Translation2d LAUNCHER_OFFSET =
+      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
+
   private static final StructArrayPublisher<Pose2d> turretToTarget =
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretToTarget", Pose2d.struct)
@@ -23,10 +25,6 @@ public class LauncherConstants {
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
           .publish();
-
-public class LauncherConstants {
-  private static final Translation2d LAUNCHER_OFFSET =
-      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -94,6 +92,21 @@ public class LauncherConstants {
 
     var array2 = new Pose2d[] {turret, turretVelocity};
     turretRotationalVelocity.set(array2, 0);
+  }
+
+  public static void update2(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
+    Pose2d turret = LaunchCalculator.estimatedPose;
+    double turret_to_hub_dist = LaunchCalculator.estimatedDist;
+    LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
+    double turretAngle = params.turretAngle().getRadians();
+    Pose2d updatedTarget =
+        new Pose2d(
+            new Translation2d(
+                turret_to_hub_dist * Math.cos(turretAngle),
+                turret_to_hub_dist * Math.sin(turretAngle)),
+            Rotation2d.kZero);
+    var array = new Pose2d[] {turret, updatedTarget};
+    turretToTarget.set(array, 0);
   }
 
   public static double getFlywheelSpeedFromDistance(double distance) {

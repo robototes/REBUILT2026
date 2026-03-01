@@ -154,6 +154,9 @@ public class Robot extends TimedRobot {
       // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
       // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
+    if (subsystems.turretSubsystem != null) {
+      subsystems.turretSubsystem.coastTurret();
+    }
   }
 
   @Override
@@ -166,6 +169,10 @@ public class Robot extends TimedRobot {
       // get rid of throttle to get rid of throttle "glazing"
       // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
       // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+    }
+
+    if (subsystems.turretSubsystem != null) {
+      subsystems.turretSubsystem.brakeTurret();
     }
   }
 

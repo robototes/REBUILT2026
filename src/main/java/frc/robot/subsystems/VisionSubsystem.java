@@ -159,7 +159,11 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
-          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())) {
+          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
+          || !MathUtil.isNear(
+              drivetrain.getState().Pose.getRotation().getDegrees(),
+              Units.radiansToDegrees(fieldPose3d.getRotation().getAngle()),
+              2)) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
       }
@@ -167,7 +171,9 @@ public class VisionSubsystem extends SubsystemBase {
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        drivetrain.resetPose(fieldPose3d.toPose2d());
+        // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
+        // VecBuilder.fill(0.1, 0.1, 99999));
+        drivetrain.resetTranslation((fieldPose3d.toPose2d().getTranslation()));
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
