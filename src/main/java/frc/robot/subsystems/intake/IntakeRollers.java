@@ -53,7 +53,7 @@ public class IntakeRollers extends SubsystemBase {
   private void motorConfigs() {
     var talonFXConfigs = new TalonFXConfiguration();
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
-    talonFXConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // motor limits idk if i need to add anymore
     talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;

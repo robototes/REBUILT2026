@@ -26,8 +26,8 @@ public class IntakePivot extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = 0.0;
-  public static final double RETRACTED_POS = 0.283;
+  public static final double DEPLOYED_POS = -0.412583;
+  public static final double RETRACTED_POS = 0.0;
 
   // PID variables
   private static final double kP = 20;
@@ -38,8 +38,8 @@ public class IntakePivot extends SubsystemBase {
   private static final double kV = 0;
   private static final double kA = 0;
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 40; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
+  private static final int STATOR_CURRENT_LIMIT = 60; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 30; // amps
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 25;
@@ -47,11 +47,11 @@ public class IntakePivot extends SubsystemBase {
   private static final double JERK = 50;
 
   // Gear Ratio
-  private static final double GEAR_RATIO = 36;
+  private static final double GEAR_RATIO = 35;
 
   // Soft Limits
-  private static final double PIVOT_MIN = 0.0; // rotations
-  private static final double PIVOT_MAX = 0.29;
+  private static final double PIVOT_MIN = -0.45; // rotations
+  private static final double PIVOT_MAX = 0.0;
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
