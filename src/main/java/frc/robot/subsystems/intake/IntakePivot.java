@@ -46,9 +46,6 @@ public class IntakePivot extends SubsystemBase {
   private static final double ACCELERATION = 10;
   private static final double JERK = 50;
 
-
-
-  
   // Gear Ratio
   private static final double GEAR_RATIO = 35;
 
