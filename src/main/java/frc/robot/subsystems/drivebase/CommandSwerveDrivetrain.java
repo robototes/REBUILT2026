@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drivebase;
 
+import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -23,6 +24,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.generated.CompTunerConstants;
 import java.util.function.Supplier;
 
 /**
@@ -271,5 +273,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     return MathUtil.isNear(0, speeds.vxMetersPerSecond, 0.01)
         && MathUtil.isNear(0, speeds.vyMetersPerSecond, 0.01)
         && MathUtil.isNear(0, speeds.omegaRadiansPerSecond, Units.degreesToRadians(2));
+  }
+
+  public double[] getWheelRotations() {
+    double wheelCircumference = 2 * Math.PI * CompTunerConstants.kWheelRadius.abs(Meter);
+    double[] values = new double[4];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = getState().ModulePositions[i].distanceMeters / wheelCircumference;
+    }
+    return values;
   }
 }
