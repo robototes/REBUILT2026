@@ -290,7 +290,7 @@ public class ClimbSubsystem extends SubsystemBase {
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
       // Robot bumper with the climb on it must face to the climb tower
-      pidRotate.setSetpoint(targetPose.getRotation().getRadians() + Math.PI);
+      pidRotate.setSetpoint(targetPose.getRotation().getRadians());
     }
 
     @Override
