@@ -37,19 +37,26 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "Copy of LB-NeutralLeft-Back"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [
               {
-                "type": "path",
+                "type": "sequential",
                 "data": {
-                  "pathName": "LT-n-aim"
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Copy of LB-NeutralLeft-Back"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-n-aim"
+                      }
+                    }
+                  ]
                 }
               },
               {
@@ -86,7 +93,27 @@
                       "data": {
                         "pathName": "Copy of LT-NeutralLeft-TWO"
                       }
-                    },
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
                     {
                       "type": "path",
                       "data": {
@@ -105,7 +132,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "intake"
+                  "name": "aim"
                 }
               }
             ]
