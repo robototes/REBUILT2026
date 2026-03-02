@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.util.tuning.NtTunableDouble;
-
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
