@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.tuning;
 
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanSubscriber;
