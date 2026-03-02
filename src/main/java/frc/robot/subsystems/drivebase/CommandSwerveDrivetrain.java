@@ -276,11 +276,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   public double[] getWheelRotations() {
-    double wheelCircumference = 2 * Math.PI * CompTunerConstants.kWheelRadius.abs(Meter);
+    double wheelCircumference = tau(CompTunerConstants.kWheelRadius.abs(Meter));
     double[] values = new double[4];
     for (int i = 0; i < values.length; i++) {
       values[i] = getState().ModulePositions[i].distanceMeters / wheelCircumference;
     }
     return values;
+  }
+
+  public static double tau(double value) {
+    return value * 2 * Math.PI;
   }
 }

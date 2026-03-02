@@ -85,7 +85,7 @@ public class WheelRadiusCharacterization {
                             wheelDelta +=
                                 Math.abs(positions[i] - state.positions[i]) / (double) NUM_MODULES;
                           }
-                          wheelDelta *= 2 * Math.PI;
+                          wheelDelta = CommandSwerveDrivetrain.tau(wheelDelta);
                           double wheelRadius = (state.gyroDelta * DRIVE_BASE_RADIUS) / wheelDelta;
 
                           DataLogManager.log(
