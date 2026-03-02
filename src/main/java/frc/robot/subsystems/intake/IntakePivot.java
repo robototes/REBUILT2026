@@ -26,7 +26,7 @@ public class IntakePivot extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = -0.412583;
+  public static final double DEPLOYED_POS = -0.39;
   public static final double RETRACTED_POS = 0.0;
 
   // PID variables
@@ -46,6 +46,9 @@ public class IntakePivot extends SubsystemBase {
   private static final double ACCELERATION = 10;
   private static final double JERK = 50;
 
+
+
+  
   // Gear Ratio
   private static final double GEAR_RATIO = 35;
 
