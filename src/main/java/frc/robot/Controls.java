@@ -250,7 +250,7 @@ public class Controls {
       return;
     }
 
-    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+    // s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
 
     c.driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
     c.driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
