@@ -211,7 +211,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
   /**
    * This is the Climb routine that will automatically climb if the robot is close enough to the
-   * climb
+   * climb. It raises the climber, then moves to it, then climbss
    *
    * @param state an enum value that represents the desired climb level
    * @return returns a Command that provides instructions on how to Climb
