@@ -32,11 +32,6 @@ public class WheelRadiusCharacterization {
   private static final NumberFormat FORMATTER = new DecimalFormat("#0.000");
   private static final int NUM_MODULES = 4;
 
-  // get the wheel rotation positions of the swerve modules
-  public static double[] getWheelRadiusCharacterizationPositions(CommandSwerveDrivetrain drive) {
-    return drive.getWheelRotations();
-  }
-
   public static Command wheelRadiusCharacterizationCommand(CommandSwerveDrivetrain drive) {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
@@ -68,7 +63,7 @@ public class WheelRadiusCharacterization {
                 // Record starting measurement
                 Commands.runOnce(
                     () -> {
-                      state.positions = getWheelRadiusCharacterizationPositions(drive);
+                      state.positions = drive.getWheelRotations();
                       state.lastAngle = drive.getState().Pose.getRotation();
                       state.gyroDelta = 0.0;
                     }),
@@ -84,7 +79,7 @@ public class WheelRadiusCharacterization {
                     // When cancelled, calculate and print results
                     .finallyDo(
                         () -> {
-                          double[] positions = getWheelRadiusCharacterizationPositions(drive);
+                          double[] positions = drive.getWheelRotations();
                           double wheelDelta = 0.0;
                           for (int i = 0; i < NUM_MODULES; i++) {
                             wheelDelta +=
