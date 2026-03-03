@@ -58,10 +58,9 @@ public class LauncherConstants {
   private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(1.31, 3, 65, 0.6),
     new LauncherDistanceDataPoint(2.52, 6, 72, 1.18),
-    new LauncherDistanceDataPoint(3.32, 8, 75
-  , 1.2),
+    new LauncherDistanceDataPoint(3.32, 8, 75, 1.2),
     new LauncherDistanceDataPoint(3.87, 10, 79, 1.36),
-    new LauncherDistanceDataPoint(4.27, 11, 82, 2) //pending james TOF
+    new LauncherDistanceDataPoint(4.27, 11, 82, 2) // pending james TOF
   };
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
@@ -77,7 +76,8 @@ public class LauncherConstants {
       timeMap.put(point.distance, point.time);
     }
     turretToTarget.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
-    turretRotationalVelocity.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});}
+    turretRotationalVelocity.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
+  }
 
   public static void update(Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target) {
     Pose2d turret = new Pose2d(launcherFromRobot(robot), Rotation2d.kZero);

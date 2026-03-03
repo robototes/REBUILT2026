@@ -72,7 +72,6 @@ public class TurretSubsystem extends SubsystemBase {
           .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
           .publish();
 
-
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
     turretMotor =
@@ -225,7 +224,7 @@ public class TurretSubsystem extends SubsystemBase {
     return runEnd(
         () -> {
           double targetRotations = calculateTurretAngle();
-          //turretMotor.setControl(request.withPosition(targetRotations));
+          // turretMotor.setControl(request.withPosition(targetRotations));
           this.setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
           Transform2d fieldRelativeOffset =

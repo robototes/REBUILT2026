@@ -133,7 +133,7 @@ public class Hood extends SubsystemBase {
     if (TUNER_CONTROLLED) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetPosition.getAtomic();
-        //setHoodPosition(currentTarget.value);
+        // setHoodPosition(currentTarget.value);
         lastPositionUpdateTime = currentTarget.timestamp;
       }
     }

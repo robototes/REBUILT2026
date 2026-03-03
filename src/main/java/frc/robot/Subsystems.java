@@ -1,7 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
@@ -16,6 +14,9 @@ import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
+
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
