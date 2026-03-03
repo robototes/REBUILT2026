@@ -235,9 +235,10 @@ public class Controls {
                 .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
-      driverController
+      launcherTuningController
           .leftBumper()
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
+      launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
     }
     if (s.hood.TUNER_CONTROLLED) {
       launcherTuningController

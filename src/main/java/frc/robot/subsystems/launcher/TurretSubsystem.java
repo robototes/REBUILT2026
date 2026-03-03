@@ -64,13 +64,14 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 90; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -180; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 180; // degrees
+  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
           .publish();
+
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
@@ -224,7 +225,8 @@ public class TurretSubsystem extends SubsystemBase {
     return runEnd(
         () -> {
           double targetRotations = calculateTurretAngle();
-          turretMotor.setControl(request.withPosition(targetRotations));
+          //turretMotor.setControl(request.withPosition(targetRotations));
+          this.setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
           Transform2d fieldRelativeOffset =
               new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);

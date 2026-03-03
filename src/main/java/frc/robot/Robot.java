@@ -115,28 +115,28 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
-      if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
+      // if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
 
-        LimelightHelpers.SetRobotOrientation(
-            Hardware.LIMELIGHT_C,
-            swerveState.Pose.getRotation().getDegrees(),
-            swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-            0,
-            0,
-            0,
-            0);
-      } else {
-        if (subsystems.visionSubsystem.limelightaOnline) {
-          LimelightHelpers.SetRobotOrientation(
-              Hardware.LIMELIGHT_A,
-              swerveState.Pose.getRotation().getDegrees(),
-              swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-              0,
-              0,
-              0,
-              0);
-        }
-        if (subsystems.visionSubsystem.limelightbOnline) {
+      //   LimelightHelpers.SetRobotOrientation(
+      //       Hardware.LIMELIGHT_C,
+      //       swerveState.Pose.getRotation().getDegrees(),
+      //       swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+      //       0,
+      //       0,
+      //       0,
+      //       0);
+      // } else {
+      //   if (subsystems.visionSubsystem.limelightaOnline) {
+      //     LimelightHelpers.SetRobotOrientation(
+      //         Hardware.LIMELIGHT_A,
+      //         swerveState.Pose.getRotation().getDegrees(),
+      //         swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+      //         0,
+      //         0,
+      //         0,
+      //         0);
+      //   }
+       // if (subsystems.visionSubsystem.limelightbOnline) {
           LimelightHelpers.SetRobotOrientation(
               Hardware.LIMELIGHT_B,
               swerveState.Pose.getRotation().getDegrees(),
@@ -145,8 +145,8 @@ public class Robot extends TimedRobot {
               0,
               0,
               0);
-        }
-      }
+       // }
+      //}
       subsystems.visionSubsystem.update();
     }
     if (subsystems.detectionSubsystem != null) {
@@ -162,16 +162,16 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
-      }
-      if (subsystems.visionSubsystem.limelightbOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
-      }
+      // if (subsystems.visionSubsystem.limelightaOnline) {
+        // setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+      // }
+      // if (subsystems.visionSubsystem.limelightbOnline) {
+        // setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+      // }
     }
     if (subsystems.visionSubsystem != null
-        && RobotType.isAlpha()
-        && subsystems.visionSubsystem.limelightcOnline) {
+        && RobotType.isAlpha()){
+        //&& subsystems.visionSubsystem.limelightcOnline) {
       setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
     }
     if (subsystems.detectionSubsystem != null) {
@@ -188,16 +188,16 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {
     if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
-      }
-      if (subsystems.visionSubsystem.limelightbOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
-      }
+      //if (subsystems.visionSubsystem.limelightaOnline) {
+      //  setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
+      //}
+      //if (subsystems.visionSubsystem.limelightbOnline) {
+      //  setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
+      //}
     }
     if (subsystems.visionSubsystem != null
-        && RobotType.isAlpha()
-        && subsystems.visionSubsystem.limelightcOnline) {
+        && RobotType.isAlpha()){
+      //  && subsystems.visionSubsystem.limelightcOnline) {
       setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
     }
     if (subsystems.detectionSubsystem != null) {
