@@ -49,6 +49,12 @@
           }
         },
         {
+          "type": "wait",
+          "data": {
+            "waitTime": 4.5
+          }
+        },
+        {
           "type": "deadline",
           "data": {
             "commands": [
@@ -87,15 +93,15 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "try"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 4.5
           }
         }
       ]
