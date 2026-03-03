@@ -31,12 +31,7 @@ public class LaunchCalculator {
   }
 
   public record LaunchingParameters(
-      boolean isValid,
-      Rotation2d turretAngle,
-      // double turret_target_velocity,
-      double hoodAngle,
-      // double hood_target_velocity,
-      double flywheelSpeed) {}
+      boolean isValid, Rotation2d turretAngle, double hoodAngle, double flywheelSpeed) {}
 
   // Cache parametersZ
   private LaunchingParameters finalParameters = null;
@@ -130,9 +125,7 @@ public class LaunchCalculator {
             lookaheadTurretToTargetDistance >= minDistance
                 && lookaheadTurretToTargetDistance <= maxDistance,
             targetTurretAngle,
-            // turret_target_velocity,
             targetHoodAngle,
-            // hood_target_velocity,
             LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
 
     // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
