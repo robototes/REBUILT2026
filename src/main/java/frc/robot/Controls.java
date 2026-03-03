@@ -247,12 +247,8 @@ public class Controls {
     }
 
     // CHANGE AFTER ALPHA IS DONE!
-    if (RobotType.isAlpha()) {
-      driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
-    }
-    if (RobotType.isComp()) {
-      driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
-    }
+
+    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
 
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());

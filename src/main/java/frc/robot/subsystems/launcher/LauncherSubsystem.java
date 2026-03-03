@@ -54,11 +54,7 @@ public class LauncherSubsystem extends SubsystemBase {
           flywheels.setVelocityRPS(flywheelsGoal);
           turret.setTurretRawPosition(turretGoal);
         },
-
-
         () -> stowCommand());
-
-
   }
 
   // TODO: add tolerance range calculation

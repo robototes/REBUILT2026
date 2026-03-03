@@ -94,7 +94,7 @@ public class AutoLogic {
     if (rebuiltPaths != null) {
       return rebuiltPaths;
     }
-    System.out.println("fail");
+
     return List.of();
   }
 
@@ -262,6 +262,5 @@ public class AutoLogic {
 
   public static Command climbCommand() {
     return Commands.none();
-    // return s.climbSubsystem.autoAlignRoutine(ClimbState.Climbing);
   }
 }
