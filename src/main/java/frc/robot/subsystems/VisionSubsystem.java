@@ -110,7 +110,7 @@ public class VisionSubsystem extends SubsystemBase {
     limelightaOnline = isLimeLightaOnline();
     limelightbOnline = isLimeLightbOnline();
     limelightcOnline = isLimeLightcOnline();
-    if (RobotType.isComp()) {
+    if (!RobotType.isAlpha()) {
       if (limelightaOnline) {
         RawFiducial[] rawFiducialsA = ACamera.getRawFiducials();
         // DataLogManager.log("got raw fiducials");
