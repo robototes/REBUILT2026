@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -25,7 +26,13 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
 
-  private static final String LIMELIGHT_C = Hardware.LIMELIGHT_B;
+  private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
+  private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
+  private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
+  public boolean limelightaOnline = false;
+  public boolean limelightbOnline = false;
+  public boolean limelightcOnline = false;
+
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
   private static final Transform3d COMP_BOT_LEFT_CAMERA =
@@ -67,6 +74,8 @@ public class VisionSubsystem extends SubsystemBase {
   private double tagAmbiguity = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
+  private static final double DISTANCE_TOLERANCE = 1;
+
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
@@ -141,7 +150,11 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
-          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())) {
+          || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
+          || lastFieldPose != null
+              && !(Math.abs(
+                      getDistanceToTargetViaPoseEstimation(lastFieldPose, fieldPose3d.toPose2d()))
+                  < DISTANCE_TOLERANCE)) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
       }
@@ -149,7 +162,9 @@ public class VisionSubsystem extends SubsystemBase {
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        drivetrain.resetTranslation(fieldPose3d.toPose2d().getTranslation());
+        // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
+        // VecBuilder.fill(0.1, 0.1, 99999));
+        drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
@@ -184,6 +199,9 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
+    if (yourPose == null || targetPose == null) {
+      return 0;
+    }
     double distance =
         Math.hypot(targetPose.getX() - yourPose.getX(), targetPose.getY() - yourPose.getY());
     // 1 millimeter
@@ -211,5 +229,29 @@ public class VisionSubsystem extends SubsystemBase {
     Pose3d robotPose3d = new Pose3d(robotPose2d);
     compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
     compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
+  }
+
+  public boolean isLimeLightaOnline() {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_A);
+    if (table == null) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isLimeLightbOnline() {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_B);
+    if (table == null) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isLimeLightcOnline() {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_C);
+    if (table == null) {
+      return false;
+    }
+    return true;
   }
 }
