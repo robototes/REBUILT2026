@@ -91,6 +91,18 @@ public class LauncherConstants {
     return timeMap.get(distance);
   }
 
+  public static double minTimeOfFlight() {
+    for (timeMap) {
+
+    }
+  }
+
+  public static double maxTimeOfFlight() {
+    for (timeMap) {
+
+    }
+  }
+
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
   public static Translation2d predictTargetPos(
       Translation2d target, ChassisSpeeds fieldSpeeds, double timeOfFlight) {
