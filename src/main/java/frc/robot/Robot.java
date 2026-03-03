@@ -125,8 +125,7 @@ public class Robot extends TimedRobot {
             0,
             0,
             0);
-      }
-      else {
+      } else {
         if (subsystems.visionSubsystem.limelightaOnline) {
           LimelightHelpers.SetRobotOrientation(
               Hardware.LIMELIGHT_A,
