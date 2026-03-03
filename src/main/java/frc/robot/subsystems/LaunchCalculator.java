@@ -88,7 +88,7 @@ public class LaunchCalculator {
         robotVelocity.vxMetersPerSecond
             - robotVelocity.omegaRadiansPerSecond
                 * (turretTransform.getY() * Math.cos(robotAngle)
-                    - turretTransform.getX() * Math.sin(robotAngle));
+                    + turretTransform.getX() * Math.sin(robotAngle));
     double turretVelocityY =
         robotVelocity.vyMetersPerSecond
             + robotVelocity.omegaRadiansPerSecond
