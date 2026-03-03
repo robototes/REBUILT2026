@@ -160,7 +160,6 @@ public class LEDSubsystem extends SubsystemBase {
     RGBWColor scaled = color.scaleBrightness(brightness);
 
     currentColorPub.set(scaled.toHexString());
-    System.out.println("Color: " + scaled.toHexString());
 
     solidController.withColor(scaled);
     candle.setControl(solidController);
@@ -241,7 +240,6 @@ public class LEDSubsystem extends SubsystemBase {
     return Commands.repeatingSequence(
             Commands.runOnce(
                 () -> {
-                  System.out.println("Switching to Color A: " + colorA);
                   setHardwareColor(colorA);
                 },
                 this),
@@ -249,7 +247,6 @@ public class LEDSubsystem extends SubsystemBase {
             Commands.waitSeconds(interval),
             Commands.runOnce(
                 () -> {
-                  System.out.println("Switching to Color B: " + colorB);
                   setHardwareColor(colorB);
                 },
                 this),
@@ -279,7 +276,6 @@ public class LEDSubsystem extends SubsystemBase {
               .andThen(
                   Commands.runOnce(
                       () -> {
-                        System.out.println("Setting color: " + color);
                         setHardwareColor(color);
                       },
                       this))
