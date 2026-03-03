@@ -30,9 +30,9 @@ public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
   private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
-  public boolean limelightaOnline = true;
-  public boolean limelightbOnline = true;
-  public boolean limelightcOnline = true;
+  public boolean limelightaOnline = false;
+  public boolean limelightbOnline = false;
+  public boolean limelightcOnline = false;
 
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
@@ -267,6 +267,9 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
+    if (yourPose == null || targetPose == null) {
+      return 0;
+    }
     double distance =
         Math.hypot(targetPose.getX() - yourPose.getX(), targetPose.getY() - yourPose.getY());
     // 1 millimeter
