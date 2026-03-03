@@ -297,16 +297,25 @@ public class VisionSubsystem extends SubsystemBase {
 
   public boolean isLimeLightaOnline() {
     NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_A);
+    if (table == null) {
+      return false;
+    }
     return table.getEntry("tv").getLastChange() > 0;
   }
 
   public boolean isLimeLightbOnline() {
     NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_B);
+    if (table == null) {
+      return false;
+    }
     return table.getEntry("tv").getLastChange() > 0;
   }
 
   public boolean isLimeLightcOnline() {
     NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_C);
+    if (table == null) {
+      return false;
+    }
     return table.getEntry("tv").getLastChange() > 0;
   }
 }
