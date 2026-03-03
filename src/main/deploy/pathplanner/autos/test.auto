@@ -5,7 +5,7 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -36,7 +36,7 @@
           }
         },
         {
-          "type": "parallel",
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -57,7 +57,7 @@
         {
           "type": "named",
           "data": {
-            "name": "launch"
+            "name": "intake"
           }
         },
         {

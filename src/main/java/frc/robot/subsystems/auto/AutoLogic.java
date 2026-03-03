@@ -187,18 +187,15 @@ public class AutoLogic {
         NamedCommands.registerCommand("launch", launcherSimCommand());
       } else {
         NamedCommands.registerCommand("launch", launcherCommand());
+             NamedCommands.registerCommand("launch2", launcherCommand2());
+
       }
 
-      if (RobotType.isAlpha()) {
-        NamedCommands.registerCommand("intake", rollerCommand());
-      } else {
-        NamedCommands.registerCommand("intake", intakeCommand());
-      }
-
+   NamedCommands.registerCommand("intake", intakeCommand());
       NamedCommands.registerCommand("aim", aimCommand());
       NamedCommands.registerCommand("deploy", deployCommand());
       NamedCommands.registerCommand("climb", climbCommand());
-      NamedCommands.registerCommand("rollers", rollerCommand());
+
 
     } else {
 
@@ -217,12 +214,8 @@ public class AutoLogic {
 
   public static Command aimCommand() {
 
-    return s.turretSubsystem.rotateToHub();
+    return s.turretSubsystem.rotateToHub().withName("aim");
     // return empty();
-  }
-
-  public static Command rollerCommand() { // Mainly AlphaBot Thing
-    return s.intakeRollers.runSingleRoller();
   }
 
   public static Command launcherCommand() {
@@ -232,10 +225,19 @@ public class AutoLogic {
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(
                     Commands.parallel(
-                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))).withName("launch")
         .withTimeout(4.5);
   }
+  public static Command launcherCommand2() {
 
+    return Commands.parallel(
+            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(
+                    Commands.parallel(
+                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor()))).withName("launch")
+        .withTimeout(4.5);
+  }
   public static Command launcherSimCommand() {
 
     return Commands.sequence(
@@ -253,12 +255,12 @@ public class AutoLogic {
 
   public static Command intakeCommand() {
 
-    return s.intakeSubsystem.smartIntake();
+    return s.intakeSubsystem.smartIntake().withName("intake");
   }
 
   public static Command deployCommand() {
 
-    return s.intakeSubsystem.deployPivot();
+    return s.intakeSubsystem.deployPivot().withName("deploy");
   }
 
   public static Command climbCommand() {

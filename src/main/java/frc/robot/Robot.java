@@ -153,6 +153,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledExit() {
+    CommandScheduler.getInstance().cancelAll();
 
     if (subsystems.visionSubsystem != null) {
       LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
