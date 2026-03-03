@@ -136,6 +136,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    CommandScheduler.getInstance().cancelAll();
     if (subsystems.visionSubsystem != null) {
       // seed internal limelight imu for mt2
       LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
