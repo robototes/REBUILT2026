@@ -110,7 +110,7 @@ public class VisionSubsystem extends SubsystemBase {
     limelightaOnline = isLimeLightaOnline();
     limelightbOnline = isLimeLightbOnline();
     limelightcOnline = isLimeLightcOnline();
-    if (RobotType.isComp()) {
+    if (!RobotType.isAlpha()) {
       if (limelightaOnline) {
         RawFiducial[] rawFiducialsA = ACamera.getRawFiducials();
         // DataLogManager.log("got raw fiducials");
@@ -207,9 +207,9 @@ public class VisionSubsystem extends SubsystemBase {
               Units.radiansToDegrees(fieldPose3d.getRotation().getAngle()),
               2)
           || lastFieldPose != null
-              && Math.abs(
+              && !(Math.abs(
                       getDistanceToTargetViaPoseEstimation(lastFieldPose, fieldPose3d.toPose2d()))
-                  < DISTANCE_TOLERANCE) {
+                  < DISTANCE_TOLERANCE)) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
       }
@@ -249,9 +249,15 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public int getNumTargets() {
-    int A = ACamera.getNumTargets();
-    int B = BCamera.getNumTargets();
-    return A + B;
+    if (!RobotType.isAlpha()) {
+      int A = ACamera.getNumTargets();
+      int B = BCamera.getNumTargets();
+      return A + B;
+    }
+    if (RobotType.isAlpha()) {
+      return CCamera.getNumTargets();
+    }
+    return 0;
   }
 
   public double getLastTimestampSeconds() {

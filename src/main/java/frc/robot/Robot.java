@@ -115,7 +115,17 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
-      if (RobotType.isComp()) {
+      if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
+
+        LimelightHelpers.SetRobotOrientation(
+            Hardware.LIMELIGHT_C,
+            swerveState.Pose.getRotation().getDegrees(),
+            swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+            0,
+            0,
+            0,
+            0);
+      } else {
         if (subsystems.visionSubsystem.limelightaOnline) {
           LimelightHelpers.SetRobotOrientation(
               Hardware.LIMELIGHT_A,
@@ -137,17 +147,6 @@ public class Robot extends TimedRobot {
               0);
         }
       }
-      if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
-
-        LimelightHelpers.SetRobotOrientation(
-            Hardware.LIMELIGHT_C,
-            swerveState.Pose.getRotation().getDegrees(),
-            swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-            0,
-            0,
-            0,
-            0);
-      }
       subsystems.visionSubsystem.update();
     }
     if (subsystems.detectionSubsystem != null) {
@@ -162,7 +161,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    if (subsystems.visionSubsystem != null && RobotType.isComp()) {
+    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
       if (subsystems.visionSubsystem.limelightaOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
       }
@@ -188,7 +187,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledExit() {
-    if (subsystems.visionSubsystem != null && RobotType.isComp()) {
+    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
       if (subsystems.visionSubsystem.limelightaOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
       }
