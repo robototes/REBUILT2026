@@ -87,6 +87,12 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "try"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "launch"
