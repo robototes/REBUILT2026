@@ -22,6 +22,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
+import frc.robot.util.robotType.RobotType;
 
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
@@ -48,15 +49,25 @@ public class VisionSubsystem extends SubsystemBase {
   private final FieldObject2d rawVisionFieldObject;
 
   private BooleanSubscriber disableVision;
+  private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
+  private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/fieldPose3d", Pose3d.struct)
           .publish();
+  private final StructPublisher<Pose3d> rawFieldPose3dEntryA =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/rawFieldPose3dA", Pose3d.struct)
+          .publish();
   private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
       NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dLeft", Pose3d.struct)
+          .getStructTopic("vision/rawFieldPose3dB", Pose3d.struct)
+          .publish();
+  private final StructPublisher<Pose3d> rawFieldPose3dEntryC =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/rawFieldPose3dC", Pose3d.struct)
           .publish();
   private final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
       NetworkTableInstance.getDefault()
@@ -74,8 +85,7 @@ public class VisionSubsystem extends SubsystemBase {
   private double tagAmbiguity = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
-  private static final double DISTANCE_TOLERANCE = 1;
-
+  private static final double DISTANCE_TOLERANCE = 1.0;
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
@@ -97,28 +107,46 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void update() {
     // DataLogManager.log("updating");
-    RawFiducial[] rawFiducialsC = CCamera.getRawFiducials();
-    // DataLogManager.log("got raw fiducials");
-    if (rawFiducialsC != null) {
-      if (rawFiducialsC.length != 1) {
-        BetterPoseEstimate estimatemt1 = CCamera.getBetterPoseEstimate();
-        for (RawFiducial rf : rawFiducialsC) {
-          // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt1, rawFieldPose3dEntryB, rf);
-        }
-      } else {
-        BetterPoseEstimate estimatemt2 = CCamera.getPoseEstimateMegatag2();
-        for (RawFiducial rf : rawFiducialsC) {
-          // DataLogManager.log("processing raw fiducials");
-          processLimelight(estimatemt2, rawFieldPose3dEntryB, rf);
+    limelightaOnline = isLimeLightaOnline();
+    limelightbOnline = isLimeLightbOnline();
+    limelightcOnline = isLimeLightcOnline();
+    if (!RobotType.isAlpha()) {
+      processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
+      processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
+      updateCameraView();
+    }
+
+    if (RobotType.isAlpha()) {
+      processCamera(CCamera, limelightaOnline, rawFieldPose3dEntryC);
+    }
+  }
+
+  private void processCamera(
+      LLCamera camera, boolean cameraOnline, StructPublisher<Pose3d> rawFieldPose3dEntry) {
+    if (cameraOnline) {
+      RawFiducial[] rawFiducials = camera.getRawFiducials();
+      if (rawFiducials != null) {
+        if (rawFiducials.length != 1) {
+          BetterPoseEstimate estimatemt1 = BCamera.getBetterPoseEstimate();
+          processLimelight(estimatemt1, rawFieldPose3dEntry);
+          for (RawFiducial rf : rawFiducials) {
+            // DataLogManager.log("processing raw fiducials");
+            processTags(rf);
+          }
+        } else {
+          BetterPoseEstimate estimatemt2 = BCamera.getPoseEstimateMegatag2();
+          processLimelight(estimatemt2, rawFieldPose3dEntry);
+          for (RawFiducial rf : rawFiducials) {
+            // DataLogManager.log("processing raw fiducials");
+            processTags(rf);
+          }
         }
       }
     }
-    updateCameraView();
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, RawFiducial rf) {
+      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry) {
     if (getDisableVision()) {
       return;
     }
@@ -131,16 +159,6 @@ public class VisionSubsystem extends SubsystemBase {
 
       double timestampSeconds = estimate.timestampSeconds;
       Pose3d fieldPose3d = estimate.pose3d;
-      var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-      if (tagPose.isEmpty()) {
-        DriverStation.reportWarning(
-            "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-            false);
-        return;
-      }
-      this.distance =
-          getDistanceToTargetViaPoseEstimation(fieldPose3d.toPose2d(), tagPose.get().toPose2d());
-      this.tagAmbiguity = rf.ambiguity;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
       //   DataLogManager.log("got new data");
@@ -181,9 +199,28 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
+  private void processTags(RawFiducial rf) {
+    var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
+    if (tagPose.isEmpty()) {
+      DriverStation.reportWarning(
+          "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
+          false);
+      return;
+    }
+    this.distance = getDistanceToTargetViaPoseEstimation(lastFieldPose, tagPose.get().toPose2d());
+    this.tagAmbiguity = rf.ambiguity;
+  }
+
   public int getNumTargets() {
-    int C = CCamera.getNumTargets();
-    return C;
+    if (!RobotType.isAlpha()) {
+      int A = ACamera.getNumTargets();
+      int B = BCamera.getNumTargets();
+      return A + B;
+    }
+    if (RobotType.isAlpha()) {
+      return CCamera.getNumTargets();
+    }
+    return 0;
   }
 
   public double getLastTimestampSeconds() {
@@ -214,10 +251,6 @@ public class VisionSubsystem extends SubsystemBase {
 
   public boolean getDisableVision() {
     return disableVision.get(false);
-  }
-
-  public boolean isViewFinder() {
-    return "viewfinder".equals(CCamera.getPipeline());
   }
 
   public Pose2d getLastVisionPose2d() {
