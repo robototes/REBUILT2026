@@ -15,7 +15,6 @@ public class LaunchCalculator {
   public static Pose2d estimatedPose;
   public static double estimatedDist;
 
-  // These filters are here to reduce noise when grabbing turret and hood angles
   // private final LinearFilter ROC__target_turret_filter =
   //     LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
   // private final LinearFilter ROC__target_hood_filter =
