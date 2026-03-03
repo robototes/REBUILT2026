@@ -107,9 +107,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void update() {
     // DataLogManager.log("updating");
-    limelightaOnline = isLimeLightaOnline();
-    limelightbOnline = isLimeLightbOnline();
-    limelightcOnline = isLimeLightcOnline();
+    limelightaOnline = isLimeLightOnline(LIMELIGHT_A);
+    limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
+    limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
     if (!RobotType.isAlpha()) {
       processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
       processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
@@ -264,24 +264,8 @@ public class VisionSubsystem extends SubsystemBase {
     compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
   }
 
-  public boolean isLimeLightaOnline() {
-    NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_A);
-    if (table == null) {
-      return false;
-    }
-    return true;
-  }
-
-  public boolean isLimeLightbOnline() {
-    NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_B);
-    if (table == null) {
-      return false;
-    }
-    return true;
-  }
-
-  public boolean isLimeLightcOnline() {
-    NetworkTable table = NetworkTableInstance.getDefault().getTable(Hardware.LIMELIGHT_C);
+  public boolean isLimeLightOnline(String name) {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(name);
     if (table == null) {
       return false;
     }
