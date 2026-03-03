@@ -1,5 +1,7 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
@@ -14,9 +16,6 @@ import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
-
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
@@ -43,7 +42,7 @@ public class Subsystems {
     public static final boolean DRIVEBASE_ENABLED = true;
     public static final boolean INTAKE_ROLLERS_ENABLED = true;
     public static final boolean INTAKE_ARM_ENABLED = true;
-    public static final boolean VISION_ENABLED = false;
+    public static final boolean VISION_ENABLED = true;
     public static final boolean SPINDEXER_ENABLED = true;
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;

@@ -202,10 +202,6 @@ public class VisionSubsystem extends SubsystemBase {
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
-          || !MathUtil.isNear(
-              drivetrain.getState().Pose.getRotation().getDegrees(),
-              Units.radiansToDegrees(fieldPose3d.getRotation().getAngle()),
-              2)
           || lastFieldPose != null
               && !(Math.abs(
                       getDistanceToTargetViaPoseEstimation(lastFieldPose, fieldPose3d.toPose2d()))
@@ -219,7 +215,7 @@ public class VisionSubsystem extends SubsystemBase {
         // to not need kalman filtering
         // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
         // VecBuilder.fill(0.1, 0.1, 99999));
-        drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds);
+        drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
@@ -306,7 +302,7 @@ public class VisionSubsystem extends SubsystemBase {
     if (table == null) {
       return false;
     }
-    return table.getEntry("tv").getLastChange() > 0;
+    return true;
   }
 
   public boolean isLimeLightbOnline() {
@@ -314,7 +310,7 @@ public class VisionSubsystem extends SubsystemBase {
     if (table == null) {
       return false;
     }
-    return table.getEntry("tv").getLastChange() > 0;
+    return true;
   }
 
   public boolean isLimeLightcOnline() {
@@ -322,6 +318,6 @@ public class VisionSubsystem extends SubsystemBase {
     if (table == null) {
       return false;
     }
-    return table.getEntry("tv").getLastChange() > 0;
+    return true;
   }
 }
