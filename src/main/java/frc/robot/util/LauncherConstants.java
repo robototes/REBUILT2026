@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -84,6 +85,10 @@ public class LauncherConstants {
   public static Translation2d launcherFromRobot(Pose2d robot) {
     Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
     return robot.plus(fieldRelativeLauncherOffset).getTranslation();
+  }
+
+  public static Transform2d turretTransform() {
+    return new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d hub, Pose2d robot) {

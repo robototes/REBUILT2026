@@ -53,8 +53,7 @@ public class LaunchCalculator {
 
   // Static initializer
   static {
-    turretTransfom =
-        new Transform2d(LauncherConstants.launcherFromRobot(estimatedPose), Rotation2d.kZero);
+    turretTransfom = LauncherConstants.turretTransform();
     minDistance = 1.34;
     maxDistance = 5.60;
     phaseDelay = 0.03;
