@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -55,7 +54,7 @@ public class LauncherSubsystem extends SubsystemBase {
           flywheels.setVelocityRPS(flywheelsGoal);
           turret.setTurretRawPosition(turretGoal);
         },
-        () -> CommandScheduler.getInstance().schedule(stowCommand()));
+        () -> stowCommand());
   }
 
   // TODO: add tolerance range calculation

@@ -5,7 +5,7 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -30,13 +30,7 @@
           }
         },
         {
-          "type": "wait",
-          "data": {
-            "waitTime": 4.5
-          }
-        },
-        {
-          "type": "parallel",
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -58,12 +52,6 @@
           "type": "named",
           "data": {
             "name": "launch"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 4.5
           }
         }
       ]
