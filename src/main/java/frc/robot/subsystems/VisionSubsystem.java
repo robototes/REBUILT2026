@@ -111,65 +111,32 @@ public class VisionSubsystem extends SubsystemBase {
     limelightbOnline = isLimeLightbOnline();
     limelightcOnline = isLimeLightcOnline();
     if (!RobotType.isAlpha()) {
-      if (limelightaOnline) {
-        RawFiducial[] rawFiducialsA = ACamera.getRawFiducials();
-        // DataLogManager.log("got raw fiducials");
-        if (rawFiducialsA != null) {
-          if (rawFiducialsA.length != 1) {
-            BetterPoseEstimate estimatemt1 = ACamera.getBetterPoseEstimate();
-            processLimelight(estimatemt1, rawFieldPose3dEntryA);
-            for (RawFiducial rf : rawFiducialsA) {
-              // DataLogManager.log("processing raw fiducials");
-              processTags(rf);
-            }
-          } else {
-            BetterPoseEstimate estimatemt2 = ACamera.getPoseEstimateMegatag2();
-            processLimelight(estimatemt2, rawFieldPose3dEntryA);
-            for (RawFiducial rf : rawFiducialsA) {
-              // DataLogManager.log("processing raw fiducials");
-              processTags(rf);
-            }
-          }
-        }
-      }
-      if (limelightbOnline) {
-        RawFiducial[] rawFiducialsB = BCamera.getRawFiducials();
-        if (rawFiducialsB != null) {
-          if (rawFiducialsB.length != 1) {
-            BetterPoseEstimate estimatemt1 = BCamera.getBetterPoseEstimate();
-            processLimelight(estimatemt1, rawFieldPose3dEntryB);
-            for (RawFiducial rf : rawFiducialsB) {
-              // DataLogManager.log("processing raw fiducials");
-              processTags(rf);
-            }
-          } else {
-            BetterPoseEstimate estimatemt2 = BCamera.getPoseEstimateMegatag2();
-            processLimelight(estimatemt2, rawFieldPose3dEntryB);
-            for (RawFiducial rf : rawFiducialsB) {
-              // DataLogManager.log("processing raw fiducials");
-              processTags(rf);
-            }
-          }
-        }
-      }
-
+      processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
+      processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
       updateCameraView();
     }
 
-    if (RobotType.isAlpha() && limelightcOnline) {
-      RawFiducial[] rawFiducialsC = CCamera.getRawFiducials();
-      if (rawFiducialsC != null) {
-        if (rawFiducialsC.length != 1) {
+    if (RobotType.isAlpha()) {
+      processCamera(CCamera, limelightaOnline, rawFieldPose3dEntryC);
+    }
+  }
+
+  private void processCamera(
+      LLCamera camera, boolean cameraOnline, StructPublisher<Pose3d> rawFieldPose3dEntry) {
+    if (cameraOnline) {
+      RawFiducial[] rawFiducials = camera.getRawFiducials();
+      if (rawFiducials != null) {
+        if (rawFiducials.length != 1) {
           BetterPoseEstimate estimatemt1 = BCamera.getBetterPoseEstimate();
-          processLimelight(estimatemt1, rawFieldPose3dEntryB);
-          for (RawFiducial rf : rawFiducialsC) {
+          processLimelight(estimatemt1, rawFieldPose3dEntry);
+          for (RawFiducial rf : rawFiducials) {
             // DataLogManager.log("processing raw fiducials");
             processTags(rf);
           }
         } else {
           BetterPoseEstimate estimatemt2 = BCamera.getPoseEstimateMegatag2();
-          processLimelight(estimatemt2, rawFieldPose3dEntryB);
-          for (RawFiducial rf : rawFiducialsC) {
+          processLimelight(estimatemt2, rawFieldPose3dEntry);
+          for (RawFiducial rf : rawFiducials) {
             // DataLogManager.log("processing raw fiducials");
             processTags(rf);
           }
