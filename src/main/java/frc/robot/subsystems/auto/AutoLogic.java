@@ -191,16 +191,12 @@ public class AutoLogic {
 
       NamedCommands.registerCommand("intake", intakeCommand());
       NamedCommands.registerCommand("stow", autoStowCommand());
-      NamedCommands.registerCommand("aim", aimCommand().andThen(Commands.print("aim")));
-      NamedCommands.registerCommand("deploy", deployCommand().andThen(Commands.print("deploy")));
-      NamedCommands.registerCommand("climb", climbCommand().andThen(Commands.print("climb")));
+      NamedCommands.registerCommand("climb", climbCommand());
 
     } else {
 
       NamedCommands.registerCommand("launch", empty());
-      NamedCommands.registerCommand("aim", empty());
       NamedCommands.registerCommand("intake", empty());
-      NamedCommands.registerCommand("deploy", empty());
       NamedCommands.registerCommand("climb", empty());
     }
   }
@@ -209,18 +205,11 @@ public class AutoLogic {
     return Commands.none();
   }
 
-  public static Command aimCommand() {
-    return s.turretSubsystem.rotateToHub();
-    // return empty();
-  }
-
   public static Command launcherCommand() {
     return Commands.parallel(
             s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(
-                    Commands.parallel(
-                        s.spindexerSubsystem.startMotor(), s.feederSubsystem.startMotor())))
+                .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
         .withTimeout(4.5);
   }
 
@@ -244,11 +233,6 @@ public class AutoLogic {
 
   public static Command intakeCommand() {
     return s.intakeSubsystem.smartIntake();
-  }
-
-  public static Command deployCommand() {
-
-    return s.intakeSubsystem.deployPivot();
   }
 
   public static Command climbCommand() {

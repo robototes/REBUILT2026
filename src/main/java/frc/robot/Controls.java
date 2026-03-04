@@ -247,8 +247,6 @@ public class Controls {
       return;
     }
 
-    // CHANGE AFTER ALPHA IS DONE!
-
     driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
 
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
@@ -337,9 +335,9 @@ public class Controls {
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
     driverController
-        .rightStick() // Unsure if this is supposed to be rightstick but I think so?
+        .rightStick()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
-                () -> driverController.getLeftX(), () -> driverController.getLeftY()));
+                () -> driverController.getRightX(), () -> driverController.getRightY()));
   }
 }
