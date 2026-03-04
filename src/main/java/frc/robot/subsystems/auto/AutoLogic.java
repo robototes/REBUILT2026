@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
@@ -58,7 +57,7 @@ public class AutoLogic {
   private static final List<AutoPath> rebuiltPaths =
       List.of(
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-                  new AutoPath("test", "test"),
+          new AutoPath("test", "test"),
           new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
           new AutoPath("LT-NeutralLeft-Sweep", "LT-NeutralLeft-Sweep"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),

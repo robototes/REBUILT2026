@@ -38,18 +38,17 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
     return Commands.run(
-            () -> {
-              Translation2d targetPose = (AllianceUtils.getHubTranslation2d());
+        () -> {
+          Translation2d targetPose = (AllianceUtils.getHubTranslation2d());
 
-              hoodGoal =
-                  LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
-              flywheelsGoal =
-                  LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
-              turretGoal = turret.calculateTurretAngle();
+          hoodGoal = LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
+          flywheelsGoal =
+              LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
+          turretGoal = turret.calculateTurretAngle();
 
-              hoodGoalPub.set(hoodGoal);
-              flywheelGoalPub.set(flywheelsGoal);
-              turretGoalPub.set(turretGoal);
+          hoodGoalPub.set(hoodGoal);
+          flywheelGoalPub.set(flywheelsGoal);
+          turretGoalPub.set(turretGoal);
 
           hood.setHoodPosition(hoodGoal);
           flywheels.setVelocityRPS(flywheelsGoal);
@@ -73,6 +72,8 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command rawStowCommand() {
-    return Commands.parallel(Commands.runOnce(()->hood.setHoodPosition(0)), Commands.runOnce(()-> flywheels.setVelocityRPS(0)));
+    return Commands.parallel(
+        Commands.runOnce(() -> hood.setHoodPosition(0)),
+        Commands.runOnce(() -> flywheels.setVelocityRPS(0)));
   }
 }
