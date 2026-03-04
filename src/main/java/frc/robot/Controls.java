@@ -227,7 +227,7 @@ public class Controls {
                         s.indexerSubsystem
                             .runIndexer()
                             .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR)))
-                    .andThen(Commands.waitSeconds(0.5))
+                    .alongWith(Commands.waitSeconds(0.5))
                     .andThen(s.intakeSubsystem.intakeWhileLuanchCommand())));
     driverController
         .start()
