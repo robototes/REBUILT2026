@@ -183,21 +183,22 @@ public class AutoLogic {
     if (enabled) {
 
       if (Robot.isSimulation()) {
-        NamedCommands.registerCommand("launch", launcherSimCommand());
+        NamedCommands.registerCommand(
+            "launch", launcherSimCommand().andThen(Commands.print("launch")));
       } else {
-        NamedCommands.registerCommand("launch", launcherCommand());
+        NamedCommands.registerCommand(
+            "launch", launcherCommand().andThen(Commands.print("launch")));
       }
 
       if (RobotType.isAlpha()) {
-        NamedCommands.registerCommand("intake", rollerCommand());
+        NamedCommands.registerCommand("intake", rollerCommand().andThen(Commands.print("intake")));
       } else {
-        NamedCommands.registerCommand("intake", intakeCommand());
+        NamedCommands.registerCommand("intake", intakeCommand().andThen(Commands.print("intake")));
       }
 
-      NamedCommands.registerCommand("aim", aimCommand());
-      NamedCommands.registerCommand("deploy", deployCommand());
-      NamedCommands.registerCommand("climb", climbCommand());
-      NamedCommands.registerCommand("rollers", rollerCommand());
+      NamedCommands.registerCommand("aim", aimCommand().andThen(Commands.print("aim")));
+      NamedCommands.registerCommand("deploy", deployCommand().andThen(Commands.print("deploy")));
+      NamedCommands.registerCommand("climb", climbCommand().andThen(Commands.print("climb")));
 
     } else {
 
@@ -206,7 +207,6 @@ public class AutoLogic {
       NamedCommands.registerCommand("intake", empty());
       NamedCommands.registerCommand("deploy", empty());
       NamedCommands.registerCommand("climb", empty());
-      NamedCommands.registerCommand("rollers", empty());
     }
   }
 
