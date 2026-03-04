@@ -314,6 +314,8 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
+
+    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTarget());
     // use static position constants from TurretSubsystem
     turretTestController
         .povUp()
@@ -340,7 +342,7 @@ public class Controls {
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
-    turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
+    turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToTarget());
     driverController
         .rightBumper()
         .onTrue(

@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
+import frc.robot.util.ClockAndHubStatus;
 import frc.robot.util.LauncherConstants;
 import frc.robot.util.robotType.RobotType;
 import java.util.function.Supplier;
@@ -32,6 +32,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final CommandSwerveDrivetrain driveTrain;
+  private final ClockAndHubStatus clockAndHubStatus = new ClockAndHubStatus();
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
@@ -180,7 +181,7 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(degreeTolerance);
   }
 
-  public double calculateTurretAngle() {
+  public double calculateTurretAngle(Translation2d target) {
     // Get current turret pose
     Translation2d turretTranslation =
         LauncherConstants.launcherFromRobot(driveTrain.getState().Pose);
@@ -189,19 +190,18 @@ public class TurretSubsystem extends SubsystemBase {
     Rotation2d turretRotation = driveTrain.getState().Pose.getRotation().plus(Rotation2d.k180deg);
 
     // Get hub position
-    Translation2d hubTranslation = AllianceUtils.getHubTranslation2d();
+    Translation2d targetTranslation = target;
 
-    // Calculate vector from turret to hub
-    Translation2d turretToHub = hubTranslation.minus(turretTranslation);
+    // Calculate vector from turret to target
+    Translation2d turretToTarget = targetTranslation.minus(turretTranslation);
 
-    // Calculate absolute field angle to hub
-    Rotation2d absoluteAngleToHub =
-        new Rotation2d(Math.atan2(turretToHub.getY(), turretToHub.getX()));
+    // Calculate absolute field angle to target
+    Rotation2d absoluteAngleToTarget =
+        new Rotation2d(Math.atan2(turretToTarget.getY(), turretToTarget.getX()));
 
     // Calculate turret angle relative to robot's forward direction
     // Subtract turret's rotation to get robot-relative angle
-    Rotation2d turretAngle = absoluteAngleToHub.minus(turretRotation);
-
+    Rotation2d turretAngle = absoluteAngleToTarget.minus(turretRotation);
     // Convert to degrees
     double degrees = turretAngle.getDegrees();
 
@@ -220,10 +220,11 @@ public class TurretSubsystem extends SubsystemBase {
     return rotations;
   }
 
-  public Command rotateToHub() {
+  public Command rotateToTarget() {
     return runEnd(
         () -> {
-          double targetRotations = calculateTurretAngle();
+          double targetRotations =
+              calculateTurretAngle(clockAndHubStatus.getTargetLocation(driveTrain));
           // turretMotor.setControl(request.withPosition(targetRotations));
           this.setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
