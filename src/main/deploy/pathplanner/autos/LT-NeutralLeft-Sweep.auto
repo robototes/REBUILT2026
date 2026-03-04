@@ -37,41 +37,27 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Copy of LB-NeutralLeft-Back"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "LT-n-aim"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
+            "pathName": "Copy of LB-NeutralLeft-Back"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-n-aim"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
           }
         },
         {
@@ -107,41 +93,21 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "stop-LT-NeutralLeft-back-preclimb"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Copy of stop-LT-NeutralLeft-back-preclimb"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
+            "pathName": "stop-LT-NeutralLeft-back-preclimb"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
           }
         }
       ]
