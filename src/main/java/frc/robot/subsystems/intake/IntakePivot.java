@@ -118,7 +118,7 @@ public class IntakePivot extends SubsystemBase {
           pivotMotor.setControl(request.withPosition(pos));
           targetPos = pos;
         })
-        .withName("Run intake pivot");
+        .withName("Set intake pivot to " + pos);
   }
 
   public Command zeroPivot() {

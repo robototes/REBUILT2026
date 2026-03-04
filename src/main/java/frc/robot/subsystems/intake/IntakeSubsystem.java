@@ -17,7 +17,7 @@ public class IntakeSubsystem {
   }
 
   public Command deployPivot() {
-    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
+    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS).until(() -> intakePivot.isDeployed(5));
   }
 
   public Command retractPivot() {

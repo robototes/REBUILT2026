@@ -15,7 +15,7 @@ public class Controllers {
   public final CommandXboxController indexingTestController;
   public final CommandXboxController launcherTestController;
   public final CommandXboxController turretTestController;
-  public final CommandXboxController intakeController;
+  public final CommandXboxController intakeTestController;
   public final CommandXboxController visionTestController;
 
   public static class ControllerConstants {
@@ -49,9 +49,9 @@ public class Controllers {
       turretTestController = null;
     }
     if (INTAKE_TEST_CONTROLLER_ENABLED) {
-      intakeController = new CommandXboxController(Controls.INTAKE_TEST_CONTROLLER_PORT);
+      intakeTestController = new CommandXboxController(Controls.INTAKE_TEST_CONTROLLER_PORT);
     } else {
-      intakeController = null;
+      intakeTestController = null;
     }
     if (VISION_TEST_CONTROLLER_ENABLED) {
       visionTestController = new CommandXboxController(Controls.VISION_TEST_CONTROLLER_PORT);

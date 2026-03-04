@@ -81,7 +81,7 @@ public class IntakeRollers extends SubsystemBase {
   }
 
   public Command runRollers() {
-    return Commands.runEnd(
+    return Commands.startEnd(
             () -> {
               leftRoller.set(INTAKE_SPEED);
               rightRoller.setControl(followRequest);
