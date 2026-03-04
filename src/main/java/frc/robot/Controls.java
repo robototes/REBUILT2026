@@ -111,7 +111,8 @@ public class Controls {
       controller.indexingTestController.x().whileTrue(s.spindexerSubsystem.startMotor());
 
       // run both while left trigger is held
-      controller.indexingTestController
+      controller
+          .indexingTestController
           .leftTrigger()
           .whileTrue(
               Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
@@ -179,7 +180,8 @@ public class Controls {
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on back button press
-    controller.driverController
+    controller
+        .driverController
         .back()
         .onTrue(
             s.drivebaseSubsystem
@@ -210,7 +212,8 @@ public class Controls {
       DataLogManager.log("Flywheels and/or Hood are disabled");
       return;
     }
-    controller.driverController
+    controller
+        .driverController
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
@@ -218,7 +221,10 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runIndexer()))
                 .withName("Aim turret then feeder and spindexer started"));
-    controller.driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
+    controller
+        .driverController
+        .y()
+        .onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
 
     if (!LAUNCHER_TUNING_CONTROLLER_ENABLED) {
       DataLogManager.log("Controllers.java: launcher test controller is disabled");
@@ -226,12 +232,14 @@ public class Controls {
     } else {
 
       if (s.flywheels.TUNER_CONTROLLED) {
-        controller.launcherTestController
+        controller
+            .launcherTestController
             .leftBumper()
             .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
       }
       if (s.hood.TUNER_CONTROLLED) {
-        controller.launcherTestController
+        controller
+            .launcherTestController
             .rightBumper()
             .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
       }
@@ -259,8 +267,14 @@ public class Controls {
       return;
     } else {
       controller.intakeTestController.a().whileTrue(s.intakeRollers.runRollers());
-      controller.intakeTestController.x().onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
-      controller.intakeTestController.y().onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
+      controller
+          .intakeTestController
+          .x()
+          .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+      controller
+          .intakeTestController
+          .y()
+          .onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
     }
   }
 
@@ -293,7 +307,8 @@ public class Controls {
       DataLogManager.log("Controllers.java: vision test controller is disabled");
     } else {
       if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-        controller.visionTestController
+        controller
+            .visionTestController
             .leftBumper()
             .onTrue(
                 s.drivebaseSubsystem
@@ -319,20 +334,25 @@ public class Controls {
       DataLogManager.log("Controllers.java: turret test controller is disabled");
       return;
     } else {
-      controller.turretTestController
+      controller
+          .turretTestController
           .povUp()
           .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
-      controller.turretTestController
+      controller
+          .turretTestController
           .povLeft()
           .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
-      controller.turretTestController
+      controller
+          .turretTestController
           .povRight()
           .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
-      controller.turretTestController
+      controller
+          .turretTestController
           .povDown()
           .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
       controller.turretTestController.y().onTrue(s.turretSubsystem.zeroTurret());
-      controller.turretTestController
+      controller
+          .turretTestController
           .rightStick()
           .whileTrue(
               s.turretSubsystem.manualMovingVoltage(
@@ -340,7 +360,8 @@ public class Controls {
                       Volts.of(
                           TurretSubsystem.TURRET_MANUAL_SPEED
                               * controller.turretTestController.getRightY())));
-      controller.turretTestController
+      controller
+          .turretTestController
           .leftStick()
           .whileTrue(
               s.turretSubsystem.pointFacingJoystick(
@@ -348,17 +369,20 @@ public class Controls {
                   () -> controller.turretTestController.getLeftY()));
 
       controller.turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
-      controller.turretTestController
+      controller
+          .turretTestController
           .rightBumper()
           .onTrue(
               s.drivebaseSubsystem.runOnce(
                   () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
     }
 
-    controller.driverController
+    controller
+        .driverController
         .rightTrigger()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
-                () -> controller.driverController.getLeftX(), () -> controller.driverController.getLeftY()));
+                () -> controller.driverController.getLeftX(),
+                () -> controller.driverController.getLeftY()));
   }
 }

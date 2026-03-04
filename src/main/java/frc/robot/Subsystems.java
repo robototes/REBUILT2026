@@ -52,7 +52,8 @@ public class Subsystems {
     public static final boolean LAUNCHER_ENABLED =
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
-    public static final boolean FUEL_SIM_ENABLED = false;  // fuel sim can be slow on some laptops, only enable when specifically needed
+    public static final boolean FUEL_SIM_ENABLED =
+        false; // fuel sim can be slow on some laptops, only enable when specifically needed
   }
 
   // Subsystems go here
