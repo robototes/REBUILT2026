@@ -36,7 +36,7 @@ public class AutoLogic {
     LEFT_TRENCH("Left Trench", new Pose2d(4.35, 7.465, new Rotation2d(Units.degreesToRadians(90)))),
     LEFT_BUMP("Left Bump", new Pose2d(3.664, 5.411, new Rotation2d(Units.degreesToRadians(90)))),
     CENTER("Center", new Pose2d(3.62, 4.008, new Rotation2d(Units.degreesToRadians(0)))),
-    RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(-90)))),
+    RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(180)))),
     RIGHT_TRENCH(
         "Right Trench", new Pose2d(4.35, 0.55, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
