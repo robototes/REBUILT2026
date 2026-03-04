@@ -1,5 +1,7 @@
 package frc.robot.util;
 
+import java.util.Map;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -13,6 +15,8 @@ public class LauncherConstants {
   private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
       new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
+  private static double minTime = 100000;
+  private static double maxTime = -100000;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -61,6 +65,12 @@ public class LauncherConstants {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
       timeMap.put(point.distance, point.time);
+      if (point.time > maxTime){
+        maxTime = point.time;
+      }
+      if (point.time < minTime){
+        minTime = point.time;
+      }
     }
   }
 
@@ -92,16 +102,14 @@ public class LauncherConstants {
   }
 
   public static double minTimeOfFlight() {
-    for (timeMap) {
-
-    }
+    return minTime;
   }
 
   public static double maxTimeOfFlight() {
-    for (timeMap) {
-
-    }
+    return maxTime;
   }
+
+
 
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
   public static Translation2d predictTargetPos(
