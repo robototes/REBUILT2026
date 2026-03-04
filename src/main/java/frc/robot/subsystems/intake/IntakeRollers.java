@@ -3,11 +3,12 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -25,8 +26,8 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private MotionMagicVelocityVoltage voltReq = new MotionMagicVelocityVoltage(0);
-  private static final double INTAKE_RPS = 40;
+  private final VoltageOut voltReq = new VoltageOut(0);
+  private static final double INTAKE_VOLTAGE = 10;
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -85,7 +86,7 @@ public class IntakeRollers extends SubsystemBase {
   public Command runRollers() {
     return Commands.runEnd(
         () -> {
-          leftRoller.setControl(voltReq.withVelocity(INTAKE_RPS));
+          leftRoller.setControl(voltReq.withOutput(INTAKE_VOLTAGE));
           rightRoller.setControl(followRequest);
         },
         () -> {
