@@ -114,7 +114,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public Command setPivotPosition(double pos) {
-    return run(() -> {
+    return runOnce(() -> {
           pivotMotor.setControl(request.withPosition(pos));
           targetPos = pos;
         })
