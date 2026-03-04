@@ -219,7 +219,6 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                // s.launcherSubsystem.launcherAimV2(s.drivebaseSubsystem),
                 s.ledSubsystem
                     .alternateColors(
                         LEDSubsystem.LAUNCH_PREP_COLOR_TWO, LEDSubsystem.LAUNCH_PREP_COLOR, 0.2)
@@ -227,7 +226,7 @@ public class Controls {
                     .andThen(
                         s.indexerSubsystem
                             .runIndexer()
-                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR)))));
+                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR))).andThen(Commands.waitSeconds(0.5)).andThen(s.intakeSubsystem.intakeWhileLuanchCommand())));
     driverController
         .start()
         .onTrue(

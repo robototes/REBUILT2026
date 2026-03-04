@@ -25,6 +25,10 @@ public class IntakeSubsystem extends SubsystemBase {
     return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
   }
 
+  public Command intakeWhileLuanchCommand() {
+    return intakePivot.setPivotPosition(IntakePivot.LAUNCH_POS).alongWith(intakeRollers.runRollers());
+  }
+
   public Command smartIntake() {
     return Commands.either(
         runRollersCommand(),
