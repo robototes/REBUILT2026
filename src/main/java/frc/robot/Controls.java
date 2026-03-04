@@ -219,7 +219,7 @@ public class Controls {
                     s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(s.indexerSubsystem.runIndexer()))
-                .withName("Aim turret then feeder and spindexer started"));
+                .withName("Aim turret then feeder and spindexer started")).onFalse(s.launcherSubsystem.stowCommand());
     driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {

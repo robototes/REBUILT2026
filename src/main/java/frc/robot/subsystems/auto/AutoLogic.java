@@ -58,6 +58,7 @@ public class AutoLogic {
   private static final List<AutoPath> rebuiltPaths =
       List.of(
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
+                  new AutoPath("test", "test"),
           new AutoPath("LT-NeutralLeft-Climb", "LT-NeutralLeft-Climb"),
           new AutoPath("LT-NeutralLeft-Sweep", "LT-NeutralLeft-Sweep"),
           new AutoPath("RT-NeutralRight-Climb", "RT-NeutralRight-Climb"),
@@ -190,12 +191,8 @@ public class AutoLogic {
             "launch", launcherCommand().andThen(Commands.print("launch")));
       }
 
-      if (RobotType.isAlpha()) {
-        NamedCommands.registerCommand("intake", rollerCommand().andThen(Commands.print("intake")));
-      } else {
-        NamedCommands.registerCommand("intake", intakeCommand().andThen(Commands.print("intake")));
-      }
-
+      NamedCommands.registerCommand("intake", intakeCommand());
+      NamedCommands.registerCommand("stow", autoStowCommand());
       NamedCommands.registerCommand("aim", aimCommand().andThen(Commands.print("aim")));
       NamedCommands.registerCommand("deploy", deployCommand().andThen(Commands.print("deploy")));
       NamedCommands.registerCommand("climb", climbCommand().andThen(Commands.print("climb")));
@@ -215,17 +212,11 @@ public class AutoLogic {
   }
 
   public static Command aimCommand() {
-
     return s.turretSubsystem.rotateToHub();
     // return empty();
   }
 
-  public static Command rollerCommand() { // Mainly AlphaBot Thing
-    return s.intakeRollers.runSingleRoller();
-  }
-
   public static Command launcherCommand() {
-
     return Commands.parallel(
             s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
@@ -235,8 +226,11 @@ public class AutoLogic {
         .withTimeout(4.5);
   }
 
-  public static Command launcherSimCommand() {
+  public static Command autoStowCommand() {
+    return s.launcherSubsystem.rawStowCommand();
+  }
 
+  public static Command launcherSimCommand() {
     return Commands.sequence(
         AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), // SIM PURPOSES ONLY
         Commands.run(
@@ -251,7 +245,6 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-
     return s.intakeSubsystem.smartIntake();
   }
 

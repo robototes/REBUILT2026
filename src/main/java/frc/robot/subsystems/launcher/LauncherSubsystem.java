@@ -37,7 +37,7 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
-    return Commands.runEnd(
+    return Commands.run(
         () -> {
           Translation2d targetPose = (AllianceUtils.getHubTranslation2d());
 
@@ -53,8 +53,7 @@ public class LauncherSubsystem extends SubsystemBase {
           hood.setHoodPosition(hoodGoal);
           flywheels.setVelocityRPS(flywheelsGoal);
           turret.setTurretRawPosition(turretGoal);
-        },
-        () -> stowCommand());
+        });
   }
 
   // TODO: add tolerance range calculation
@@ -70,5 +69,9 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public Command stowCommand() {
     return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.setVelocityCommand(0.0));
+  }
+
+  public Command rawStowCommand() {
+    return Commands.parallel(Commands.runOnce(()->hood.setHoodPosition(0)), Commands.runOnce(()-> flywheels.setVelocityRPS(0)));
   }
 }
