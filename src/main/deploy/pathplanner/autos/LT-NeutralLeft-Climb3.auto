@@ -76,6 +76,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Week 3",
   "choreoAuto": false
 }

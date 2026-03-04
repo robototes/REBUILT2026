@@ -13,13 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RB-Outpost"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Outpost-Shoot"
+            "pathName": "RT-Outpost"
           }
         },
         {
@@ -50,6 +44,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Week 3",
   "choreoAuto": false
 }

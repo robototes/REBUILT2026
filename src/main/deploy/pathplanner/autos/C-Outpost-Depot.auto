@@ -97,12 +97,6 @@
           "data": {
             "name": "stow"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climb"
-          }
         }
       ]
     }

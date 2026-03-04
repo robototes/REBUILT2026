@@ -11,22 +11,9 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "C-Climb"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
+            "pathName": "RT-Outpost"
           }
         },
         {
@@ -40,17 +27,11 @@
           "data": {
             "name": "stow"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "climb"
-          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Week 3",
+  "folder": null,
   "choreoAuto": false
 }
