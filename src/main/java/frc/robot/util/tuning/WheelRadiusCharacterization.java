@@ -35,6 +35,9 @@ public class WheelRadiusCharacterization {
   public static Command wheelRadiusCharacterizationCommand(CommandSwerveDrivetrain drive) {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
+
+    ChassisSpeeds speeds = new ChassisSpeeds();
+    SwerveRequest driveRequest = new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds);
     return Commands.parallel(
             // Drive control sequence
             Commands.sequence(
@@ -47,10 +50,7 @@ public class WheelRadiusCharacterization {
                 // Turn in place, accelerating up to full speed
                 Commands.run(
                     () -> {
-                      double speed = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
-                      SwerveRequest driveRequest =
-                          new SwerveRequest.ApplyRobotSpeeds()
-                              .withSpeeds(new ChassisSpeeds(0.0, 0.0, speed));
+                      speeds.omegaRadiansPerSecond = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
                       drive.setControl(driveRequest);
                     },
                     drive)),
