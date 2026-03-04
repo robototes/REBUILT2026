@@ -262,7 +262,7 @@ public class Controls {
     controller.driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     controller.driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
-    if (!INTAKE_TEST_CONTROLLER_ENABLED) {
+    if (!controller.intakeTestController.isConnected()) {
       DataLogManager.log("Controllers.java: intake test controller is disabled");
       return;
     } else {
