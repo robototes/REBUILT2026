@@ -267,8 +267,6 @@ public class Controls {
       return;
     }
 
-    s.intakePivot.setDefaultCommand(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
-
     driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
