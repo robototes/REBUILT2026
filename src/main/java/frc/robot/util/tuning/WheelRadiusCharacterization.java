@@ -86,6 +86,12 @@ public class WheelRadiusCharacterization {
                                 Math.abs(positions[i] - state.positions[i]) / (double) NUM_MODULES;
                           }
                           wheelDelta = CommandSwerveDrivetrain.tau(wheelDelta);
+                          if (Math.abs(wheelDelta) < 1E-5) {
+                            DataLogManager.log(
+                                "Wheel Radius Characterization aborted: No significant movement detected.");
+                            return;
+                          }
+
                           double wheelRadius = (state.gyroDelta * DRIVE_BASE_RADIUS) / wheelDelta;
 
                           DataLogManager.log(
