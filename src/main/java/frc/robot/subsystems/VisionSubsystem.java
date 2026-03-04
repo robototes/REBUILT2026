@@ -158,6 +158,7 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       double timestampSeconds = estimate.timestampSeconds;
+      Pose2d drivePose2d = drivetrain.getState().Pose;
       Pose3d fieldPose3d = estimate.pose3d;
       boolean pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
@@ -171,7 +172,7 @@ public class VisionSubsystem extends SubsystemBase {
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
           || lastFieldPose != null
               && !(Math.abs(
-                      getDistanceToTargetViaPoseEstimation(lastFieldPose, fieldPose3d.toPose2d()))
+                      getDistanceToTargetViaPoseEstimation(drivePose2d, fieldPose3d.toPose2d()))
                   < DISTANCE_TOLERANCE)) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
