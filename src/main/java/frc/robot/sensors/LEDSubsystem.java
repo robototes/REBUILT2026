@@ -6,6 +6,7 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
+
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -199,15 +200,7 @@ public class LEDSubsystem extends SubsystemBase {
    * @return a command that sets the LEDs once when scheduled
    */
   public Command setLEDsCommand(RGBWColor color) {
-    Command command;
-
-    if (DEFAULT_COLOR.equals(color)) {
-      command = Commands.run(() -> setHardwareColor(color), this);
-    } else {
-      command = Commands.runOnce(() -> setHardwareColor(color), this);
-    }
-
-    return command.withName("Set LEDs Default Brightness");
+    return Commands.runOnce(() -> setHardwareColor(color), this).withName("Set LEDs color");
   }
 
   public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
@@ -250,7 +243,6 @@ public class LEDSubsystem extends SubsystemBase {
                   setHardwareColor(colorB);
                 },
                 this),
-            Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
             Commands.waitSeconds(interval))
         .repeatedly();
   }
