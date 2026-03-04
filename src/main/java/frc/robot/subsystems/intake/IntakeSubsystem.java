@@ -26,7 +26,9 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command intakeWhileLuanchCommand() {
-    return intakePivot.setPivotPosition(IntakePivot.LAUNCH_POS).alongWith(intakeRollers.runRollers());
+    return intakePivot
+        .setPivotPosition(IntakePivot.LAUNCH_POS)
+        .alongWith(intakeRollers.runRollers());
   }
 
   public Command smartIntake() {
