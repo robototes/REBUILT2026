@@ -43,12 +43,12 @@ public class Hood extends SubsystemBase {
   public NtTunableDouble targetPosition;
   private long lastPositionUpdateTime = 0;
 
-  private static final double TARGET_TOLERANCE = 0.1; // tolerance in motor rotations
+  private static final double TARGET_TOLERANCE = 0.05; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
       1; // voltage/speed to control the motor for manual control
   private static final double STATOR_CURRENT_LIMIT = 10; // stator limit in amps
   // GEAR_RATIO = 2.90909;
-  private static final double FORWARD_SOFT_LIMIT = 1.72; // 1.72 rotations
+  private static final double FORWARD_SOFT_LIMIT = 18.411; // 1.72 rotations
   private static final double BACKWARD_SOFT_LIMIT = -0.02; // -0.02 rotations, past zeroing point
 
   public final boolean TUNER_CONTROLLED = false; // boolean to check if tuner control is being used
@@ -133,7 +133,7 @@ public class Hood extends SubsystemBase {
     if (TUNER_CONTROLLED) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetPosition.getAtomic();
-        setHoodPosition(currentTarget.value);
+        // setHoodPosition(currentTarget.value);
         lastPositionUpdateTime = currentTarget.timestamp;
       }
     }

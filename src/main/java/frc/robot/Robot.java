@@ -4,10 +4,9 @@
 
 package frc.robot;
 
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
-
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -19,10 +18,14 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.LauncherConstants;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
 
 /**
@@ -112,52 +115,99 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
-      LimelightHelpers.SetRobotOrientation(
-          Hardware.LIMELIGHT_C,
-          swerveState.Pose.getRotation().getDegrees(),
-          swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-          0,
-          0,
-          0,
-          0);
-      subsystems.visionSubsystem.update();
+      if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
+
+        LimelightHelpers.SetRobotOrientation(
+            Hardware.LIMELIGHT_C,
+            swerveState.Pose.getRotation().getDegrees(),
+            swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+            0,
+            0,
+            0,
+            0);
+      } else {
+        if (subsystems.visionSubsystem.limelightaOnline) {
+          LimelightHelpers.SetRobotOrientation(
+              Hardware.LIMELIGHT_A,
+              swerveState.Pose.getRotation().getDegrees(),
+              swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+              0,
+              0,
+              0,
+              0);
+        }
+        if (subsystems.visionSubsystem.limelightbOnline) {
+        LimelightHelpers.SetRobotOrientation(
+            Hardware.LIMELIGHT_B,
+            swerveState.Pose.getRotation().getDegrees(),
+            swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+            0,
+            0,
+            0,
+            0);
+        subsystems.visionSubsystem.update();
+        }
+      }
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
     }
+    var robotState = subsystems.drivebaseSubsystem.getState();
+    LauncherConstants.update(
+        robotState.Pose, robotState.Speeds, AllianceUtils.getHubTranslation2d());
     CommandScheduler.getInstance().run();
   }
+
+
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    if (subsystems.visionSubsystem != null) {
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_ON);
-      // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 1);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_C, APRILTAG_PIPELINE);
+    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+      }
+    }
+    if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
+      // && subsystems.visionSubsystem.limelightcOnline) {
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
       // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
+      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+    }
+    if (subsystems.turretSubsystem != null) {
+      subsystems.turretSubsystem.coastTurret();
     }
   }
 
   @Override
   public void disabledExit() {
-    if (subsystems.visionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_OFF);
-      // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(Hardware.LIMELIGHT_C, 4);
+    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
+      }
+    }
+    if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
+      //  && subsystems.visionSubsystem.limelightcOnline) {
+      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
     }
     if (subsystems.detectionSubsystem != null) {
       // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
-      LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
+      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+    }
+
+    if (subsystems.turretSubsystem != null) {
+      subsystems.turretSubsystem.brakeTurret();
     }
   }
 
@@ -167,6 +217,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    subsystems.ledSubsystem.setRainbowEnabled(true);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -186,6 +237,7 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    subsystems.ledSubsystem.setRainbowEnabled(false);
   }
 
   /** This function is called periodically during operator control. */
@@ -212,5 +264,21 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     robotSim.updateFuelSim();
+  }
+
+  private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
+    if (isEnteringDisabled) {
+      // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(limelightName, 1);
+      LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
+
+    } else {
+      // get rid of throttle to get rid of throttle "glazing"
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(limelightName, 4);
+    }
   }
 }

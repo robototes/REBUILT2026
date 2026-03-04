@@ -10,6 +10,7 @@ import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ARM_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.LAUNCHER_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
@@ -18,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -47,11 +49,12 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
-    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean TURRET_ENABLED = true;
+    public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean LAUNCHER_ENABLED =
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
+    public static final boolean LEDS_ENABLED = true;
   }
 
   // Subsystems go here
@@ -68,10 +71,20 @@ public class Subsystems {
   public final IntakeSubsystem intakeSubsystem;
   public final TurretSubsystem turretSubsystem;
   public final IndexerSubsystem indexerSubsystem;
+  public final LEDSubsystem ledSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
+
+    // Pattern is
+
+    // if (SUBSYSTEM_ENABLED){
+    //   subsystem = new SubsystemName();
+    // } else {
+    //   subsystem = null;
+    // }
+
     if (DRIVEBASE_ENABLED) {
       drivebaseSubsystem =
           (RobotType.type == RobotTypesEnum.ALPHA)
@@ -91,13 +104,6 @@ public class Subsystems {
       intakePivot = new IntakePivot();
     } else {
       intakePivot = null;
-    }
-
-    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystem);
-    } else {
-      visionSubsystem = null;
     }
 
     if (FLYWHEELS_ENABLED) {
@@ -152,6 +158,19 @@ public class Subsystems {
       indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
     } else {
       indexerSubsystem = null;
+    }
+
+    if (LEDS_ENABLED) {
+      ledSubsystem = new LEDSubsystem();
+    } else {
+      ledSubsystem = null;
+    }
+
+    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
+      SmartDashboard.putData(visionSubsystem);
+    } else {
+      visionSubsystem = null;
     }
   }
 }

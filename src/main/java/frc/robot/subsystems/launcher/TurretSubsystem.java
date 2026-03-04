@@ -2,6 +2,7 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -20,9 +21,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LauncherConstants;
+import frc.robot.util.robotType.RobotType;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -34,17 +37,17 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double FRONT_POSITION = 0.16748;
-  public static final double LEFT_POSITION = 0.3122;
-  public static final double RIGHT_POSITION = 0;
+  public static final double FRONT_POSITION = 0;
+  public static final double LEFT_POSITION = -0.15;
+  public static final double RIGHT_POSITION = 0.15;
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = 2.97;
+  private static final double kP = 1000;
   private static final double kI = 0;
-  private static final double kD = 1;
+  private static final double kD = 0;
   private static final double kG = 0;
-  private static final double kS = 0.41;
+  private static final double kS = 0.82;
   private static final double kV = 0.9;
   private static final double kA = 0.12;
 
@@ -53,16 +56,16 @@ public class TurretSubsystem extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 5;
-  private static final double ACCELERATION = 10;
-  private static final double JERK = 150;
+  private static final double CRUISE_VELOCITY = 200;
+  private static final double ACCELERATION = 600;
+  private static final double JERK = 2000;
 
   // Gear Ratio
-  private static final double GEAR_RATIO = 24;
+  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  private static final double TURRET_MAX = 190; // degrees
-  private static final double TURRET_MIN = 0; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 180; // degrees
+  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
@@ -71,17 +74,19 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
+    turretMotor =
+        new TalonFX(
+            Hardware.TURRET_MOTOR_ID,
+            RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     turretConfig();
-    turretMotor.setPosition(0);
     turretRotation.set(new Pose2d[2]);
   }
 
   public void turretConfig() {
     TalonFXConfiguration config = new TalonFXConfiguration();
 
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     config.Feedback.SensorToMechanismRatio = GEAR_RATIO;
 
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
@@ -203,8 +208,8 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to clockwise positive
     degrees = -degrees;
 
-    // Normalize to [0, 360)
-    degrees = (degrees % 360 + 360) % 360;
+    // Normalize to [-180, 180]
+    degrees = MathUtil.inputModulus(degrees, -180, 180);
 
     // Clamp to turret limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
@@ -219,7 +224,8 @@ public class TurretSubsystem extends SubsystemBase {
     return runEnd(
         () -> {
           double targetRotations = calculateTurretAngle();
-          turretMotor.setControl(request.withPosition(targetRotations));
+          // turretMotor.setControl(request.withPosition(targetRotations));
+          this.setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
           Transform2d fieldRelativeOffset =
               new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
@@ -243,5 +249,13 @@ public class TurretSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Turret/Target", targetPos);
     SmartDashboard.putNumber("Turret/Velocity", turretMotor.getVelocity().getValueAsDouble());
     SmartDashboard.putNumber("Turret/Current", turretMotor.getStatorCurrent().getValueAsDouble());
+  }
+
+  public void brakeTurret() {
+    turretMotor.setNeutralMode(NeutralModeValue.Brake);
+  }
+
+  public void coastTurret() {
+    turretMotor.setNeutralMode(NeutralModeValue.Coast);
   }
 }

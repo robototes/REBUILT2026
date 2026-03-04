@@ -19,6 +19,9 @@ public class Hardware {
   // Climb Motor (35-39)
   public static final int CLIMB_MOTOR_ID = 35;
 
+  // CANdle
+  public static final int CANDLE_ID = 40;
+
   public static final int PDH_ID = 1;
   // Swerve: 1-12
   // Check CompTunerConstants
@@ -27,5 +30,5 @@ public class Hardware {
   // TODO: Use more descriptive names for Limelights once their positions are known.
   public static final String LIMELIGHT_A = "limelight-a";
   public static final String LIMELIGHT_B = "limelight-b";
-  public static final String LIMELIGHT_C = "limelight-c";
+  public static final String LIMELIGHT_C = "limelight-b";
 }
