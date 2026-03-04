@@ -117,7 +117,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     if (RobotType.isAlpha()) {
-      processCamera(CCamera, limelightaOnline, rawFieldPose3dEntryC);
+      processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC);
     }
   }
 
@@ -269,6 +269,6 @@ public class VisionSubsystem extends SubsystemBase {
     if (table == null) {
       return false;
     }
-    return true;
+    return table.getEntry("tl").getLastChange() > 0;
   }
 }

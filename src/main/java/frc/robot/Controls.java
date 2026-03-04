@@ -222,13 +222,12 @@ public class Controls {
                 s.ledSubsystem
                     .alternateColors(
                         LEDSubsystem.LAUNCH_PREP_COLOR_TWO, LEDSubsystem.LAUNCH_PREP_COLOR, 0.2)
-                    .until(() -> s.launcherSubsystem.isAtTarget())
+                    .until(() -> true /* s.launcherSubsystem.isAtTarget()*/)
                     .andThen(
                         s.indexerSubsystem
                             .runIndexer()
-                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR)))
-                    .alongWith(Commands.waitSeconds(0.5))
-                    .andThen(s.intakeSubsystem.intakeWhileLuanchCommand())));
+                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR))),
+                Commands.waitSeconds(0.5).andThen(s.intakeSubsystem.intakeWhileLuanchCommand())));
     driverController
         .start()
         .onTrue(
@@ -342,7 +341,7 @@ public class Controls {
             s.turretSubsystem.pointFacingJoystick(
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
     turretTestController.rightTrigger().whileTrue(s.turretSubsystem.rotateToHub());
-    turretTestController
+    driverController
         .rightBumper()
         .onTrue(
             s.drivebaseSubsystem.runOnce(

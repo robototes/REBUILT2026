@@ -145,9 +145,9 @@ public class Robot extends TimedRobot {
               0,
               0,
               0);
-          subsystems.visionSubsystem.update();
         }
       }
+      subsystems.visionSubsystem.update();
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
