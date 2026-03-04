@@ -137,23 +137,24 @@ public class LauncherConstants {
     return timeMap.get(distance);
   }
 
-  public static double minTimeOfFlight() {
-    for (timeMap) {
+  // public static double minTimeOfFlight() {
+  //   for (timeMap) {
 
-    }
-  }
+  //   }
+  // }
 
-  public static double maxTimeOfFlight() {
-    for (timeMap) {
+  // public static double maxTimeOfFlight() {
+  //   for (timeMap) {
 
-    }
-  }
+  //   }
+  // }
 
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
-  public static Translation2d predictTargetPos(
-      Translation2d target, ChassisSpeeds fieldSpeeds, double timeOfFlight) {
-    double predictedX = target.getX() - fieldSpeeds.vxMetersPerSecond * timeOfFlight;
-    double predictedY = target.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight;
+  // public static Translation2d predictTargetPos(
+  //     Translation2d target, ChassisSpeeds fieldSpeeds, double timeOfFlight) {
+  //   double predictedX = target.getX() - fieldSpeeds.vxMetersPerSecond * timeOfFlight;
+  //   double predictedY = target.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight;}
+
   // finds angular speed using velocity = angular rotation * radius
   // radius is launcher offset from center of robot
   // then converts angular speed into tangent velocity

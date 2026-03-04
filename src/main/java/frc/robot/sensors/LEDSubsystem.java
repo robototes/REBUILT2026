@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.util.ClockAndHubStatus;
 
 public class LEDSubsystem extends SubsystemBase {
   public enum LedMode {
@@ -304,5 +305,10 @@ public class LEDSubsystem extends SubsystemBase {
       isRainbowPub.set(false);
       currentAnimationPub.set("None");
     }
+  }
+
+  public Command hubTransition(RGBWColor flashWith) {
+    return Commands.run(() -> alternateColors(flashWith, DEFAULT_COLOR, CAN_ID))
+        .onlyWhile(() -> ClockAndHubStatus.isHubActive(0));
   }
 }

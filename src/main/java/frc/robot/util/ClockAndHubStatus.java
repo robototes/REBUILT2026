@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import java.util.Optional;
 
-class ClockAndHubStatus {
+public class ClockAndHubStatus {
   public double matchLength = 2.5;
 
   private Translation2d pointLeftFieldTop = new Translation2d(2, 2);
@@ -43,7 +43,7 @@ class ClockAndHubStatus {
     }
   }
 
-  public boolean isHubActive(double lookAheadTime) {
+  public static boolean isHubActive(double lookAheadTime) {
     Optional<Alliance> alliance = DriverStation.getAlliance();
     // If we have no alliance, we cannot be enabled, therefore no hub.
     if (alliance.isEmpty()) {
