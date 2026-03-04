@@ -123,8 +123,8 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setTurretRawPosition(double pos) {
-    turretMotor.setControl(request.withPosition(-pos));
-    targetPos = -pos;
+    turretMotor.setControl(request.withPosition(pos));
+    targetPos = pos;
   }
 
   public Command zeroTurret() {
