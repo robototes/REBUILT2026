@@ -37,28 +37,27 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": " stop-NeutralRight-RT-intake-back"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
+            "pathName": " half-stop-NeutralRight-RT-intake-back"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "stop-NeutralRight-RT-intake-back"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
           }
         },
         {
@@ -69,6 +68,12 @@
                 "type": "sequential",
                 "data": {
                   "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "half-NeutralRight-NeutralLeft-Sweep"
+                      }
+                    },
                     {
                       "type": "path",
                       "data": {
@@ -88,28 +93,27 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "stop-NeutralRight-NeutralLeftTWO"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "aim"
-                }
-              }
-            ]
+            "pathName": "half-stop-NeutralRight-NeutralLeftTWO"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "stop-NeutralRight-NeutralLeftTWO"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
           }
         }
       ]
