@@ -52,8 +52,6 @@ public class Controls {
   private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
   private static final int VISION_TEST_CONTROLLER_PORT = 5;
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
