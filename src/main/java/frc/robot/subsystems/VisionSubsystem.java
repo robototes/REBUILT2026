@@ -102,10 +102,14 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
     SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
-    SmartDashboard.putNumber("vision/Num targets", getNumTargets());
-    SmartDashboard.putNumber("vision/april tag distance meters", getDistanceToTarget());
-    SmartDashboard.putNumber("vision/time since last reading", getTimeSinceLastReading());
-    SmartDashboard.putNumber("vision/tag ambiguity", getTagAmbiguity());
+    SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
+    SmartDashboard.putNumber("/vision/april tag distance meters", getDistanceToTarget());
+    SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
+    SmartDashboard.putNumber("/vision/tag ambiguity", getTagAmbiguity());
+    SmartDashboard.putBoolean("/vision/limelightaOnline", limelightaOnline);
+    SmartDashboard.putBoolean("/vision/limelightbOnline", limelightbOnline);
+    SmartDashboard.putBoolean("/vision/limelightcOnline", limelightcOnline);
+
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
@@ -176,7 +180,6 @@ public class VisionSubsystem extends SubsystemBase {
                           drivePose3d.toPose2d(), fieldPose3d.toPose2d()))
                   < DISTANCE_TOLERANCE)) {
         pose_bad = true;
-        // DataLogManager.log(("pose bad");
       }
 
       if (!pose_bad) {
@@ -193,10 +196,8 @@ public class VisionSubsystem extends SubsystemBase {
           fieldPose3dEntry.set(fieldPose3d);
           lastFieldPose = fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
-          //   DataLogManager.log("updated pose");
         }
         lastTimestampSeconds = timestampSeconds;
-        // DataLogManager.log("updated time");
       }
     }
   }
@@ -260,8 +261,10 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void updateCameraView(Pose3d robotPose3d) {
-    compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
-    compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
+    if (robotPose3d != null) {
+      compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
+      compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
+    }
   }
 
   public boolean isLimeLightOnline(String name) {

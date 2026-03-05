@@ -95,7 +95,7 @@ public class IntakeRollers extends SubsystemBase {
         });
   }
 
-    public Command runRollersAgitations() {
+  public Command runRollersAgitations() {
     return Commands.runEnd(
         () -> {
           leftRoller.setControl(voltReq.withOutput(INTAKE_VOLTAGE));
