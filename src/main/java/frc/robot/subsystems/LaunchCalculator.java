@@ -77,8 +77,7 @@ public class LaunchCalculator {
 
     // Calculate field relative turret velocity
     ChassisSpeeds robotVelocity =
-        ChassisSpeeds.fromRobotRelativeSpeeds(
-            robotRelativeVelocity, robotState.getState().Pose.getRotation());
+        ChassisSpeeds.fromRobotRelativeSpeeds(robotRelativeVelocity, estimatedPose.getRotation());
     // Grab robot angle
     double robotAngle = estimatedPose.getRotation().getRadians();
     // calculate the turret's tangetial velocity field relative.
