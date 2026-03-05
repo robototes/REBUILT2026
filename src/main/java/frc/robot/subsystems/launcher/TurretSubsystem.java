@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.ClockAndHubStatus;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.Supplier;
@@ -32,7 +32,6 @@ public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final CommandSwerveDrivetrain driveTrain;
-  private final ClockAndHubStatus clockAndHubStatus = new ClockAndHubStatus();
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
@@ -224,10 +223,7 @@ public class TurretSubsystem extends SubsystemBase {
     return runEnd(
         () -> {
           double targetRotations =
-              calculateTurretAngle(clockAndHubStatus.getTargetLocation(driveTrain));
-          // turretMotor.setControl(request.withPosition(targetRotations));
-          // System.out.println(targetRotations);
-          // System.out.println(clockAndHubStatus.getTargetLocation(driveTrain).getX());
+              calculateTurretAngle(GetTargetFromPose.getTargetLocation(driveTrain));
           this.setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
           Transform2d fieldRelativeOffset =

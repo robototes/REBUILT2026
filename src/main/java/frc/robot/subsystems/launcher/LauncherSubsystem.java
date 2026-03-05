@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 
 public class LauncherSubsystem extends SubsystemBase {
@@ -34,7 +34,7 @@ public class LauncherSubsystem extends SubsystemBase {
   public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
     return Commands.runEnd(
         () -> {
-          Translation2d targetPose = (AllianceUtils.getHubTranslation2d());
+          Translation2d targetPose = GetTargetFromPose.getTargetLocation(drive);
 
           hoodGoal = LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
           flywheelsGoal =
@@ -79,7 +79,7 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command zeroSubsystemCommand() {
-    return Commands.parallel(hood.zeroHoodCommand());
+    return Commands.runOnce(() -> hood.zeroHoodCommand());
   }
 
   public Command stowCommand() {
