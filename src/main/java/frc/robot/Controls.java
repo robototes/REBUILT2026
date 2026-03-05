@@ -222,7 +222,7 @@ public class Controls {
                 s.ledSubsystem
                     .alternateColors(
                         LEDSubsystem.LAUNCH_PREP_COLOR_TWO, LEDSubsystem.LAUNCH_PREP_COLOR, 0.2)
-                    .until(() -> true /* s.launcherSubsystem.isAtTarget()*/)
+                    .until(() ->  s.launcherSubsystem.isAtTarget())
                     .andThen(
                         s.indexerSubsystem
                             .runIndexer()

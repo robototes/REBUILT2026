@@ -26,7 +26,8 @@ public class IntakeRollers extends SubsystemBase {
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
   private final VoltageOut voltReq = new VoltageOut(0);
-  private static final double INTAKE_VOLTAGE = 10;
+  private static final double INTAKE_VOLTAGE = 8;
+  private static final double AGITATE_VOLTAGE = 4;
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -83,6 +84,18 @@ public class IntakeRollers extends SubsystemBase {
   }
 
   public Command runRollers() {
+    return Commands.runEnd(
+        () -> {
+          leftRoller.setControl(voltReq.withOutput(INTAKE_VOLTAGE));
+          rightRoller.setControl(followRequest);
+        },
+        () -> {
+          leftRoller.stopMotor();
+          rightRoller.stopMotor();
+        });
+  }
+
+    public Command runRollersAgitations() {
     return Commands.runEnd(
         () -> {
           leftRoller.setControl(voltReq.withOutput(INTAKE_VOLTAGE));
