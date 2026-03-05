@@ -30,7 +30,7 @@ public class ClockAndHubStatus {
       return AllianceUtils.getHubTranslation2d();
     }
 
-    if (AllianceUtils.isRed()) {
+    if (AllianceUtils.isBlue()) {
       if (drivetrain.getState().Pose.getX() <= allianceLineX) {
         return AllianceUtils.getHubTranslation2d();
       } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
@@ -38,7 +38,7 @@ public class ClockAndHubStatus {
       } else {
         return pointLeftFieldBottom;
       }
-    } else if (AllianceUtils.isBlue()) {
+    } else if (AllianceUtils.isRed()) {
       if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX)) {
         return AllianceUtils.getHubTranslation2d();
       } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
