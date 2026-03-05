@@ -24,8 +24,8 @@ import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.ClockAndHubStatus;
-import frc.robot.util.LauncherConstants;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
