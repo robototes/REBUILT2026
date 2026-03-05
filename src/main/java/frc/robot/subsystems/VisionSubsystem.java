@@ -80,6 +80,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   // state
   private double lastTimestampSeconds = 0;
+  private double timestampSeconds = 0;
   private Pose2d lastFieldPose = null;
   private double distance = 0;
   private double tagAmbiguity = 0;
@@ -89,6 +90,10 @@ public class VisionSubsystem extends SubsystemBase {
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
+  private Pose3d drivePose3d;
+  // vision
+  private Pose3d fieldPose3d;
+  private boolean pose_bad = false;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
@@ -96,24 +101,23 @@ public class VisionSubsystem extends SubsystemBase {
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
-    SmartDashboard.putNumber("Last timestamp", getLastTimestampSeconds());
-    SmartDashboard.putNumber("Num targets", getNumTargets());
-    SmartDashboard.putNumber("april tag distance meters", getDistanceToTarget());
-    SmartDashboard.putNumber("time since last reading", getTimeSinceLastReading());
-    SmartDashboard.putNumber("tag ambiguity", getTagAmbiguity());
+    SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
+    SmartDashboard.putNumber("vision/Num targets", getNumTargets());
+    SmartDashboard.putNumber("vision/april tag distance meters", getDistanceToTarget());
+    SmartDashboard.putNumber("vision/time since last reading", getTimeSinceLastReading());
+    SmartDashboard.putNumber("vision/tag ambiguity", getTagAmbiguity());
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
 
   public void update() {
-    // DataLogManager.log("updating");
     limelightaOnline = isLimeLightOnline(LIMELIGHT_A);
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
     if (!RobotType.isAlpha()) {
       processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
       processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
-      updateCameraView();
+      updateCameraView(drivePose3d);
     }
 
     if (RobotType.isAlpha()) {
@@ -127,17 +131,15 @@ public class VisionSubsystem extends SubsystemBase {
       RawFiducial[] rawFiducials = camera.getRawFiducials();
       if (rawFiducials != null) {
         if (rawFiducials.length != 1) {
-          BetterPoseEstimate estimatemt1 = BCamera.getBetterPoseEstimate();
-          processLimelight(estimatemt1, rawFieldPose3dEntry);
+          // Multi tag pose Estimation
+          processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry);
           for (RawFiducial rf : rawFiducials) {
-            // DataLogManager.log("processing raw fiducials");
             processTags(rf);
           }
         } else {
-          BetterPoseEstimate estimatemt2 = BCamera.getPoseEstimateMegatag2();
-          processLimelight(estimatemt2, rawFieldPose3dEntry);
+          // Single tag pose Estimation
+          processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry);
           for (RawFiducial rf : rawFiducials) {
-            // DataLogManager.log("processing raw fiducials");
             processTags(rf);
           }
         }
@@ -153,16 +155,14 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (estimate != null) {
       if (estimate.tagCount <= 0) {
-        // DataLogManager.log("no tags");
         return;
       }
 
-      double timestampSeconds = estimate.timestampSeconds;
-      Pose2d drivePose2d = drivetrain.getState().Pose;
-      Pose3d fieldPose3d = estimate.pose3d;
-      boolean pose_bad = false;
+      timestampSeconds = estimate.timestampSeconds;
+      drivePose3d = new Pose3d(drivetrain.getState().Pose);
+      fieldPose3d = estimate.pose3d;
+      pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
-      //   DataLogManager.log("got new data");
 
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
@@ -172,7 +172,8 @@ public class VisionSubsystem extends SubsystemBase {
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
           || lastFieldPose != null
               && !(Math.abs(
-                      getDistanceToTargetViaPoseEstimation(drivePose2d, fieldPose3d.toPose2d()))
+                      getDistanceToTargetViaPoseEstimation(
+                          drivePose3d.toPose2d(), fieldPose3d.toPose2d()))
                   < DISTANCE_TOLERANCE)) {
         pose_bad = true;
         // DataLogManager.log(("pose bad");
@@ -258,9 +259,7 @@ public class VisionSubsystem extends SubsystemBase {
     return lastFieldPose;
   }
 
-  private void updateCameraView() {
-    Pose2d robotPose2d = drivetrain.getState().Pose;
-    Pose3d robotPose3d = new Pose3d(robotPose2d);
+  private void updateCameraView(Pose3d robotPose3d) {
     compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
     compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
   }
@@ -270,6 +269,7 @@ public class VisionSubsystem extends SubsystemBase {
     if (table == null) {
       return false;
     }
-    return table.getEntry("tl").getLastChange() > 0;
+    // tl = timestamp, tv = valid target (supossedly tv updates every ll frame)
+    return table.getEntry("tv").getLastChange() > 0;
   }
 }
