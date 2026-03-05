@@ -10,6 +10,7 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
@@ -81,7 +83,9 @@ public class VisionSubsystem extends SubsystemBase {
   private double timestampSeconds = 0;
   private Pose2d lastFieldPose = null;
   private double distance = 0;
-  private double tagAmbiguity = 0;
+  private double distanceA = 0;
+  private double distanceB = 0;
+  private double distanceC = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
   private static final double DISTANCE_TOLERANCE = 1.0;
@@ -101,9 +105,10 @@ public class VisionSubsystem extends SubsystemBase {
     rawVisionFieldObject = robotField.getObject("RawVision");
     SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
     SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
-    SmartDashboard.putNumber("/vision/april tag distance meters", getDistanceToTarget());
+    SmartDashboard.putNumber("/vision/distance meters llA", distanceA);
+    SmartDashboard.putNumber("/vision/distance meters llB", distanceB);
+    SmartDashboard.putNumber("/vision/distance meters llC", distanceC);
     SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
-    SmartDashboard.putNumber("/vision/tag ambiguity", getTagAmbiguity());
     SmartDashboard.putBoolean("/vision/limelightaOnline", limelightaOnline);
     SmartDashboard.putBoolean("/vision/limelightbOnline", limelightbOnline);
     SmartDashboard.putBoolean("/vision/limelightcOnline", limelightcOnline);
@@ -139,6 +144,14 @@ public class VisionSubsystem extends SubsystemBase {
           // Single tag pose Estimation
           processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry);
         }
+      }
+      // rawfiducials should be closest apriltag do to how i configured them
+      if (camera.getName().equals(LIMELIGHT_A)) {
+        distanceA = getDistanceToApriltag(rawFiducials[0]);
+      } else if (camera.getName().equals(LIMELIGHT_B)) {
+        distanceB = getDistanceToApriltag(rawFiducials[0]);
+      } else {
+        distanceC = getDistanceToApriltag(rawFiducials[0]);
       }
     }
   }
@@ -226,10 +239,6 @@ public class VisionSubsystem extends SubsystemBase {
     return (double) Math.round(distance * 1000) / 1000;
   }
 
-  public double getTagAmbiguity() {
-    return tagAmbiguity;
-  }
-
   public boolean getDisableVision() {
     return disableVision.get(false);
   }
@@ -252,5 +261,16 @@ public class VisionSubsystem extends SubsystemBase {
     }
     // tl = timestamp, tv = valid target (supossedly tv updates every ll frame)
     return table.getEntry("tv").getLastChange() > 0;
+  }
+
+  private double getDistanceToApriltag(RawFiducial rf) {
+    var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
+    if (tagPose.isEmpty()) {
+      DriverStation.reportWarning(
+          "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
+          false);
+      return 0;
+    }
+    return getDistanceToTargetViaPoseEstimation(lastFieldPose, tagPose.get().toPose2d());
   }
 }
