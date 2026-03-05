@@ -158,8 +158,8 @@ public class TurretSubsystem extends SubsystemBase {
           // Shift so 0° = backward
           degrees += 180.0;
 
-          // Normalize to [0, 360)
-          degrees = (degrees % 360 + 360) % 360;
+          // Normalize to [-90, 270]
+          degrees = MathUtil.inputModulus(degrees, -90, 270);
 
           // Clamp to turret range
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
@@ -207,7 +207,7 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to clockwise positive
     degrees = -degrees;
 
-    // Normalize to [-180, 180]
+    // Normalize to [-90, 270]
     degrees = MathUtil.inputModulus(degrees, -90, 270);
 
     // Clamp to turret limits

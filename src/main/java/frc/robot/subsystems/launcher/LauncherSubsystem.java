@@ -79,7 +79,7 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command zeroSubsystemCommand() {
-    return Commands.runOnce(() -> hood.zeroHoodCommand());
+    return hood.zeroHoodCommand();
   }
 
   public Command stowCommand() {

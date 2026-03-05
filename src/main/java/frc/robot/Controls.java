@@ -30,6 +30,7 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakeRollers;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.RobotType;
@@ -259,7 +260,7 @@ public class Controls {
                             s.indexerSubsystem.runIndexer(),
                             Commands.runOnce(() -> currentMode = LEDMode.LAUNCH),
                             Commands.waitSeconds(1)
-                                .andThen(s.intakeSubsystem.intakeWhileLuanchCommand())))))
+                                .andThen(s.intakeSubsystem.intakeWhileLaunchCommand())))))
         .onFalse(Commands.runOnce(() -> currentMode = LEDMode.DEFAULT));
     driverController
         .start()
@@ -281,8 +282,6 @@ public class Controls {
           .and(launcherTuningController.rightBumper())
           .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
     }
-
-    launcherTuningController.start().onTrue(s.hood.autoZeroCommand());
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
@@ -321,7 +320,7 @@ public class Controls {
 
     connected(intakeTestController)
         .and(intakeTestController.a())
-        .whileTrue(s.intakeRollers.runRollers());
+        .whileTrue(s.intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE));
     connected(intakeTestController)
         .and(intakeTestController.x())
         .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
@@ -424,6 +423,6 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-    s.ledSubsystem.setDefaultCommand(Commands.runOnce(() -> s.ledSubsystem.setMode(currentMode)));
+    s.ledSubsystem.setDefaultCommand(Commands.run(() -> s.ledSubsystem.setMode(currentMode)));
   }
 }

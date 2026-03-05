@@ -14,7 +14,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollers();
+    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE);
   }
 
   public Command deployPivot() {
@@ -25,10 +25,10 @@ public class IntakeSubsystem extends SubsystemBase {
     return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
   }
 
-  public Command intakeWhileLuanchCommand() {
+  public Command intakeWhileLaunchCommand() {
     return intakePivot
         .setPivotPosition(IntakePivot.LAUNCH_POS)
-        .alongWith(intakeRollers.runRollersAgitations());
+        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE));
   }
 
   public Command smartIntake() {
