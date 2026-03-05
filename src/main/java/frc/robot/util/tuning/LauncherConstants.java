@@ -62,10 +62,10 @@ public class LauncherConstants {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
       timeMap.put(point.distance, point.time);
-      if (point.time > maxTime){
+      if (point.time > maxTime) {
         maxTime = point.time;
       }
-      if (point.time < minTime){
+      if (point.time < minTime) {
         minTime = point.time;
       }
     }
@@ -105,8 +105,6 @@ public class LauncherConstants {
   public static double maxTimeOfFlight() {
     return maxTime;
   }
-
-
 
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
   public static Translation2d predictTargetPos(

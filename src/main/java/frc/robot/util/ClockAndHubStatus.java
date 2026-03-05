@@ -1,12 +1,11 @@
 package frc.robot.util;
 
-import java.util.Optional;
-
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import java.util.Optional;
 
 public class ClockAndHubStatus {
   public double matchLength = 2.5;
