@@ -10,33 +10,42 @@ import java.util.Optional;
 public class ClockAndHubStatus {
   public double matchLength = 2.5;
 
-  private Translation2d pointLeftFieldTop = new Translation2d(2, 2);
-  private Translation2d pointLeftFieldBottom = new Translation2d(2, 6);
-  private Translation2d pointRightFieldTop = new Translation2d(14, 2);
-  private Translation2d pointRightFieldBottom = new Translation2d(14, 6);
+  private Translation2d pointLeftFieldTop = new Translation2d(2, 6);
+  private Translation2d pointLeftFieldBottom = new Translation2d(2, 2);
+  private Translation2d pointRightFieldTop = new Translation2d(14, 6);
+  private Translation2d pointRightFieldBottom = new Translation2d(14, 2);
+
+  private double fieldLength = Units.inchesToMeters(651.2);
+  private double fieldWidth = Units.inchesToMeters(317.7);
+  private double allianceLineX = Units.inchesToMeters(158.6);
+  private double robotOffset = Units.inchesToMeters(15);
+
+  private static final double TRANSITION_PERIOD_END_TIME = 130;
+  private static final double SHIFT_1_END_TIME = 105;
+  private static final double SHIFT_2_END_TIME = 80;
+  private static final double SHIFT_3_END_TIME = 55;
+  private static final double END_GAME_START_TIME = 30;
 
   public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
     if (isHubActive(0)) {
       return AllianceUtils.getHubTranslation2d();
-    } else {
-      if (AllianceUtils.isRed()) {
-        if (drivetrain.getState().Pose.getX() <= Units.inchesToMeters(158.6)) {
-          return AllianceUtils.getHubTranslation2d();
-        } else if (drivetrain.getState().Pose.getY() >= Units.inchesToMeters(317.7 / 2)) {
-          return pointLeftFieldTop;
-        } else {
-          return pointLeftFieldBottom;
-        }
-      }
     }
-    if (AllianceUtils.isBlue()) {
 
-      if (drivetrain.getState().Pose.getX() >= Units.inchesToMeters(651.2 - 158.6)) {
+    if (AllianceUtils.isBlue()) {
+      if (drivetrain.getState().Pose.getX() <= allianceLineX + robotOffset) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= Units.inchesToMeters(317.7 / 2)) {
-        return pointRightFieldBottom;
+      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+        return pointLeftFieldTop;
       } else {
+        return pointLeftFieldBottom;
+      }
+    } else if (AllianceUtils.isRed()) {
+      if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
+        return AllianceUtils.getHubTranslation2d();
+      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
         return pointRightFieldTop;
+      } else {
+        return pointRightFieldBottom;
       }
     } else {
       return AllianceUtils.getHubTranslation2d();
@@ -64,6 +73,7 @@ public class ClockAndHubStatus {
     if (gameData.isEmpty()) {
       return false;
     }
+
     boolean redInactiveFirst = false;
     switch (gameData.charAt(0)) {
       case 'R' -> redInactiveFirst = true;
@@ -74,26 +84,26 @@ public class ClockAndHubStatus {
       }
     }
 
-    // Shift was is active for blue if red won auto, or red if blue won auto.
+    // Shift is active
     boolean shift1Active =
         switch (alliance.get()) {
           case Red -> !redInactiveFirst;
           case Blue -> redInactiveFirst;
         };
 
-    if (matchTime > 130) {
+    if (matchTime > TRANSITION_PERIOD_END_TIME) {
       // Transition shift, hub is active.
       return true;
-    } else if (matchTime > 105) {
+    } else if (matchTime > SHIFT_1_END_TIME) {
       // Shift 1
       return shift1Active;
-    } else if (matchTime > 80) {
+    } else if (matchTime > SHIFT_2_END_TIME) {
       // Shift 2
       return !shift1Active;
-    } else if (matchTime > 55) {
+    } else if (matchTime > SHIFT_3_END_TIME) {
       // Shift 3
       return shift1Active;
-    } else if (matchTime > 30) {
+    } else if (matchTime > END_GAME_START_TIME) {
       // Shift 4
       return !shift1Active;
     } else {
@@ -104,6 +114,9 @@ public class ClockAndHubStatus {
 
   public boolean isGameDataValid() {
     String gameData = DriverStation.getGameSpecificMessage();
+    if (gameData.isEmpty()) {
+      return false;
+    }
 
     switch (gameData.charAt(0)) {
       case 'R':

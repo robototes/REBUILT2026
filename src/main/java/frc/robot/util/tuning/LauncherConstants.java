@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.tuning;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -25,6 +25,9 @@ public class LauncherConstants {
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
           .publish();
+          
+  private static double minTime = 100000;
+  private static double maxTime = -100000;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -74,6 +77,12 @@ public class LauncherConstants {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
       timeMap.put(point.distance, point.time);
+      if (point.time > maxTime) {
+        maxTime = point.time;
+      }
+      if (point.time < minTime) {
+        minTime = point.time;
+      }
     }
     turretToTarget.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
     turretRotationalVelocity.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
@@ -137,17 +146,13 @@ public class LauncherConstants {
     return timeMap.get(distance);
   }
 
-  // public static double minTimeOfFlight() {
-  //   for (timeMap) {
+  public static double minTimeOfFlight() {
+    return minTime;
+  }
 
-  //   }
-  // }
-
-  // public static double maxTimeOfFlight() {
-  //   for (timeMap) {
-
-  //   }
-  // }
+  public static double maxTimeOfFlight() {
+    return maxTime;
+  }
 
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
   // public static Translation2d predictTargetPos(

@@ -13,7 +13,7 @@ import frc.robot.subsystems.LaunchCalculator;
 import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.LauncherConstants;
+import frc.robot.util.tuning.LauncherConstants;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected Hood hood;
