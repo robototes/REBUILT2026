@@ -4,6 +4,7 @@
   "holonomicMode": true,
   "pathFolders": [],
   "autoFolders": [
+    "Outpost",
     "Week 3"
   ],
   "defaultMaxVel": 5.0,
