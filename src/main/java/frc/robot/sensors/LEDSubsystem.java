@@ -9,6 +9,7 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -22,6 +23,7 @@ public class LEDSubsystem extends SubsystemBase {
     LAUNCH,
     LAUNCHING,
     RAINBOW,
+    DISABLED,
     DEFAULT;
   }
 
@@ -148,12 +150,34 @@ public class LEDSubsystem extends SubsystemBase {
       case DEFAULT -> setSolid(DEFAULT_COLOR);
       case LAUNCH -> setSolid(LAUNCH_COLOR);
       case LAUNCHING -> setAlternating(LAUNCH_PREP_COLOR, LAUNCH_PREP_COLOR_TWO, 0.25);
+      case DISABLED -> setSolid(OFF);
       case RAINBOW -> setRainbow();
     }
   }
 
+  public Command flashCommand(RGBWColor color, int times, double interval) {
+    return Commands.sequence(
+            Commands.repeatingSequence(
+                    Commands.runOnce(() -> setHardwareColor(color)),
+                    Commands.waitSeconds(interval),
+                    Commands.runOnce(() -> setHardwareColor(OFF)),
+                    Commands.waitSeconds(interval))
+                .withTimeout(times * interval * 2),
+            Commands.runOnce(
+                () -> {
+                  LEDMode saved = currentMode;
+                  currentMode = null;
+                  setMode(saved);
+                }))
+        .withName("Flash LEDs");
+  }
+
   @Override
   public void periodic() {
+    if (RobotState.isDisabled()) {
+      setMode(LEDMode.DISABLED);
+      return;
+    }
     if (currentPattern == LEDPattern.ALTERNATE) {
       if (Timer.getFPGATimestamp() - lastToggleTime > interval) {
         showingPrimary = !showingPrimary;

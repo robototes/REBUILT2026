@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
@@ -274,7 +275,8 @@ public class Controls {
             Commands.parallel(
                     s.launcherSubsystem.zeroSubsystemCommand(),
                     s.intakePivot.zeroPivot(),
-                    s.turretSubsystem.zeroTurret())
+                    s.turretSubsystem.zeroTurret(),
+                    s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
