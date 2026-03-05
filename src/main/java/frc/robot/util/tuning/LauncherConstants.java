@@ -25,7 +25,7 @@ public class LauncherConstants {
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
           .publish();
-          
+
   private static double minTime = 100000;
   private static double maxTime = -100000;
 
@@ -128,8 +128,8 @@ public class LauncherConstants {
     return robot.plus(fieldRelativeLauncherOffset).getTranslation();
   }
 
-  public static double getFlywheelSpeedFromPose2d(Translation2d hub, Pose2d robot) {
-    double distance = launcherFromRobot(robot).getDistance(hub);
+  public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
+    double distance = launcherFromRobot(robot).getDistance(target);
     return getFlywheelSpeedFromDistance(distance);
   }
 
@@ -137,8 +137,8 @@ public class LauncherConstants {
     return hoodMap.get(distance);
   }
 
-  public static double getHoodAngleFromPose2d(Translation2d hub, Pose2d robot) {
-    double distance = launcherFromRobot(robot).getDistance(hub);
+  public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot) {
+    double distance = launcherFromRobot(robot).getDistance(target);
     return getHoodAngleFromDistance(distance);
   }
 

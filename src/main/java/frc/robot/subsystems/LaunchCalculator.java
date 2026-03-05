@@ -8,7 +8,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.LauncherConstants;
+import frc.robot.util.tuning.LauncherConstants;
 
 public class LaunchCalculator {
   private static class Holder {

@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -24,7 +25,9 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private static final double INTAKE_SPEED = 0.5; // full speed
+  private final VoltageOut voltReq = new VoltageOut(0);
+  public static final double INTAKE_VOLTAGE = 8;
+  public static final double AGITATE_VOLTAGE = 4;
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -80,10 +83,10 @@ public class IntakeRollers extends SubsystemBase {
     rightRollerPub.set(0);
   }
 
-  public Command runRollers() {
+  public Command runRollers(double voltage) {
     return Commands.runEnd(
         () -> {
-          leftRoller.set(INTAKE_SPEED);
+          leftRoller.setControl(voltReq.withOutput(voltage));
           rightRoller.setControl(followRequest);
         },
         () -> {

@@ -19,14 +19,15 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.LauncherConstants;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
+import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -145,9 +146,9 @@ public class Robot extends TimedRobot {
               0,
               0,
               0);
-          subsystems.visionSubsystem.update();
         }
       }
+      subsystems.visionSubsystem.update();
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
@@ -215,7 +216,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    subsystems.ledSubsystem.setRainbowEnabled(true);
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -235,7 +236,7 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    subsystems.ledSubsystem.setRainbowEnabled(false);
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
   }
 
   /** This function is called periodically during operator control. */

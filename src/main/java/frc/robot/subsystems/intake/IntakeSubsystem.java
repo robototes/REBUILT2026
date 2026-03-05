@@ -5,6 +5,14 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IntakeSubsystem extends SubsystemBase {
+  public enum IntakeMode {
+    DEPLOYED,
+    RETRACTED,
+    SPIN,
+    LAUNCH,
+    INTAKE
+  }
+
   protected IntakePivot intakePivot;
   protected IntakeRollers intakeRollers;
 
@@ -14,7 +22,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollers();
+    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE);
   }
 
   public Command deployPivot() {
@@ -23,6 +31,12 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public Command retractPivot() {
     return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
+  }
+
+  public Command intakeWhileLaunchCommand() {
+    return intakePivot
+        .setPivotPosition(IntakePivot.LAUNCH_POS)
+        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE));
   }
 
   public Command smartIntake() {
