@@ -65,7 +65,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 180; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 270; // degrees
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
@@ -209,7 +209,7 @@ public class TurretSubsystem extends SubsystemBase {
     degrees = -degrees;
 
     // Normalize to [-180, 180]
-    degrees = MathUtil.inputModulus(degrees, -180, 180);
+    degrees = MathUtil.inputModulus(degrees, -90, 270);
 
     // Clamp to turret limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
@@ -226,6 +226,8 @@ public class TurretSubsystem extends SubsystemBase {
           double targetRotations =
               calculateTurretAngle(clockAndHubStatus.getTargetLocation(driveTrain));
           // turretMotor.setControl(request.withPosition(targetRotations));
+          // System.out.println(targetRotations);
+          // System.out.println(clockAndHubStatus.getTargetLocation(driveTrain).getX());
           this.setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
           Transform2d fieldRelativeOffset =

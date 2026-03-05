@@ -10,14 +10,15 @@ import java.util.Optional;
 public class ClockAndHubStatus {
   public double matchLength = 2.5;
 
-  private Translation2d pointLeftFieldTop = new Translation2d(2, 2);
-  private Translation2d pointLeftFieldBottom = new Translation2d(2, 6);
-  private Translation2d pointRightFieldTop = new Translation2d(14, 2);
-  private Translation2d pointRightFieldBottom = new Translation2d(14, 6);
+  private Translation2d pointLeftFieldTop = new Translation2d(2, 6);
+  private Translation2d pointLeftFieldBottom = new Translation2d(2, 2);
+  private Translation2d pointRightFieldTop = new Translation2d(14, 6);
+  private Translation2d pointRightFieldBottom = new Translation2d(14, 2);
 
   private double fieldLength = Units.inchesToMeters(651.2);
   private double fieldWidth = Units.inchesToMeters(317.7);
   private double allianceLineX = Units.inchesToMeters(158.6);
+  private double robotOffset = Units.inchesToMeters(15);
 
   private static final double TRANSITION_PERIOD_END_TIME = 130;
   private static final double SHIFT_1_END_TIME = 105;
@@ -26,12 +27,12 @@ public class ClockAndHubStatus {
   private static final double END_GAME_START_TIME = 30;
 
   public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
-    if (isHubActive(0)) {
-      return AllianceUtils.getHubTranslation2d();
-    }
+    // if (isHubActive(0)) {
+    //   return AllianceUtils.getHubTranslation2d();
+    // }
 
     if (AllianceUtils.isBlue()) {
-      if (drivetrain.getState().Pose.getX() <= allianceLineX) {
+      if (drivetrain.getState().Pose.getX() <= allianceLineX + robotOffset) {
         return AllianceUtils.getHubTranslation2d();
       } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
         return pointLeftFieldTop;
@@ -39,7 +40,7 @@ public class ClockAndHubStatus {
         return pointLeftFieldBottom;
       }
     } else if (AllianceUtils.isRed()) {
-      if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX)) {
+      if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
         return AllianceUtils.getHubTranslation2d();
       } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
         return pointRightFieldTop;

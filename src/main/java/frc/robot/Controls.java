@@ -226,12 +226,12 @@ public class Controls {
                     .andThen(
                         s.indexerSubsystem
                             .runIndexer()
-                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR))),
-                Commands.waitSeconds(0.5).andThen(s.intakeSubsystem.intakeWhileLuanchCommand())));
+                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR))).alongWith(
+                Commands.waitSeconds(1).andThen(s.intakeSubsystem.intakeWhileLuanchCommand()))));
     driverController
         .start()
         .onTrue(
-            Commands.parallel(s.launcherSubsystem.zeroSubsystemCommand(), s.intakePivot.zeroPivot())
+            Commands.parallel(s.launcherSubsystem.zeroSubsystemCommand(), s.intakePivot.zeroPivot(), s.turretSubsystem.zeroTurret())
                 .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
@@ -359,6 +359,6 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR));
+    //s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR));
   }
 }
