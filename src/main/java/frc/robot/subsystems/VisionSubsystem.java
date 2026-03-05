@@ -10,7 +10,6 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -18,7 +17,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
@@ -137,15 +135,9 @@ public class VisionSubsystem extends SubsystemBase {
         if (rawFiducials.length != 1) {
           // Multi tag pose Estimation
           processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry);
-          for (RawFiducial rf : rawFiducials) {
-            processTags(rf);
-          }
         } else {
           // Single tag pose Estimation
           processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry);
-          for (RawFiducial rf : rawFiducials) {
-            processTags(rf);
-          }
         }
       }
     }
@@ -202,28 +194,14 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  private void processTags(RawFiducial rf) {
-    var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-    if (tagPose.isEmpty()) {
-      DriverStation.reportWarning(
-          "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-          false);
-      return;
-    }
-    this.distance = getDistanceToTargetViaPoseEstimation(lastFieldPose, tagPose.get().toPose2d());
-    this.tagAmbiguity = rf.ambiguity;
-  }
-
   public int getNumTargets() {
     if (!RobotType.isAlpha()) {
       int A = ACamera.getNumTargets();
       int B = BCamera.getNumTargets();
       return A + B;
-    }
-    if (RobotType.isAlpha()) {
+    } else {
       return CCamera.getNumTargets();
     }
-    return 0;
   }
 
   public double getLastTimestampSeconds() {

@@ -117,35 +117,13 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
       if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
-
-        LimelightHelpers.SetRobotOrientation(
-            Hardware.LIMELIGHT_C,
-            swerveState.Pose.getRotation().getDegrees(),
-            swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-            0,
-            0,
-            0,
-            0);
+        supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_C);
       } else {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          LimelightHelpers.SetRobotOrientation(
-              Hardware.LIMELIGHT_A,
-              swerveState.Pose.getRotation().getDegrees(),
-              swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-              0,
-              0,
-              0,
-              0);
+          supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_A);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          LimelightHelpers.SetRobotOrientation(
-              Hardware.LIMELIGHT_B,
-              swerveState.Pose.getRotation().getDegrees(),
-              swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-              0,
-              0,
-              0,
-              0);
+          supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_B);
         }
       }
       subsystems.visionSubsystem.update();
@@ -195,8 +173,9 @@ public class Robot extends TimedRobot {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
       }
     }
-    if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
-      //  && subsystems.visionSubsystem.limelightcOnline) {
+    if (subsystems.visionSubsystem != null
+        && RobotType.isAlpha()
+        && subsystems.visionSubsystem.limelightcOnline) {
       setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
     }
     if (subsystems.detectionSubsystem != null) {
@@ -279,5 +258,16 @@ public class Robot extends TimedRobot {
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(limelightName, 4);
     }
+  }
+
+  private void supplyRobotYawToLimelight(SwerveDriveState swerveState, String limelightName) {
+    LimelightHelpers.SetRobotOrientation(
+        limelightName,
+        swerveState.Pose.getRotation().getDegrees(),
+        swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+        0,
+        0,
+        0,
+        0);
   }
 }
