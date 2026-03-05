@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
+import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.launcher.TurretSubsystem;
@@ -77,6 +78,8 @@ public class Controls {
           new Translation2d(Units.inchesToMeters(30 / 2), 0), Rotation2d.fromDegrees(180));
   Pose2d redHub = aprilTagFieldLayout.getTagPose(10).get().toPose2d().plus(robotOffsetFromTag);
   Pose2d blueHub = aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
+
+  private LEDSubsystem.LEDMode currentMode = LEDMode.DEFAULT;
 
   public static final double MaxSpeed =
       (RobotType.type == RobotTypesEnum.ALPHA)
@@ -249,17 +252,15 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                s.ledSubsystem
-                    .alternateColors(
-                        LEDSubsystem.LAUNCH_PREP_COLOR_TWO, LEDSubsystem.LAUNCH_PREP_COLOR, 0.2)
-                    .until(() -> s.launcherSubsystem.isAtTarget())
+                Commands.runOnce(() -> currentMode = LEDMode.LAUNCHING),
+                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
-                        s.indexerSubsystem
-                            .runIndexer()
-                            .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.LAUNCH_COLOR)))
-                    .alongWith(
-                        Commands.waitSeconds(1)
-                            .andThen(s.intakeSubsystem.intakeWhileLuanchCommand()))));
+                        Commands.parallel(
+                            s.indexerSubsystem.runIndexer(),
+                            Commands.runOnce(() -> currentMode = LEDMode.LAUNCH),
+                            Commands.waitSeconds(1)
+                                .andThen(s.intakeSubsystem.intakeWhileLuanchCommand())))))
+        .onFalse(Commands.runOnce(() -> currentMode = LEDMode.DEFAULT));
     driverController
         .start()
         .onTrue(
@@ -313,7 +314,8 @@ public class Controls {
         .whileTrue(
             s.intakeSubsystem
                 .smartIntake()
-                .alongWith(s.ledSubsystem.setLEDsCommand(LEDSubsystem.INTAKE_COLOR)));
+                .alongWith(Commands.runOnce(() -> currentMode = LEDMode.INTAKE)))
+        .onFalse(Commands.runOnce(() -> currentMode = LEDMode.DEFAULT));
     driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
     driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
 
@@ -422,6 +424,6 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-    s.ledSubsystem.setDefaultCommand(s.ledSubsystem.setLEDsCommand(LEDSubsystem.DEFAULT_COLOR));
+    s.ledSubsystem.setDefaultCommand(Commands.runOnce(() -> s.ledSubsystem.setMode(currentMode)));
   }
 }

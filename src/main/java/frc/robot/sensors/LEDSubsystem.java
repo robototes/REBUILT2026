@@ -1,161 +1,97 @@
 package frc.robot.sensors;
 
-import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
+
 import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.BooleanTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.networktables.StringTopic;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class LEDSubsystem extends SubsystemBase {
-  public enum LedMode {
-    CLIMB_IN_PROGRESS(),
-    INTAKE_IN_PROGRESS(),
-    SHOOT_IN_PROGRESS(),
-    DEFAULT();
+  public enum LEDMode {
+    CLIMB,
+    INTAKE,
+    LAUNCH,
+    LAUNCHING,
+    RAINBOW,
+    DEFAULT;
   }
 
-  /** CAN device ID for the {@link CANdle} LED controller. */
+  private enum LEDPattern {
+    SOLID,
+    ALTERNATE,
+    RAINBOW
+  }
+
+  private LEDMode currentMode = LEDMode.DEFAULT;
+  private LEDPattern currentPattern = LEDPattern.SOLID;
   private static final int CAN_ID = Hardware.CANDLE_ID;
-
-  /**
-   * Last valid LED index in the strip (inclusive).
-   *
-   * <p>For example, if the strip contains 8 LEDs, valid indices range from {@code 0} to {@code 7}.
-   */
   private static final int END_INDEX = 200;
-
-  /**
-   * Default brightness applied to {@link #candle} operations.
-   *
-   * <p>Valid range: {@code 0.0} (off) to {@code 1.0} (full brightness).
-   */
-  public static final double DEFAULT_BRIGHTNESS = 1.0;
 
   /** Animation slot index used for LED animations. */
   private static final int SLOT = 0;
 
-  /** Instance of the {@link CANdle} LED controller used to control the LED strip. */
   private final CANdle candle = new CANdle(CAN_ID);
-
-  /**
-   * Solid color controller applied to LEDs from index {@code 0} through {@link #END_INDEX}.
-   *
-   * <p>Used to set a single static color across the entire strip.
-   */
   private final SolidColor solidController = new SolidColor(0, END_INDEX);
-
-  /**
-   * Preconfigured rainbow animation assigned to {@link #SLOT}.
-   *
-   * <p>Applies to LEDs from index {@code 0} through {@link #END_INDEX}. Can be enabled or disabled
-   * to create an animated rainbow effect.
-   */
   private final RainbowAnimation rainbowAnimation =
       new RainbowAnimation(0, END_INDEX).withSlot(SLOT);
 
-  /** Animation used to stop animations on {@link #SLOT}. */
-  private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
-
-  /** LED color representing LEDs turned off. */
-  public static final RGBWColor OFF_COLOR = new RGBWColor(0, 0, 0);
-
-  /** Default robot LED color (purple). */
+  public static final RGBWColor OFF = new RGBWColor(0, 0, 0);
+  // Purple
   public static final RGBWColor DEFAULT_COLOR = new RGBWColor(255, 0, 255);
-
-  /** LED color used while intaking (blue). */
+  // Blue
   public static final RGBWColor INTAKE_COLOR = new RGBWColor(0, 0, 255);
-
-  /** LED color used during climb mode (orange). */
+  // Orange
   public static final RGBWColor CLIMB_COLOR = new RGBWColor(255, 128, 0);
-
-  /** LED color used while launching (green). */
+  // Green
   public static final RGBWColor LAUNCH_COLOR = new RGBWColor(0, 255, 0);
-
-  /** LED color used while preparing to launch (yellow flashing). */
+  // Yellow
   public static final RGBWColor LAUNCH_PREP_COLOR = new RGBWColor(255, 255, 0);
-
-  /** Another LED color used while preparing to launch (red). */
+  // Red
   public static final RGBWColor LAUNCH_PREP_COLOR_TWO = new RGBWColor(255, 0, 0);
 
-  /** NetworkTable topics and publishers for LED state information. */
+  private RGBWColor primaryColor;
+  private RGBWColor secondaryColor;
 
-  /** NetworkTable topic that indicates whether the rainbow animation is currently enabled. */
-  private BooleanTopic isRainbow;
+  private double interval = 0.25;
+  private double lastToggleTime = 0;
+  private boolean showingPrimary = true;
 
-  /** Publisher for {@link #isRainbow}, used to send the current rainbow state to NetworkTables. */
-  private BooleanPublisher isRainbowPub;
-
-  /** NetworkTable topic that stores the currently displayed LED color as a string. */
-  private StringTopic currentColor;
-
-  /** Publisher for {@link #currentColor}, used to send the current LED color to dashboards. */
-  private StringPublisher currentColorPub;
-
-  /** NetworkTable topic that stores the name of the currently running LED animation. */
-  private StringTopic currentAnimation;
-
-  /**
-   * Publisher for {@link #currentAnimation}, used to send the current animation name to dashboards.
-   */
-  private StringPublisher currentAnimationPub;
-
-  /**
-   * NetworkTable topic that stores the two alternating colors for flashing or cycling effects.
-   * Formatted as: "A:R{red},G{green},B{blue},W{white} | B:R{red},G{green},B{blue},W{white}"
-   */
-  private StringTopic alternatingColors;
-
-  /**
-   * Publisher for {@link #alternatingColors}, used to send the current alternating colors to
-   * dashboards.
-   */
-  private StringPublisher alternatingColorsPub;
+  private final BooleanPublisher isRainbowPub;
+  private final StringPublisher currentColorPub;
+  private final StringPublisher currentAnimationPub;
+  private final StringPublisher alternatingColorsPub;
 
   public LEDSubsystem() {
     rainbowAnimation
-        .withBrightness(DEFAULT_BRIGHTNESS)
+        .withBrightness(1.0)
         .withDirection(AnimationDirectionValue.Forward)
         .withFrameRate(Units.Hertz.of(100));
 
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
 
-    isRainbow = nt.getBooleanTopic("/color/isRainbow");
-    isRainbowPub = isRainbow.publish();
+    isRainbowPub = nt.getBooleanTopic("/color/isRainbow").publish();
     isRainbowPub.set(false);
 
-    currentColor = nt.getStringTopic("/color/currentColor");
-    currentColorPub = currentColor.publish();
+    currentColorPub = nt.getStringTopic("/color/currentColor").publish();
     currentColorPub.set("None");
 
-    currentAnimation = nt.getStringTopic("/color/currentAnimation");
-    currentAnimationPub = currentAnimation.publish();
+    currentAnimationPub = nt.getStringTopic("/color/currentAnimation").publish();
     currentAnimationPub.set("None");
 
-    alternatingColors = nt.getStringTopic("/color/alternatingColors");
-    alternatingColorsPub = alternatingColors.publish();
+    alternatingColorsPub = nt.getStringTopic("/color/alternatingColors").publish();
     alternatingColorsPub.set("A:None | B:None");
   }
 
-  /**
-   * Sets the CANdle LED controller to a solid color at the specified brightness.
-   *
-   * <p>This method directly updates the physical hardware output. It is intended to be called
-   * internally by higher-level commands that manage LED behavior.
-   *
-   * @param color the {@link RGBWColor} to apply to the LED strip
-   * @param brightness the brightness scalar (0.0–1.0) applied to the color
-   */
   public void setHardwareColor(RGBWColor color, double brightness) {
     RGBWColor scaled = color.scaleBrightness(brightness);
 
@@ -165,135 +101,66 @@ public class LEDSubsystem extends SubsystemBase {
     candle.setControl(solidController);
   }
 
-  /**
-   * Sets the CANdle LED controller to a solid color using the default brightness.
-   *
-   * @param color the {@link RGBWColor} to apply to the LED strip
-   */
   public void setHardwareColor(RGBWColor color) {
-    setHardwareColor(color, DEFAULT_BRIGHTNESS);
+    setHardwareColor(color, 1.0);
   }
 
-  /**
-   * Creates a {@link Command} that sets the LEDs to the specified color and brightness.
-   *
-   * <p>The returned command runs once and immediately updates the hardware using {@link
-   * #setHardwareColor(RGBWColor, double)}.
-   *
-   * @param color the {@link RGBWColor} to display
-   * @param brightness the brightness scalar (0.0–1.0)
-   * @return a command that sets the LEDs once when scheduled
-   */
   public Command setLEDsCommand(RGBWColor color, double brightness) {
-    return Commands.runOnce(() -> setHardwareColor(color, brightness), this)
+    return Commands.runOnce(() -> setHardwareColor(color, brightness))
         .withName("Set LEDs With Brightness");
   }
 
-  /**
-   * Creates a {@link Command} that sets the LEDs to the specified color using full (1.0)
-   * brightness.
-   *
-   * <p>The returned command runs once and immediately updates the hardware.
-   *
-   * @param color the {@link RGBWColor} to display
-   * @return a command that sets the LEDs once when scheduled
-   */
   public Command setLEDsCommand(RGBWColor color) {
-    return Commands.runOnce(() -> setHardwareColor(color), this).withName("Set LEDs color");
+    return Commands.runOnce(() -> setHardwareColor(color)).withName("Set LEDs color");
   }
 
-  public void publishAlternateColors(RGBWColor colorA, RGBWColor colorB) {
-    String value =
-        String.format(
-            "A:R%d,G%d,B%d,W%d | B:R%d,G%d,B%d,W%d",
-            colorA.Red,
-            colorA.Green,
-            colorA.Blue,
-            colorA.White,
-            colorB.Red,
-            colorB.Green,
-            colorB.Blue,
-            colorB.White);
-    alternatingColorsPub.set(value);
+  private void setSolid(RGBWColor color) {
+    currentPattern = LEDPattern.SOLID;
+    primaryColor = color;
+    setHardwareColor(color);
   }
 
-  /**
-   * Alternates the LED strip between two colors, switching every {@code interval} seconds.
-   *
-   * <p>This command will repeatedly alternating between {@code colorA} for {@code interval} seconds
-   * and {@code colorB} for {@code interval} seconds, creating a flashing effect.
-   *
-   * @param colorA the first color in the sequence
-   * @param colorB the second color in the sequence
-   * @param interval time between each color in seconds
-   * @return a {@link Command} that continuously alternates LED colors
-   */
-  public Command alternateColors(RGBWColor colorA, RGBWColor colorB, double interval) {
-    return Commands.repeatingSequence(
-            Commands.runOnce(
-                () -> {
-                  setHardwareColor(colorA);
-                },
-                this),
-            Commands.runOnce(() -> publishAlternateColors(colorA, colorB), this),
-            Commands.waitSeconds(interval),
-            Commands.runOnce(
-                () -> {
-                  setHardwareColor(colorB);
-                },
-                this),
-            Commands.waitSeconds(interval))
-        .repeatedly();
+  private void setAlternating(RGBWColor a, RGBWColor b, double interval) {
+    currentPattern = LEDPattern.ALTERNATE;
+
+    primaryColor = a;
+    secondaryColor = b;
+
+    this.interval = interval;
+    showingPrimary = true;
+    lastToggleTime = Timer.getFPGATimestamp();
+
+    setHardwareColor(a);
   }
 
-  /**
-   * Creates a command that cycles through an array of colors, switching to the next color every
-   * {@code interval} seconds.
-   *
-   * @param colors an array of {@link RGBWColor} objects to cycle through
-   * @param interval the time in seconds to wait before switching to the next color
-   * @return a {@link Command} that cycles through the given colors
-   */
-  public Command cycleColors(RGBWColor[] colors, double interval) {
-    if (colors.length == 0) {
-      throw new IllegalArgumentException("Colors array must contain at least one color");
+  private void setRainbow() {
+    currentPattern = LEDPattern.RAINBOW;
+    candle.setControl(rainbowAnimation);
+  }
+
+  public void setMode(LEDMode mode) {
+    if (mode == currentMode) return;
+
+    currentMode = mode;
+
+    switch (mode) {
+      case INTAKE -> setSolid(INTAKE_COLOR);
+      case CLIMB -> setSolid(CLIMB_COLOR);
+      case DEFAULT -> setSolid(DEFAULT_COLOR);
+      case LAUNCH -> setSolid(LAUNCH_COLOR);
+      case LAUNCHING -> setAlternating(LAUNCH_PREP_COLOR, LAUNCH_PREP_COLOR_TWO, 0.25);
+      case RAINBOW -> setRainbow();
     }
-
-    Command sequence = Commands.sequence();
-
-    for (RGBWColor color : colors) {
-      sequence =
-          sequence
-              .andThen(
-                  Commands.runOnce(
-                      () -> {
-                        setHardwareColor(color);
-                      },
-                      this))
-              .andThen(Commands.waitSeconds(interval));
-    }
-
-    return sequence.repeatedly();
   }
 
-  /**
-   * Enables or disables the rainbow animation on the CANdle.
-   *
-   * <p>If {@code enabled} is true, the preconfiguRed rainbow animation is applied. If false, the
-   * active animation is cleaRed.
-   *
-   * @param enabled true to start the rainbow animation, false to stop it
-   */
-  public void setRainbowEnabled(boolean enabled) {
-    if (enabled) {
-      candle.setControl(rainbowAnimation);
-      isRainbowPub.set(true);
-      currentAnimationPub.set("Rainbow");
-      currentColorPub.set("None"); // always set to None
-    } else {
-      candle.setControl(emptyAnimation);
-      isRainbowPub.set(false);
-      currentAnimationPub.set("None");
+  @Override
+  public void periodic() {
+    if (currentPattern == LEDPattern.ALTERNATE) {
+      if (Timer.getFPGATimestamp() - lastToggleTime > interval) {
+        showingPrimary = !showingPrimary;
+        setHardwareColor(showingPrimary ? primaryColor : secondaryColor);
+        lastToggleTime = Timer.getFPGATimestamp();
+      }
     }
   }
 }
