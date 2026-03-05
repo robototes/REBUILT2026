@@ -26,11 +26,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakeRollers;
+import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.RobotType;
@@ -80,7 +80,8 @@ public class Controls {
   Pose2d redHub = aprilTagFieldLayout.getTagPose(10).get().toPose2d().plus(robotOffsetFromTag);
   Pose2d blueHub = aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
 
-  private LEDSubsystem.LEDMode currentMode = LEDMode.DEFAULT;
+  private LEDMode ledsMode = LEDMode.DEFAULT;
+  private IntakeMode intakeMode = IntakeMode.RETRACTED;
 
   public static final double MaxSpeed =
       (RobotType.type == RobotTypesEnum.ALPHA)
@@ -253,15 +254,20 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                Commands.runOnce(() -> currentMode = LEDMode.LAUNCHING),
+                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
                         Commands.parallel(
                             s.indexerSubsystem.runIndexer(),
-                            Commands.runOnce(() -> currentMode = LEDMode.LAUNCH),
+                            Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                             Commands.waitSeconds(1)
-                                .andThen(s.intakeSubsystem.intakeWhileLaunchCommand())))))
-        .onFalse(Commands.runOnce(() -> currentMode = LEDMode.DEFAULT));
+                                .andThen(Commands.runOnce(() -> intakeMode = IntakeMode.LAUNCH))))))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  ledsMode = LEDMode.DEFAULT;
+                  intakeMode = IntakeMode.DEPLOYED;
+                }));
     driverController
         .start()
         .onTrue(
@@ -308,15 +314,36 @@ public class Controls {
       return;
     }
 
+    s.intakeSubsystem.setDefaultCommand(
+        Commands.run(
+                () -> {
+                  switch (intakeMode) {
+                    case DEPLOYED -> s.intakeSubsystem.deployPivot();
+                    case RETRACTED -> s.intakeSubsystem.retractPivot();
+                    case SPIN -> s.intakeSubsystem.runRollersCommand();
+                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchCommand();
+                    case INTAKE -> s.intakeSubsystem.smartIntake();
+                  }
+                },
+                s.intakeSubsystem)
+            .withName("Intake Default Command"));
+
     driverController
         .leftTrigger()
         .whileTrue(
-            s.intakeSubsystem
-                .smartIntake()
-                .alongWith(Commands.runOnce(() -> currentMode = LEDMode.INTAKE)))
-        .onFalse(Commands.runOnce(() -> currentMode = LEDMode.DEFAULT));
-    driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
-    driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
+            Commands.runOnce(
+                () -> {
+                  intakeMode = IntakeMode.INTAKE;
+                  ledsMode = LEDMode.INTAKE;
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  intakeMode = IntakeMode.DEPLOYED;
+                  ledsMode = LEDMode.DEFAULT;
+                }));
+    driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
+    driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
 
     connected(intakeTestController)
         .and(intakeTestController.a())
@@ -423,6 +450,8 @@ public class Controls {
     if (s.ledSubsystem == null) {
       return;
     }
-    s.ledSubsystem.setDefaultCommand(Commands.run(() -> s.ledSubsystem.setMode(currentMode)));
+    s.ledSubsystem.setDefaultCommand(
+        Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
+            .withName("LED Default Command"));
   }
 }
