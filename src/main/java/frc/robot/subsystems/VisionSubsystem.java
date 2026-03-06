@@ -178,11 +178,11 @@ public class VisionSubsystem extends SubsystemBase {
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        drivetrain.addVisionMeasurement(
-            fieldPose3d.toPose2d(),
-            Utils.fpgaToCurrentTime(timestampSeconds),
-            VecBuilder.fill(0.1, 0.1, 0.1));
-        // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
+        //drivetrain.addVisionMeasurement(
+        //    fieldPose3d.toPose2d(),
+        //    Utils.fpgaToCurrentTime(timestampSeconds),
+        //    VecBuilder.fill(0.1, 0.1, 0.1));
+       drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
