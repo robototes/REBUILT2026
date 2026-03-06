@@ -23,8 +23,8 @@ public class LauncherConstants {
           .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
           .publish();
 
-  private static double minTime = 100000;
-  private static double maxTime = -100000;
+  private static double minTime = Double.POSITIVE_INFINITY;
+  private static double maxTime = Double.NEGATIVE_INFINITY;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -64,9 +64,9 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(5.6, 14, 100, 2.5)
   };
 
-  private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
-  private static InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
-  private static InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
     LauncherDistanceDataPoint[] distanceData =
@@ -75,12 +75,8 @@ public class LauncherConstants {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
       timeMap.put(point.distance, point.time);
-      if (point.time > maxTime) {
-        maxTime = point.time;
-      }
-      if (point.time < minTime) {
-        minTime = point.time;
-      }
+      maxTime = Math.max(maxTime, point.time);
+      minTime = Math.min(minTime, point.time);
     }
   }
 
