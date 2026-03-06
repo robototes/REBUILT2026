@@ -1,7 +1,6 @@
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
-import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
@@ -18,9 +17,8 @@ class AutosTest {
 
   @BeforeEach
   void setup() {
-    if (RobotBase.isReal()) {
-      AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), true);
-    }
+
+    AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), true);
   }
 
   @Test
