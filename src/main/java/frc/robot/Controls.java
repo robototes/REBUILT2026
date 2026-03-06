@@ -262,7 +262,8 @@ public class Controls {
                             s.indexerSubsystem.runIndexer(),
                             Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                             Commands.waitSeconds(1)
-                                .andThen(Commands.runOnce(() -> intakeMode = IntakeMode.LAUNCH))))))
+                                .andThen(Commands.runOnce(() -> intakeMode = driverController.leftTrigger().getAsBoolean() ? IntakeMode.INTAKE : IntakeMode.LAUNCH))))))
+                                
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
@@ -270,7 +271,7 @@ public class Controls {
                     Commands.runOnce(
                         () -> {
                           ledsMode = LEDMode.DEFAULT;
-                          intakeMode = IntakeMode.DEPLOYED;
+                          intakeMode = driverController.leftTrigger().getAsBoolean() ? IntakeMode.INTAKE :IntakeMode.DEPLOYED;
                         })));
     driverController
         .start()

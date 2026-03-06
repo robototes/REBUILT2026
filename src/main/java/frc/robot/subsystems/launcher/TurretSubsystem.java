@@ -52,7 +52,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kA = 0.12;
 
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 40; // amps
+  private static final int STATOR_CURRENT_LIMIT = 30; // amps
   private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
