@@ -95,6 +95,11 @@ public class IntakeRollers extends SubsystemBase {
         });
   }
 
+  public void setRollerVolt(double voltage) {
+    leftRoller.setControl(voltReq.withOutput(voltage));
+    rightRoller.setControl(followRequest);
+  }
+
   public void stopMotor() {
     leftRoller.stopMotor();
     rightRoller.stopMotor();
