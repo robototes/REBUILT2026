@@ -45,4 +45,33 @@ public class IntakeSubsystem extends SubsystemBase {
         Commands.sequence(deployPivot(), runRollersCommand()),
         () -> intakePivot.isDeployed(5));
   }
+
+  public void runRollersVoid() {
+    intakeRollers.setRollerVolt(IntakeRollers.INTAKE_VOLTAGE);
+    intakePivot.setPivotPositionVoid(intakePivot.targetPos);
+  }
+
+  public void deployPivotVoid() {
+    intakePivot.setPivotPositionVoid(IntakePivot.DEPLOYED_POS);
+    intakeRollers.setRollerVolt(0);
+  }
+
+  public void retractPivotVoid() {
+    intakePivot.setPivotPositionVoid(IntakePivot.RETRACTED_POS);
+    intakeRollers.setRollerVolt(0);
+  }
+
+  public void intakeWhileLaunchVoid() {
+    intakePivot.setPivotPositionVoid(IntakePivot.LAUNCH_POS);
+    intakeRollers.setRollerVolt(IntakeRollers.AGITATE_VOLTAGE);
+  }
+
+  public void smartIntakeVoid() {
+    if (intakePivot.isDeployed(5)) {
+      runRollersVoid();
+    } else {
+      deployPivotVoid();
+      runRollersVoid();
+    }
+  }
 }

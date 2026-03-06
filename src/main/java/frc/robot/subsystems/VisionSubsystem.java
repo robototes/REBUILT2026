@@ -1,16 +1,19 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -18,7 +21,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
@@ -83,7 +85,6 @@ public class VisionSubsystem extends SubsystemBase {
   private double timestampSeconds = 0;
   private Pose2d lastFieldPose = null;
   private double distance = 0;
-  private double tagAmbiguity = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
   private static final double DISTANCE_TOLERANCE = 1.0;
@@ -91,6 +92,8 @@ public class VisionSubsystem extends SubsystemBase {
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
   private Pose3d drivePose3d;
+  private SwerveDriveState swerveState;
+  private ChassisSpeeds swerveSpeeds;
   // vision
   private Pose3d fieldPose3d;
   private boolean pose_bad = false;
@@ -103,13 +106,7 @@ public class VisionSubsystem extends SubsystemBase {
     rawVisionFieldObject = robotField.getObject("RawVision");
     SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
     SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
-    SmartDashboard.putNumber("/vision/april tag distance meters", getDistanceToTarget());
     SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
-    SmartDashboard.putNumber("/vision/tag ambiguity", getTagAmbiguity());
-    SmartDashboard.putBoolean("/vision/limelightaOnline", limelightaOnline);
-    SmartDashboard.putBoolean("/vision/limelightbOnline", limelightbOnline);
-    SmartDashboard.putBoolean("/vision/limelightcOnline", limelightcOnline);
-
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
@@ -137,15 +134,9 @@ public class VisionSubsystem extends SubsystemBase {
         if (rawFiducials.length != 1) {
           // Multi tag pose Estimation
           processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry);
-          for (RawFiducial rf : rawFiducials) {
-            processTags(rf);
-          }
         } else {
           // Single tag pose Estimation
           processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry);
-          for (RawFiducial rf : rawFiducials) {
-            processTags(rf);
-          }
         }
       }
     }
@@ -163,7 +154,9 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       timestampSeconds = estimate.timestampSeconds;
-      drivePose3d = new Pose3d(drivetrain.getState().Pose);
+      swerveState = drivetrain.getState();
+      swerveSpeeds = swerveState.Speeds;
+      drivePose3d = new Pose3d(swerveState.Pose);
       fieldPose3d = estimate.pose3d;
       pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
@@ -175,19 +168,21 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
           || lastFieldPose != null
-              && !(Math.abs(
-                      getDistanceToTargetViaPoseEstimation(
-                          drivePose3d.toPose2d(), fieldPose3d.toPose2d()))
-                  < DISTANCE_TOLERANCE)) {
+              && Math.abs(swerveSpeeds.vxMetersPerSecond) < 0.001
+              && Math.abs(swerveSpeeds.vyMetersPerSecond) < 0.001
+              && Math.abs(swerveSpeeds.omegaRadiansPerSecond) < 0.02
+              && RobotType.isAlpha()) {
         pose_bad = true;
       }
 
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
-        // VecBuilder.fill(0.1, 0.1, 99999));
-        drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
+        drivetrain.addVisionMeasurement(
+            fieldPose3d.toPose2d(),
+            Utils.fpgaToCurrentTime(timestampSeconds),
+            VecBuilder.fill(0.1, 0.1, 0.1));
+        // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
@@ -202,28 +197,14 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  private void processTags(RawFiducial rf) {
-    var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-    if (tagPose.isEmpty()) {
-      DriverStation.reportWarning(
-          "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-          false);
-      return;
-    }
-    this.distance = getDistanceToTargetViaPoseEstimation(lastFieldPose, tagPose.get().toPose2d());
-    this.tagAmbiguity = rf.ambiguity;
-  }
-
   public int getNumTargets() {
     if (!RobotType.isAlpha()) {
       int A = ACamera.getNumTargets();
       int B = BCamera.getNumTargets();
       return A + B;
-    }
-    if (RobotType.isAlpha()) {
+    } else {
       return CCamera.getNumTargets();
     }
-    return 0;
   }
 
   public double getLastTimestampSeconds() {
@@ -248,10 +229,6 @@ public class VisionSubsystem extends SubsystemBase {
     return (double) Math.round(distance * 1000) / 1000;
   }
 
-  public double getTagAmbiguity() {
-    return tagAmbiguity;
-  }
-
   public boolean getDisableVision() {
     return disableVision.get(false);
   }
@@ -273,6 +250,6 @@ public class VisionSubsystem extends SubsystemBase {
       return false;
     }
     // tl = timestamp, tv = valid target (supossedly tv updates every ll frame)
-    return table.getEntry("tv").getLastChange() > 0;
+    return table.getEntry("tl").getLastChange() > 0;
   }
 }

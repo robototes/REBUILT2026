@@ -8,9 +8,6 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
-import frc.robot.subsystems.LaunchCalculator;
-import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
@@ -63,7 +60,8 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(2.52, 6, 72, 1.18),
     new LauncherDistanceDataPoint(3.32, 8, 75, 1.2),
     new LauncherDistanceDataPoint(3.87, 10, 79, 1.36),
-    new LauncherDistanceDataPoint(4.27, 11, 82, 2) // pending james TOF
+    new LauncherDistanceDataPoint(4.27, 11, 82, 2), // pending james TOF
+    new LauncherDistanceDataPoint(5.6, 14, 100, 2.5)
   };
 
   private static InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
@@ -84,40 +82,22 @@ public class LauncherConstants {
         minTime = point.time;
       }
     }
-    turretToTarget.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
-    turretRotationalVelocity.set(new Pose2d[] {Pose2d.kZero, Pose2d.kZero});
   }
 
-  public static void update(Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target) {
-    Pose2d turret = new Pose2d(launcherFromRobot(robot), Rotation2d.kZero);
-    Pose2d updatedTarget =
-        new Pose2d(
-            iterativeMovingShotFromFunnelClearance(robot, fieldSpeeds, target, 3),
-            Rotation2d.kZero);
-    Pose2d turretVelocity =
-        turret.plus(new Transform2d(angularVelocity(robot, fieldSpeeds), Rotation2d.kZero));
-
-    var array = new Pose2d[] {turret, updatedTarget};
-    turretToTarget.set(array, 0);
-
-    var array2 = new Pose2d[] {turret, turretVelocity};
-    turretRotationalVelocity.set(array2, 0);
-  }
-
-  public static void update2(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
-    Pose2d turret = LaunchCalculator.estimatedPose;
-    double turret_to_hub_dist = LaunchCalculator.estimatedDist;
-    LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
-    double turretAngle = params.turretAngle().getRadians();
-    Pose2d updatedTarget =
-        new Pose2d(
-            new Translation2d(
-                turret_to_hub_dist * Math.cos(turretAngle),
-                turret_to_hub_dist * Math.sin(turretAngle)),
-            Rotation2d.kZero);
-    var array = new Pose2d[] {turret, updatedTarget};
-    turretToTarget.set(array, 0);
-  }
+  // public static void update(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
+  //   Pose2d turret = LaunchCalculator.estimatedPose;
+  //   double turret_to_hub_dist = LaunchCalculator.estimatedDist;
+  //   LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
+  //   double turretAngle = params.turretAngle().getRadians();
+  //   Pose2d updatedTarget =
+  //       new Pose2d(
+  //           new Translation2d(
+  //               turret_to_hub_dist * Math.cos(turretAngle),
+  //               turret_to_hub_dist * Math.sin(turretAngle)),
+  //           Rotation2d.kZero);
+  //   var array = new Pose2d[] {turret, updatedTarget};
+  //   turretToTarget.set(array, 0);
+  // }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
     return flywheelMap.get(distance);
@@ -131,6 +111,10 @@ public class LauncherConstants {
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
     double distance = launcherFromRobot(robot).getDistance(target);
     return getFlywheelSpeedFromDistance(distance);
+  }
+
+  public static Transform2d turretTransform() {
+    return new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
   }
 
   public static double getHoodAngleFromDistance(double distance) {

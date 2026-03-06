@@ -27,7 +27,6 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
-import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -53,9 +52,12 @@ public class Robot extends TimedRobot {
    * initialization code.
    */
   protected Robot() {
+
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
+    // Loads the field layout before auto  to prevent any delay
+    AllianceUtils.getHubTranslation2d();
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
@@ -87,7 +89,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(CommandScheduler.getInstance());
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      AutoLogic.registerCommands();
+      AutoLogic.registerCommands(true);
       AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
       AutoLogic.initSmartDashBoard();
@@ -110,6 +112,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -117,35 +120,13 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       swerveState = subsystems.drivebaseSubsystem.getState();
       if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
-
-        LimelightHelpers.SetRobotOrientation(
-            Hardware.LIMELIGHT_C,
-            swerveState.Pose.getRotation().getDegrees(),
-            swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-            0,
-            0,
-            0,
-            0);
+        supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_C);
       } else {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          LimelightHelpers.SetRobotOrientation(
-              Hardware.LIMELIGHT_A,
-              swerveState.Pose.getRotation().getDegrees(),
-              swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-              0,
-              0,
-              0,
-              0);
+          supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_A);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          LimelightHelpers.SetRobotOrientation(
-              Hardware.LIMELIGHT_B,
-              swerveState.Pose.getRotation().getDegrees(),
-              swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
-              0,
-              0,
-              0,
-              0);
+          supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_B);
         }
       }
       subsystems.visionSubsystem.update();
@@ -153,9 +134,8 @@ public class Robot extends TimedRobot {
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
     }
-    var robotState = subsystems.drivebaseSubsystem.getState();
-    LauncherConstants.update(
-        robotState.Pose, robotState.Speeds, AllianceUtils.getHubTranslation2d());
+    // var robotState = subsystems.drivebaseSubsystem.getState();
+    // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
   }
 
@@ -183,6 +163,8 @@ public class Robot extends TimedRobot {
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.coastTurret();
     }
+    CommandScheduler.getInstance()
+        .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
   }
 
   @Override
@@ -195,8 +177,9 @@ public class Robot extends TimedRobot {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
       }
     }
-    if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
-      //  && subsystems.visionSubsystem.limelightcOnline) {
+    if (subsystems.visionSubsystem != null
+        && RobotType.isAlpha()
+        && subsystems.visionSubsystem.limelightcOnline) {
       setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
     }
     if (subsystems.detectionSubsystem != null) {
@@ -279,5 +262,16 @@ public class Robot extends TimedRobot {
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(limelightName, 4);
     }
+  }
+
+  private void supplyRobotYawToLimelight(SwerveDriveState swerveState, String limelightName) {
+    LimelightHelpers.SetRobotOrientation(
+        limelightName,
+        swerveState.Pose.getRotation().getDegrees(),
+        swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+        0,
+        0,
+        0,
+        0);
   }
 }

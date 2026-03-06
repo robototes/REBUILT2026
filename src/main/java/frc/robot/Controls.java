@@ -262,13 +262,25 @@ public class Controls {
                             s.indexerSubsystem.runIndexer(),
                             Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                             Commands.waitSeconds(1)
-                                .andThen(Commands.runOnce(() -> intakeMode = IntakeMode.LAUNCH))))))
+                                .andThen(
+                                    Commands.runOnce(
+                                        () ->
+                                            intakeMode =
+                                                driverController.leftTrigger().getAsBoolean()
+                                                    ? IntakeMode.INTAKE
+                                                    : IntakeMode.LAUNCH))))))
         .onFalse(
-            Commands.runOnce(
-                () -> {
-                  ledsMode = LEDMode.DEFAULT;
-                  intakeMode = IntakeMode.DEPLOYED;
-                }));
+            s.launcherSubsystem
+                .rawStowCommand()
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          ledsMode = LEDMode.DEFAULT;
+                          intakeMode =
+                              driverController.leftTrigger().getAsBoolean()
+                                  ? IntakeMode.INTAKE
+                                  : IntakeMode.DEPLOYED;
+                        })));
     driverController
         .start()
         .onTrue(
@@ -320,11 +332,11 @@ public class Controls {
         Commands.run(
                 () -> {
                   switch (intakeMode) {
-                    case DEPLOYED -> s.intakeSubsystem.deployPivot();
-                    case RETRACTED -> s.intakeSubsystem.retractPivot();
-                    case SPIN -> s.intakeSubsystem.runRollersCommand();
-                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchCommand();
-                    case INTAKE -> s.intakeSubsystem.smartIntake();
+                    case DEPLOYED -> s.intakeSubsystem.deployPivotVoid();
+                    case RETRACTED -> s.intakeSubsystem.retractPivotVoid();
+                    case SPIN -> s.intakeSubsystem.runRollersVoid();
+                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchVoid();
+                    case INTAKE -> s.intakeSubsystem.smartIntakeVoid();
                   }
                 },
                 s.intakeSubsystem)
@@ -341,7 +353,10 @@ public class Controls {
         .onFalse(
             Commands.runOnce(
                 () -> {
-                  intakeMode = IntakeMode.DEPLOYED;
+                  intakeMode =
+                      driverController.rightTrigger().getAsBoolean()
+                          ? IntakeMode.LAUNCH
+                          : IntakeMode.DEPLOYED;
                   ledsMode = LEDMode.DEFAULT;
                 }));
     driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));

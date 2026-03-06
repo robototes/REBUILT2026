@@ -7,7 +7,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 
 public class LaunchCalculator {
@@ -22,15 +22,8 @@ public class LaunchCalculator {
   public static Pose2d estimatedPose;
   public static double estimatedDist;
 
-  // These filters are here to reduce noise when grabbing turret and hood angles
-  // private final LinearFilter ROC__target_turret_filter =
-  //     LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
-  // private final LinearFilter ROC__target_hood_filter =
-  //     LinearFilter.movingAverage((int) (0.1 / TimedRobot.kDefaultPeriod));
-
   // Turret transform
-  private final Transform2d turretTransfom =
-      new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+  private static final Transform2d turretTransform;
   // private Rotation2d lastTurretAngle;
   // private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
@@ -41,12 +34,7 @@ public class LaunchCalculator {
   // private double hood_target_velocity;
 
   public record LaunchingParameters(
-      boolean isValid,
-      Rotation2d turretAngle,
-      // double turret_target_velocity,
-      double hoodAngle,
-      // double hood_target_velocity,
-      double flywheelSpeed) {}
+      boolean isValid, Rotation2d turretAngle, double hoodAngle, double flywheelSpeed) {}
 
   // Cache parametersZ
   private LaunchingParameters finalParameters = null;
@@ -57,6 +45,7 @@ public class LaunchCalculator {
 
   // Static initializer
   static {
+    turretTransform = LauncherConstants.turretTransform();
     minDistance = 1.34;
     maxDistance = 5.60;
     phaseDelay = 0.03;
@@ -72,7 +61,7 @@ public class LaunchCalculator {
     ChassisSpeeds robotRelativeVelocity = robotState.getState().Speeds;
     /* This takes dX /s and dY /s, both multiplied by the estimated delta T (in this case it's the phase delay) to get the real dX dY for the Twist2d object.
     Twist 2d objects gives us a transformation result that tells us where the robot will end up (individually by each component). We then integrate the velocity of the x and
-    y components (field relative) from 0 to delta T. This gives us a delta X and delta Y, which we will then apply to the previous robot pose to get a new pose2d that
+    y components (robot relative) from 0 to delta T. This gives us a delta X and delta Y, which we will then apply to the previous robot pose to get a new pose2d that
     accurately represents the robot's position accounting in for angular velocity.
     */
     estimatedPose =
@@ -83,16 +72,15 @@ public class LaunchCalculator {
                 robotRelativeVelocity.omegaRadiansPerSecond * phaseDelay));
 
     // - Calculate distance from turret to target - //
-    Translation2d target = AllianceUtils.getHubTranslation2d();
-    Pose2d turretPosition = estimatedPose.transformBy(turretTransfom);
+    Translation2d target = GetTargetFromPose.getTargetLocation(estimatedPose);
+    Pose2d turretPosition = estimatedPose.transformBy(turretTransform);
     LaunchCalculator.estimatedPose = turretPosition;
     // grab distance between turret and center of hub
     double turretToTargetDistance = target.getDistance(turretPosition.getTranslation());
 
     // Calculate field relative turret velocity
     ChassisSpeeds robotVelocity =
-        ChassisSpeeds.fromRobotRelativeSpeeds(
-            robotRelativeVelocity, robotState.getState().Pose.getRotation());
+        ChassisSpeeds.fromRobotRelativeSpeeds(robotRelativeVelocity, estimatedPose.getRotation());
     // Grab robot angle
     double robotAngle = estimatedPose.getRotation().getRadians();
     // calculate the turret's tangetial velocity field relative.
@@ -101,13 +89,13 @@ public class LaunchCalculator {
     double turretVelocityX =
         robotVelocity.vxMetersPerSecond
             - robotVelocity.omegaRadiansPerSecond
-                * (turretTransfom.getY() * Math.cos(robotAngle)
-                    - turretTransfom.getX() * Math.sin(robotAngle));
+                * (turretTransform.getY() * Math.cos(robotAngle)
+                    + turretTransform.getX() * Math.sin(robotAngle));
     double turretVelocityY =
         robotVelocity.vyMetersPerSecond
             + robotVelocity.omegaRadiansPerSecond
-                * (turretTransfom.getX() * Math.cos(robotAngle)
-                    - turretTransfom.getY() * Math.sin(robotAngle));
+                * (turretTransform.getX() * Math.cos(robotAngle)
+                    - turretTransform.getY() * Math.sin(robotAngle));
 
     // Account for imparted velocity by robot (turret) to offset
     double timeOfFlight;
@@ -134,30 +122,12 @@ public class LaunchCalculator {
     // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
     // System.out.println(targetTurretAngle.getDegrees());
-
-    // // Set last turret angle to the currrent turret Angle and the last hood angle to current hood
-    // // angle
-    // if (lastTurretAngle == null) lastTurretAngle = targetTurretAngle;
-    // if (Double.isNaN(lastHoodAngle)) lastHoodAngle = targetHoodAngle;
-
-    // Calculate the angular velocity of the target angle. We're using filters to eliminate noise
-    // from the derivative for infinitsimal values
-    // turret_target_velocity =
-    //     ROC__target_turret_filter.calculate(
-    //         targetTurretAngle.minus(lastTurretAngle).getRadians() / TimedRobot.kDefaultPeriod);
-    // hood_target_velocity =
-    //     ROC__target_hood_filter.calculate(
-    //         (targetHoodAngle - lastHoodAngle) / TimedRobot.kDefaultPeriod);
-    // lastTurretAngle = targetTurretAngle;
-    // lastHoodAngle = targetHoodAngle;
     finalParameters =
         new LaunchingParameters(
             lookaheadTurretToTargetDistance >= minDistance
                 && lookaheadTurretToTargetDistance <= maxDistance,
             targetTurretAngle,
-            // turret_target_velocity,
             targetHoodAngle,
-            // hood_target_velocity,
             LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
 
     // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
