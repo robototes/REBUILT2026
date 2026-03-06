@@ -1,25 +1,18 @@
 package frc.robot.subsystems.auto;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.json.simple.parser.ParseException;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radians;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Radians;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -27,6 +20,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.util.simulation.FuelSim;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
 
@@ -35,7 +33,8 @@ public class AutoLogic {
   /* ---------------- Start positions ---------------- */
 
   public enum StartPosition {
-    LEFT_TRENCH("Left Trench", new Pose2d(3.664, 7.597, new Rotation2d(Units.degreesToRadians(90)))),
+    LEFT_TRENCH(
+        "Left Trench", new Pose2d(3.664, 7.597, new Rotation2d(Units.degreesToRadians(90)))),
     CENTER("Center", new Pose2d(3.600, 4.035, new Rotation2d(Units.degreesToRadians(0)))),
     RIGHT_TRENCH(
         "Right Trench", new Pose2d(3.664, 0.473, new Rotation2d(Units.degreesToRadians(-90)))),

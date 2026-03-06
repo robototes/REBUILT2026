@@ -10,8 +10,8 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.Voltage;
@@ -31,10 +31,9 @@ public class Hood extends SubsystemBase {
   private final TalonFX hood;
   private HoodSim hoodSim;
 
-  private DoubleTopic positionTopic; // hood pose in rotations
-  private DoublePublisher positionPub;
-  private DoubleTopic goalTopic; // hood pose in rotations
-  private DoublePublisher goalPub;
+  private DoublePublisher positionPub; // hood pose in rotations
+  private DoublePublisher goalPub; // hood pose in rotations
+  private BooleanPublisher zeroPublisher;
 
   @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
@@ -69,13 +68,12 @@ public class Hood extends SubsystemBase {
 
   public void initializeNT() {
     var nt = NetworkTableInstance.getDefault();
-    positionTopic = nt.getDoubleTopic("/hood/position");
-    positionPub = positionTopic.publish();
+    positionPub = nt.getDoubleTopic("/hood/position").publish();
     positionPub.set(0);
-    goalTopic = nt.getDoubleTopic("/hood/goal");
-    goalPub = goalTopic.publish();
+    goalPub = nt.getDoubleTopic("/hood/goal").publish();
     goalPub.set(request.Position);
-
+    zeroPublisher = nt.getBooleanTopic("/Zero/hoodZero").publish();
+    zeroPublisher.set(false);
     targetPosition = new NtTunableDouble("/launcher/hoodTuner", 0.0);
   }
 
@@ -165,10 +163,11 @@ public class Hood extends SubsystemBase {
   public void zero() {
     hood.setPosition(0);
     hoodZeroed = true;
+    zeroPublisher.set(true);
   }
 
   public Command zeroHoodCommand() {
-    return runOnce(this::zero).withName("Zeroing Hood").ignoringDisable(true);
+    return runOnce(() -> zero()).withName("Zeroing Hood");
   }
 
   public boolean atTargetPosition() {
