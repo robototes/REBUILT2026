@@ -23,7 +23,6 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
@@ -132,8 +131,7 @@ public class Robot extends TimedRobot {
       subsystems.detectionSubsystem.update();
     }
     var robotState = subsystems.drivebaseSubsystem.getState();
-    LauncherConstants.update(
-        robotState.Pose, robotState.Speeds, AllianceUtils.getHubTranslation2d());
+    LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
   }
 
