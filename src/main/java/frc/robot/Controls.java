@@ -493,6 +493,6 @@ public class Controls {
               return shiftInfo.remainingTime() <= 4.0;
             });
 
-    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.DEFAULT_COLOR, 5, 0.1));
+    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 5, 0.1));
   }
 }
