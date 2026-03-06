@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.LauncherConstants;
+import frc.robot.util.tuning.LauncherConstants;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected Hood hood;
