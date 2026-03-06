@@ -15,28 +15,59 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "Center-DepotL"
+                        "pathName": "RT-Intake"
                       }
                     },
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "DepotL-DepotF"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "DepotF-DepotR"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "DepotR-Outpost"
+                        "pathName": "NeutralRight-Intake"
                       }
                     }
                   ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BackFromIntakeRight"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Back-RightTrench"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RT-Outpost"
                 }
               },
               {

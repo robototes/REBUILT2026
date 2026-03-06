@@ -15,7 +15,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "Center-DepotL"
+                        "pathName": "LT-DepotL"
                       }
                     },
                     {
@@ -28,12 +28,6 @@
                       "type": "path",
                       "data": {
                         "pathName": "DepotF-DepotR"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "DepotR-Outpost"
                       }
                     }
                   ]
