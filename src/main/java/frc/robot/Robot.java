@@ -62,7 +62,7 @@ public class Robot extends TimedRobot {
     controls = new Controls(subsystems);
 
     if (DRIVEBASE_ENABLED) {
-      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem);
+      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
     }
     AutoLogic.init(subsystems);
     if (Robot.isSimulation()) {
