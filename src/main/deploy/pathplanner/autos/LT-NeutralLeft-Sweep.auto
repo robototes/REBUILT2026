@@ -39,7 +39,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Copy of LB-NeutralLeft-Back"
+            "pathName": "half-LB-NeutralLeft-Back"
           }
         },
         {
@@ -77,7 +77,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "Copy of LT-NeutralLeft-TWO"
+                        "pathName": "half-LT-NeutralLeft-TWO"
                       }
                     }
                   ]
