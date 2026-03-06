@@ -23,6 +23,7 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
@@ -51,9 +52,12 @@ public class Robot extends TimedRobot {
    * initialization code.
    */
   protected Robot() {
+
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
+    // Loads the field layout before auto  to prevent any delay
+    AllianceUtils.getHubTranslation2d();
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
@@ -85,7 +89,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(CommandScheduler.getInstance());
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      AutoLogic.registerCommands();
+      AutoLogic.registerCommands(true);
       AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
       AutoLogic.initSmartDashBoard();
@@ -108,6 +112,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -158,6 +163,8 @@ public class Robot extends TimedRobot {
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.coastTurret();
     }
+    CommandScheduler.getInstance()
+        .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
   }
 
   @Override

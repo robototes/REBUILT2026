@@ -40,6 +40,7 @@ public class PathPlannerAutos {
 
   public PathPlannerAutos(String autoName) {
     auto = new PathPlannerAuto(autoName);
+
     Pose2d startingPose = auto.getStartingPose();
     if (startingPose == null) {
       startingPose = Pose2d.kZero;
