@@ -88,7 +88,7 @@ public class Controls {
   private IntakeMode intakeMode = IntakeMode.RETRACTED;
 
   public static final double MaxSpeed =
-      (RobotType.type == RobotTypesEnum.ALPHA)
+      (RobotType.TYPE == RobotTypesEnum.ALPHA)
           ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
           : CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed

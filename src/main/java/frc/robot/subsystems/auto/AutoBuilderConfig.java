@@ -3,17 +3,18 @@ package frc.robot.subsystems.auto;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.robotType.ConfigShift;
+import frc.robot.util.robotType.RobotType;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
 
 public class AutoBuilderConfig {
 
-  public static void buildAuto(CommandSwerveDrivetrain drivebase) {
+  public static void buildAuto(CommandSwerveDrivetrain drivebase, boolean unitTest) {
 
     try {
       AutoBuilder.configure(
@@ -44,7 +45,7 @@ public class AutoBuilderConfig {
               new PIDConstants(5, 0.0, 0.0), // Translation PID constants
               new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
               ),
-          RobotConfig.fromGUISettings(), // The robot configuration
+          ConfigShift.configFromRobot(setRobot(unitTest)), // The robot configuration
           () -> {
             // Boolean supplier that controls when the path will be mirrored for the red alliance
             // This will flip the path being followed to the red side of the field.
@@ -58,5 +59,13 @@ public class AutoBuilderConfig {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+  }
+
+  public static String setRobot(boolean unitTest) throws IOException, ParseException {
+    if (unitTest) {
+      return "sim";
+    }
+
+    return (RobotType.isAlpha() ? "alpha" : "comp");
   }
 }

@@ -87,7 +87,7 @@ public class Subsystems {
 
     if (DRIVEBASE_ENABLED) {
       drivebaseSubsystem =
-          (RobotType.type == RobotTypesEnum.ALPHA)
+          (RobotType.TYPE == RobotTypesEnum.ALPHA)
               ? AlphaTunerConstants.createDrivetrain()
               : CompTunerConstants.createDrivetrain();
     } else {
