@@ -26,7 +26,6 @@ import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
-import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -130,8 +129,8 @@ public class Robot extends TimedRobot {
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
     }
-    var robotState = subsystems.drivebaseSubsystem.getState();
-    LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
+    // var robotState = subsystems.drivebaseSubsystem.getState();
+    // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
   }
 
