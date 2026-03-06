@@ -1,10 +1,15 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
@@ -83,9 +88,6 @@ public class VisionSubsystem extends SubsystemBase {
   private double timestampSeconds = 0;
   private Pose2d lastFieldPose = null;
   private double distance = 0;
-  private double distanceA = 0;
-  private double distanceB = 0;
-  private double distanceC = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
   private static final double DISTANCE_TOLERANCE = 1.0;
@@ -93,6 +95,8 @@ public class VisionSubsystem extends SubsystemBase {
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
   private Pose3d drivePose3d;
+  private SwerveDriveState swerveState;
+  private ChassisSpeeds swerveSpeeds;
   // vision
   private Pose3d fieldPose3d;
   private boolean pose_bad = false;
@@ -105,14 +109,7 @@ public class VisionSubsystem extends SubsystemBase {
     rawVisionFieldObject = robotField.getObject("RawVision");
     SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
     SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
-    SmartDashboard.putNumber("/vision/distance meters llA", distanceA);
-    SmartDashboard.putNumber("/vision/distance meters llB", distanceB);
-    SmartDashboard.putNumber("/vision/distance meters llC", distanceC);
     SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
-    SmartDashboard.putBoolean("/vision/limelightaOnline", limelightaOnline);
-    SmartDashboard.putBoolean("/vision/limelightbOnline", limelightbOnline);
-    SmartDashboard.putBoolean("/vision/limelightcOnline", limelightcOnline);
-
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
@@ -145,14 +142,6 @@ public class VisionSubsystem extends SubsystemBase {
           processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry);
         }
       }
-      // rawfiducials should be closest apriltag do to how i configured them
-      if (camera.getName().equals(LIMELIGHT_A)) {
-        distanceA = getDistanceToApriltag(rawFiducials[0]);
-      } else if (camera.getName().equals(LIMELIGHT_B)) {
-        distanceB = getDistanceToApriltag(rawFiducials[0]);
-      } else {
-        distanceC = getDistanceToApriltag(rawFiducials[0]);
-      }
     }
   }
 
@@ -168,7 +157,9 @@ public class VisionSubsystem extends SubsystemBase {
       }
 
       timestampSeconds = estimate.timestampSeconds;
-      drivePose3d = new Pose3d(drivetrain.getState().Pose);
+      swerveState = drivetrain.getState();
+      swerveSpeeds = swerveState.Speeds;
+      drivePose3d = new Pose3d(swerveState.Pose);
       fieldPose3d = estimate.pose3d;
       pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
@@ -180,19 +171,15 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
           || lastFieldPose != null
-              && !(Math.abs(
-                      getDistanceToTargetViaPoseEstimation(
-                          drivePose3d.toPose2d(), fieldPose3d.toPose2d()))
-                  < DISTANCE_TOLERANCE)) {
+              && Math.abs(swerveSpeeds.vxMetersPerSecond) < 0.001 && Math.abs(swerveSpeeds.vyMetersPerSecond) < 0.001 &&  Math.abs(swerveSpeeds.omegaRadiansPerSecond) < 0.02 && RobotType.isAlpha()) {
         pose_bad = true;
       }
 
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        // drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), timestampSeconds,
-        // VecBuilder.fill(0.1, 0.1, 99999));
-        drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
+        drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), Utils.fpgaToCurrentTime(timestampSeconds), VecBuilder.fill(0.1, 0.1, 0.1));
+        // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
@@ -260,17 +247,6 @@ public class VisionSubsystem extends SubsystemBase {
       return false;
     }
     // tl = timestamp, tv = valid target (supossedly tv updates every ll frame)
-    return table.getEntry("tv").getLastChange() > 0;
-  }
-
-  private double getDistanceToApriltag(RawFiducial rf) {
-    var tagPose = AllianceUtils.FIELD_LAYOUT.getTagPose(rf.id);
-    if (tagPose.isEmpty()) {
-      DriverStation.reportWarning(
-          "Vision: Received pose for tag ID " + rf.id + " which is not in the field layout.",
-          false);
-      return 0;
-    }
-    return getDistanceToTargetViaPoseEstimation(lastFieldPose, tagPose.get().toPose2d());
+    return table.getEntry("tl").getLastChange() > 0;
   }
 }
