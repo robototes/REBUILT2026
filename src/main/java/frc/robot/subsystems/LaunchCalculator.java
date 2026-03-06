@@ -36,9 +36,6 @@ public class LaunchCalculator {
   public record LaunchingParameters(
       boolean isValid, Rotation2d turretAngle, double hoodAngle, double flywheelSpeed) {}
 
-  // Cache parametersZ
-  private LaunchingParameters finalParameters = null;
-
   private static double minDistance;
   private static double maxDistance;
   private static double phaseDelay;
@@ -52,9 +49,6 @@ public class LaunchCalculator {
   }
 
   public LaunchingParameters getParameters(CommandSwerveDrivetrain robotState) {
-    if (finalParameters != null) {
-      return finalParameters;
-    }
 
     // Calculate estimated pose while accounting for phase delay
     Pose2d estimatedPose = robotState.getState().Pose;
@@ -122,21 +116,15 @@ public class LaunchCalculator {
     // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
     // System.out.println(targetTurretAngle.getDegrees());
-    finalParameters =
-        new LaunchingParameters(
-            lookaheadTurretToTargetDistance >= minDistance
-                && lookaheadTurretToTargetDistance <= maxDistance,
-            targetTurretAngle,
-            targetHoodAngle,
-            LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
 
     // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
     // speed
     // with all velocities accounted for
-    return finalParameters;
-  }
-
-  public void clearLaunchingParameters() {
-    finalParameters = null;
+    return new LaunchingParameters(
+        lookaheadTurretToTargetDistance >= minDistance
+            && lookaheadTurretToTargetDistance <= maxDistance,
+        targetTurretAngle,
+        targetHoodAngle,
+        LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
   }
 }

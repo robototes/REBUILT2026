@@ -256,7 +256,7 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
@@ -421,8 +421,7 @@ public class Controls {
       return;
     }
 
-    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTarget());
-    // use static position constants from TurretSubsystem
+    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));

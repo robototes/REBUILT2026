@@ -22,6 +22,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
@@ -159,10 +161,10 @@ public class TurretSubsystem extends SubsystemBase {
           // Shift so 0° = backward
           degrees += 180.0;
 
-          // Normalize to [-90, 270]
+          // Normalize to [-90, 270] (input modulus always need 360)
           degrees = MathUtil.inputModulus(degrees, -90, 270);
 
-          // Clamp to turret range
+          // Clamp to soft limits
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
           double rotations = Units.degreesToRotations(degrees);
@@ -208,10 +210,10 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to clockwise positive
     degrees = -degrees;
 
-    // Normalize to [-90, 270]
+    // Normalize to soft limits (inout modulus always needs 360)
     degrees = MathUtil.inputModulus(degrees, -90, 270);
 
-    // Clamp to turret limits
+    // Clamp to soft limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
     // Convert to rotations
@@ -225,8 +227,9 @@ public class TurretSubsystem extends SubsystemBase {
         () -> {
           double targetRotations =
               calculateTurretAngle(GetTargetFromPose.getTargetLocation(driveTrain));
-          this.setTurretRawPosition(targetRotations);
+          setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
+          // System.out.println("Target Rotations: " + targetRotations);
           Transform2d fieldRelativeOffset =
               new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
           Pose2d turretPose2 =
@@ -239,6 +242,23 @@ public class TurretSubsystem extends SubsystemBase {
                       .minus(Rotation2d.fromRotations(targetRotations)));
           var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
           turretRotation.set(array2, 0);
+        },
+        () -> turretMotor.stopMotor());
+  }
+
+  public Command rotateToTargetWithCalc() {
+    return runEnd(
+        () -> {
+          double currentTurretDegrees = getTurretPosition();
+          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain);
+          double targetTurretDegrees = para.turretAngle().getDegrees();
+          double shortestAngle =
+              MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -90, 270);
+          double turretDegrees =
+              MathUtil.clamp(currentTurretDegrees + shortestAngle, TURRET_MIN, TURRET_MAX);
+          // System.out.println(Units.degreesToRotations(turretDegrees));
+          setTurretRawPosition(Units.degreesToRotations(turretDegrees));
+          targetPos = Units.degreesToRotations(turretDegrees);
         },
         () -> turretMotor.stopMotor());
   }
