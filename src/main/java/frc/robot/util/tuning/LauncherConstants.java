@@ -103,6 +103,10 @@ public class LauncherConstants {
     return getFlywheelSpeedFromDistance(distance);
   }
 
+  public static Transform2d turretTransform() {
+    return new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
+  }
+
   public static double getHoodAngleFromDistance(double distance) {
     return hoodMap.get(distance);
   }
