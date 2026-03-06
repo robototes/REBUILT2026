@@ -86,6 +86,6 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public Command rawStowCommand() {
     return Commands.parallel(
-        Commands.runOnce(() -> hood.setHoodPosition(0)),flywheels.stopCommand());
+        Commands.runOnce(() -> hood.setHoodPosition(0)), flywheels.stopCommand());
   }
 }
