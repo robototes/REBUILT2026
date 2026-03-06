@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -34,6 +35,7 @@ import frc.robot.subsystems.intake.IntakeRollers;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 
@@ -75,9 +77,10 @@ public class Controls {
 
   AprilTagFieldLayout aprilTagFieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+  // Robot with bumpers is 36.875 inches by 30.750 inches
   Transform2d robotOffsetFromTag =
       new Transform2d(
-          new Translation2d(Units.inchesToMeters(30 / 2), 0), Rotation2d.fromDegrees(180));
+          new Translation2d(Units.inchesToMeters(30.750 / 2), 0), Rotation2d.fromDegrees(180));
   Pose2d redHub = aprilTagFieldLayout.getTagPose(10).get().toPose2d().plus(robotOffsetFromTag);
   Pose2d blueHub = aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
 
@@ -254,7 +257,7 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+                s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
@@ -290,6 +293,16 @@ public class Controls {
                     s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
+
+    // driverController
+    //     .start()
+    //     .onTrue(
+    //         Commands.parallel(
+    //                 s.hood.autoZeroCommand(),
+    //                 s.intakePivot.autoZeroCommand(),
+    //                 s.turretSubsystem.autoZeroCommand(),
+    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
+    //             .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED) {
       connected(launcherTuningController)
@@ -419,8 +432,7 @@ public class Controls {
       return;
     }
 
-    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTarget());
-    // use static position constants from TurretSubsystem
+    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
@@ -470,5 +482,17 @@ public class Controls {
     s.ledSubsystem.setDefaultCommand(
         Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
             .withName("LED Default Command"));
+
+    Trigger shiftWarning =
+        new Trigger(
+            () -> {
+              if (RobotState.isAutonomous()) return false;
+
+              var shiftInfo = HubShiftUtil.getOfficialShiftInfo();
+
+              return shiftInfo.remainingTime() <= 4.0;
+            });
+
+    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.DEFAULT_COLOR, 5, 0.1));
   }
 }

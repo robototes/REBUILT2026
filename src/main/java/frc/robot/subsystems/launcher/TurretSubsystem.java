@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -14,14 +15,19 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
@@ -31,9 +37,11 @@ import java.util.function.Supplier;
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
+  private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
+  private static final double AUTO_ZERO_VOLTAGE = 0.5;
 
   // Positions
   private double targetPos;
@@ -67,6 +75,9 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 270; // degrees
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
+  private final BooleanPublisher zeroPublisher =
+      NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
+
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
@@ -78,6 +89,7 @@ public class TurretSubsystem extends SubsystemBase {
         new TalonFX(
             Hardware.TURRET_MOTOR_ID,
             RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+    zeroPublisher.set(false);
     turretConfig();
     turretRotation.set(new Pose2d[2]);
   }
@@ -129,11 +141,11 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command zeroTurret() {
     return runOnce(
-            () -> {
-              turretMotor.setPosition(0);
-              targetPos = 0;
-            })
-        .ignoringDisable(true);
+        () -> {
+          turretMotor.setPosition(0);
+          targetPos = 0;
+          zeroPublisher.set(true);
+        });
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
@@ -159,10 +171,10 @@ public class TurretSubsystem extends SubsystemBase {
           // Shift so 0° = backward
           degrees += 180.0;
 
-          // Normalize to [-90, 270]
+          // Normalize to [-90, 270] (input modulus always need 360)
           degrees = MathUtil.inputModulus(degrees, -90, 270);
 
-          // Clamp to turret range
+          // Clamp to soft limits
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
           double rotations = Units.degreesToRotations(degrees);
@@ -208,10 +220,10 @@ public class TurretSubsystem extends SubsystemBase {
     // Convert to clockwise positive
     degrees = -degrees;
 
-    // Normalize to [-90, 270]
+    // Normalize to soft limits (inout modulus always needs 360)
     degrees = MathUtil.inputModulus(degrees, -90, 270);
 
-    // Clamp to turret limits
+    // Clamp to soft limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
     // Convert to rotations
@@ -225,8 +237,9 @@ public class TurretSubsystem extends SubsystemBase {
         () -> {
           double targetRotations =
               calculateTurretAngle(GetTargetFromPose.getTargetLocation(driveTrain));
-          this.setTurretRawPosition(targetRotations);
+          setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
+          // System.out.println("Target Rotations: " + targetRotations);
           Transform2d fieldRelativeOffset =
               new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
           Pose2d turretPose2 =
@@ -239,6 +252,23 @@ public class TurretSubsystem extends SubsystemBase {
                       .minus(Rotation2d.fromRotations(targetRotations)));
           var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
           turretRotation.set(array2, 0);
+        },
+        () -> turretMotor.stopMotor());
+  }
+
+  public Command rotateToTargetWithCalc() {
+    return runEnd(
+        () -> {
+          double currentTurretDegrees = getTurretPosition();
+          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain);
+          double targetTurretDegrees = para.turretAngle().getDegrees();
+          double shortestAngle =
+              MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -90, 270);
+          double turretDegrees =
+              MathUtil.clamp(currentTurretDegrees + shortestAngle, TURRET_MIN, TURRET_MAX);
+          // System.out.println(Units.degreesToRotations(turretDegrees));
+          setTurretRawPosition(Units.degreesToRotations(turretDegrees));
+          targetPos = Units.degreesToRotations(turretDegrees);
         },
         () -> turretMotor.stopMotor());
   }
@@ -257,5 +287,28 @@ public class TurretSubsystem extends SubsystemBase {
 
   public void coastTurret() {
     turretMotor.setNeutralMode(NeutralModeValue.Coast);
+  }
+
+  public Command voltageControl(Supplier<Voltage> voltageSupplier) {
+    return runEnd(
+            () -> {
+              turretMotor.setControl(voltageRequest.withOutput(voltageSupplier.get()));
+            },
+            () -> {
+              turretMotor.stopMotor();
+            })
+        .withName("Voltage Control");
+  }
+
+  public Command autoZeroCommand() {
+    if (Robot.isSimulation()) {
+      return zeroTurret();
+    }
+    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
+        .until(
+            () -> turretMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
+        .andThen(zeroTurret())
+        .withTimeout(3)
+        .withName("Automatic Zero turret");
   }
 }
