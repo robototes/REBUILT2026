@@ -167,7 +167,7 @@ public class Hood extends SubsystemBase {
   }
 
   public Command zeroHoodCommand() {
-    return runOnce(this::zero).withName("Zeroing Hood");
+    return runOnce(this::zero).withName("Zeroing Hood").ignoringDisable(true);
   }
 
   public boolean atTargetPosition() {

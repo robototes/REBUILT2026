@@ -132,7 +132,7 @@ public class TurretSubsystem extends SubsystemBase {
         () -> {
           turretMotor.setPosition(0);
           targetPos = 0;
-        });
+        }).ignoringDisable(true);
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {

@@ -128,7 +128,7 @@ public class IntakePivot extends SubsystemBase {
         () -> {
           pivotMotor.setPosition(RETRACTED_POS);
           targetPos = RETRACTED_POS;
-        });
+        }).ignoringDisable(true);
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
