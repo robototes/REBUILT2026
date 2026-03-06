@@ -22,6 +22,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -38,7 +39,9 @@ import java.util.function.DoubleSupplier;
 public class ClimbSubsystem extends SubsystemBase {
   // Climb states
   public enum ClimbLevel {
-    L1;
+    L1,
+    L2,
+    L3
   }
 
   public enum ClimbState {
@@ -71,7 +74,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double POWER_COEFFICIENT = .05;
   private static final double MAX_TRANSLATIONAL_POWER = 2.0;
   private static final double MAX_ROTATIONAL_POWER = 4.0;
-  private static final double TRANSLATION_TOLERANCE_METERS = 0.01;
+  private static final double TRANSLATION_TOLERANCE_METERS = 0.03;
   private static final double ROTATION_TOLERANCE_DEGREES = 1.0;
 
   // Auto Zero constants
@@ -131,7 +134,7 @@ public class ClimbSubsystem extends SubsystemBase {
   /**
    * sets the motor's position
    *
-   * @param position A double representing the absolut target motor rotation, relative to the
+   * @param position A double representing the absolute target motor rotation, relative to the
    *     motor's zero position
    */
   public void setMotorPosition(double position) {
@@ -203,6 +206,10 @@ public class ClimbSubsystem extends SubsystemBase {
                 isZeroed = true;
               }
             })
+        .beforeStarting(
+            () -> {
+              hits.set(0);
+            })
         .onlyIf(() -> !isZeroed)
         .withTimeout(5);
   }
@@ -217,6 +224,7 @@ public class ClimbSubsystem extends SubsystemBase {
    * @return returns a Command that provides instructions on how to Climb
    */
   public Command climbRoutine(ClimbLevel state) {
+    Set<Subsystem> deferReqs = driveTrain != null ? Set.of(this, driveTrain) : Set.of(this);
     return Commands.defer(
             () -> {
               final double targetPosition;
@@ -225,7 +233,7 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                  // case L2: ... (Future proofing)
+                // case L2: ... (Future proofing)
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
@@ -244,8 +252,11 @@ public class ClimbSubsystem extends SubsystemBase {
                   .beforeStarting(() -> climbState = ClimbState.Climbing)
                   .finallyDo((interrupted) -> climbState = ClimbState.Idle);
             },
-            Set.of(this)) // Requirements for the deferred command
-        .onlyIf(() -> climbState == ClimbState.Idle);
+            deferReqs) // Requirements for the deferred command
+        .onlyIf(
+            () -> {
+              return isZeroed && climbState == ClimbState.Idle;
+            });
   }
 
   // -------- AUTO ALIGN -------- //
