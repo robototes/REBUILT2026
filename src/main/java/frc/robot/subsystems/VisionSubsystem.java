@@ -1,9 +1,7 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -178,11 +176,11 @@ public class VisionSubsystem extends SubsystemBase {
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        //drivetrain.addVisionMeasurement(
+        // drivetrain.addVisionMeasurement(
         //    fieldPose3d.toPose2d(),
         //    Utils.fpgaToCurrentTime(timestampSeconds),
         //    VecBuilder.fill(0.1, 0.1, 0.1));
-       drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
+        drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
       }
