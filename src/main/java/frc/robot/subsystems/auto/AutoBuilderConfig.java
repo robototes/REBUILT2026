@@ -5,6 +5,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.io.IOException;
@@ -16,22 +17,32 @@ public class AutoBuilderConfig {
 
     try {
       AutoBuilder.configure(
-          () -> drivebase.getState().Pose, // Robot pose supplier
-          (pose) ->
-              drivebase.resetPose(
-                  pose), // Method to reset odometry (will be called if your auto has a starting
+          () -> {
+            return drivebase.getState().Pose;
+          }, // Robot pose supplier
+          (pose) -> {
+            drivebase.resetPose(pose);
+          }, // Method to reset odometry (will be called if your auto has a starting
           // pose)
-          () -> drivebase.getState().Speeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+          () -> {
+            return drivebase.getState().Speeds;
+          },
+          // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
           (speeds, feedforwards) ->
               drivebase.setControl(
                   new SwerveRequest.ApplyRobotSpeeds()
-                      .withSpeeds(speeds)), // Method that will drive the robot given ROBOT RELATIVE
+                      .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
+                      .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                      .withWheelForceFeedforwardsY(
+                          feedforwards
+                              .robotRelativeForcesYNewtons())), // Method that will drive the robot
+          // given ROBOT RELATIVE
           // ChassisSpeeds. Also optionally outputs individual module
           // feedforwards
           new PPHolonomicDriveController( // PPHolonomicController is the built in path following
               // controller for holonomic drive trains
-              new PIDConstants(3.0, 0.0, 0.0), // Translation PID constants
-              new PIDConstants(2.0, 0.0, 0.0) // Rotation PID constants
+              new PIDConstants(5, 0.0, 0.0), // Translation PID constants
+              new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
               ),
           RobotConfig.fromGUISettings(), // The robot configuration
           () -> {
