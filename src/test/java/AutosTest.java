@@ -19,7 +19,7 @@ class AutosTest {
   @BeforeEach
   void setup() {
     if (RobotBase.isReal()) {
-      AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain());
+      AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), true);
     }
   }
 
