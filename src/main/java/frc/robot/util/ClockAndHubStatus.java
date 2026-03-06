@@ -4,8 +4,11 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import java.util.Optional;
+import java.util.function.Supplier;
+import lombok.Setter;
 
 public class ClockAndHubStatus {
   public double matchLength = 2.5;
@@ -25,6 +28,8 @@ public class ClockAndHubStatus {
   private static final double SHIFT_2_END_TIME = 80;
   private static final double SHIFT_3_END_TIME = 55;
   private static final double END_GAME_START_TIME = 30;
+  private static final Timer shiftTimer = new Timer();
+
 
   public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
     if (isHubActive(0)) {
@@ -52,6 +57,11 @@ public class ClockAndHubStatus {
     }
   }
 
+  /** Starts the timer at the begining of teleop. */
+  public static void initialize() {
+    shiftTimer.restart();
+  }
+
   public boolean isHubActive(double lookAheadTime) {
     Optional<Alliance> alliance = DriverStation.getAlliance();
     // If we have no alliance, we cannot be enabled, therefore no hub.
@@ -67,11 +77,23 @@ public class ClockAndHubStatus {
       return false;
     }
 
+
     // We're teleop enabled, compute.
     double matchTime = DriverStation.getMatchTime() + lookAheadTime;
     String gameData = DriverStation.getGameSpecificMessage();
     if (gameData.isEmpty()) {
       return false;
+    }
+
+      // Return FMS value
+    String message = DriverStation.getGameSpecificMessage();
+    if (message.length() > 0) {
+      char character = message.charAt(0);
+      if (character == 'R' && matchTime ) {
+
+      } else if (character == 'B') {
+        return Alliance.Blue;
+      }
     }
 
     boolean redInactiveFirst = false;
@@ -113,20 +135,54 @@ public class ClockAndHubStatus {
   }
 
   public boolean isGameDataValid() {
-    String gameData = DriverStation.getGameSpecificMessage();
-    if (gameData.isEmpty()) {
-      return false;
-    }
-
-    switch (gameData.charAt(0)) {
-      case 'R':
-        return true;
-      case 'B':
-        return true;
-      default:
-        {
-          return false;
+    if (!DriverStation.isTeleopEnabled()){
+      String gameData = DriverStation.getGameSpecificMessage();
+      if (gameData.isEmpty()) {
+        return false;
+      }
+      switch (gameData.charAt(0)) {
+        case 'R':
+          return true;
+        case 'B':
+          return true;
+        default:
+          {
+            return false;
         }
     }
   }
+}
+
+ @Setter private static Supplier<Optional<Boolean>> allianceWinOverride = () -> Optional.empty();
+
+ public static Optional<Boolean> getAllianceWinOverride() {
+    return allianceWinOverride.get();
+  }
+
+public static Alliance getFirstActiveAlliance() {
+    var alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+
+    // Return override value
+    var winOverride = getAllianceWinOverride();
+    if (!winOverride.isEmpty()) {
+      return winOverride.get()
+          ? (alliance == Alliance.Blue ? Alliance.Red : Alliance.Blue)
+          : (alliance == Alliance.Blue ? Alliance.Blue : Alliance.Red);
+    }
+
+    // Return FMS value
+    String message = DriverStation.getGameSpecificMessage();
+    if (message.length() > 0) {
+      char character = message.charAt(0);
+      if (character == 'R') {
+        return Alliance.Blue;
+      } else if (character == 'B') {
+        return Alliance.Red;
+      }
+    }
+
+    // Return default value
+    return alliance == Alliance.Blue ? Alliance.Red : Alliance.Blue;
+  }
+
 }
