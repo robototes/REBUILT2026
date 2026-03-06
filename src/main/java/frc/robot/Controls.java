@@ -480,7 +480,7 @@ public class Controls {
 
               var shiftInfo = HubShiftUtil.getOfficialShiftInfo();
 
-              return shiftInfo.remainingTime() <= 4.0 && shiftInfo.remainingTime() > 3.9;
+              return shiftInfo.remainingTime() <= 4.0;
             });
 
     shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.DEFAULT_COLOR, 5, 0.1));
