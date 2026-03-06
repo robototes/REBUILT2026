@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj.Timer;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.Setter;
-import org.littletonrobotics.frc2026.subsystems.launcher.LaunchCalculator;
 
 public class HubShiftUtil {
   public enum ShiftEnum {
@@ -32,8 +31,8 @@ public class HubShiftUtil {
   private static final double minFuelCountDelay = 1.0;
   private static final double maxFuelCountDelay = 2.0;
   private static final double shiftEndFuelCountExtension = 3.0;
-  private static final double minTimeOfFlight = LaunchCalculator.getMinTimeOfFlight();
-  private static final double maxTimeOfFlight = LaunchCalculator.getMaxTimeOfFlight();
+  private static final double minTimeOfFlight = LauncherConstants.minTimeOfFlight();
+  private static final double maxTimeOfFlight = LauncherConstants.maxTimeOfFlight();
   private static final double approachingActiveFudge = -1 * (minTimeOfFlight + minFuelCountDelay);
   private static final double endingActiveFudge =
       shiftEndFuelCountExtension + -1 * (maxTimeOfFlight + maxFuelCountDelay);
