@@ -5,7 +5,6 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
-import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.units.Units;
@@ -15,8 +14,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.util.AllianceUtils;
-import frc.robot.util.ClockAndHubStatus;
 
 public class LEDSubsystem extends SubsystemBase {
   public enum LEDMode {
@@ -69,7 +66,6 @@ public class LEDSubsystem extends SubsystemBase {
   private double lastToggleTime = 0;
   private boolean showingPrimary = true;
 
-  private final BooleanPublisher isRainbowPub;
   private final StringPublisher currentColorPub;
   private final StringPublisher currentPatternPub;
   private final StringPublisher currentModePub;
@@ -82,9 +78,6 @@ public class LEDSubsystem extends SubsystemBase {
         .withFrameRate(Units.Hertz.of(100));
 
     NetworkTableInstance nt = NetworkTableInstance.getDefault();
-
-    isRainbowPub = nt.getBooleanTopic("/color/isRainbow").publish();
-    isRainbowPub.set(false);
 
     currentColorPub = nt.getStringTopic("/color/currentColor").publish();
     currentColorPub.set("None");
@@ -124,7 +117,6 @@ public class LEDSubsystem extends SubsystemBase {
     primaryColor = color;
     setHardwareColor(color);
 
-    isRainbowPub.set(false);
     currentPatternPub.set("SOLID");
     currentColorPub.set(color.toHexString());
     alternatingColorsPub.set("A:None | B:None");
@@ -140,7 +132,6 @@ public class LEDSubsystem extends SubsystemBase {
     showingPrimary = true;
     lastToggleTime = Timer.getFPGATimestamp();
 
-    isRainbowPub.set(false);
     currentPatternPub.set("ALTERNATING");
     currentColorPub.set(a.toHexString());
     alternatingColorsPub.set("A:" + a.toHexString() + " | B:" + b.toHexString());
@@ -152,7 +143,6 @@ public class LEDSubsystem extends SubsystemBase {
     currentPattern = LEDPattern.RAINBOW;
 
     // Update publishers
-    isRainbowPub.set(true);
     currentPatternPub.set("RAINBOW");
     currentColorPub.set("NONE");
     alternatingColorsPub.set("A:None | B:None");
@@ -200,10 +190,6 @@ public class LEDSubsystem extends SubsystemBase {
     if (RobotState.isDisabled()) {
       setMode(LEDMode.DISABLED);
       return;
-    }
-
-    if (ClockAndHubStatus.isHubActive(5)) {
-      flashCommand((AllianceUtils.isBlue() ? INTAKE_COLOR : LAUNCH_PREP_COLOR_TWO), 3, 0.25);
     }
 
     if (currentPattern == LEDPattern.ALTERNATE) {

@@ -184,6 +184,5 @@ public class HubShiftUtil {
       140.0
     };
     return getShiftInfo(shiftSchedule, shiftedShiftStartTimes, shiftedShiftEndTimes);
-    // }
   }
 }
