@@ -25,7 +25,7 @@ public class IntakePivot extends SubsystemBase {
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
 
   // Positions
-  private double targetPos;
+  public double targetPos;
   public static final double DEPLOYED_POS = -0.39;
   public static final double LAUNCH_POS = -0.21;
   public static final double RETRACTED_POS = 0.0;
@@ -121,6 +121,11 @@ public class IntakePivot extends SubsystemBase {
           pivotMotor.setControl(request.withPosition(pos));
           targetPos = pos;
         });
+  }
+
+  public void setPivotPositionVoid(double pos) {
+    targetPos = pos;
+    pivotMotor.setControl(request.withPosition(pos));
   }
 
   public Command zeroPivot() {

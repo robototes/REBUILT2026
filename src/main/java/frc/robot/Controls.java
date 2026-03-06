@@ -323,11 +323,11 @@ public class Controls {
         Commands.run(
                 () -> {
                   switch (intakeMode) {
-                    case DEPLOYED -> s.intakeSubsystem.deployPivot();
-                    case RETRACTED -> s.intakeSubsystem.retractPivot();
-                    case SPIN -> s.intakeSubsystem.runRollersCommand();
-                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchCommand();
-                    case INTAKE -> s.intakeSubsystem.smartIntake();
+                    case DEPLOYED -> s.intakeSubsystem.deployPivotVoid();
+                    case RETRACTED -> s.intakeSubsystem.retractPivotVoid();
+                    case SPIN -> s.intakeSubsystem.runRollersVoid();
+                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchVoid();
+                    case INTAKE -> s.intakeSubsystem.smartIntakeVoid();
                   }
                 },
                 s.intakeSubsystem)

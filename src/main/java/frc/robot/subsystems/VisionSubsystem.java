@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,7 +14,6 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -23,7 +21,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
@@ -171,14 +168,20 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
           || lastFieldPose != null
-              && Math.abs(swerveSpeeds.vxMetersPerSecond) < 0.001 && Math.abs(swerveSpeeds.vyMetersPerSecond) < 0.001 &&  Math.abs(swerveSpeeds.omegaRadiansPerSecond) < 0.02 && RobotType.isAlpha()) {
+              && Math.abs(swerveSpeeds.vxMetersPerSecond) < 0.001
+              && Math.abs(swerveSpeeds.vyMetersPerSecond) < 0.001
+              && Math.abs(swerveSpeeds.omegaRadiansPerSecond) < 0.02
+              && RobotType.isAlpha()) {
         pose_bad = true;
       }
 
       if (!pose_bad) {
         // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
         // to not need kalman filtering
-        drivetrain.addVisionMeasurement(fieldPose3d.toPose2d(), Utils.fpgaToCurrentTime(timestampSeconds), VecBuilder.fill(0.1, 0.1, 0.1));
+        drivetrain.addVisionMeasurement(
+            fieldPose3d.toPose2d(),
+            Utils.fpgaToCurrentTime(timestampSeconds),
+            VecBuilder.fill(0.1, 0.1, 0.1));
         // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
