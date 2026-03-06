@@ -129,10 +129,11 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command zeroTurret() {
     return runOnce(
-        () -> {
-          turretMotor.setPosition(0);
-          targetPos = 0;
-        }).ignoringDisable(true);
+            () -> {
+              turretMotor.setPosition(0);
+              targetPos = 0;
+            })
+        .ignoringDisable(true);
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {

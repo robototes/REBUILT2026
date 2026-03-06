@@ -130,10 +130,11 @@ public class IntakePivot extends SubsystemBase {
 
   public Command zeroPivot() {
     return runOnce(
-        () -> {
-          pivotMotor.setPosition(RETRACTED_POS);
-          targetPos = RETRACTED_POS;
-        }).ignoringDisable(true);
+            () -> {
+              pivotMotor.setPosition(RETRACTED_POS);
+              targetPos = RETRACTED_POS;
+            })
+        .ignoringDisable(true);
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
