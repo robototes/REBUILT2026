@@ -572,6 +572,10 @@ public class FuelSim {
 
     xVel += fieldSpeeds.vxMetersPerSecond;
     yVel += fieldSpeeds.vyMetersPerSecond;
+    if (RobotSim.fuelsHeld > 0) {
+      RobotSim.fuelsHeld--;
+      spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    }
 
     spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
   }
@@ -635,6 +639,9 @@ public class FuelSim {
       for (int i = 0; i < fuels.size(); i++) {
         if (intake.shouldIntake(fuels.get(i), robot)) {
           fuels.remove(i);
+          if (RobotSim.fuelsHeld < RobotSim.CAPACITY) {
+            RobotSim.fuelsHeld++;
+          }
           i--;
         }
       }
@@ -845,8 +852,6 @@ public class FuelSim {
     protected final Translation3d exit;
     protected final int exitVelXMult;
 
-    protected int score = 0;
-
     protected Hub(Translation2d center, Translation3d exit, int exitVelXMult) {
       this.center = center;
       this.exit = exit;
@@ -857,7 +862,7 @@ public class FuelSim {
       if (didFuelScore(fuel, subticks)) {
         fuel.pos = exit;
         fuel.vel = getDispersalVelocity();
-        score++;
+        RobotSim.score++;
       }
     }
 
@@ -874,7 +879,8 @@ public class FuelSim {
 
     /** Reset this hub's score to 0 */
     public void resetScore() {
-      score = 0;
+      RobotSim.score = 0;
+      RobotSim.fuelsHeld = 8;
     }
 
     /**
@@ -882,10 +888,6 @@ public class FuelSim {
      *
      * @return
      */
-    public int getScore() {
-      return score;
-    }
-
     protected void fuelCollideSide(Fuel fuel) {
       fuelCollideRectangle(
           fuel,
