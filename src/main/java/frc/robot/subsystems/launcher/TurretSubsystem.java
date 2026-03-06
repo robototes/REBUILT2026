@@ -60,8 +60,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kA = 0.12;
 
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT =  10; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 5; // amps
+  private static final int STATOR_CURRENT_LIMIT =  40; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 200;
@@ -259,9 +259,10 @@ public class TurretSubsystem extends SubsystemBase {
   public Command rotateToTargetWithCalc() {
     return runEnd(
         () -> {
-          double currentTurretDegrees = getTurretPosition();
+          double currentTurretDegrees = Units.rotationsToDegrees(getTurretPosition());
           LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain);
           double targetTurretDegrees = para.turretAngle().getDegrees();
+          targetTurretDegrees = -targetTurretDegrees;
           double shortestAngle =
               MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -90, 270);
           double turretDegrees =

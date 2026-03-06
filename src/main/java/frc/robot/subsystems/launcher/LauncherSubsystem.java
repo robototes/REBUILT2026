@@ -54,8 +54,11 @@ public class LauncherSubsystem extends SubsystemBase {
     return Commands.run(
         () -> {
           LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
-          hood.setHoodPosition(para.hoodAngle());
-          flywheels.setVelocityRPS(para.flywheelSpeed());
+          hoodGoal = para.hoodAngle();
+          flywheelsGoal = para.flywheelSpeed();
+
+          hood.setHoodPosition(hoodGoal);
+          flywheels.setVelocityRPS(flywheelsGoal);
         });
   }
 
