@@ -39,8 +39,8 @@ public class FlywheelsSim {
     // Physics model
     flywheelSim =
         new FlywheelSim(
-            LinearSystemId.createFlywheelSystem(DCMotor.getFalcon500(2), MOI, GEAR_RATIO),
-            DCMotor.getFalcon500(2), // two motors total
+            LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(2), MOI, GEAR_RATIO),
+            DCMotor.getKrakenX60(2), // two motors total
             1);
 
     // --- Mechanism2d ---
