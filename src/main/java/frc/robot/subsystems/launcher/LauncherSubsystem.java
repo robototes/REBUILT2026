@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -32,7 +31,7 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
-    return Commands.runEnd(
+    return Commands.run(
         () -> {
           Translation2d targetPose = GetTargetFromPose.getTargetLocation(drive);
 
@@ -45,8 +44,7 @@ public class LauncherSubsystem extends SubsystemBase {
 
           hood.setHoodPosition(hoodGoal);
           flywheels.setVelocityRPS(flywheelsGoal);
-        },
-        () -> CommandScheduler.getInstance().schedule(stowCommand()));
+        });
   }
 
   // Will use after week 1
@@ -84,5 +82,11 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public Command stowCommand() {
     return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.stopCommand());
+  }
+
+  public Command rawStowCommand() {
+    return Commands.parallel(
+        Commands.runOnce(() -> hood.setHoodPosition(0)),
+        Commands.runOnce(() -> flywheels.setVelocityRPS(0)));
   }
 }
