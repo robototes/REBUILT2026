@@ -105,7 +105,8 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Climb level positions
   private static final double L1 = 5; // rotations
-
+  private static final double L2 = 10; // rotations
+  private static final double L3 = 15; // rotations
   // Simulation
   private DoublePublisher ntMotorPos;
   private DoublePublisher ntMotorCurrent;
@@ -233,7 +234,12 @@ public class ClimbSubsystem extends SubsystemBase {
                 case L1:
                   targetPosition = L1;
                   break;
-                // case L2: ... (Future proofing)
+                case L2:
+                  targetPosition = L2;
+                  break;
+                case L3:
+                  targetPosition = L3;
+                  break;
                 default:
                   throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
               }
