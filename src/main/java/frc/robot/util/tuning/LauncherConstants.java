@@ -1,4 +1,5 @@
-package frc.robot.util;
+package frc.robot.util.tuning;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -8,10 +9,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
-  private static final double TURRET_X_OFFSET = 0.2159;
-  private static final double TURRET_Y_OFFSET = -0.1397;
   private static final Translation2d LAUNCHER_OFFSET =
-      new Translation2d(TURRET_X_OFFSET, TURRET_Y_OFFSET);
+      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
+
   private static double minTime = 100000;
   private static double maxTime = -100000;
 
@@ -62,10 +62,10 @@ public class LauncherConstants {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
       timeMap.put(point.distance, point.time);
-      if (point.time > maxTime){
+      if (point.time > maxTime) {
         maxTime = point.time;
       }
-      if (point.time < minTime){
+      if (point.time < minTime) {
         minTime = point.time;
       }
     }
@@ -105,8 +105,6 @@ public class LauncherConstants {
   public static double maxTimeOfFlight() {
     return maxTime;
   }
-
-
 
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
   public static Translation2d predictTargetPos(
