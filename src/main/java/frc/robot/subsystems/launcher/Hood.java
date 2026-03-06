@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
-import frc.robot.util.NtTunableDouble;
+import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -35,6 +35,7 @@ public class Hood extends SubsystemBase {
   private DoublePublisher positionPub;
   private DoubleTopic goalTopic; // hood pose in rotations
   private DoublePublisher goalPub;
+
   @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);

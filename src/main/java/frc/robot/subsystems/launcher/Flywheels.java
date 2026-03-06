@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
-import frc.robot.util.NtTunableDouble;
+import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 
 public class Flywheels extends SubsystemBase {
@@ -152,6 +152,7 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
+
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
     if (TUNER_CONTROLLED) {

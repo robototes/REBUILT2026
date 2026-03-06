@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.LauncherConstants;
+import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -73,7 +73,6 @@ public class TurretSubsystem extends SubsystemBase {
     this.driveTrain = driveTrain;
     turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID);
     turretConfig();
-    turretMotor.setPosition(0);
     turretRotation.set(new Pose2d[2]);
   }
 
