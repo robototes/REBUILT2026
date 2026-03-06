@@ -5,38 +5,38 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 
 public class RobotType {
-  private static final String comp = ""; // Comp bot serial number
+  private static final String comp = "032B4B39"; // Comp bot serial number
   private static final String alpha = "032B4B88"; // Alpha bot serial number
 
-  public static RobotTypesEnum type = RobotTypesEnum.OTHER;
+  public static final RobotTypesEnum TYPE;
 
   static {
     if (RobotBase.isSimulation()) {
-      type = RobotTypesEnum.SIM;
+      TYPE = RobotTypesEnum.SIM;
     } else {
       String serialNumber = RobotController.getSerialNumber();
       if (serialNumber.equals(comp)) {
-        type = RobotTypesEnum.COMP;
+        TYPE = RobotTypesEnum.COMP;
         DataLogManager.log("Running on Comp-bot");
       } else if (serialNumber.equals(alpha)) {
-        type = RobotTypesEnum.ALPHA;
+        TYPE = RobotTypesEnum.ALPHA;
         DataLogManager.log("Running on Alpha-bot");
       } else {
-        type = RobotTypesEnum.OTHER;
+        TYPE = RobotTypesEnum.OTHER;
         DataLogManager.log("Unknown robot detected serial number is " + serialNumber);
       }
     }
   }
 
   public static boolean isAlpha() {
-    return type == RobotTypesEnum.ALPHA;
+    return TYPE == RobotTypesEnum.ALPHA;
   }
 
   public static boolean isComp() {
-    return type == RobotTypesEnum.COMP;
+    return TYPE == RobotTypesEnum.COMP;
   }
 
   public static boolean isSim() {
-    return type == RobotTypesEnum.SIM;
+    return TYPE == RobotTypesEnum.SIM;
   }
 }

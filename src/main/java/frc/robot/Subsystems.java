@@ -74,7 +74,7 @@ public class Subsystems {
     // Add specification for bonk, Enum? get team number?
     if (DRIVEBASE_ENABLED) {
       drivebaseSubsystem =
-          (RobotType.type == RobotTypesEnum.ALPHA)
+          (RobotType.TYPE == RobotTypesEnum.ALPHA)
               ? AlphaTunerConstants.createDrivetrain()
               : CompTunerConstants.createDrivetrain();
     } else {

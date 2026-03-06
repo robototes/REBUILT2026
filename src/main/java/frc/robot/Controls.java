@@ -66,7 +66,7 @@ public class Controls {
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
   public static final double MaxSpeed =
-      (RobotType.type == RobotTypesEnum.ALPHA)
+      (RobotType.TYPE == RobotTypesEnum.ALPHA)
           ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
           : CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
