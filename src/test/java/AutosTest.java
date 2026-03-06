@@ -39,7 +39,4 @@ class AutosTest {
           PathPlannerAuto.getPathGroupFromAutoFile(key).isEmpty(), "No file path matches" + key);
     }
   }
-
-  @Test
-  void validateFiles() {}
 }
