@@ -149,7 +149,7 @@ public class Subsystems {
     }
 
     if (LAUNCHER_ENABLED) {
-      launcherSubsystem = new LauncherSubsystem(hood, flywheels);
+      launcherSubsystem = new LauncherSubsystem(hood, flywheels, turretSubsystem);
     } else {
       launcherSubsystem = null;
     }
