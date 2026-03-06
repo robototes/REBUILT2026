@@ -7,7 +7,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 
 public class LaunchCalculator {
@@ -72,7 +72,7 @@ public class LaunchCalculator {
                 robotRelativeVelocity.omegaRadiansPerSecond * phaseDelay));
 
     // - Calculate distance from turret to target - //
-    Translation2d target = AllianceUtils.getHubTranslation2d();
+    Translation2d target = GetTargetFromPose.getTargetLocation(estimatedPose);
     Pose2d turretPosition = estimatedPose.transformBy(turretTransform);
     LaunchCalculator.estimatedPose = turretPosition;
     // grab distance between turret and center of hub

@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -28,6 +29,28 @@ public class GetTargetFromPose {
       if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
         return AllianceUtils.getHubTranslation2d();
       } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+        return pointRightFieldTop;
+      } else {
+        return pointRightFieldBottom;
+      }
+    } else {
+      return AllianceUtils.getHubTranslation2d();
+    }
+  }
+
+  public static Translation2d getTargetLocation(Pose2d pose) {
+    if (AllianceUtils.isBlue()) {
+      if (pose.getX() <= allianceLineX + robotOffset) {
+        return AllianceUtils.getHubTranslation2d();
+      } else if (pose.getY() >= (fieldWidth / 2)) {
+        return pointLeftFieldTop;
+      } else {
+        return pointLeftFieldBottom;
+      }
+    } else if (AllianceUtils.isRed()) {
+      if (pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
+        return AllianceUtils.getHubTranslation2d();
+      } else if (pose.getY() >= (fieldWidth / 2)) {
         return pointRightFieldTop;
       } else {
         return pointRightFieldBottom;
