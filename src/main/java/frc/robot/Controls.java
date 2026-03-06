@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -34,6 +35,7 @@ import frc.robot.subsystems.intake.IntakeRollers;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 
@@ -470,5 +472,17 @@ public class Controls {
     s.ledSubsystem.setDefaultCommand(
         Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
             .withName("LED Default Command"));
+
+    Trigger shiftWarning =
+        new Trigger(
+            () -> {
+              if (RobotState.isAutonomous()) return false;
+
+              var shiftInfo = HubShiftUtil.getOfficialShiftInfo();
+
+              return shiftInfo.remainingTime() <= 4.0;
+            });
+
+    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.DEFAULT_COLOR, 5, 0.1));
   }
 }

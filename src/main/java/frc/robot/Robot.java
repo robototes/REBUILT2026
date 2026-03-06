@@ -24,6 +24,7 @@ import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
@@ -220,6 +221,7 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
+    HubShiftUtil.initialize();
   }
 
   /** This function is called periodically during operator control. */
