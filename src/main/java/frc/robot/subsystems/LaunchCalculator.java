@@ -71,7 +71,7 @@ public class LaunchCalculator {
     y components (robot relative) from 0 to delta T. This gives us a delta X and delta Y, which we will then apply to the previous robot pose to get a new pose2d that
     accurately represents the robot's position accounting in for angular velocity.
     */
-    double phase = phaseDelay.getDouble(D_LOOKAHEAD_ITERATIONS);
+    double phase = phaseDelay.getDouble(D_phaseDelay);
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
@@ -111,7 +111,7 @@ public class LaunchCalculator {
     // the distance from the turret to the hub. This will be updated in the for loop
     double lookaheadTurretToTargetDistance = turretToTargetDistance;
 
-    double iterations = LOOKAHEAD_ITERATIONS.getDouble(D_LOOKAHEAD_ITERATIONS);
+    double iterations = LOOKAHEAD_ITERATIONS.getInteger(D_LOOKAHEAD_ITERATIONS);
     for (int i = 0; i < iterations; i++) {
       timeOfFlight = LauncherConstants.getTimeFromDistance(lookaheadTurretToTargetDistance);
       double offsetX = turretVelocityX * timeOfFlight;
