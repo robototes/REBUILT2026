@@ -17,8 +17,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,10 +36,10 @@ public class AutoLogic {
 
   public enum StartPosition {
     LEFT_TRENCH(
-        "Left Trench", new Pose2d(3.664, 7.597, new Rotation2d(Units.degreesToRadians(90)))),
+        "Left Trench", new Pose2d(4.013, 7.597, new Rotation2d(Units.degreesToRadians(90)))),
     CENTER("Center", new Pose2d(3.600, 4.035, new Rotation2d(Units.degreesToRadians(0)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(3.664, 0.473, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Right Trench", new Pose2d(4.013, 0.473, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
@@ -208,14 +210,21 @@ public class AutoLogic {
 
   public static Command launcherCommand() {
     return Commands.parallel(
-            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+            s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
+                .andThen(
+                    Commands.parallel(
+                        s.indexerSubsystem.runIndexer(),
+                        Commands.waitSeconds(1)
+                            .andThen(
+                                Commands.runOnce(() -> Controls.intakeMode = IntakeMode.LAUNCH)))))
         .withTimeout(4.5);
   }
 
   public static Command autoStowCommand() {
-    return s.launcherSubsystem.rawStowCommand();
+    return s.launcherSubsystem
+        .rawStowCommand()
+        .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget()));
   }
 
   public static Command launcherSimCommand() {
@@ -233,7 +242,7 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return s.intakeSubsystem.smartIntake();
+    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE);
   }
 
   public static Command climbCommand() {

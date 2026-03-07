@@ -96,7 +96,7 @@ public class LEDSubsystem extends SubsystemBase {
     RGBWColor scaled = color.scaleBrightness(brightness);
 
     solidController.withColor(scaled);
-    candle.setControl(solidController);
+    candle.setControl(solidController.clone());
   }
 
   public void setHardwareColor(RGBWColor color) {

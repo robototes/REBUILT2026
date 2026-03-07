@@ -85,7 +85,7 @@ public class Controls {
   Pose2d blueHub = aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
 
   private LEDMode ledsMode = LEDMode.DEFAULT;
-  private IntakeMode intakeMode = IntakeMode.RETRACTED;
+  public static IntakeMode intakeMode = IntakeMode.RETRACTED;
 
   public static final double MaxSpeed =
       (RobotType.TYPE == RobotTypesEnum.ALPHA)
