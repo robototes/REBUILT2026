@@ -49,14 +49,17 @@ public class LaunchCalculator {
   // private final NtTunableDouble phaseDelay;
   // private final NtTunableDouble LOOKAHEAD_ITERATIONS;
 
-  private static final DoubleSubscriber phaseDelaySub;
-  private static final IntegerSubscriber iterationsSub;
+  private final DoubleSubscriber phaseDelaySub;
+  private final IntegerSubscriber iterationsSub;
 
   // Static initializer
   static {
     turretTransform = LauncherConstants.turretTransform();
     minDistance = 1.34;
     maxDistance = 5.60;
+  }
+
+  private LaunchCalculator() {
     // Get the table once
     NetworkTable table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
     phaseDelaySub = table.getDoubleTopic("phaseDelay").subscribe(D_PHASE_DELAY);
@@ -113,7 +116,7 @@ public class LaunchCalculator {
     // the distance from the turret to the hub. This will be updated in the for loop
     double lookaheadTurretToTargetDistance = turretToTargetDistance;
 
-    double iterations = (int) iterationsSub.getAsLong();
+    int iterations = (int) iterationsSub.getAsLong();
     for (int i = 0; i < iterations; i++) {
       timeOfFlight = LauncherConstants.getTimeFromDistance(lookaheadTurretToTargetDistance);
       double offsetX = turretVelocityX * timeOfFlight;
