@@ -135,8 +135,8 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void stopVoid() {
-              FlywheelOne.stopMotor();
-              FlywheelTwo.stopMotor();
+    FlywheelOne.stopMotor();
+    FlywheelTwo.stopMotor();
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
