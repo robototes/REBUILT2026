@@ -143,10 +143,6 @@ public class Hood extends SubsystemBase {
   }
 
   public void setHoodPosition(double positionRotations) {
-    if (!hoodZeroed) {
-      System.out.println("Hood not zero'd!");
-      return;
-    }
     hood.setControl(request.withPosition(positionRotations));
   }
 
@@ -172,7 +168,6 @@ public class Hood extends SubsystemBase {
 
   public boolean atTargetPosition() {
     return DriverStation.isEnabled()
-        && hoodZeroed
         && Math.abs(hood.getPosition().getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
   }
 
