@@ -6,7 +6,9 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.DoubleSubscriber;
+import edu.wpi.first.networktables.IntegerSubscriber;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.GetTargetFromPose;
@@ -41,24 +43,24 @@ public class LaunchCalculator {
 
   private static double minDistance;
   private static double maxDistance;
-  private static double D_phaseDelay = 0.03;
+  private static double D_PHASE_DELAY = 0.03;
 
   // Network tables
   // private final NtTunableDouble phaseDelay;
   // private final NtTunableDouble LOOKAHEAD_ITERATIONS;
 
-  private static final NetworkTableEntry phaseDelay =
-      NetworkTableInstance.getDefault().getTable("SmartDashboard").getEntry("phaseDelay");
-  private static final NetworkTableEntry LOOKAHEAD_ITERATIONS =
-      NetworkTableInstance.getDefault().getTable("SmartDashboard").getEntry("Lookahead iterations");
+  private static final DoubleSubscriber phaseDelaySub;
+  private static final IntegerSubscriber iterationsSub;
 
   // Static initializer
   static {
     turretTransform = LauncherConstants.turretTransform();
     minDistance = 1.34;
     maxDistance = 5.60;
-    phaseDelay.setDouble(D_phaseDelay);
-    LOOKAHEAD_ITERATIONS.setInteger(D_LOOKAHEAD_ITERATIONS);
+    // Get the table once
+    NetworkTable table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
+    phaseDelaySub = table.getDoubleTopic("phaseDelay").subscribe(D_PHASE_DELAY);
+    iterationsSub = table.getIntegerTopic("Lookahead iterations").subscribe(D_LOOKAHEAD_ITERATIONS);
   }
 
   public LaunchingParameters getParameters(CommandSwerveDrivetrain robotState) {
@@ -71,7 +73,7 @@ public class LaunchCalculator {
     y components (robot relative) from 0 to delta T. This gives us a delta X and delta Y, which we will then apply to the previous robot pose to get a new pose2d that
     accurately represents the robot's position accounting in for angular velocity.
     */
-    double phase = phaseDelay.getDouble(D_phaseDelay);
+    double phase = phaseDelaySub.get();
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
@@ -111,7 +113,7 @@ public class LaunchCalculator {
     // the distance from the turret to the hub. This will be updated in the for loop
     double lookaheadTurretToTargetDistance = turretToTargetDistance;
 
-    double iterations = LOOKAHEAD_ITERATIONS.getInteger(D_LOOKAHEAD_ITERATIONS);
+    double iterations = (int) iterationsSub.getAsLong();
     for (int i = 0; i < iterations; i++) {
       timeOfFlight = LauncherConstants.getTimeFromDistance(lookaheadTurretToTargetDistance);
       double offsetX = turretVelocityX * timeOfFlight;
