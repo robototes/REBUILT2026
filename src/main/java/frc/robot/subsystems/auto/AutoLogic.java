@@ -17,8 +17,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
@@ -33,12 +35,11 @@ public class AutoLogic {
   /* ---------------- Start positions ---------------- */
 
   public enum StartPosition {
-    LEFT_TRENCH("Left Trench", new Pose2d(4.35, 7.465, new Rotation2d(Units.degreesToRadians(90)))),
-    LEFT_BUMP("Left Bump", new Pose2d(3.664, 5.411, new Rotation2d(Units.degreesToRadians(90)))),
-    CENTER("Center", new Pose2d(3.62, 4.008, new Rotation2d(Units.degreesToRadians(0)))),
-    RIGHT_BUMP("Right Bump", new Pose2d(3.638, 2.322, new Rotation2d(Units.degreesToRadians(180)))),
+    LEFT_TRENCH(
+        "Left Trench", new Pose2d(4.013, 7.597, new Rotation2d(Units.degreesToRadians(90)))),
+    CENTER("Center", new Pose2d(3.600, 4.035, new Rotation2d(Units.degreesToRadians(0)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(4.35, 0.55, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Right Trench", new Pose2d(4.013, 0.473, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
@@ -57,10 +58,12 @@ public class AutoLogic {
   private static final List<AutoPath> rebuiltPaths =
       List.of(
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-          new AutoPath("LT-NeutralLeft-Depot", "LT-NeutralLeft-Depot"),
-          new AutoPath("LT-NeutralLeft-Sweep", "LT-NeutralLeft-Sweep"),
-          new AutoPath("RT-NeutralRight-Outpost", "RT-NeutralRight-Outpost"),
-          new AutoPath("RT-NeutralRight-Sweep", "RT-NeutralRight-Sweep"));
+          new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
+          new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
+          new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
+          new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
+          new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
+          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
@@ -207,14 +210,21 @@ public class AutoLogic {
 
   public static Command launcherCommand() {
     return Commands.parallel(
-            s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
+            s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-        .withTimeout(4.5);
+                .andThen(
+                    Commands.parallel(
+                        s.indexerSubsystem.runIndexer(),
+                        Commands.waitSeconds(1)
+                            .andThen(
+                                Commands.runOnce(() -> Controls.intakeMode = IntakeMode.LAUNCH)))))
+        .withTimeout(4.5).andThen(Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE));
   }
 
   public static Command autoStowCommand() {
-    return s.launcherSubsystem.rawStowCommand();
+    return s.launcherSubsystem
+        .rawStowCommand()
+        .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isHoodAtTarget()));
   }
 
   public static Command launcherSimCommand() {
@@ -232,7 +242,7 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return s.intakeSubsystem.smartIntake();
+    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE);
   }
 
   public static Command climbCommand() {
