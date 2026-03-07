@@ -193,6 +193,11 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(degreeTolerance);
   }
 
+  public boolean atTargetV2(double degreeTolerance, double target) {
+    return Math.abs(turretMotor.getPosition().getValueAsDouble() - target)
+        < Units.degreesToRotations(degreeTolerance);
+  }
+
   public double calculateTurretAngle(Translation2d target) {
     // Get current turret pose
     Translation2d turretTranslation =
