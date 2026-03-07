@@ -218,13 +218,13 @@ public class AutoLogic {
                         Commands.waitSeconds(1)
                             .andThen(
                                 Commands.runOnce(() -> Controls.intakeMode = IntakeMode.LAUNCH)))))
-        .withTimeout(4.5);
+        .withTimeout(4.5).andThen(Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE));
   }
 
   public static Command autoStowCommand() {
     return s.launcherSubsystem
         .rawStowCommand()
-        .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget()));
+        .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isHoodAtTarget()));
   }
 
   public static Command launcherSimCommand() {

@@ -68,6 +68,10 @@ public class LauncherSubsystem extends SubsystemBase {
         && hood.atTargetPosition();
   }
 
+  public boolean isHoodAtTarget() {
+        return hood.atTargetPosition();
+  }
+
   public Command zeroSubsystemCommand() {
     return hood.zeroHoodCommand();
   }
@@ -80,6 +84,6 @@ public class LauncherSubsystem extends SubsystemBase {
     hoodGoal = 0;
     flywheelsGoal = 0;
     return Commands.parallel(
-        Commands.runOnce(() -> hood.setHoodPosition(0)), flywheels.stopCommand());
+        Commands.runOnce(() -> hood.setHoodPosition(0)), Commands.runOnce(() -> flywheels.stopVoid()));
   }
 }
