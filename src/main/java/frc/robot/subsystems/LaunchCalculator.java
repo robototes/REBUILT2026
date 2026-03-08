@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
@@ -34,7 +33,7 @@ public class LaunchCalculator {
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
 
-  private static int D_LOOKAHEAD_ITERATIONS = 55;
+  private static int D_LOOKAHEAD_ITERATIONS = 33;
 
   // private double turret_target_velocity;+
   // private double hood_target_velocity;
@@ -134,9 +133,7 @@ public class LaunchCalculator {
     // // Target turret angle robot relative
     Rotation2d targetAngleFieldRelative = target.minus(lookaheadPose.getTranslation()).getAngle();
     targetTurretAngle =
-        targetAngleFieldRelative
-            .minus(lookaheadPose.getRotation())
-            .rotateBy(new Rotation2d(Units.degreesToRadians(-75)));
+        targetAngleFieldRelative.minus(lookaheadPose.getRotation()).rotateBy(Rotation2d.k180deg);
     // // Target hood angle
     targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
     // System.out.println(targetTurretAngle.getDegrees());

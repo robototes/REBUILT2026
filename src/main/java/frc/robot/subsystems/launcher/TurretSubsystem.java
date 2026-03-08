@@ -72,8 +72,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 0; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -320; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 270; // degrees
+  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
       NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
@@ -257,7 +257,7 @@ public class TurretSubsystem extends SubsystemBase {
         () -> turretMotor.stopMotor());
   }
 
-  public Command rotateToTargetWithCalc() {
+  public Command rotateToTargetWithCalcx() {
     return runEnd(
         () -> {
           double currentTurretDegrees = Units.rotationsToDegrees(getTurretPosition());
@@ -265,10 +265,11 @@ public class TurretSubsystem extends SubsystemBase {
           double targetTurretDegrees = para.turretAngle().getDegrees();
           targetTurretDegrees = -targetTurretDegrees;
           double shortestDelta =
-              MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -360, 0);
+              MathUtil.inputModulus(
+                  targetTurretDegrees - currentTurretDegrees, TURRET_MIN, TURRET_MAX);
           double turretDegrees =
               MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
-          System.out.println(Units.degreesToRotations(turretDegrees));
+          // System.out.println(Units.degreesToRotations(turretDegrees));
           setTurretRawPosition(Units.degreesToRotations(turretDegrees));
           targetPos = Units.degreesToRotations(turretDegrees);
         },
@@ -276,7 +277,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   // Experimental IF WITHIN BOUNDS go to it instead of clamping
-  public Command rotateToTargetWithCalcx() {
+  public Command rotateToTargetWithCalc() {
     return runEnd(
         () -> {
 
@@ -314,7 +315,7 @@ public class TurretSubsystem extends SubsystemBase {
           }
 
           // Set position (Note: This assumes your PID/Controller uses these degrees)
-          System.out.println(Units.degreesToRotations(finalTarget));
+          // System.out.println(Units.degreesToRotations(finalTarget));
           setTurretRawPosition(Units.degreesToRotations(finalTarget));
           targetPos = Units.degreesToRotations(finalTarget);
         },
