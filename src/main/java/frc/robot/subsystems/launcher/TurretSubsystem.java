@@ -263,10 +263,10 @@ public class TurretSubsystem extends SubsystemBase {
           LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain);
           double targetTurretDegrees = para.turretAngle().getDegrees();
           targetTurretDegrees = -targetTurretDegrees;
-          double shortestAngle =
+          double shortestDelta =
               MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -90, 270);
           double turretDegrees =
-              MathUtil.clamp(currentTurretDegrees + shortestAngle, TURRET_MIN, TURRET_MAX);
+              MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
           // System.out.println(Units.degreesToRotations(turretDegrees));
           setTurretRawPosition(Units.degreesToRotations(turretDegrees));
           targetPos = Units.degreesToRotations(turretDegrees);
