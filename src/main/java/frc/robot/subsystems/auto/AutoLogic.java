@@ -218,7 +218,8 @@ public class AutoLogic {
                         Commands.waitSeconds(1)
                             .andThen(
                                 Commands.runOnce(() -> Controls.intakeMode = IntakeMode.LAUNCH)))))
-        .withTimeout(4.5).andThen(Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE));
+        .withTimeout(4.5)
+        .andThen(Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE));
   }
 
   public static Command autoStowCommand() {
