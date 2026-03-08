@@ -237,8 +237,7 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
-        .alongWith(Commands.waitSeconds(0.75));
+    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE);
   }
 
   public static Command climbCommand() {

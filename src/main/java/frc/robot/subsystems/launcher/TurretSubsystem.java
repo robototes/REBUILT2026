@@ -172,7 +172,7 @@ public class TurretSubsystem extends SubsystemBase {
           degrees += 180.0;
 
           // Normalize to [-90, 270] (input modulus always need 360)
-          degrees = MathUtil.inputModulus(degrees, -360, 0);
+          degrees = MathUtil.inputModulus(degrees, TURRET_MIN, TURRET_MAX);
 
           // Clamp to soft limits
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
