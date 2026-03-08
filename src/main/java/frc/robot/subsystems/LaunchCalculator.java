@@ -56,9 +56,9 @@ public class LaunchCalculator {
   private final DoubleSubscriber phaseDelaySub;
   private final IntegerSubscriber iterationsSub;
 
-  private final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
-  private final double TURRET_TO_TRENCH_TOLERANCE = 0.15;
-  Collection<Pose2d> trenchTags =
+  private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
+  private static final double TURRET_TO_TRENCH_TOLERANCE = 0.22;
+  private static final Collection<Pose2d> trenchTags =
       List.of(
           field.getTagPose(17).get().toPose2d(),
           field.getTagPose(28).get().toPose2d(),
@@ -104,7 +104,6 @@ public class LaunchCalculator {
     // - Calculate distance from turret to target - //
     Translation2d target = GetTargetFromPose.getTargetLocation(estimatedPose);
     Pose2d turretPosition = estimatedPose.transformBy(turretTransform);
-    LaunchCalculator.estimatedPose = turretPosition;
     // grab distance between turret and center of hub
     double turretToTargetDistance = target.getDistance(turretPosition.getTranslation());
 
@@ -144,6 +143,7 @@ public class LaunchCalculator {
               turretPosition.getRotation());
       lookaheadTurretToTargetDistance = target.getDistance(lookaheadPose.getTranslation());
     }
+    LaunchCalculator.estimatedPose = lookaheadPose;
     LaunchCalculator.estimatedDist = lookaheadTurretToTargetDistance;
     // Calculate parameters accounted for imparted velocity
 
@@ -177,9 +177,9 @@ public class LaunchCalculator {
     }
   }
 
-  public boolean isCloseToTrench(Pose2d lookaheadPose) {
-    Pose2d nearestTag = lookaheadPose.nearest(trenchTags);
-    if (nearestTag.getTranslation().getDistance(lookaheadPose.getTranslation())
+  public static boolean isCloseToTrench() {
+    Pose2d nearestTag = estimatedPose.nearest(trenchTags);
+    if (nearestTag.getTranslation().getDistance(estimatedPose.getTranslation())
         < TURRET_TO_TRENCH_TOLERANCE) {
       return true;
     } else {
