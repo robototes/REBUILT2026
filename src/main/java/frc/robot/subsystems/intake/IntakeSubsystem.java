@@ -10,7 +10,8 @@ public class IntakeSubsystem extends SubsystemBase {
     RETRACTED,
     SPIN,
     LAUNCH,
-    INTAKE
+    INTAKE,
+    EXTAKE
   }
 
   protected IntakePivot intakePivot;
@@ -73,5 +74,10 @@ public class IntakeSubsystem extends SubsystemBase {
       deployPivotVoid();
       runRollersVoid();
     }
+  }
+
+  public void extakeIntake() {
+    intakePivot.setPivotPositionVoid(IntakePivot.EXTAKE_POS);
+    intakeRollers.setReverseRollerVolt(IntakeRollers.INTAKE_VOLTAGE);
   }
 }

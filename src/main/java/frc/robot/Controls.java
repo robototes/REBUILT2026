@@ -349,6 +349,7 @@ public class Controls {
                     case SPIN -> s.intakeSubsystem.runRollersVoid();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchVoid();
                     case INTAKE -> s.intakeSubsystem.smartIntakeVoid();
+                    case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },
                 s.intakeSubsystem)
@@ -373,6 +374,10 @@ public class Controls {
                 }));
     driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+    driverController
+        .leftBumper()
+        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE))
+        .onFalse(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
 
     connected(intakeTestController)
         .and(intakeTestController.a())
