@@ -25,7 +25,7 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private final VoltageOut voltReq = new VoltageOut(0);
+  private final VoltageOut voltReq = new VoltageOut(0).withEnableFOC(false);
   public static final double INTAKE_VOLTAGE = 8;
   public static final double AGITATE_VOLTAGE = 4;
 

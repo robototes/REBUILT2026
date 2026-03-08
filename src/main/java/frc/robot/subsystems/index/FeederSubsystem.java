@@ -21,7 +21,7 @@ import frc.robot.util.robotType.RobotType;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
-  public static final double FEEDER_VOLTAGE = 12;
+  public static final double FEEDER_VOLTAGE = 11;
   private static final int feederRumbleThreshold = 67;
   private VoltageOut voltReq = new VoltageOut(0);
 

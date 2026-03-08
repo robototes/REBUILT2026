@@ -18,7 +18,7 @@ import frc.robot.Hardware;
 
 public class SpindexerSubsystem extends SubsystemBase {
 
-  public static final double SPINDEXER_VOLTAGE = 12;
+  public static final double SPINDEXER_VOLTAGE = 11;
   private VoltageOut voltReq = new VoltageOut(0);
 
   private final TalonFX spindexerMotor;

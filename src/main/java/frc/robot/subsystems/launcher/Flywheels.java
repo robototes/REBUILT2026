@@ -30,7 +30,7 @@ public class Flywheels extends SubsystemBase {
 
   private FlywheelsSim flywheelSim;
 
-  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
+  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0).withEnableFOC(false);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
@@ -69,7 +69,7 @@ public class Flywheels extends SubsystemBase {
     // set current limits
     config.CurrentLimits.SupplyCurrentLimit = 40;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.StatorCurrentLimit = 60;
+    config.CurrentLimits.StatorCurrentLimit = 80;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create coast mode for motors
