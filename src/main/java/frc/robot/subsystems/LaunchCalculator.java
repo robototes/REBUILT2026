@@ -28,7 +28,7 @@ public class LaunchCalculator {
   // private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
-  private int LOOKAHEAD_ITERATIONS = 20;
+  private int LOOKAHEAD_ITERATIONS = 25;
 
   // private double turret_target_velocity;+
   // private double hood_target_velocity;

@@ -462,7 +462,7 @@ public class Controls {
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
     connected(turretTestController)
         .and(turretTestController.rightTrigger())
-        .whileTrue(s.turretSubsystem.rotateToTarget());
+        .whileTrue(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.rightBumper())
         .onTrue(
