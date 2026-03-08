@@ -212,14 +212,8 @@ public class AutoLogic {
     return Commands.parallel(
             s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(
-                    Commands.parallel(
-                        s.indexerSubsystem.runIndexer(),
-                        Commands.waitSeconds(1)
-                            .andThen(
-                                Commands.runOnce(() -> Controls.intakeMode = IntakeMode.LAUNCH)))))
-        .withTimeout(4.5)
-        .andThen(Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE));
+                .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
+        .withTimeout(4.5);
   }
 
   public static Command autoStowCommand() {
@@ -243,7 +237,8 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE);
+    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
+        .alongWith(Commands.waitSeconds(0.75));
   }
 
   public static Command climbCommand() {

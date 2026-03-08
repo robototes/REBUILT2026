@@ -72,8 +72,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 270; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 0; // degrees
+  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -320; // degrees
 
   private final BooleanPublisher zeroPublisher =
       NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
@@ -172,7 +172,7 @@ public class TurretSubsystem extends SubsystemBase {
           degrees += 180.0;
 
           // Normalize to [-90, 270] (input modulus always need 360)
-          degrees = MathUtil.inputModulus(degrees, -90, 270);
+          degrees = MathUtil.inputModulus(degrees, -360, 0);
 
           // Clamp to soft limits
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
@@ -199,7 +199,8 @@ public class TurretSubsystem extends SubsystemBase {
         LauncherConstants.launcherFromRobot(driveTrain.getState().Pose);
 
     // Add 180 degrees to account for 0 posistion
-    Rotation2d turretRotation = driveTrain.getState().Pose.getRotation().plus(Rotation2d.k180deg);
+    Rotation2d turretRotation =
+        driveTrain.getState().Pose.getRotation().plus(new Rotation2d(Units.degreesToRadians(-75)));
 
     // Get hub position
     Translation2d targetTranslation = target;
@@ -221,7 +222,7 @@ public class TurretSubsystem extends SubsystemBase {
     degrees = -degrees;
 
     // Normalize to soft limits (inout modulus always needs 360)
-    degrees = MathUtil.inputModulus(degrees, -90, 270);
+    degrees = MathUtil.inputModulus(degrees, -360, 0);
 
     // Clamp to soft limits
     degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
@@ -264,7 +265,7 @@ public class TurretSubsystem extends SubsystemBase {
           double targetTurretDegrees = para.turretAngle().getDegrees();
           targetTurretDegrees = -targetTurretDegrees;
           double shortestDelta =
-              MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -90, 270);
+              MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -360, 0);
           double turretDegrees =
               MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
           System.out.println(Units.degreesToRotations(turretDegrees));
