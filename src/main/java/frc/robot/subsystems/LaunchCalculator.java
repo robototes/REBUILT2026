@@ -176,4 +176,14 @@ public class LaunchCalculator {
       return LauncherConstants.getHoodAngleFromDistance(estimatedDist);
     }
   }
+
+  public boolean isCloseToTrench(Pose2d lookaheadPose) {
+    Pose2d nearestTag = lookaheadPose.nearest(trenchTags);
+    if (nearestTag.getTranslation().getDistance(lookaheadPose.getTranslation())
+        < TURRET_TO_TRENCH_TOLERANCE) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
