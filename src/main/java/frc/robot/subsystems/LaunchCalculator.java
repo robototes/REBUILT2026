@@ -152,13 +152,7 @@ public class LaunchCalculator {
     targetTurretAngle =
         targetAngleFieldRelative.minus(lookaheadPose.getRotation()).rotateBy(Rotation2d.k180deg);
     // // Target hood angle
-    Pose2d nearestTag = lookaheadPose.nearest(trenchTags);
-    if (nearestTag.getTranslation().getDistance(lookaheadPose.getTranslation())
-        < TURRET_TO_TRENCH_TOLERANCE) {
-      targetHoodAngle = 0;
-    } else {
-      targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
-    }
+    targetHoodAngle = getHoodAngle(lookaheadPose);
     // System.out.println(targetTurretAngle.getDegrees());
 
     // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
@@ -171,5 +165,15 @@ public class LaunchCalculator {
         targetTurretAngle,
         targetHoodAngle,
         LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
+  }
+
+  public double getHoodAngle(Pose2d lookaheadPose) {
+    Pose2d nearestTag = lookaheadPose.nearest(trenchTags);
+    if (nearestTag.getTranslation().getDistance(lookaheadPose.getTranslation())
+        < TURRET_TO_TRENCH_TOLERANCE) {
+      return 0;
+    } else {
+      return LauncherConstants.getHoodAngleFromDistance(estimatedDist);
+    }
   }
 }
