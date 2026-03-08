@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
@@ -57,7 +58,7 @@ public class LaunchCalculator {
   private final IntegerSubscriber iterationsSub;
 
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
-  private static final double TURRET_TO_TRENCH_TOLERANCE = 0.22;
+  private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
   private static final Collection<Pose2d> trenchTags =
       List.of(
           field.getTagPose(17).get().toPose2d(),
@@ -168,9 +169,7 @@ public class LaunchCalculator {
   }
 
   public double getHoodAngle(Pose2d lookaheadPose) {
-    Pose2d nearestTag = lookaheadPose.nearest(trenchTags);
-    if (nearestTag.getTranslation().getDistance(lookaheadPose.getTranslation())
-        < TURRET_TO_TRENCH_TOLERANCE) {
+    if (isCloseToTrench()) {
       return 0;
     } else {
       return LauncherConstants.getHoodAngleFromDistance(estimatedDist);
@@ -178,8 +177,8 @@ public class LaunchCalculator {
   }
 
   public static boolean isCloseToTrench() {
-    Pose2d nearestTag = estimatedPose.nearest(trenchTags);
-    if (nearestTag.getTranslation().getDistance(estimatedPose.getTranslation())
+    double nearestTagX = estimatedPose.nearest(trenchTags).getX();
+    if (Math.abs(nearestTagX - estimatedPose.getX())
         < TURRET_TO_TRENCH_TOLERANCE) {
       return true;
     } else {

@@ -41,6 +41,12 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "LT-DepotFull"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "launch"
@@ -53,41 +59,9 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "LT-DepotL"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "DepotL-DepotF"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "DepotF-DepotR"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
-                }
-              }
-            ]
+            "pathName": "DepotFull-DepotIntake"
           }
         },
         {
