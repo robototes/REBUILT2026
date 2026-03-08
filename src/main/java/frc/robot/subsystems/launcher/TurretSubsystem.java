@@ -267,9 +267,55 @@ public class TurretSubsystem extends SubsystemBase {
               MathUtil.inputModulus(targetTurretDegrees - currentTurretDegrees, -90, 270);
           double turretDegrees =
               MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
-          // System.out.println(Units.degreesToRotations(turretDegrees));
+          System.out.println(Units.degreesToRotations(turretDegrees));
           setTurretRawPosition(Units.degreesToRotations(turretDegrees));
           targetPos = Units.degreesToRotations(turretDegrees);
+        },
+        () -> turretMotor.stopMotor());
+  }
+
+  // Experimental IF WITHIN BOUNDS go to it instead of clamping
+  public Command rotateToTargetWithCalcx() {
+    return runEnd(
+        () -> {
+
+          // This represents where the turret is within a single circle (-180 to 180)
+          double wrappedCurrent =
+              MathUtil.inputModulus(
+                  Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
+
+          // Get the target from the calculator
+          double targetDegrees =
+              -LaunchCalculator.getInstance().getParameters(driveTrain).turretAngle().getDegrees();
+
+          // Find the shortest distance to that target from our "wrapped" position
+          double shortestDelta = MathUtil.inputModulus(targetDegrees - wrappedCurrent, -180, 180);
+
+          // This is the "ideal" target in the range closest to our current wrapped pos
+          double baseTarget = wrappedCurrent + shortestDelta;
+
+          // Check multiple rotations to see which one fits in the hardware limits
+          // We check: baseTarget, baseTarget + 360, and baseTarget - 360
+          double finalTarget = baseTarget;
+
+          if (baseTarget < TURRET_MIN) {
+            if (baseTarget + 360 <= TURRET_MAX) {
+              finalTarget = baseTarget + 360;
+            } else {
+              finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
+            }
+          } else if (baseTarget > TURRET_MAX) {
+            if (baseTarget - 360 >= TURRET_MIN) {
+              finalTarget = baseTarget - 360;
+            } else {
+              finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
+            }
+          }
+
+          // Set position (Note: This assumes your PID/Controller uses these degrees)
+          System.out.println(Units.degreesToRotations(finalTarget));
+          setTurretRawPosition(Units.degreesToRotations(finalTarget));
+          targetPos = Units.degreesToRotations(finalTarget);
         },
         () -> turretMotor.stopMotor());
   }
