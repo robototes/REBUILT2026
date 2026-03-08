@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -11,8 +12,11 @@ import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
+import java.util.Collection;
+import java.util.List;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -51,6 +55,19 @@ public class LaunchCalculator {
 
   private final DoubleSubscriber phaseDelaySub;
   private final IntegerSubscriber iterationsSub;
+
+  private final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
+  private final double TURRET_TO_TRENCH_TOLERANCE = 0.15;
+  Collection<Pose2d> trenchTags =
+      List.of(
+          field.getTagPose(17).get().toPose2d(),
+          field.getTagPose(28).get().toPose2d(),
+          field.getTagPose(22).get().toPose2d(),
+          field.getTagPose(23).get().toPose2d(),
+          field.getTagPose(12).get().toPose2d(),
+          field.getTagPose(1).get().toPose2d(),
+          field.getTagPose(7).get().toPose2d(),
+          field.getTagPose(6).get().toPose2d());
 
   // Static initializer
   static {
@@ -135,12 +152,19 @@ public class LaunchCalculator {
     targetTurretAngle =
         targetAngleFieldRelative.minus(lookaheadPose.getRotation()).rotateBy(Rotation2d.k180deg);
     // // Target hood angle
-    targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
+    Pose2d nearestTag = lookaheadPose.nearest(trenchTags);
+    if (nearestTag.getTranslation().getDistance(lookaheadPose.getTranslation())
+        < TURRET_TO_TRENCH_TOLERANCE) {
+      targetHoodAngle = 0;
+    } else {
+      targetHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadTurretToTargetDistance);
+    }
     // System.out.println(targetTurretAngle.getDegrees());
 
     // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
     // speed
     // with all velocities accounted for
+
     return new LaunchingParameters(
         lookaheadTurretToTargetDistance >= minDistance
             && lookaheadTurretToTargetDistance <= maxDistance,
