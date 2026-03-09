@@ -178,8 +178,7 @@ public class LaunchCalculator {
 
   public static boolean isCloseToTrench() {
     double nearestTagX = estimatedPose.nearest(trenchTags).getX();
-    if (Math.abs(nearestTagX - estimatedPose.getX())
-        < TURRET_TO_TRENCH_TOLERANCE) {
+    if (Math.abs(nearestTagX - estimatedPose.getX()) < TURRET_TO_TRENCH_TOLERANCE) {
       return true;
     } else {
       return false;

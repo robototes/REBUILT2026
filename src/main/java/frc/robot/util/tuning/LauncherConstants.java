@@ -61,7 +61,11 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(3.32, 8, 75, 1.2),
     new LauncherDistanceDataPoint(3.87, 10, 79, 1.36),
     new LauncherDistanceDataPoint(4.27, 11, 82, 32.0 / 30.0), // pending james TOF
-    new LauncherDistanceDataPoint(5.6, 12.9, 100, 36.0 / 30.0) //HOOD USED TO BE 14, LOWERED DUE TO HOOD LIMIT CHANGING FROM BREAK -TD
+    new LauncherDistanceDataPoint(
+        5.6,
+        12.9,
+        100,
+        36.0 / 30.0) // HOOD USED TO BE 14, LOWERED DUE TO HOOD LIMIT CHANGING FROM BREAK -TD
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
