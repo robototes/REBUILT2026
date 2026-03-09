@@ -15,13 +15,13 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "RT-Intake"
+                        "pathName": "LT-Intake"
                       }
                     },
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "NeutralRight-Intake"
+                        "pathName": "NeutralLeft-Intake"
                       }
                     }
                   ]
@@ -39,69 +39,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeRight"
+            "pathName": "BackFromIntakeLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "RT-Intake"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "NeutralRight-IntakeFar"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "BackFromIntakeRightFar"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "Back-LeftTrench"
           }
         },
         {
@@ -115,11 +59,73 @@
           "data": {
             "name": "stow"
           }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-DepotL"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "DepotL-DepotF"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "DepotF-DepotR"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Depot(R)-Climb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
+          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Week 1",
+  "folder": "WIP",
   "choreoAuto": false
 }

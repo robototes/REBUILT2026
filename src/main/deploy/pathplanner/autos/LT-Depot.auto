@@ -9,9 +9,28 @@
           "data": {
             "commands": [
               {
-                "type": "path",
+                "type": "sequential",
                 "data": {
-                  "pathName": "RT-Outpost"
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-DepotL"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "DepotL-DepotF"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "DepotF-DepotR"
+                      }
+                    }
+                  ]
                 }
               },
               {
@@ -39,6 +58,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Week 1",
   "choreoAuto": false
 }

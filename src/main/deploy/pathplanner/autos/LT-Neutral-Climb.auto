@@ -15,19 +15,13 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LT-DepotL"
+                        "pathName": "LT-Intake"
                       }
                     },
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "DepotL-DepotF"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "DepotF-DepotR"
+                        "pathName": "NeutralLeft-Intake"
                       }
                     }
                   ]
@@ -43,6 +37,18 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "BackFromIntakeLeft"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Back-LeftTrench"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "launch"
@@ -53,11 +59,23 @@
           "data": {
             "name": "stow"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-Climb"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
+          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "WIP",
   "choreoAuto": false
 }
