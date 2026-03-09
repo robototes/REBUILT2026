@@ -5,27 +5,35 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "LT-Intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralLeft-Intake"
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-Intake"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralLeft-Intake"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
@@ -41,12 +49,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "LT-DepotFull"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"
@@ -59,9 +61,41 @@
           }
         },
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "DepotFull-DepotIntake"
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LT-DepotL"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "DepotL-DepotF"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "DepotF-DepotR"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {

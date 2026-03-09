@@ -1,0 +1,43 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-Close-Hub-Right"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": " RT-Close-Hub-Right-Presweep"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-Close-Hub-Right-Sweep"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-Close-Hub-Bump"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Neutral-Bump-RB"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

@@ -5,27 +5,35 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "RT-Intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.0
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-Intake"
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "RT-Intake"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralRight-Intake"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
@@ -49,19 +57,39 @@
         {
           "type": "named",
           "data": {
-            "name": "stow"
+            "name": "intake"
           }
         },
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "RT-Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-IntakeFar"
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "RT-Intake"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "NeutralRight-IntakeFar"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
           }
         },
         {
