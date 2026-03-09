@@ -38,7 +38,7 @@ public class LaunchCalculator {
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
 
-  private static int D_LOOKAHEAD_ITERATIONS = 33;
+  private static int D_LOOKAHEAD_ITERATIONS = 5;
 
   // private double turret_target_velocity;+
   // private double hood_target_velocity;
@@ -48,7 +48,7 @@ public class LaunchCalculator {
 
   private static double minDistance;
   private static double maxDistance;
-  private static double D_PHASE_DELAY = 0.2;
+  private static double D_PHASE_DELAY = 0.05;
 
   // Network tables
   // private final NtTunableDouble phaseDelay;
@@ -93,6 +93,8 @@ public class LaunchCalculator {
     Twist 2d objects gives us a transformation result that tells us where the robot will end up (individually by each component). We then integrate the velocity of the x and
     y components (robot relative) from 0 to delta T. This gives us a delta X and delta Y, which we will then apply to the previous robot pose to get a new pose2d that
     accurately represents the robot's position accounting in for angular velocity.
+
+    TLDR: Where will the robot be the moment we're finished calculating everything
     */
     double phase = phaseDelaySub.get();
     estimatedPose =
@@ -102,11 +104,8 @@ public class LaunchCalculator {
                 robotRelativeVelocity.vyMetersPerSecond * phase,
                 robotRelativeVelocity.omegaRadiansPerSecond * phase));
 
-    // - Calculate distance from turret to target - //
-    Translation2d target = GetTargetFromPose.getTargetLocation(estimatedPose);
+    // Apply turret transform to the estimated psoe
     Pose2d turretPosition = estimatedPose.transformBy(turretTransform);
-    // grab distance between turret and center of hub
-    double turretToTargetDistance = target.getDistance(turretPosition.getTranslation());
 
     // Calculate field relative turret velocity
     ChassisSpeeds robotVelocity =
@@ -127,45 +126,62 @@ public class LaunchCalculator {
                 * (turretTransform.getX() * Math.cos(robotAngle)
                     - turretTransform.getY() * Math.sin(robotAngle));
 
-    // Account for imparted velocity by robot (turret) to offset
-    double timeOfFlight;
+    // Account for imparted target
+    Translation2d realTargetLocation = GetTargetFromPose.getTargetLocation(turretPosition);
+    Rotation2d targetAngleFieldRelative =
+        realTargetLocation.minus(turretPosition.getTranslation()).getAngle();
     Pose2d lookaheadPose = turretPosition;
-    // the distance from the turret to the hub. This will be updated in the for loop
-    double lookaheadTurretToTargetDistance = turretToTargetDistance;
+    double lastFlightTime = 0;
+    // Initial guess based on the actual physical distance
+    double currentFlightTime =
+        LauncherConstants.getTimeFromDistance(
+            realTargetLocation.getDistance(lookaheadPose.getTranslation()));
 
-    int iterations = (int) iterationsSub.getAsLong();
-    for (int i = 0; i < iterations; i++) {
-      timeOfFlight = LauncherConstants.getTimeFromDistance(lookaheadTurretToTargetDistance);
-      double offsetX = turretVelocityX * timeOfFlight;
-      double offsetY = turretVelocityY * timeOfFlight;
-      lookaheadPose =
-          new Pose2d(
-              turretPosition.getTranslation().plus(new Translation2d(offsetX, offsetY)),
-              turretPosition.getRotation());
-      lookaheadTurretToTargetDistance = target.getDistance(lookaheadPose.getTranslation());
+    double lookaheadDist = 0;
+    double currentFlywheelSpeed = 0;
+    double currentHoodAngle = 0;
+
+    int maxIters = (int) iterationsSub.getAsLong();
+    int i = 0;
+
+    while (Math.abs(currentFlightTime - lastFlightTime) > 0.001 && i < maxIters) {
+      lastFlightTime = currentFlightTime;
+
+      // 1. Move the target "upstream" to cancel robot velocity
+      double virtualX = realTargetLocation.getX() - (turretVelocityX * currentFlightTime);
+      double virtualY = realTargetLocation.getY() - (turretVelocityY * currentFlightTime);
+      Translation2d virtualTarget = new Translation2d(virtualX, virtualY);
+
+      // 2. Calculate the "Physics Distance" to this ghost target
+      lookaheadDist = virtualTarget.getDistance(lookaheadPose.getTranslation());
+
+      // 3. Update ALL parameters based on this corrected distance
+      currentFlightTime = LauncherConstants.getTimeFromDistance(lookaheadDist);
+      currentFlywheelSpeed = LauncherConstants.getFlywheelSpeedFromDistance(lookaheadDist);
+      currentHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadDist);
+
+      // We update angle based on the virtual target
+      targetAngleFieldRelative =
+          virtualTarget
+              .minus(lookaheadPose.getTranslation())
+              .getAngle()
+              .rotateBy(Rotation2d.k180deg);
+
+      i++;
     }
-    LaunchCalculator.estimatedPose = lookaheadPose;
-    LaunchCalculator.estimatedDist = lookaheadTurretToTargetDistance;
-    // Calculate parameters accounted for imparted velocity
 
-    // // Target turret angle robot relative
-    Rotation2d targetAngleFieldRelative = target.minus(lookaheadPose.getTranslation()).getAngle();
-    targetTurretAngle =
-        targetAngleFieldRelative.minus(lookaheadPose.getRotation()).rotateBy(Rotation2d.k180deg);
-    // // Target hood angle
-    targetHoodAngle = getHoodAngle(lookaheadPose);
-    // System.out.println(targetTurretAngle.getDegrees());
+    // Assign to static variables for trench logic/logging
+    LaunchCalculator.estimatedPose = estimatedPose; // The robot's predicted pose at shot-time
+    LaunchCalculator.estimatedDist = lookaheadDist; // The "faked" distance the ball needs to fly
 
-    // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
-    // speed
-    // with all velocities accounted for
-
+    // Final resolution
+    targetTurretAngle = targetAngleFieldRelative;
+    targetHoodAngle = currentHoodAngle;
     return new LaunchingParameters(
-        lookaheadTurretToTargetDistance >= minDistance
-            && lookaheadTurretToTargetDistance <= maxDistance,
+        lookaheadDist >= minDistance && lookaheadDist <= maxDistance,
         targetTurretAngle,
         targetHoodAngle,
-        LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
+        currentFlywheelSpeed);
   }
 
   public double getHoodAngle(Pose2d lookaheadPose) {
