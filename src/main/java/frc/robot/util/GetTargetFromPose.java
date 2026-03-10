@@ -6,6 +6,7 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class GetTargetFromPose {
+  // This is with blue alliance on the left
   private static Translation2d pointLeftFieldTop = new Translation2d(2, 6);
   private static Translation2d pointLeftFieldBottom = new Translation2d(2, 2);
   private static Translation2d pointRightFieldTop = new Translation2d(14, 6);
@@ -14,15 +15,21 @@ public class GetTargetFromPose {
   private static double fieldLength = Units.inchesToMeters(651.2);
   private static double fieldWidth = Units.inchesToMeters(317.7);
   private static double allianceLineX = Units.inchesToMeters(158.6);
+  // This is here so that only the bumper needs to cross the line
   private static double robotOffset = Units.inchesToMeters(15);
 
   public static Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
     if (AllianceUtils.isBlue()) {
+      // If in shooting zone
       if (drivetrain.getState().Pose.getX() <= allianceLineX + robotOffset) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+      }
+      // If not in shooting zone and on the top
+      else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
         return pointLeftFieldTop;
-      } else {
+      }
+      // If not in shooting zone and on bottom
+      else {
         return pointLeftFieldBottom;
       }
     } else if (AllianceUtils.isRed()) {
