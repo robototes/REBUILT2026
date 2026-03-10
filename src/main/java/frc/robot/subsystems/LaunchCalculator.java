@@ -147,15 +147,15 @@ public class LaunchCalculator {
     while (Math.abs(currentFlightTime - lastFlightTime) > 0.001 && i < maxIters) {
       lastFlightTime = currentFlightTime;
 
-      // 1. Move the target "upstream" to cancel robot velocity
+      // Move the ghost target
       double virtualX = realTargetLocation.getX() - (turretVelocityX * currentFlightTime);
       double virtualY = realTargetLocation.getY() - (turretVelocityY * currentFlightTime);
       Translation2d virtualTarget = new Translation2d(virtualX, virtualY);
 
-      // 2. Calculate the "Physics Distance" to this ghost target
+      // Calculate distance from turret to ghost target
       lookaheadDist = virtualTarget.getDistance(lookaheadPose.getTranslation());
 
-      // 3. Update ALL parameters based on this corrected distance
+      // Update parameters
       currentFlightTime = LauncherConstants.getTimeFromDistance(lookaheadDist);
       currentFlywheelSpeed = LauncherConstants.getFlywheelSpeedFromDistance(lookaheadDist);
       currentHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadDist);
