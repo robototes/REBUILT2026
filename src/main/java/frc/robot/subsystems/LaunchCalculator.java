@@ -142,8 +142,8 @@ public class LaunchCalculator {
     double currentHoodAngle = 0;
 
     int maxIters = (int) iterationsSub.getAsLong();
-    int i = 0;
 
+    int i = 0;
     while (Math.abs(currentFlightTime - lastFlightTime) > 0.001 && i < maxIters) {
       lastFlightTime = currentFlightTime;
 
