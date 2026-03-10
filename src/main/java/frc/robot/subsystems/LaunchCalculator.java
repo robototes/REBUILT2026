@@ -114,7 +114,7 @@ public class LaunchCalculator {
     double robotAngle = estimatedPose.getRotation().getRadians();
     // calculate the turret's tangetial velocity field relative.
     // take the turret's field relative position function, take the derivative of it and plug in
-    // your velocities.
+    // your velocities. THIS IS CORRECT MATH, DO NOT TOUCH
     double turretVelocityX =
         robotVelocity.vxMetersPerSecond
             - robotVelocity.omegaRadiansPerSecond
