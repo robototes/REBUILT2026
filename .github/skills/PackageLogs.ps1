@@ -17,6 +17,9 @@
 .PARAMETER MaxZipSizeMB
     Target max uncompressed size per zip in MB.  Default 100.
 
+.PARAMETER MaxParallel
+    Number of zip compression jobs to run in parallel.  Default 4.
+
 .EXAMPLE
     .\PackageLogs.ps1 -LogFolder "D:\Temp\2026_BonneyLake\2412"
 #>
@@ -25,10 +28,24 @@ param(
     [Parameter(Position = 0)]
     [string]$LogFolder,
     [int]$ToleranceMinutes = 2,
-    [int]$MaxZipSizeMB = 100
+    [int]$MaxZipSizeMB = 100,
+    [int]$MaxParallel = 4
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Script flow:
+#   Step 0  Get the log folder path (prompt if not provided)
+#   Step 1  Enumerate .wpilog files and hoot folders
+#   Step 2  Auto-match folders to .wpilog files (by label, then timestamp)
+#   Step 3  Resolve any unmatched folders/files (with bulk options)
+#   Step 4  Group everything into size-limited zip batches
+#   Step 5  Confirm plan and create .zip archives
+#   Step 6  Print summary
+#
+# See SPEC.md in this folder for details on file naming conventions.
+# ─────────────────────────────────────────────────────────────────────────────
 
 #region Helpers
 
@@ -48,7 +65,10 @@ function Parse-WpilogTimestamp([string]$FileName) {
 
 function Parse-WpilogMatchLabel([string]$FileName) {
     # Match event labels like _WABON_Q65, _CASJ_E14, _ORORE_P2
-    # Format: _<EventCode>_<Type><Number> where Type is P/Q/E/F
+    # Format: _<EventCode>_<Type><Number>
+    #   EventCode = uppercase letters (FRC event code, e.g. WABON)
+    #   Type      = P (practice), Q (qualification), E (elimination), F (finals)
+    #   Number    = match number (1, 2, 42, 65, etc.)
     if ($FileName -match '_([A-Z]+_[PQEF]\d+)\.wpilog$') { return $Matches[1] }
     return $null
 }
@@ -110,6 +130,7 @@ $LogFolder = (Resolve-Path $LogFolder).Path
 Write-Host "Log folder : $LogFolder" -ForegroundColor Gray
 Write-Host "Tolerance  : $ToleranceMinutes min" -ForegroundColor Gray
 Write-Host "Max zip    : $MaxZipSizeMB MB (uncompressed)" -ForegroundColor Gray
+Write-Host "Parallel   : $MaxParallel jobs" -ForegroundColor Gray
 
 #endregion
 
@@ -125,10 +146,19 @@ $wpilogFiles = @(Get-ChildItem -Path $LogFolder -Filter "*.wpilog" -File | ForEa
         return
     }
     $ts = Parse-WpilogTimestamp $_.Name
+    $isTBD = $false
     if (-not $ts) {
-        Write-Host "  SKIP (no timestamp): $($_.Name)" -ForegroundColor Yellow
-        $script:skippedCount++
-        return
+        # FRC_TBD_{random}.wpilog -- DS never connected, but still valid data.
+        # Use the file's last-write time as the timestamp for sorting/batching.
+        if ($_.Name -match '^FRC_TBD_') {
+            $ts = $_.LastWriteTime
+            $isTBD = $true
+            Write-Host "  TBD (pre-DS): $($_.Name) -- using file date $($ts.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor DarkYellow
+        } else {
+            Write-Host "  SKIP (no timestamp): $($_.Name)" -ForegroundColor Yellow
+            $script:skippedCount++
+            return
+        }
     }
     $label = Parse-WpilogMatchLabel $_.Name
     [PSCustomObject]@{
@@ -138,6 +168,7 @@ $wpilogFiles = @(Get-ChildItem -Path $LogFolder -Filter "*.wpilog" -File | ForEa
         Size       = $_.Length
         BaseName   = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
         MatchLabel = $label
+        IsTBD      = $isTBD
     }
 } | Sort-Object Timestamp)
 
@@ -153,8 +184,8 @@ Write-Host ("  {0,-4} {1,-48} {2,-20} {3,10}" -f "#", "Filename", "Timestamp", "
 Write-Sep
 for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
     $w = $wpilogFiles[$i]
-    $dn = $w.Name; if ($dn.Length -gt 47) { $dn = $dn.Substring(0,44) + "..." }
-    Write-Host ("  {0,-4} {1,-48} {2,-20} {3,10}" -f ($i+1), $dn, $w.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"), (Format-FileSize $w.Size))
+    $displayName = $w.Name; if ($displayName.Length -gt 47) { $displayName = $displayName.Substring(0,44) + "..." }
+    Write-Host ("  {0,-4} {1,-48} {2,-20} {3,10}" -f ($i+1), $displayName, $w.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"), (Format-FileSize $w.Size))
 }
 
 #endregion
@@ -170,11 +201,11 @@ $allFolders = @(Get-ChildItem -Path $LogFolder -Directory | ForEach-Object {
         return
     }
     if ($name -match '^([A-Z]+_[PQEF]\d+)$') {
-        $ml = $Matches[1]
+        $matchLabel = $Matches[1]
         $hootTs = Get-HootTimestamp $full
         $empty = ($null -eq $hootTs)
         if (-not $hootTs) { $hootTs = [datetime]::MinValue }
-        [PSCustomObject]@{ Name=$name; FullPath=$full; Timestamp=$hootTs; MatchLabel=$ml; IsEmpty=$empty }
+        [PSCustomObject]@{ Name=$name; FullPath=$full; Timestamp=$hootTs; MatchLabel=$matchLabel; IsEmpty=$empty }
         return
     }
 } | Sort-Object Timestamp)
@@ -199,20 +230,25 @@ $unmatchedFolders = New-Object System.Collections.ArrayList
 
 foreach ($folder in $allFolders) {
     $matched = $false
-    # Priority 1: match by label name
+
+    # ── Priority 1: Match by event label name ────────────────────────
+    # If the folder is event-labeled (e.g. "WABON_Q42"), look for a
+    # .wpilog file with the same label in its filename.
     if ($folder.MatchLabel) {
         for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
             if ($wpilogFiles[$i].MatchLabel -eq $folder.MatchLabel) {
                 [void]$matchMap[$i].Add($folder)
                 $matched = $true
-                break
+                break  # assign to first (earliest) matching wpilog
             }
         }
+        # If no label match found, fall back to timestamp matching
+        # (but only if the folder has hoot files to get a timestamp from)
         if (-not $matched -and -not $folder.IsEmpty) {
             $bestIdx = -1; $bestDiff = [double]::MaxValue
             for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
-                $ad = [Math]::Abs(($folder.Timestamp - $wpilogFiles[$i].Timestamp).TotalSeconds)
-                if ($ad -lt $bestDiff) { $bestIdx = $i; $bestDiff = $ad }
+                $absDiff = [Math]::Abs(($folder.Timestamp - $wpilogFiles[$i].Timestamp).TotalSeconds)
+                if ($absDiff -lt $bestDiff) { $bestIdx = $i; $bestDiff = $absDiff }
             }
             if ($bestIdx -ge 0 -and $bestDiff -le $toleranceSec) {
                 [void]$matchMap[$bestIdx].Add($folder)
@@ -220,18 +256,22 @@ foreach ($folder in $allFolders) {
             }
         }
     }
-    # Priority 2: closest timestamp
+
+    # ── Priority 2: Match by closest timestamp ───────────────────────
+    # For timestamped folders (e.g. "2026-03-06_04-38-48"), find the
+    # .wpilog file whose timestamp is closest, within tolerance.
     if (-not $matched -and -not $folder.MatchLabel) {
         $bestIdx = -1; $bestDiff = [double]::MaxValue
         for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
-            $ad = [Math]::Abs(($folder.Timestamp - $wpilogFiles[$i].Timestamp).TotalSeconds)
-            if ($ad -lt $bestDiff) { $bestIdx = $i; $bestDiff = $ad }
+            $absDiff = [Math]::Abs(($folder.Timestamp - $wpilogFiles[$i].Timestamp).TotalSeconds)
+            if ($absDiff -lt $bestDiff) { $bestIdx = $i; $bestDiff = $absDiff }
         }
         if ($bestIdx -ge 0 -and $bestDiff -le $toleranceSec) {
             [void]$matchMap[$bestIdx].Add($folder)
             $matched = $true
         }
     }
+
     if (-not $matched) { [void]$unmatchedFolders.Add($folder) }
 }
 
@@ -373,7 +413,11 @@ if ($unmatchedWpilogs.Count -gt 0) {
 Write-Header "Step 4: Building zip batches"
 
 $planItems = @()
+$planCount = ($matchMap.Keys | Measure-Object).Count
+$planCurrent = 0
 foreach ($idx in ($matchMap.Keys | Sort-Object)) {
+    $planCurrent++
+    Write-Host "`r  Calculating sizes... $planCurrent / $planCount" -NoNewline
     $w = $wpilogFiles[$idx]
     $folders = @($matchMap[$idx])
     $isStandalone = ($null -eq $w.FullPath)
@@ -381,11 +425,68 @@ foreach ($idx in ($matchMap.Keys | Sort-Object)) {
     if (-not $isStandalone) { $itemSize += $w.Size }
     foreach ($f in $folders) { $itemSize += (Get-DirSize $f.FullPath) }
     $planItems += [PSCustomObject]@{
-        WpilogIdx=$idx; WpilogFile=$w; Folders=$folders; IsStandalone=$isStandalone
-        Timestamp=$w.Timestamp; TotalSize=$itemSize
+        WpilogFiles = @($w)          # array — may grow when merging split matches
+        Folders     = $folders
+        IsStandalone = $isStandalone
+        Timestamp   = $w.Timestamp   # earliest timestamp (for sorting/batching)
+        TotalSize   = $itemSize
+        MatchLabel  = $w.MatchLabel   # event label or $null
     }
 }
 $planItems = @($planItems | Sort-Object Timestamp)
+Write-Host ""  # clear the progress line
+
+# ── Merge split-match items ──────────────────────────────────────────
+# When multiple .wpilog files share the same event label (e.g., two
+# WABON_Q65 files due to a mid-match power loss), merge them into a
+# single plan item so they end up in the same zip file.
+$mergedItems = New-Object System.Collections.ArrayList
+$labelGroups = @{}  # label -> index in $mergedItems
+
+foreach ($item in $planItems) {
+    if ($item.MatchLabel) {
+        if ($labelGroups.ContainsKey($item.MatchLabel)) {
+            # Merge into existing item
+            $existingIdx = $labelGroups[$item.MatchLabel]
+            $existing = $mergedItems[$existingIdx]
+            $existing.WpilogFiles += $item.WpilogFiles
+            $existing.TotalSize  += $item.TotalSize
+            # Merge folders (avoid duplicates by path)
+            foreach ($f in $item.Folders) {
+                $alreadyHave = $false
+                foreach ($ef in $existing.Folders) {
+                    if ($ef.FullPath -eq $f.FullPath) { $alreadyHave = $true; break }
+                }
+                if (-not $alreadyHave) {
+                    $existing.Folders += $f
+                    $existing.TotalSize += (Get-DirSize $f.FullPath)
+                }
+            }
+            # Keep the earliest timestamp
+            if ($item.Timestamp -lt $existing.Timestamp) {
+                $existing.Timestamp = $item.Timestamp
+            }
+        } else {
+            $labelGroups[$item.MatchLabel] = $mergedItems.Count
+            [void]$mergedItems.Add($item)
+        }
+    } else {
+        [void]$mergedItems.Add($item)
+    }
+}
+
+$planItems = @($mergedItems | Sort-Object Timestamp)
+
+# Report any merges
+$mergeCount = 0
+foreach ($item in $planItems) {
+    if ($item.WpilogFiles.Count -gt 1) {
+        $mergeCount++
+        $label = $item.MatchLabel
+        Write-Host "  Merged $($item.WpilogFiles.Count) split logs for $label" -ForegroundColor Cyan
+    }
+}
+if ($mergeCount -gt 0) { Write-Host "" }
 
 if ($planItems.Count -eq 0) {
     Write-Host "  Nothing to do." -ForegroundColor Yellow
@@ -433,7 +534,13 @@ for ($b = 0; $b -lt $batchList.Count; $b++) {
     $first = $batch[0].Timestamp
     $last  = $batch[$batch.Count - 1].Timestamp
     if ($batch.Count -eq 1) {
-        $zipBase = $batch[0].WpilogFile.BaseName
+        # Single item — use the label or basename
+        $item = $batch[0]
+        if ($item.MatchLabel) {
+            $zipBase = "FRC_" + $item.MatchLabel
+        } else {
+            $zipBase = $item.WpilogFiles[0].BaseName
+        }
     } else {
         $zipBase = "FRC_" + $first.ToString("yyyyMMdd_HHmmss") + "_to_" + $last.ToString("yyyyMMdd_HHmmss")
     }
@@ -448,6 +555,17 @@ for ($b = 0; $b -lt $batchList.Count; $b++) {
 
 Write-Host ""
 Write-Host "  $($batchPlans.Count) zip archive(s) planned:" -ForegroundColor White
+
+# Warn about Compress-Archive 2GB limit in Windows PowerShell 5.1
+foreach ($bp in $batchPlans) {
+    if ($bp.TotalSize -gt 2GB) {
+        Write-Host ""
+        Write-Host "  WARNING: Batch '$($bp.ZipName)' is ~$(Format-FileSize $bp.TotalSize) uncompressed." -ForegroundColor Red
+        Write-Host "  Compress-Archive in PowerShell 5.1 has a ~2 GB limit and may fail." -ForegroundColor Red
+        Write-Host "  Consider reducing -MaxZipSizeMB to split it further." -ForegroundColor Red
+    }
+}
+
 Write-Host ""
 foreach ($bp in $batchPlans) {
     $sizeStr = Format-FileSize $bp.TotalSize
@@ -457,7 +575,9 @@ foreach ($bp in $batchPlans) {
         if ($it.IsStandalone) {
             Write-Host "    [standalone]" -ForegroundColor DarkGray
         } else {
-            Write-Host "    $($it.WpilogFile.Name)  ($(Format-FileSize $it.WpilogFile.Size))" -ForegroundColor White
+            foreach ($wf in $it.WpilogFiles) {
+                Write-Host "    $($wf.Name)  ($(Format-FileSize $wf.Size))" -ForegroundColor White
+            }
         }
         foreach ($f in $it.Folders) { Write-Host "      + $($f.Name)/" -ForegroundColor Green }
     }
@@ -471,31 +591,99 @@ foreach ($bp in $batchPlans) {
 $confirm = (Read-Host "Proceed? [Y/N]").Trim().ToUpper()
 if ($confirm -ne "Y") { Write-Host "Cancelled." -ForegroundColor Yellow; exit 0 }
 
-Write-Header "Step 5: Creating archives"
+Write-Header "Step 5: Creating archives ($MaxParallel parallel)"
 
-$createdZips = @()
+# Build a list of compression tasks (each is a hashtable with paths)
+$tasks = @()
 foreach ($bp in $batchPlans) {
-    $zipPath = $bp.ZipPath
-    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
     $itemsToCompress = @()
     [int]$wpiCount = 0; [int]$folderCount = 0
     foreach ($it in $bp.Items) {
-        if (-not $it.IsStandalone) { $itemsToCompress += $it.WpilogFile.FullPath; $wpiCount++ }
+        if (-not $it.IsStandalone) {
+            foreach ($wf in $it.WpilogFiles) {
+                $itemsToCompress += $wf.FullPath
+                $wpiCount++
+            }
+        }
         foreach ($f in $it.Folders) { $itemsToCompress += $f.FullPath; $folderCount++ }
     }
     if ($itemsToCompress.Count -eq 0) { continue }
-    $zipLabel = $bp.ZipName
-    Write-Host ""
-    Write-Host "  Creating $zipLabel ..." -ForegroundColor White -NoNewline
-    try {
-        Compress-Archive -Path $itemsToCompress -DestinationPath $zipPath -CompressionLevel Optimal -Force
-        $zipSize = (Get-Item $zipPath).Length
-        Write-Host ""
-        Write-Host "  [OK] $zipLabel ($(Format-FileSize $zipSize))" -ForegroundColor Green
-        $createdZips += [PSCustomObject]@{ ZipName=$zipLabel; ZipSize=$zipSize; WpiCount=$wpiCount; FolderCount=$folderCount }
-    } catch {
-        Write-Host ""
-        Write-Host "  [FAIL] ${zipLabel}: $_" -ForegroundColor Red
+    $tasks += @{
+        ZipName  = $bp.ZipName
+        ZipPath  = $bp.ZipPath
+        Items    = $itemsToCompress
+        WpiCount = $wpiCount
+        FolderCount = $folderCount
+    }
+}
+
+# Remove any pre-existing zips that we are about to recreate
+foreach ($t in $tasks) {
+    if (Test-Path $t.ZipPath) { Remove-Item $t.ZipPath -Force }
+}
+
+# Launch compression jobs in parallel, throttled to $MaxParallel
+$runningJobs = @{}   # jobId -> task hashtable
+$completedIdx = 0
+$totalTasks = $tasks.Count
+$createdZips = @()
+$failedZips  = @()
+
+for ($taskIdx = 0; $taskIdx -lt $tasks.Count; $taskIdx++) {
+    # Wait if we've hit the concurrency limit
+    while ($runningJobs.Count -ge $MaxParallel) {
+        $finished = Get-Job -Id ($runningJobs.Keys) | Where-Object { $_.State -ne 'Running' } | Select-Object -First 1
+        if ($finished) {
+            $fTask = $runningJobs[$finished.Id]
+            $runningJobs.Remove($finished.Id)
+            if ($finished.State -eq 'Completed') {
+                $zipSize = [long](Receive-Job $finished)
+                $completedIdx++
+                Write-Host ("  [{0}/{1}] [OK] {2} ({3})" -f $completedIdx, $totalTasks, $fTask.ZipName, (Format-FileSize $zipSize)) -ForegroundColor Green
+                $createdZips += [PSCustomObject]@{ ZipName=$fTask.ZipName; ZipSize=$zipSize; WpiCount=$fTask.WpiCount; FolderCount=$fTask.FolderCount }
+            } else {
+                $errMsg = (Receive-Job $finished -ErrorAction SilentlyContinue 2>&1) -join "; "
+                $completedIdx++
+                Write-Host ("  [{0}/{1}] [FAIL] {2}: {3}" -f $completedIdx, $totalTasks, $fTask.ZipName, $errMsg) -ForegroundColor Red
+                $failedZips += $fTask.ZipName
+            }
+            Remove-Job $finished
+        } else {
+            Start-Sleep -Milliseconds 500
+        }
+    }
+
+    # Launch this task
+    $t = $tasks[$taskIdx]
+    Write-Host "  Starting $($t.ZipName) ..." -ForegroundColor Gray
+    $job = Start-Job -ScriptBlock {
+        param($zipPath, $items)
+        Compress-Archive -Path $items -DestinationPath $zipPath -CompressionLevel Optimal -Force
+        (Get-Item $zipPath).Length
+    } -ArgumentList $t.ZipPath, $t.Items
+    $runningJobs[$job.Id] = $t
+}
+
+# Wait for remaining jobs to finish
+while ($runningJobs.Count -gt 0) {
+    $finished = Get-Job -Id ($runningJobs.Keys) | Where-Object { $_.State -ne 'Running' } | Select-Object -First 1
+    if ($finished) {
+        $fTask = $runningJobs[$finished.Id]
+        $runningJobs.Remove($finished.Id)
+        if ($finished.State -eq 'Completed') {
+            $zipSize = [long](Receive-Job $finished)
+            $completedIdx++
+            Write-Host ("  [{0}/{1}] [OK] {2} ({3})" -f $completedIdx, $totalTasks, $fTask.ZipName, (Format-FileSize $zipSize)) -ForegroundColor Green
+            $createdZips += [PSCustomObject]@{ ZipName=$fTask.ZipName; ZipSize=$zipSize; WpiCount=$fTask.WpiCount; FolderCount=$fTask.FolderCount }
+        } else {
+            $errMsg = (Receive-Job $finished -ErrorAction SilentlyContinue 2>&1) -join "; "
+            $completedIdx++
+            Write-Host ("  [{0}/{1}] [FAIL] {2}: {3}" -f $completedIdx, $totalTasks, $fTask.ZipName, $errMsg) -ForegroundColor Red
+            $failedZips += $fTask.ZipName
+        }
+        Remove-Job $finished
+    } else {
+        Start-Sleep -Milliseconds 500
     }
 }
 

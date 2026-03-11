@@ -5,6 +5,9 @@
 Bundle `.wpilog` robot log files with their corresponding `.hoot` signal
 logger folders into `.zip` archives sized for OneDrive/SharePoint upload.
 
+See [`SPEC.md`](SPEC.md) for detailed documentation of FRC log file naming
+conventions, timestamps, and folder structures.
+
 ## Script
 
 This skill is implemented as a standalone Windows PowerShell 5.1 script:
@@ -19,8 +22,8 @@ This skill is implemented as a standalone Windows PowerShell 5.1 script:
 # With arguments:
 .\PackageLogs.ps1 -LogFolder "D:\Temp\2026_BonneyLake\2412"
 
-# Custom size limit and tolerance:
-.\PackageLogs.ps1 -LogFolder "C:\logs" -MaxZipSizeMB 50 -ToleranceMinutes 3
+# Custom size limit, tolerance, and parallelism:
+.\PackageLogs.ps1 -LogFolder "C:\logs" -MaxZipSizeMB 50 -MaxParallel 8
 
 # Interactive (prompts for folder):
 .\PackageLogs.ps1
@@ -33,7 +36,9 @@ on the user's behalf based on context, or relay the prompts to the user.
 
 1. **Scans** the folder for `.wpilog` files and subdirectories (both
    timestamped like `2026-03-06_04-21-49` and event-labeled like `WABON_Q42`).
-2. **Skips** zero-byte `.wpilog` files and files with no parseable timestamp.
+2. **Skips** zero-byte `.wpilog` files. Includes `FRC_TBD_*` files (pre-DS
+   logs where the Driver Station never connected -- valid data, uses file
+   modification time for sorting).
 3. **Auto-matches** folders to `.wpilog` files using:
    - **Event label matching** (highest priority): `WABON_P2` folder to
      `FRC_..._WABON_P2.wpilog`
@@ -41,14 +46,16 @@ on the user's behalf based on context, or relay the prompts to the user.
    - For event-labeled folders, timestamps are extracted from `.hoot`
      filenames inside
 4. **Event match `.wpilog` files are always kept** -- they are never listed
-   as unmatched and never require user prompts.
+   as unmatched and never require user prompts. Split-match logs (same
+   label due to power loss) are merged into one zip.
 5. **Prompts** the user to resolve remaining unmatched items, with **bulk
    options** for large sets (Ignore All / Zip All / Resolve Each).
 6. **Groups** matched items into **batches** that stay under `MaxZipSizeMB`
    (default 100 MB uncompressed), splitting at the **largest timestamp gaps**
    to keep related logs together.
 7. **Shows the final plan** and asks for confirmation.
-8. **Creates `.zip` archives** and prints a summary with sizes.
+8. **Creates `.zip` archives in parallel** (default 4 concurrent jobs) and
+   prints a summary with sizes.
 
 ### Parameters
 
@@ -57,8 +64,22 @@ on the user's behalf based on context, or relay the prompts to the user.
 | `-LogFolder` | *(prompt)* | Path to the folder with `.wpilog` files and subdirs |
 | `-ToleranceMinutes` | `2` | Max minutes of timestamp drift for auto-matching |
 | `-MaxZipSizeMB` | `100` | Target max uncompressed size per zip (for OneDrive) |
+| `-MaxParallel` | `4` | Number of zip compression jobs to run concurrently |
 
 ## Reference
+
+### `.wpilog` file naming (from WPILib docs)
+
+Files go through up to three naming stages:
+
+| Stage | Pattern | When |
+|-------|---------|------|
+| Pre-DS | `FRC_TBD_{random}.wpilog` | At boot, before Driver Station connects |
+| DS connected | `FRC_YYYYMMDD_HHMMSS.wpilog` | After DS connects (UTC timestamp) |
+| FMS match | `FRC_YYYYMMDD_HHMMSS_{event}_{match}.wpilog` | When FMS provides match info |
+
+`FRC_TBD_*` files are valid logs -- the DS simply never connected. They are
+preserved and included in batches.
 
 ### Supported folder types
 
@@ -70,40 +91,36 @@ on the user's behalf based on context, or relay the prompts to the user.
 
 ### Event match labels
 
-Event match labels follow the format `<EventCode>_<Type><Number>`:
-- **Event code**: uppercase letters (e.g., `WABON`, `CASJ`, `ORORE`)
-- **Type**: `P` (practice), `Q` (qualification), `E` (elimination), `F` (finals)
-- **Number**: match number (e.g., `1`, `42`, `65`)
+Format: `<EventCode>_<Type><Number>` where Type is `P` (practice),
+`Q` (qualification), `E` (elimination), or `F` (finals).
 
-Examples: `WABON_P2`, `WABON_Q65`, `CASJ_E14`, `ORORE_F3`
-
-**Event-labeled `.wpilog` files are always included** -- they represent
-official competition matches and are automatically zipped with or without
-matching folders.  They never appear in the "unmatched" prompts.
-
-### Timestamp formats
-
-- `.wpilog` filename: `FRC_YYYYMMDD_HHMMSS.wpilog` or
-  `FRC_YYYYMMDD_HHMMSS_WABON_Q42.wpilog`
-- Timestamped folder: `YYYY-MM-DD_HH-MM-SS`
-- `.hoot` files: `..._YYYY-MM-DD_HH-MM-SS.hoot`
+Event-labeled `.wpilog` files are **always included** -- they never appear
+in "unmatched" prompts. When multiple `.wpilog` files share the same
+label (power loss mid-match), they are **merged into one zip** along with
+the shared `.hoot` folder.
 
 ### Matching rules
 
-- **Event label match** takes priority -- if a folder name matches the
-  `_XXXXX_YNN` suffix of a `.wpilog` file, they are linked regardless of
-  timestamp.
+- **Event label match** takes priority over timestamp matching.
 - **Timestamp match** uses closest-match within the tolerance.
 - Multiple folders can match one `.wpilog` file.
-- Zero-byte `.wpilog` files and unparseable filenames are skipped.
+- Zero-byte `.wpilog` files are skipped; `FRC_TBD_*` files are kept.
 
 ### Batching rules
 
-- All matched items are sorted chronologically and grouped into batches.
-- If a batch exceeds `MaxZipSizeMB`, it is split at the **largest timestamp
-  gap** within it, maximizing the natural separation between sessions.
+- All items are sorted chronologically and grouped into batches.
+- Batches exceeding `MaxZipSizeMB` are split at the **largest timestamp
+  gap**, maximizing natural separation between sessions.
 - Single-item batches use the `.wpilog` basename as the zip filename.
 - Multi-item batches are named `FRC_<first>_to_<last>.zip`.
+- Event match items use `FRC_<label>.zip` (e.g., `FRC_WABON_Q65.zip`).
+
+### Compression
+
+- Uses `Start-Job` to run up to `-MaxParallel` (default 4) compression
+  jobs concurrently, significantly reducing total time for large log sets.
+- A warning is shown if any batch exceeds the ~2 GB `Compress-Archive`
+  limit in PowerShell 5.1.
 
 ### Safety
 
