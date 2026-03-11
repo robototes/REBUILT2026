@@ -192,6 +192,8 @@ for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
 
 #region Step 1b - Enumerate folders
 
+# Note: Inside ForEach-Object, "return" acts like "continue" (skips to the
+# next pipeline item), NOT like a function return.  This is a PowerShell quirk.
 $allFolders = @(Get-ChildItem -Path $LogFolder -Directory | ForEach-Object {
     $name = $_.Name
     $full = $_.FullName
@@ -224,6 +226,8 @@ Write-Header "Step 2: Matching folders to .wpilog files"
 $toleranceSec = $ToleranceMinutes * 60
 $matchMap = @{}
 for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
+    # [void] suppresses ArrayList.Add() return value (it returns the index,
+    # which would pollute the pipeline output if not suppressed).
     $matchMap[$i] = New-Object System.Collections.ArrayList
 }
 $unmatchedFolders = New-Object System.Collections.ArrayList
@@ -328,7 +332,7 @@ if ($unmatchedFolders.Count -gt 0) {
                     Write-Host "    -> Ignored" -ForegroundColor DarkGray; $valid = $true
                 } elseif ($ch -eq "S") {
                     $sIdx = $wpilogFiles.Count
-                    $sEntry = [PSCustomObject]@{ Name=$null; FullPath=$null; Timestamp=$folder.Timestamp; Size=[long]0; BaseName=$folder.Name; MatchLabel=$null }
+                    $sEntry = [PSCustomObject]@{ Name=$null; FullPath=$null; Timestamp=$folder.Timestamp; Size=[long]0; BaseName=$folder.Name; MatchLabel=$null; IsTBD=$false }
                     $wpilogFiles += $sEntry
                     $matchMap[$sIdx] = New-Object System.Collections.ArrayList
                     [void]$matchMap[$sIdx].Add($folder)
@@ -459,7 +463,8 @@ foreach ($item in $planItems) {
                 }
                 if (-not $alreadyHave) {
                     $existing.Folders += $f
-                    $existing.TotalSize += (Get-DirSize $f.FullPath)
+                    # Note: folder size is NOT added here because it was already
+                    # counted in $item.TotalSize which was added above.
                 }
             }
             # Keep the earliest timestamp
@@ -495,7 +500,12 @@ if ($planItems.Count -eq 0) {
 
 $maxBytes = [long]$MaxZipSizeMB * 1MB
 
-# Start with everything in one batch, split at largest gaps when over size
+# ── Batch-splitting algorithm ────────────────────────────────────────
+# Start with ALL plan items in a single batch.  If that batch exceeds
+# the size limit, find the largest time gap between consecutive items
+# and split there.  Repeat until every batch is under the limit (or
+# can't be split further because it contains only one item).
+# This maximizes the natural time separation between zips.
 $batchList = New-Object System.Collections.ArrayList
 [void]$batchList.Add(@($planItems))
 
@@ -632,7 +642,8 @@ $failedZips  = @()
 for ($taskIdx = 0; $taskIdx -lt $tasks.Count; $taskIdx++) {
     # Wait if we've hit the concurrency limit
     while ($runningJobs.Count -ge $MaxParallel) {
-        $finished = Get-Job -Id ($runningJobs.Keys) | Where-Object { $_.State -ne 'Running' } | Select-Object -First 1
+        # @() forces array even when there's only one running job
+        $finished = Get-Job -Id @($runningJobs.Keys) | Where-Object { $_.State -ne 'Running' } | Select-Object -First 1
         if ($finished) {
             $fTask = $runningJobs[$finished.Id]
             $runningJobs.Remove($finished.Id)
@@ -666,7 +677,7 @@ for ($taskIdx = 0; $taskIdx -lt $tasks.Count; $taskIdx++) {
 
 # Wait for remaining jobs to finish
 while ($runningJobs.Count -gt 0) {
-    $finished = Get-Job -Id ($runningJobs.Keys) | Where-Object { $_.State -ne 'Running' } | Select-Object -First 1
+    $finished = Get-Job -Id @($runningJobs.Keys) | Where-Object { $_.State -ne 'Running' } | Select-Object -First 1
     if ($finished) {
         $fTask = $runningJobs[$finished.Id]
         $runningJobs.Remove($finished.Id)
@@ -705,6 +716,11 @@ if ($createdZips.Count -eq 0) {
     }
     Write-Host ""
     Write-Host "  Total: $(Format-FileSize $totalSize)" -ForegroundColor Cyan
+}
+if ($failedZips.Count -gt 0) {
+    Write-Host ""
+    Write-Host "  $($failedZips.Count) archive(s) FAILED:" -ForegroundColor Red
+    foreach ($f in $failedZips) { Write-Host "    $f" -ForegroundColor Red }
 }
 Write-Host ""
 
