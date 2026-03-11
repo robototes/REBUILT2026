@@ -1,43 +1,36 @@
-<#
+﻿<#
 .SYNOPSIS
-    Package FRC log files (.wpilog) with their matching .hoot signal-logger
-    folders into .zip archives.
+    Package FRC log files (.wpilog) with matching .hoot folders into .zip archives.
 
 .DESCRIPTION
-    This script scans a folder for .wpilog files and timestamped subdirectories
-    containing .hoot files. It automatically matches folders to .wpilog files
-    based on timestamp proximity, lets you resolve any ambiguities, and then
-    creates one .zip archive per .wpilog file containing the log and its
-    associated folders.
+    Scans a folder for .wpilog files and subdirectories containing .hoot files.
+    Supports both timestamped folders (2026-03-06_04-21-49) and match-labeled
+    folders (WABON_Q42).  Auto-matches, groups into size-limited batches by
+    splitting at the largest timestamp gaps, and creates .zip archives.
 
 .PARAMETER LogFolder
-    Path to the folder that contains .wpilog files and timestamped subdirectories.
-    If omitted, the script will prompt you to enter one.
+    Path to the folder containing .wpilog files and subdirectories.
 
 .PARAMETER ToleranceMinutes
-    Maximum number of minutes a folder timestamp may differ from a .wpilog
-    timestamp and still be considered an automatic match.  Default is 2.
+    Max minutes of timestamp drift for auto-matching.  Default 2.
+
+.PARAMETER MaxZipSizeMB
+    Target max uncompressed size per zip in MB.  Default 100.
 
 .EXAMPLE
-    .\PackageLogs.ps1 -LogFolder "C:\Users\me\Downloads\logs"
-
-.EXAMPLE
-    .\PackageLogs.ps1
-    # (will prompt for the folder path)
+    .\PackageLogs.ps1 -LogFolder "D:\Temp\2026_BonneyLake\2412"
 #>
-
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
     [string]$LogFolder,
-
-    [int]$ToleranceMinutes = 2
+    [int]$ToleranceMinutes = 2,
+    [int]$MaxZipSizeMB = 100
 )
-
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+#region Helpers
 
 function Format-FileSize([long]$Bytes) {
     if ($Bytes -ge 1GB) { return "{0:N2} GB" -f ($Bytes / 1GB) }
@@ -47,382 +40,484 @@ function Format-FileSize([long]$Bytes) {
 }
 
 function Parse-WpilogTimestamp([string]$FileName) {
-    # FRC_YYYYMMDD_HHMMSS.wpilog
-    if ($FileName -match '(\d{8})_(\d{6})\.wpilog$') {
-        $d = $Matches[1]   # 20260306
-        $t = $Matches[2]   # 042157
-        return [datetime]::ParseExact("$d$t", "yyyyMMddHHmmss", $null)
+    if ($FileName -match '(\d{8})_(\d{6})') {
+        return [datetime]::ParseExact("$($Matches[1])$($Matches[2])", "yyyyMMddHHmmss", $null)
     }
     return $null
 }
 
+function Parse-WpilogMatchLabel([string]$FileName) {
+    # Match event labels like _WABON_Q65, _CASJ_E14, _ORORE_P2
+    # Format: _<EventCode>_<Type><Number> where Type is P/Q/E/F
+    if ($FileName -match '_([A-Z]+_[PQEF]\d+)\.wpilog$') { return $Matches[1] }
+    return $null
+}
+
+function Test-IsEventLog([PSCustomObject]$WpilogEntry) {
+    # Returns true if the wpilog has an event match label
+    return ($null -ne $WpilogEntry.MatchLabel)
+}
+
 function Parse-FolderTimestamp([string]$FolderName) {
-    # 2026-03-06_04-21-49
     if ($FolderName -match '^(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})$') {
-        $d = $Matches[1]                          # 2026-03-06
-        $t = $Matches[2] -replace '-', ':'        # 04:21:49
+        $d = $Matches[1]
+        $t = $Matches[2] -replace '-', ':'
         return [datetime]::Parse("$d $t")
     }
     return $null
 }
 
+function Get-HootTimestamp([string]$FolderPath) {
+    $hoot = Get-ChildItem -Path $FolderPath -Filter "*.hoot" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($hoot -and $hoot.Name -match '(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})\.hoot$') {
+        $d = $Matches[1]
+        $t = $Matches[2] -replace '-', ':'
+        return [datetime]::Parse("$d $t")
+    }
+    return $null
+}
+
+function Get-DirSize([string]$Path) {
+    $items = Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue
+    if ($items) { return ($items | Measure-Object -Property Length -Sum).Sum }
+    return [long]0
+}
+
 function Write-Header([string]$Text) {
-    $bar = "=" * 65
+    $bar = "=" * 70
     Write-Host ""
     Write-Host $bar -ForegroundColor Cyan
     Write-Host "  $Text" -ForegroundColor Cyan
     Write-Host $bar -ForegroundColor Cyan
 }
 
-function Write-Separator() {
-    Write-Host ("-" * 65) -ForegroundColor DarkGray
-}
+function Write-Sep() { Write-Host ("-" * 70) -ForegroundColor DarkGray }
 
-# ── Step 0: Get the folder path ─────────────────────────────────────────────
+#endregion
+
+#region Step 0 - Get folder path
 
 if (-not $LogFolder) {
     Write-Host ""
     $LogFolder = Read-Host "Enter the path to the folder containing .wpilog files"
 }
-
 $LogFolder = $LogFolder.Trim('"').Trim("'")
-
 if (-not (Test-Path $LogFolder -PathType Container)) {
     Write-Host "ERROR: Folder not found: $LogFolder" -ForegroundColor Red
     exit 1
 }
-
 $LogFolder = (Resolve-Path $LogFolder).Path
-Write-Host "Log folder: $LogFolder" -ForegroundColor Gray
+Write-Host "Log folder : $LogFolder" -ForegroundColor Gray
+Write-Host "Tolerance  : $ToleranceMinutes min" -ForegroundColor Gray
+Write-Host "Max zip    : $MaxZipSizeMB MB (uncompressed)" -ForegroundColor Gray
 
-# ── Step 1: Enumerate .wpilog files and folders ─────────────────────────────
+#endregion
 
-Write-Header "Step 1: Scanning log folder"
+#region Step 1 - Enumerate
 
-# Gather .wpilog files
+Write-Header "Step 1: Scanning"
+
+$script:skippedCount = 0
 $wpilogFiles = @(Get-ChildItem -Path $LogFolder -Filter "*.wpilog" -File | ForEach-Object {
+    if ($_.Length -eq 0) {
+        Write-Host "  SKIP (0 bytes): $($_.Name)" -ForegroundColor DarkGray
+        $script:skippedCount++
+        return
+    }
     $ts = Parse-WpilogTimestamp $_.Name
-    if ($ts) {
-        [PSCustomObject]@{
-            Name      = $_.Name
-            FullPath  = $_.FullName
-            Timestamp = $ts
-            Size      = $_.Length
-            BaseName  = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
-        }
-    } else {
-        Write-Host "  WARNING: Could not parse timestamp from $($_.Name), skipping." -ForegroundColor Yellow
+    if (-not $ts) {
+        Write-Host "  SKIP (no timestamp): $($_.Name)" -ForegroundColor Yellow
+        $script:skippedCount++
+        return
+    }
+    $label = Parse-WpilogMatchLabel $_.Name
+    [PSCustomObject]@{
+        Name       = $_.Name
+        FullPath   = $_.FullName
+        Timestamp  = $ts
+        Size       = $_.Length
+        BaseName   = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+        MatchLabel = $label
     }
 } | Sort-Object Timestamp)
 
+if ($script:skippedCount -gt 0) { Write-Host "  ($($script:skippedCount) file(s) skipped)" -ForegroundColor DarkGray }
 if ($wpilogFiles.Count -eq 0) {
-    Write-Host "  No .wpilog files found in $LogFolder" -ForegroundColor Red
+    Write-Host "  No usable .wpilog files found." -ForegroundColor Red
     exit 0
 }
 
 Write-Host ""
-Write-Host "  .wpilog files found:" -ForegroundColor White
-Write-Host ("  {0,-4} {1,-35} {2,-22} {3,12}" -f "#", "Filename", "Timestamp", "Size")
-Write-Separator
+Write-Host "  $($wpilogFiles.Count) .wpilog files:" -ForegroundColor White
+Write-Host ("  {0,-4} {1,-48} {2,-20} {3,10}" -f "#", "Filename", "Timestamp", "Size")
+Write-Sep
 for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
     $w = $wpilogFiles[$i]
-    Write-Host ("  {0,-4} {1,-35} {2,-22} {3,12}" -f `
-        ($i + 1), $w.Name, `
-        $w.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"), `
-        (Format-FileSize $w.Size))
+    $dn = $w.Name; if ($dn.Length -gt 47) { $dn = $dn.Substring(0,44) + "..." }
+    Write-Host ("  {0,-4} {1,-48} {2,-20} {3,10}" -f ($i+1), $dn, $w.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"), (Format-FileSize $w.Size))
 }
 
-# Gather timestamped folders
-$logFolders = @(Get-ChildItem -Path $LogFolder -Directory | ForEach-Object {
-    $ts = Parse-FolderTimestamp $_.Name
+#endregion
+
+#region Step 1b - Enumerate folders
+
+$allFolders = @(Get-ChildItem -Path $LogFolder -Directory | ForEach-Object {
+    $name = $_.Name
+    $full = $_.FullName
+    $ts = Parse-FolderTimestamp $name
     if ($ts) {
-        [PSCustomObject]@{
-            Name      = $_.Name
-            FullPath  = $_.FullName
-            Timestamp = $ts
-        }
+        [PSCustomObject]@{ Name=$name; FullPath=$full; Timestamp=$ts; MatchLabel=$null; IsEmpty=$false }
+        return
+    }
+    if ($name -match '^([A-Z]+_[PQEF]\d+)$') {
+        $ml = $Matches[1]
+        $hootTs = Get-HootTimestamp $full
+        $empty = ($null -eq $hootTs)
+        if (-not $hootTs) { $hootTs = [datetime]::MinValue }
+        [PSCustomObject]@{ Name=$name; FullPath=$full; Timestamp=$hootTs; MatchLabel=$ml; IsEmpty=$empty }
+        return
     }
 } | Sort-Object Timestamp)
 
+$tsCount    = @($allFolders | Where-Object { -not $_.MatchLabel }).Count
+$labelCount = @($allFolders | Where-Object { $null -ne $_.MatchLabel }).Count
 Write-Host ""
-if ($logFolders.Count -eq 0) {
-    Write-Host "  No timestamped folders found." -ForegroundColor Yellow
-} else {
-    Write-Host "  Timestamped folders found: $($logFolders.Count)" -ForegroundColor White
-    foreach ($f in $logFolders) {
-        Write-Host "    $($f.Name)  ($($f.Timestamp.ToString('yyyy-MM-dd HH:mm:ss')))"
-    }
-}
+Write-Host "  Folders: $tsCount timestamped, $labelCount match-labeled" -ForegroundColor White
 
-# ── Step 2: Auto-match folders to .wpilog files ─────────────────────────────
+#endregion
+
+#region Step 2 - Match folders to wpilog files
 
 Write-Header "Step 2: Matching folders to .wpilog files"
 
 $toleranceSec = $ToleranceMinutes * 60
-
-# Build a hashtable: wpilog index -> list of folder objects
-# (Named $matchMap to avoid collision with the automatic $Matches variable)
 $matchMap = @{}
 for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
     $matchMap[$i] = New-Object System.Collections.ArrayList
 }
 $unmatchedFolders = New-Object System.Collections.ArrayList
 
-foreach ($folder in $logFolders) {
-    # Find the closest .wpilog by absolute timestamp difference.
-    # The folder typically starts within a few seconds of the .wpilog.
-    $bestIdx  = -1
-    $bestDiff = [double]::MaxValue
-
-    for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
-        $wTs    = $wpilogFiles[$i].Timestamp
-        $absDiff = [Math]::Abs(($folder.Timestamp - $wTs).TotalSeconds)
-
-        if ($absDiff -lt $bestDiff) {
-            $bestIdx  = $i
-            $bestDiff = $absDiff
+foreach ($folder in $allFolders) {
+    $matched = $false
+    # Priority 1: match by label name
+    if ($folder.MatchLabel) {
+        for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
+            if ($wpilogFiles[$i].MatchLabel -eq $folder.MatchLabel) {
+                [void]$matchMap[$i].Add($folder)
+                $matched = $true
+                break
+            }
+        }
+        if (-not $matched -and -not $folder.IsEmpty) {
+            $bestIdx = -1; $bestDiff = [double]::MaxValue
+            for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
+                $ad = [Math]::Abs(($folder.Timestamp - $wpilogFiles[$i].Timestamp).TotalSeconds)
+                if ($ad -lt $bestDiff) { $bestIdx = $i; $bestDiff = $ad }
+            }
+            if ($bestIdx -ge 0 -and $bestDiff -le $toleranceSec) {
+                [void]$matchMap[$bestIdx].Add($folder)
+                $matched = $true
+            }
         }
     }
-
-    # Only auto-match if within tolerance
-    if ($bestIdx -ge 0 -and $bestDiff -le $toleranceSec) {
-        [void]$matchMap[$bestIdx].Add($folder)
-    } else {
-        [void]$unmatchedFolders.Add($folder)
+    # Priority 2: closest timestamp
+    if (-not $matched -and -not $folder.MatchLabel) {
+        $bestIdx = -1; $bestDiff = [double]::MaxValue
+        for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
+            $ad = [Math]::Abs(($folder.Timestamp - $wpilogFiles[$i].Timestamp).TotalSeconds)
+            if ($ad -lt $bestDiff) { $bestIdx = $i; $bestDiff = $ad }
+        }
+        if ($bestIdx -ge 0 -and $bestDiff -le $toleranceSec) {
+            [void]$matchMap[$bestIdx].Add($folder)
+            $matched = $true
+        }
     }
+    if (-not $matched) { [void]$unmatchedFolders.Add($folder) }
 }
 
-# Display proposed matches
+# Display
+$matchedWpiCount = 0; $noMatchWpiCount = 0
 Write-Host ""
 for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
-    $w = $wpilogFiles[$i]
     $flist = $matchMap[$i]
-    Write-Host ("  {0}. {1}" -f ($i + 1), $w.Name) -ForegroundColor White
-    if ($flist.Count -eq 0) {
-        Write-Host "       (no folders matched)" -ForegroundColor Yellow
-    } else {
-        foreach ($f in $flist) {
-            Write-Host "       + $($f.Name)" -ForegroundColor Green
-        }
-    }
+    if ($flist.Count -gt 0) {
+        $matchedWpiCount++
+        Write-Host ("  {0}. {1}" -f ($i+1), $wpilogFiles[$i].Name) -ForegroundColor White
+        foreach ($f in $flist) { Write-Host "       + $($f.Name)" -ForegroundColor Green }
+    } else { $noMatchWpiCount++ }
+}
+if ($noMatchWpiCount -gt 0) {
+    Write-Host ""; Write-Host "  ($noMatchWpiCount .wpilog file(s) have no matched folders)" -ForegroundColor Yellow
+}
+if ($unmatchedFolders.Count -gt 0) {
+    Write-Host "  ($($unmatchedFolders.Count) folder(s) unmatched)" -ForegroundColor Yellow
 }
 
-# ── Step 3: Resolve unmatched items ──────────────────────────────────────────
+#endregion
+
+#region Step 3 - Resolve unmatched items
 
 if ($unmatchedFolders.Count -gt 0) {
-    Write-Header "Step 3a: Resolve unmatched folders"
+    Write-Header "Step 3a: Resolve $($unmatchedFolders.Count) unmatched folder(s)"
+    Write-Host ""
+    for ($j = 0; $j -lt $unmatchedFolders.Count; $j++) {
+        $uf = $unmatchedFolders[$j]
+        $extra = ""; if ($uf.IsEmpty) { $extra = " (empty)" }
+        Write-Host "    $($j+1). $($uf.Name)$extra"
+    }
+    Write-Host ""
+    Write-Host "  Bulk options:" -ForegroundColor White
+    Write-Host "    [A] Ignore ALL unmatched folders"
+    Write-Host "    [R] Resolve each one individually"
+    Write-Host ""
+    $bulkChoice = (Read-Host "  Choose [A/R]").Trim().ToUpper()
 
-    foreach ($folder in $unmatchedFolders) {
-        Write-Host ""
-        Write-Host "  Folder '$($folder.Name)' has no clear .wpilog match." -ForegroundColor Yellow
-        Write-Host "  Choose an action:"
-        for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
-            Write-Host ("    [{0}] Assign to {1}" -f ($i + 1), $wpilogFiles[$i].Name)
-        }
-        Write-Host "    [I] Ignore this folder"
-        Write-Host "    [S] Create a standalone .zip for just this folder"
-        Write-Host ""
-
-        $valid = $false
-        while (-not $valid) {
-            $choice = (Read-Host "  Your choice").Trim().ToUpper()
-
-            if ($choice -eq "I") {
-                Write-Host "    -> Ignoring $($folder.Name)" -ForegroundColor DarkGray
-                $valid = $true
-            }
-            elseif ($choice -eq "S") {
-                # Create a pseudo wpilog entry for standalone folders
-                $standaloneIdx = $wpilogFiles.Count
-                $standaloneEntry = [PSCustomObject]@{
-                    Name      = $null
-                    FullPath  = $null
-                    Timestamp = $folder.Timestamp
-                    Size      = [long]0
-                    BaseName  = $folder.Name
-                }
-                $wpilogFiles += $standaloneEntry
-                $matchMap[$standaloneIdx] = New-Object System.Collections.ArrayList
-                [void]$matchMap[$standaloneIdx].Add($folder)
-                Write-Host "    -> Will create standalone zip for $($folder.Name)" -ForegroundColor Cyan
-                $valid = $true
-            }
-            else {
-                $num = 0
-                if ([int]::TryParse($choice, [ref]$num) -and $num -ge 1 -and $num -le $wpilogFiles.Count) {
-                    $idx = $num - 1
-                    if (-not $matchMap.ContainsKey($idx)) {
-                        $matchMap[$idx] = New-Object System.Collections.ArrayList
-                    }
-                    [void]$matchMap[$idx].Add($folder)
-                    Write-Host "    -> Assigned to $($wpilogFiles[$idx].Name)" -ForegroundColor Green
-                    $valid = $true
+    if ($bulkChoice -ne "A") {
+        foreach ($folder in $unmatchedFolders) {
+            Write-Host ""
+            $extra = ""; if ($folder.IsEmpty) { $extra = " (empty)" }
+            Write-Host "  Folder '$($folder.Name)'$extra" -ForegroundColor Yellow
+            Write-Host "    [I]   Ignore"
+            Write-Host "    [S]   Standalone zip"
+            Write-Host "    [1-N] Assign to wpilog #"
+            Write-Host ""
+            $valid = $false
+            while (-not $valid) {
+                $ch = (Read-Host "  Choice").Trim().ToUpper()
+                if ($ch -eq "I") {
+                    Write-Host "    -> Ignored" -ForegroundColor DarkGray; $valid = $true
+                } elseif ($ch -eq "S") {
+                    $sIdx = $wpilogFiles.Count
+                    $sEntry = [PSCustomObject]@{ Name=$null; FullPath=$null; Timestamp=$folder.Timestamp; Size=[long]0; BaseName=$folder.Name; MatchLabel=$null }
+                    $wpilogFiles += $sEntry
+                    $matchMap[$sIdx] = New-Object System.Collections.ArrayList
+                    [void]$matchMap[$sIdx].Add($folder)
+                    Write-Host "    -> Standalone zip" -ForegroundColor Cyan; $valid = $true
                 } else {
-                    Write-Host "    Invalid choice. Try again." -ForegroundColor Red
+                    $num = 0
+                    if ([int]::TryParse($ch, [ref]$num) -and $num -ge 1 -and $num -le $wpilogFiles.Count) {
+                        $idx = $num - 1
+                        if (-not $matchMap.ContainsKey($idx)) { $matchMap[$idx] = New-Object System.Collections.ArrayList }
+                        [void]$matchMap[$idx].Add($folder)
+                        Write-Host "    -> Assigned to $($wpilogFiles[$idx].Name)" -ForegroundColor Green; $valid = $true
+                    } else { Write-Host "    Invalid." -ForegroundColor Red }
                 }
             }
+        }
+    } else {
+        Write-Host "    -> All $($unmatchedFolders.Count) folders ignored" -ForegroundColor DarkGray
+    }
+}
+
+$unmatchedWpilogs = @()
+$autoKeptEventLogs = @()
+for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
+    if ($null -eq $wpilogFiles[$i].FullPath) { continue }
+    if ($matchMap[$i].Count -eq 0) {
+        if (Test-IsEventLog $wpilogFiles[$i]) {
+            # Event match logs are always kept — never prompt
+            $autoKeptEventLogs += $i
+        } else {
+            $unmatchedWpilogs += $i
         }
     }
 }
 
-# Check for .wpilog files with no matched folders
-$unmatchedWpilogs = @()
-for ($i = 0; $i -lt $wpilogFiles.Count; $i++) {
-    $w = $wpilogFiles[$i]
-    if ($null -eq $w.FullPath) { continue }  # skip standalone folder entries
-    if ($matchMap[$i].Count -eq 0) {
-        $unmatchedWpilogs += $i
+if ($autoKeptEventLogs.Count -gt 0) {
+    Write-Host ""
+    Write-Host "  $($autoKeptEventLogs.Count) event match log(s) auto-included (no folders needed):" -ForegroundColor Cyan
+    foreach ($idx in $autoKeptEventLogs) {
+        Write-Host "    $($wpilogFiles[$idx].Name)" -ForegroundColor Cyan
     }
 }
 
 if ($unmatchedWpilogs.Count -gt 0) {
-    Write-Header "Step 3b: Resolve unmatched .wpilog files"
-
+    Write-Header "Step 3b: $($unmatchedWpilogs.Count) .wpilog file(s) have no folders"
+    Write-Host ""
     foreach ($idx in $unmatchedWpilogs) {
-        $w = $wpilogFiles[$idx]
-        Write-Host ""
-        Write-Host "  '$($w.Name)' has no matching folders." -ForegroundColor Yellow
-        Write-Host "    [Z] Zip it alone (no hoot folders)"
-        Write-Host "    [I] Ignore / skip this file"
-        Write-Host ""
-
-        $valid = $false
-        while (-not $valid) {
-            $choice = (Read-Host "  Your choice").Trim().ToUpper()
-
-            if ($choice -eq "Z") {
-                Write-Host "    -> Will zip alone" -ForegroundColor Cyan
-                $valid = $true
-            }
-            elseif ($choice -eq "I") {
-                Write-Host "    -> Ignoring $($w.Name)" -ForegroundColor DarkGray
-                $matchMap.Remove($idx)
-                $valid = $true
-            }
-            else {
-                Write-Host "    Invalid choice. Enter Z or I." -ForegroundColor Red
+        Write-Host "    $($wpilogFiles[$idx].Name)  ($(Format-FileSize $wpilogFiles[$idx].Size))"
+    }
+    Write-Host ""
+    Write-Host "  Bulk options:" -ForegroundColor White
+    Write-Host "    [Z] Include ALL in batches (zip alone)"
+    Write-Host "    [I] Ignore ALL"
+    Write-Host "    [R] Resolve each individually"
+    Write-Host ""
+    $bulkChoice = (Read-Host "  Choose [Z/I/R]").Trim().ToUpper()
+    if ($bulkChoice -eq "I") {
+        foreach ($idx in $unmatchedWpilogs) { $matchMap.Remove($idx) }
+        Write-Host "    -> All ignored" -ForegroundColor DarkGray
+    } elseif ($bulkChoice -eq "R") {
+        foreach ($idx in $unmatchedWpilogs) {
+            $w = $wpilogFiles[$idx]
+            Write-Host ""
+            Write-Host "  '$($w.Name)' ($(Format-FileSize $w.Size))" -ForegroundColor Yellow
+            Write-Host "    [Z] Zip alone  [I] Ignore"
+            $valid = $false
+            while (-not $valid) {
+                $c = (Read-Host "  Choice").Trim().ToUpper()
+                if ($c -eq "Z") { Write-Host "    -> Include" -ForegroundColor Cyan; $valid = $true }
+                elseif ($c -eq "I") { $matchMap.Remove($idx); Write-Host "    -> Ignored" -ForegroundColor DarkGray; $valid = $true }
+                else { Write-Host "    Enter Z or I." -ForegroundColor Red }
             }
         }
+    } else {
+        Write-Host "    -> All will be included in batches" -ForegroundColor Cyan
     }
 }
 
-# ── Step 4: Confirm plan ────────────────────────────────────────────────────
+#endregion
 
-Write-Header "Step 4: Final Plan"
+#region Step 4 - Build batches
 
-$plan = @()
+Write-Header "Step 4: Building zip batches"
+
+$planItems = @()
 foreach ($idx in ($matchMap.Keys | Sort-Object)) {
     $w = $wpilogFiles[$idx]
-    $folders = $matchMap[$idx]
-
+    $folders = @($matchMap[$idx])
     $isStandalone = ($null -eq $w.FullPath)
-    $zipName = "$($w.BaseName).zip"
-    $zipPath = Join-Path $LogFolder $zipName
-
-    $plan += [PSCustomObject]@{
-        Index        = $idx
-        WpilogFile   = $w
-        Folders      = $folders
-        ZipName      = $zipName
-        ZipPath      = $zipPath
-        IsStandalone = $isStandalone
+    [long]$itemSize = 0
+    if (-not $isStandalone) { $itemSize += $w.Size }
+    foreach ($f in $folders) { $itemSize += (Get-DirSize $f.FullPath) }
+    $planItems += [PSCustomObject]@{
+        WpilogIdx=$idx; WpilogFile=$w; Folders=$folders; IsStandalone=$isStandalone
+        Timestamp=$w.Timestamp; TotalSize=$itemSize
     }
 }
+$planItems = @($planItems | Sort-Object Timestamp)
 
-if ($plan.Count -eq 0) {
-    Write-Host "  Nothing to do -- all items were ignored." -ForegroundColor Yellow
+if ($planItems.Count -eq 0) {
+    Write-Host "  Nothing to do." -ForegroundColor Yellow
     exit 0
 }
 
-foreach ($p in $plan) {
-    if ($p.IsStandalone) {
-        Write-Host "  Standalone folder:" -ForegroundColor White
+$maxBytes = [long]$MaxZipSizeMB * 1MB
+
+# Start with everything in one batch, split at largest gaps when over size
+$batchList = New-Object System.Collections.ArrayList
+[void]$batchList.Add(@($planItems))
+
+$splitAgain = $true
+while ($splitAgain) {
+    $splitAgain = $false
+    $newList = New-Object System.Collections.ArrayList
+    foreach ($batch in $batchList) {
+        [long]$bSize = 0
+        foreach ($it in $batch) { $bSize += $it.TotalSize }
+        if ($bSize -gt $maxBytes -and $batch.Count -gt 1) {
+            $bestGap = -1; $bestGapSec = [double]-1
+            for ($g = 0; $g -lt ($batch.Count - 1); $g++) {
+                $gapSec = ($batch[$g+1].Timestamp - $batch[$g].Timestamp).TotalSeconds
+                if ($gapSec -gt $bestGapSec) { $bestGap = $g; $bestGapSec = $gapSec }
+            }
+            if ($bestGap -ge 0) {
+                $left  = @($batch[0..$bestGap])
+                $right = @($batch[($bestGap+1)..($batch.Count-1)])
+                [void]$newList.Add($left)
+                [void]$newList.Add($right)
+                $splitAgain = $true
+            } else {
+                [void]$newList.Add($batch)
+            }
+        } else {
+            [void]$newList.Add($batch)
+        }
+    }
+    $batchList = $newList
+}
+
+$batchPlans = @()
+for ($b = 0; $b -lt $batchList.Count; $b++) {
+    $batch = $batchList[$b]
+    $first = $batch[0].Timestamp
+    $last  = $batch[$batch.Count - 1].Timestamp
+    if ($batch.Count -eq 1) {
+        $zipBase = $batch[0].WpilogFile.BaseName
     } else {
-        Write-Host "  $($p.WpilogFile.Name)" -ForegroundColor White
+        $zipBase = "FRC_" + $first.ToString("yyyyMMdd_HHmmss") + "_to_" + $last.ToString("yyyyMMdd_HHmmss")
     }
-    foreach ($f in $p.Folders) {
-        Write-Host "     + $($f.Name)/" -ForegroundColor Green
+    $zipName = "$zipBase.zip"
+    $zipPath = Join-Path $LogFolder $zipName
+    [long]$batchSize = 0
+    foreach ($it in $batch) { $batchSize += $it.TotalSize }
+    $batchPlans += [PSCustomObject]@{
+        BatchNum=$b+1; Items=$batch; ZipName=$zipName; ZipPath=$zipPath; TotalSize=$batchSize
     }
-    Write-Host "     -> $($p.ZipName)" -ForegroundColor Cyan
+}
+
+Write-Host ""
+Write-Host "  $($batchPlans.Count) zip archive(s) planned:" -ForegroundColor White
+Write-Host ""
+foreach ($bp in $batchPlans) {
+    $sizeStr = Format-FileSize $bp.TotalSize
+    Write-Host "  Batch $($bp.BatchNum): $($bp.ZipName)" -ForegroundColor Cyan
+    Write-Host "    (~$sizeStr uncompressed, $($bp.Items.Count) item(s))" -ForegroundColor Gray
+    foreach ($it in $bp.Items) {
+        if ($it.IsStandalone) {
+            Write-Host "    [standalone]" -ForegroundColor DarkGray
+        } else {
+            Write-Host "    $($it.WpilogFile.Name)  ($(Format-FileSize $it.WpilogFile.Size))" -ForegroundColor White
+        }
+        foreach ($f in $it.Folders) { Write-Host "      + $($f.Name)/" -ForegroundColor Green }
+    }
     Write-Host ""
 }
 
-$confirm = (Read-Host "Proceed? [Y/N]").Trim().ToUpper()
-if ($confirm -ne "Y") {
-    Write-Host "Cancelled." -ForegroundColor Yellow
-    exit 0
-}
+#endregion
 
-# ── Step 5: Create .zip archives ────────────────────────────────────────────
+#region Step 5 - Confirm and create archives
+
+$confirm = (Read-Host "Proceed? [Y/N]").Trim().ToUpper()
+if ($confirm -ne "Y") { Write-Host "Cancelled." -ForegroundColor Yellow; exit 0 }
 
 Write-Header "Step 5: Creating archives"
 
 $createdZips = @()
-
-foreach ($p in $plan) {
-    $zipPath = $p.ZipPath
-
-    # Remove existing zip if present
-    if (Test-Path $zipPath) {
-        Remove-Item $zipPath -Force
-    }
-
-    # Collect items to add to the archive
+foreach ($bp in $batchPlans) {
+    $zipPath = $bp.ZipPath
+    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
     $itemsToCompress = @()
-
-    # Add the .wpilog file (if not a standalone folder zip)
-    if (-not $p.IsStandalone) {
-        $itemsToCompress += $p.WpilogFile.FullPath
+    [int]$wpiCount = 0; [int]$folderCount = 0
+    foreach ($it in $bp.Items) {
+        if (-not $it.IsStandalone) { $itemsToCompress += $it.WpilogFile.FullPath; $wpiCount++ }
+        foreach ($f in $it.Folders) { $itemsToCompress += $f.FullPath; $folderCount++ }
     }
-
-    # Add each matched folder
-    foreach ($f in $p.Folders) {
-        $itemsToCompress += $f.FullPath
-    }
-
-    $zipLabel = $p.ZipName
+    if ($itemsToCompress.Count -eq 0) { continue }
+    $zipLabel = $bp.ZipName
     Write-Host ""
     Write-Host "  Creating $zipLabel ..." -ForegroundColor White -NoNewline
-
     try {
         Compress-Archive -Path $itemsToCompress -DestinationPath $zipPath -CompressionLevel Optimal -Force
         $zipSize = (Get-Item $zipPath).Length
-        $folderCount = $p.Folders.Count
-        if ($p.IsStandalone) { $wpiCount = 0 } else { $wpiCount = 1 }
-
         Write-Host ""
-        Write-Host "  [OK] Created $zipLabel ($(Format-FileSize $zipSize))" -ForegroundColor Green
-
-        $createdZips += [PSCustomObject]@{
-            ZipName     = $zipLabel
-            ZipSize     = $zipSize
-            WpiCount    = $wpiCount
-            FolderCount = $folderCount
-        }
-    }
-    catch {
+        Write-Host "  [OK] $zipLabel ($(Format-FileSize $zipSize))" -ForegroundColor Green
+        $createdZips += [PSCustomObject]@{ ZipName=$zipLabel; ZipSize=$zipSize; WpiCount=$wpiCount; FolderCount=$folderCount }
+    } catch {
         Write-Host ""
-        Write-Host "  [FAIL] Error creating ${zipLabel}: $_" -ForegroundColor Red
+        Write-Host "  [FAIL] ${zipLabel}: $_" -ForegroundColor Red
     }
 }
 
-# ── Step 6: Summary ─────────────────────────────────────────────────────────
+#endregion
+
+#region Step 6 - Summary
 
 Write-Header "Done!"
-
 if ($createdZips.Count -eq 0) {
-    Write-Host "  No archives were created." -ForegroundColor Yellow
+    Write-Host "  No archives created." -ForegroundColor Yellow
 } else {
     Write-Host ""
     Write-Host "  Created $($createdZips.Count) zip file(s):" -ForegroundColor White
     [long]$totalSize = 0
     foreach ($z in $createdZips) {
         $desc = "$($z.WpiCount) wpilog + $($z.FolderCount) folder(s)"
-        Write-Host ("    {0,-40} {1,12}  ({2})" -f $z.ZipName, (Format-FileSize $z.ZipSize), $desc)
+        Write-Host ("    {0,-55} {1,10}  ({2})" -f $z.ZipName, (Format-FileSize $z.ZipSize), $desc)
         $totalSize += $z.ZipSize
     }
     Write-Host ""
     Write-Host "  Total: $(Format-FileSize $totalSize)" -ForegroundColor Cyan
 }
-
 Write-Host ""
+
+#endregion
