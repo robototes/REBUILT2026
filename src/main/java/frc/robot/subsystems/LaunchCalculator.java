@@ -130,12 +130,12 @@ public class LaunchCalculator {
     Translation2d realTargetLocation = GetTargetFromPose.getTargetLocation(turretPosition);
     Rotation2d targetAngleFieldRelative =
         realTargetLocation.minus(turretPosition.getTranslation()).getAngle();
-    Pose2d lookaheadPose = turretPosition;
+    Pose2d currentPose = turretPosition;
     double lastFlightTime = 0;
     // Initial guess based on the actual physical distance
     double currentFlightTime =
         LauncherConstants.getTimeFromDistance(
-            realTargetLocation.getDistance(lookaheadPose.getTranslation()));
+            realTargetLocation.getDistance(currentPose.getTranslation()));
 
     double lookaheadDist = 0;
     double currentFlywheelSpeed = 0;
@@ -153,7 +153,7 @@ public class LaunchCalculator {
       Translation2d virtualTarget = new Translation2d(virtualX, virtualY);
 
       // Calculate distance from turret to ghost target
-      lookaheadDist = virtualTarget.getDistance(lookaheadPose.getTranslation());
+      lookaheadDist = virtualTarget.getDistance(currentPose.getTranslation());
 
       // Update parameters
       currentFlightTime = LauncherConstants.getTimeFromDistance(lookaheadDist);
@@ -161,11 +161,7 @@ public class LaunchCalculator {
       currentHoodAngle = LauncherConstants.getHoodAngleFromDistance(lookaheadDist);
 
       // We update angle based on the virtual target
-      targetAngleFieldRelative =
-          virtualTarget
-              .minus(lookaheadPose.getTranslation())
-              .getAngle()
-              .rotateBy(Rotation2d.k180deg);
+      targetAngleFieldRelative = virtualTarget.minus(currentPose.getTranslation()).getAngle();
 
       i++;
     }
@@ -174,8 +170,10 @@ public class LaunchCalculator {
     LaunchCalculator.estimatedPose = estimatedPose; // The robot's predicted pose at shot-time
     LaunchCalculator.estimatedDist = lookaheadDist; // The "faked" distance the ball needs to fly
 
-    // Final resolution
-    targetTurretAngle = targetAngleFieldRelative;
+    // Final resolution, in robot relative
+    targetTurretAngle =
+        targetAngleFieldRelative.minus(currentPose.getRotation()).rotateBy(Rotation2d.k180deg);
+    ;
     targetHoodAngle = currentHoodAngle;
     return new LaunchingParameters(
         lookaheadDist >= minDistance && lookaheadDist <= maxDistance,

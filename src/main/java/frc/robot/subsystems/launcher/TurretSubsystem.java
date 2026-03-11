@@ -297,7 +297,6 @@ public class TurretSubsystem extends SubsystemBase {
           double baseTarget = wrappedCurrent + shortestDelta;
 
           // Check multiple rotations to see which one fits in the hardware limits
-          // We check: baseTarget, baseTarget + 360, and baseTarget - 360
           double finalTarget = baseTarget;
 
           if (baseTarget < TURRET_MIN) {
@@ -314,7 +313,7 @@ public class TurretSubsystem extends SubsystemBase {
             }
           }
 
-          // Set position (Note: This assumes your PID/Controller uses these degrees)
+          // Set position
           // System.out.println(Units.degreesToRotations(finalTarget));
           setTurretRawPosition(Units.degreesToRotations(finalTarget));
           targetPos = Units.degreesToRotations(finalTarget);
