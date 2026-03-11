@@ -35,13 +35,15 @@ public class LaunchCalculator {
   public static Pose2d estimatedPose;
   public static double estimatedDist;
   private static final Transform2d turretTransform;
+
+  // Volatile numbers
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
 
   // Magic numbers
-  private static int D_LOOKAHEAD_ITERATIONS = 5;
+  private static final int D_LOOKAHEAD_ITERATIONS = 5;
   private final double CONVERGENCE_TOLERANCE = 0.001;
-  private static double D_PHASE_DELAY = 0.05;
+  private static final double D_PHASE_DELAY = 0.05;
   private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
   private final DoubleSubscriber phaseDelaySub;
   private final IntegerSubscriber iterationsSub;
