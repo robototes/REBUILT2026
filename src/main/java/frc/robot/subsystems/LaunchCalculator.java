@@ -24,41 +24,33 @@ public class LaunchCalculator {
     private static final LaunchCalculator INSTANCE = new LaunchCalculator();
   }
 
+  public record LaunchingParameters(
+      boolean isValid, Rotation2d turretAngle, double hoodAngle, double flywheelSpeed) {}
+
   public static LaunchCalculator getInstance() {
     return Holder.INSTANCE;
   }
 
+  // Poses and transforms
   public static Pose2d estimatedPose;
   public static double estimatedDist;
-
-  // Turret transform
   private static final Transform2d turretTransform;
-  // private Rotation2d lastTurretAngle;
-  // private double lastHoodAngle;
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
 
+  // Magic numbers
   private static int D_LOOKAHEAD_ITERATIONS = 5;
-
-  // private double turret_target_velocity;+
-  // private double hood_target_velocity;
-
-  public record LaunchingParameters(
-      boolean isValid, Rotation2d turretAngle, double hoodAngle, double flywheelSpeed) {}
-
-  private static double minDistance;
-  private static double maxDistance;
+  private final double CONVERGENCE_TOLERANCE = 0.001;
   private static double D_PHASE_DELAY = 0.05;
-
-  // Network tables
-  // private final NtTunableDouble phaseDelay;
-  // private final NtTunableDouble LOOKAHEAD_ITERATIONS;
-
+  private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
   private final DoubleSubscriber phaseDelaySub;
   private final IntegerSubscriber iterationsSub;
 
+  private static double minDistance;
+  private static double maxDistance;
+
+  // FIELD TAGS
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
-  private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
   private static final Collection<Pose2d> trenchTags =
       List.of(
           field.getTagPose(17).get().toPose2d(),
@@ -144,7 +136,9 @@ public class LaunchCalculator {
     int maxIters = (int) iterationsSub.getAsLong();
 
     int i = 0;
-    while (Math.abs(currentFlightTime - lastFlightTime) > 0.001 && i < maxIters) {
+    // This while loop checks to see if the difference between the current flight time and the last
+    // flight time converges
+    while (Math.abs(currentFlightTime - lastFlightTime) > CONVERGENCE_TOLERANCE && i < maxIters) {
       lastFlightTime = currentFlightTime;
 
       // Move the ghost target
