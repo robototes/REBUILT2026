@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -9,6 +10,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -20,6 +22,9 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -107,10 +112,15 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double L1 = 5; // rotations
   private static final double L2 = 10; // rotations
   private static final double L3 = 15; // rotations
-  // Simulation
+
+  // Network Tables
   private DoublePublisher ntMotorPos;
   private DoublePublisher ntMotorCurrent;
   private DoublePublisher ntVoltage;
+
+  private StatusSignal<Voltage> SS_voltage;
+  private StatusSignal<Current> SS_current;
+  private StatusSignal<Angle> SS_MotorPos;
 
   // Constructor
   public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
@@ -128,6 +138,11 @@ public class ClimbSubsystem extends SubsystemBase {
     ntMotorPos = table.getDoubleTopic("Motor Pos (rotations): ").publish();
     ntMotorCurrent = table.getDoubleTopic("Current (amps):").publish();
     ntVoltage = table.getDoubleTopic("Voltage:").publish();
+
+    // Status signals for logging
+    SS_voltage = climbMotor.getMotorVoltage();
+    SS_current = climbMotor.getStatorCurrent();
+    SS_MotorPos = climbMotor.getPosition();
   }
 
   // Helper functions
@@ -155,6 +170,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
   /** zeroes the motor */
   public void zeroMotor() {
+    isZeroed = true;
     climbMotor.setPosition(0);
   }
 
@@ -180,7 +196,6 @@ public class ClimbSubsystem extends SubsystemBase {
       return Commands.runOnce(
               () -> {
                 zeroMotor();
-                isZeroed = true;
               },
               this)
           .withName("Manual Zero")
@@ -188,7 +203,8 @@ public class ClimbSubsystem extends SubsystemBase {
     }
     return Commands.run(
             () -> {
-              climbMotor.setControl(volts.withOutput(-MAX_VOLTS)); // Move down
+              climbMotor.setControl(
+                  volts.withOutput(-MAX_VOLTS).withIgnoreSoftwareLimits(true)); // Move down
               // Until it has stalled
               if (Math.abs(climbMotor.getStatorCurrent().getValueAsDouble()) >= STALL_CURRENT
                   && Math.abs(climbMotor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
@@ -203,8 +219,7 @@ public class ClimbSubsystem extends SubsystemBase {
             (interrupted) -> {
               climbMotor.stopMotor();
               if (!interrupted) {
-                climbMotor.setPosition(0);
-                isZeroed = true;
+                zeroMotor();
               }
             })
         .beforeStarting(
@@ -277,7 +292,9 @@ public class ClimbSubsystem extends SubsystemBase {
     private final PIDController pidRotate = new PIDController(8, 0, 0);
     // Request
     private final SwerveRequest.FieldCentric driveRequest =
-        new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+        new SwerveRequest.FieldCentric()
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+            .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
     private final SwerveRequest stop =
         driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
 
@@ -322,12 +339,16 @@ public class ClimbSubsystem extends SubsystemBase {
       // Overcome static friction if PID outputs are small
       powerX =
           MathUtil.clamp(
-              powerX + POWER_COEFFICIENT * Math.signum(powerX),
+              MathUtil.applyDeadband(Math.abs(pidX.getError()), TRANSLATION_TOLERANCE_METERS) == 0
+                  ? 0
+                  : powerX + POWER_COEFFICIENT * Math.signum(powerX),
               -MAX_TRANSLATIONAL_POWER,
               MAX_TRANSLATIONAL_POWER);
       powerY =
           MathUtil.clamp(
-              powerY + POWER_COEFFICIENT * Math.signum(powerY),
+              MathUtil.applyDeadband(Math.abs(pidY.getError()), TRANSLATION_TOLERANCE_METERS) == 0
+                  ? 0
+                  : powerY + POWER_COEFFICIENT * Math.signum(powerY),
               -MAX_TRANSLATIONAL_POWER,
               MAX_TRANSLATIONAL_POWER);
       // Rotational pid calculation
@@ -406,8 +427,8 @@ public class ClimbSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // set motor position in network tables
-    ntVoltage.set(climbMotor.getMotorVoltage().getValueAsDouble());
-    ntMotorPos.set(climbMotor.getPosition().getValueAsDouble());
-    ntMotorCurrent.set(climbMotor.getStatorCurrent().getValueAsDouble());
+    ntVoltage.set(SS_voltage.refresh().getValueAsDouble());
+    ntMotorPos.set(SS_current.refresh().getValueAsDouble());
+    ntMotorCurrent.set(SS_MotorPos.refresh().getValueAsDouble());
   }
 }
