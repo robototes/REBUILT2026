@@ -19,7 +19,7 @@ import frc.robot.util.tuning.LauncherConstants;
 import java.util.ArrayList;
 
 public class LaunchCalculator {
-  public static class Holder {
+  private static class Holder {
     private static final LaunchCalculator INSTANCE = new LaunchCalculator();
   }
 
@@ -34,15 +34,19 @@ public class LaunchCalculator {
   private static final double DRAG_COEFFICIENT = 0.48;
   private static final double PHASE_DELAY = 0.02;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
-  private static final double DRAG_TOLERANCE = 1e-6;
+  private static final double DRAG_TOLERANCE =
+      1e-3; // Drag tolerance. This should never really be used anyways because our interpolating
+  // map isn't accurate enough to have a delta drag of near 0, but it's just here to future proof
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
+  private static final double NEWTON_METHOD_MAX_ITERATIONS = 5;
+  private static final double VFF_DIST_TOLERANCE = 0.1;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
   private static final ArrayList<Pose2d> trenchTags = new ArrayList<>();
-  private static int[] tags = {1, 6, 7, 12, 17, 22, 23, 28};
+  private static int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
   // Network tables
   private static NetworkTableEntry tl;
@@ -106,7 +110,7 @@ public class LaunchCalculator {
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
-    estimatedPose = turretPose;
+    LaunchCalculator.estimatedPose = turretPose;
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
 
     double initialTurretToTarget = target.getDistance(turretPose.getTranslation());
@@ -116,7 +120,7 @@ public class LaunchCalculator {
 
     double trueDistance = distance;
     double t = LauncherConstants.getTimeFromDistance(initialTurretToTarget);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
       double driftT = getDragCompensatedTOF(t);
@@ -143,7 +147,7 @@ public class LaunchCalculator {
     }
     // Velocity feedforward
     double feedforwardAngularVelocity = 0;
-    if (trueDistance > 0.1) {
+    if (trueDistance > VFF_DIST_TOLERANCE) {
       // Calculated using the 2D cross product. We find the tangential velocity by taking the dot
       // product of our velocity vector and a vector perpendicular to our target direction (swapped
       // x and y), then dividing by the distance to normalize the magnitude.
@@ -208,16 +212,13 @@ public class LaunchCalculator {
     }
   }
 
+  /** compares X net of the 2 poses */
   public static boolean isCloseToTrench(Pose2d pose) {
     double nearestTagX = pose.nearest(trenchTags).getX();
-    if (Math.abs(nearestTagX - pose.getX()) < TURRET_TO_TRENCH_TOLERANCE) {
-      return true;
-    } else {
-      return false;
-    }
+    return Math.abs(nearestTagX - pose.getX()) < TURRET_TO_TRENCH_TOLERANCE;
   }
 
-  public static Pose2d getPose() {
+  public static Pose2d getEstTurretPose() {
     return estimatedPose;
   }
 }
