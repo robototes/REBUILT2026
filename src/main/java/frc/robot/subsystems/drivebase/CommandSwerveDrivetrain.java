@@ -12,7 +12,9 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -21,6 +23,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -35,6 +38,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
+
+  // Sean's new things
+  private final TimeInterpolatableBuffer<Pose2d> poseHistory =
+      TimeInterpolatableBuffer.createBuffer(1); // Store up to 1 second of history
 
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
   private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -226,6 +233,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         : kRedAlliancePerspectiveRotation);
               });
     }
+    // Continuously add pose samples per periodic loop
+    poseHistory.addSample(Timer.getFPGATimestamp(), getState().Pose);
   }
 
   private void startSimThread() {
@@ -286,5 +295,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   public static double tau(double value) {
     return value * 2 * Math.PI;
+  }
+
+  // Sean's new method. Gets the pose at the given timestamp
+  public Pose2d getPoseAtTimeStamp(double time) {
+    return poseHistory.getSample(time).orElseGet(() -> this.getState().Pose);
   }
 }
