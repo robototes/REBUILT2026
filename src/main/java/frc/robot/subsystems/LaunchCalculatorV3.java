@@ -20,10 +20,10 @@ import java.util.ArrayList;
 
 public class LaunchCalculatorV3 {
   public static class Holder {
-    private static final LaunchCalculatorV2 INSTANCE = new LaunchCalculatorV2();
+    private static final LaunchCalculatorV3 INSTANCE = new LaunchCalculatorV3();
   }
 
-  public static LaunchCalculatorV2 getInstance() {
+  public static LaunchCalculatorV3 getInstance() {
     return Holder.INSTANCE;
   }
 
