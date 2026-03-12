@@ -25,13 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Close-Hub-Bump"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Neutral-Bump-RB"
+            "pathName": "RT-Close-Hub-Right-Bump"
           }
         }
       ]
