@@ -17,6 +17,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -29,7 +30,7 @@ public class LaunchCalculator {
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
-  private static Pose2d estimatedPose;
+  private static Pose2d staticEstimatedPose;
 
   private static final double DRAG_COEFFICIENT = 0.48;
   private static final double PHASE_DELAY = 0.02;
@@ -39,18 +40,18 @@ public class LaunchCalculator {
   // map isn't accurate enough to have a delta drag of near 0, but it's just here to future proof
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
-  private static final double NEWTON_METHOD_MAX_ITERATIONS = 5;
+  private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
-  private static final ArrayList<Pose2d> trenchTags = new ArrayList<>();
-  private static int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
+  private static final List<Pose2d> trenchTags = new ArrayList<>();
+  private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
   // Network tables
-  private static NetworkTableEntry tl;
-  private static NetworkTableEntry cl;
+  private NetworkTableEntry tl;
+  private NetworkTableEntry cl;
 
   public record LaunchingParameters(
       double targetHood,
@@ -59,10 +60,6 @@ public class LaunchCalculator {
       double targetTurretFeedforward) {}
 
   static {
-    NetworkTable limelightNTEntry = NetworkTableInstance.getDefault().getTable("limelight");
-    tl = limelightNTEntry.getEntry("tl");
-    cl = limelightNTEntry.getEntry("cl");
-
     for (int tag : tags) {
       Pose2d tagpose =
           field
@@ -71,6 +68,12 @@ public class LaunchCalculator {
               .toPose2d();
       trenchTags.add(tagpose);
     }
+  }
+
+  private LaunchCalculator() {
+    NetworkTable limelightNTEntry = NetworkTableInstance.getDefault().getTable("limelight");
+    tl = limelightNTEntry.getEntry("tl");
+    cl = limelightNTEntry.getEntry("cl");
   }
 
   // ------ MAIN LOGIC ------ //
@@ -110,7 +113,7 @@ public class LaunchCalculator {
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
-    LaunchCalculator.estimatedPose = turretPose;
+    staticEstimatedPose = turretPose;
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
 
     double initialTurretToTarget = target.getDistance(turretPose.getTranslation());
@@ -191,8 +194,8 @@ public class LaunchCalculator {
   }
 
   /**
-   * DRAG TOLERANCE SHOULD NOT BE 0. This is using the low-speed fomrula for displacement due to
-   * drag. It returns the TOF accounting in drag
+   * This is using the low-speed fomrula for displacement due to drag. It returns the TOF accounting
+   * in drag
    */
   private double getDragCompensatedTOF(double tof) {
     double newTOF = (1.0 - Math.exp(-DRAG_COEFFICIENT * tof)) / DRAG_COEFFICIENT;
@@ -219,6 +222,6 @@ public class LaunchCalculator {
   }
 
   public static Pose2d getEstTurretPose() {
-    return estimatedPose;
+    return staticEstimatedPose;
   }
 }
