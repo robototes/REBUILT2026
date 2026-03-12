@@ -134,8 +134,17 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
-  public void setTurretRawPosition(double pos) {
-    turretMotor.setControl(request.withPosition(pos));
+  public void setTurretRawPosition(double pos, Double FFVelocity) {
+    if (FFVelocity != null && FFVelocity != 0) {
+      double ffRotationsPerSec = Units.radiansToRotations(FFVelocity);
+      double feedforwardVolts = ffRotationsPerSec * kV;
+
+      // .withFeedForward() to actually apply the volts
+      turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
+    } else {
+      // Normal position control if no velocity is provided
+      turretMotor.setControl(request.withPosition(pos).withFeedForward(0));
+    }
     targetPos = pos;
   }
 
@@ -238,7 +247,7 @@ public class TurretSubsystem extends SubsystemBase {
         () -> {
           double targetRotations =
               calculateTurretAngle(GetTargetFromPose.getTargetLocation(driveTrain));
-          setTurretRawPosition(targetRotations);
+          setTurretRawPosition(targetRotations, null);
           targetPos = targetRotations;
           // System.out.println("Target Rotations: " + targetRotations);
           Transform2d fieldRelativeOffset =
@@ -262,7 +271,7 @@ public class TurretSubsystem extends SubsystemBase {
         () -> {
           double currentTurretDegrees = Units.rotationsToDegrees(getTurretPosition());
           LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain);
-          double targetTurretDegrees = para.turretAngle().getDegrees();
+          double targetTurretDegrees = para.targetTurret().getDegrees();
           targetTurretDegrees = -targetTurretDegrees;
           double shortestDelta =
               MathUtil.inputModulus(
@@ -270,7 +279,7 @@ public class TurretSubsystem extends SubsystemBase {
           double turretDegrees =
               MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
           // System.out.println(Units.degreesToRotations(turretDegrees));
-          setTurretRawPosition(Units.degreesToRotations(turretDegrees));
+          setTurretRawPosition(Units.degreesToRotations(turretDegrees), null);
           targetPos = Units.degreesToRotations(turretDegrees);
         },
         () -> turretMotor.stopMotor());
@@ -287,8 +296,10 @@ public class TurretSubsystem extends SubsystemBase {
                   Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
 
           // Get the target from the calculator
-          double targetDegrees =
-              -LaunchCalculator.getInstance().getParameters(driveTrain).turretAngle().getDegrees();
+          LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
+          double targetDegrees = -params.targetTurret().getDegrees();
+
+          double FFV = params.targetTurretFeedforward();
 
           // Find the shortest distance to that target from our "wrapped" position
           double shortestDelta = MathUtil.inputModulus(targetDegrees - wrappedCurrent, -180, 180);
@@ -316,7 +327,7 @@ public class TurretSubsystem extends SubsystemBase {
 
           // Set position (Note: This assumes your PID/Controller uses these degrees)
           // System.out.println(Units.degreesToRotations(finalTarget));
-          setTurretRawPosition(Units.degreesToRotations(finalTarget));
+          setTurretRawPosition(Units.degreesToRotations(finalTarget), FFV);
           targetPos = Units.degreesToRotations(finalTarget);
         },
         () -> turretMotor.stopMotor());

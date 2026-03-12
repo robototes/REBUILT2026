@@ -54,8 +54,8 @@ public class LauncherSubsystem extends SubsystemBase {
     return Commands.run(
         () -> {
           LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
-          hoodGoal = para.hoodAngle();
-          flywheelsGoal = para.flywheelSpeed();
+          hoodGoal = para.targetHood();
+          flywheelsGoal = para.targetFlywheels();
 
           hood.setHoodPosition(hoodGoal);
           flywheels.setVelocityRPS(flywheelsGoal);
@@ -66,7 +66,7 @@ public class LauncherSubsystem extends SubsystemBase {
   public boolean isAtTarget() {
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
         && hood.atTargetPosition()
-        && !LaunchCalculator.isCloseToTrench();
+        && !LaunchCalculator.isCloseToTrench(LaunchCalculator.getPose());
   }
 
   public boolean isHoodAtTarget() {
