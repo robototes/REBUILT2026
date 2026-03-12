@@ -116,19 +116,23 @@ public class LaunchCalculator {
     staticEstimatedPose = turretPose;
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
 
+    // Initial distances
     double initialTurretToTarget = target.getDistance(turretPose.getTranslation());
     double distanceX = target.getX() - turretPose.getX();
     double distanceY = target.getY() - turretPose.getY();
     double distance = Math.hypot(distanceX, distanceY);
 
+    // Final distances
     double trueDistance = distance;
+    double trueDistanceX = distanceX;
+    double trueDistanceY = distanceY;
     double t = LauncherConstants.getTimeFromDistance(initialTurretToTarget);
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
       double driftT = getDragCompensatedTOF(t);
-      double trueDistanceX = distanceX - turretVelocityX * driftT;
-      double trueDistanceY = distanceY - turretVelocityY * driftT;
+      trueDistanceX = distanceX - turretVelocityX * driftT;
+      trueDistanceY = distanceY - turretVelocityY * driftT;
       trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
 
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
@@ -155,7 +159,7 @@ public class LaunchCalculator {
       // product of our velocity vector and a vector perpendicular to our target direction (swapped
       // x and y), then dividing by the distance to normalize the magnitude.
       double tangentialVel =
-          (-distanceY * turretVelocityX + distanceX * turretVelocityY) / trueDistance;
+          (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
       // Calculated using the standard angular velocity formula, by dividing by the distance. We
       // offset it with the robot's field angular velocity to get the true angular velocity
       feedforwardAngularVelocity = (tangentialVel / trueDistance) - fieldVel.omegaRadiansPerSecond;
