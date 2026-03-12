@@ -297,8 +297,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     return value * 2 * Math.PI;
   }
 
-  // Sean's new method. Gets the pose at the given timestamp
+  /**
+   * Gets the pose at the given timestamp by interpolating from pose history.
+   *
+   * @param time The timestamp to get the pose at.
+   * @return The interpolated pose at the given time, or the current pose if the timestamp is not in
+   *     the history.
+   */
   public Pose2d getPoseAtTimeStamp(double time) {
-    return poseHistory.getSample(time).orElseGet(() -> this.getState().Pose);
+    return poseHistory.getSample(time).orElseGet(() -> getState().Pose);
   }
 }
