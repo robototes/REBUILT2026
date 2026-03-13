@@ -15,7 +15,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "Center-DepotL"
+                        "pathName": "LT-DepotL"
                       }
                     },
                     {
@@ -31,37 +31,6 @@
                       }
                     }
                   ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "DepotR-Outpost"
                 }
               },
               {
