@@ -36,7 +36,7 @@ public class IntakePivot extends SubsystemBase {
   public static final double EXTAKE_POS = -0.30;
 
   // PID variables
-  private static final double kP = 20;
+  private static final double kP = 23;
   private static final double kI = 0;
   private static final double kD = 0;
   private static final double kG = 0.6;
@@ -49,9 +49,9 @@ public class IntakePivot extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 30; // amps
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 25;
-  private static final double ACCELERATION = 10;
-  private static final double JERK = 50;
+  private static final double CRUISE_VELOCITY = 100;
+  private static final double ACCELERATION = 50;
+  private static final double JERK = 0;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 35;
