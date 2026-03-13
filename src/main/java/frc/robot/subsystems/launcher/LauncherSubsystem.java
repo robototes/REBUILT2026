@@ -6,6 +6,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Subsystems;
 import frc.robot.subsystems.LaunchCalculator;
 import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -15,15 +16,18 @@ import frc.robot.util.tuning.LauncherConstants;
 public class LauncherSubsystem extends SubsystemBase {
   protected Hood hood;
   protected Flywheels flywheels;
+  protected CommandSwerveDrivetrain driveTrain;
   protected double flywheelsGoal;
   protected double hoodGoal;
+  protected Subsystems s;
 
   private final DoublePublisher hoodGoalPub;
   private final DoublePublisher flywheelGoalPub;
 
-  public LauncherSubsystem(Hood hood, Flywheels flywheels) {
-    this.hood = hood;
-    this.flywheels = flywheels;
+  public LauncherSubsystem(Subsystems s) {
+    this.s = s;
+    this.hood = s.hood;
+    this.flywheels = s.flywheels;
 
     var nt = NetworkTableInstance.getDefault();
     hoodGoalPub = nt.getDoubleTopic("/AutoAim/hoodGoal").publish();
@@ -50,10 +54,11 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   // Will use after week 1
-  public Command launcherAimCommandV2(CommandSwerveDrivetrain drive, TurretSubsystem turret) {
+  public Command launcherAimCommandV2() {
     return Commands.run(
         () -> {
-          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive, turret);
+          LaunchingParameters para =
+              LaunchCalculator.getInstance().getParameters(s.drivebaseSubsystem, s.turretSubsystem);
           hoodGoal = para.targetHood();
           flywheelsGoal = para.targetFlywheels();
 
@@ -66,7 +71,10 @@ public class LauncherSubsystem extends SubsystemBase {
   public boolean isAtTarget() {
     return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
         && hood.atTargetPosition()
-        && !LaunchCalculator.isCloseToTrench(LaunchCalculator.getEstTurretPose());
+        && !LaunchCalculator.isCloseToTrench(
+            LaunchCalculator.getInstance()
+                .getParameters(driveTrain, s.turretSubsystem)
+                .turretPose());
   }
 
   public boolean isHoodAtTarget() {

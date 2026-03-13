@@ -31,7 +31,6 @@ public class LaunchCalculator {
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
-  private static Pose2d staticEstimatedPose;
 
   private static final double DRAG_COEFFICIENT = 0.48;
   private static final double PHASE_DELAY = 0.02;
@@ -59,7 +58,8 @@ public class LaunchCalculator {
       double targetHood,
       Rotation2d targetTurret,
       double targetFlywheels,
-      double targetTurretFeedforward) {}
+      double targetTurretFeedforward,
+      Pose2d turretPose) {}
 
   static {
     for (int tag : tags) {
@@ -122,7 +122,6 @@ public class LaunchCalculator {
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
-    staticEstimatedPose = turretPose;
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
 
     // Initial distances
@@ -190,7 +189,7 @@ public class LaunchCalculator {
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
     return new LaunchingParameters(
-        targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity);
+        targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity, turretPose);
   }
 
   /**
@@ -230,9 +229,5 @@ public class LaunchCalculator {
   public static boolean isCloseToTrench(Pose2d pose) {
     double nearestTagX = pose.nearest(trenchTags).getX();
     return Math.abs(nearestTagX - pose.getX()) < TURRET_TO_TRENCH_TOLERANCE;
-  }
-
-  public static Pose2d getEstTurretPose() {
-    return staticEstimatedPose;
   }
 }
