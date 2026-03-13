@@ -180,8 +180,6 @@ public class LaunchCalculator {
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
-    // IF feedforward is 0, just use standard tracking. If not then
-    // use this number
     return new LaunchingParameters(
         targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity);
   }
