@@ -199,6 +199,13 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(degreeTolerance);
   }
 
+  /**
+   * @return the angular velocity of the turret in rad/s
+   */
+  public double getOmega() {
+    return Units.rotationsToRadians(turretMotor.getVelocity().getValueAsDouble());
+  }
+
   public double calculateTurretAngle(Translation2d target) {
     // Get current turret pose
     Translation2d turretTranslation =
@@ -267,7 +274,7 @@ public class TurretSubsystem extends SubsystemBase {
     return runEnd(
         () -> {
           double currentTurretDegrees = Units.rotationsToDegrees(getTurretPosition());
-          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain);
+          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain, this);
           double targetTurretDegrees = para.targetTurret().getDegrees();
           targetTurretDegrees = -targetTurretDegrees;
           double shortestDelta =
@@ -293,7 +300,8 @@ public class TurretSubsystem extends SubsystemBase {
                   Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
 
           // Get the target from the calculator
-          LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
+          LaunchingParameters params =
+              LaunchCalculator.getInstance().getParameters(driveTrain, this);
           double targetDegrees = -params.targetTurret().getDegrees();
 
           double FFV = params.targetTurretFeedforward();

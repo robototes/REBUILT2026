@@ -13,6 +13,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
@@ -78,7 +79,8 @@ public class LaunchCalculator {
   }
 
   // ------ MAIN LOGIC ------ //
-  public LaunchingParameters getParameters(CommandSwerveDrivetrain driveTrain) {
+  public LaunchingParameters getParameters(
+      CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
     // Take the pose when vision was captured rather than the instantaneous pose of the robot
     double visionLatencySeconds =
@@ -103,13 +105,14 @@ public class LaunchCalculator {
     // offset_y)
     // Turret VY robot relative is calculated using this formula: V_y_point= V_y_center + (omega *
     // offset_x)
+    double totalOmega = chassisSpeeds.omegaRadiansPerSecond + turretSubsystem.getOmega();
     ChassisSpeeds turretRobotRelativeSpeeds =
         new ChassisSpeeds(
             chassisSpeeds.vxMetersPerSecond
                 - chassisSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
             chassisSpeeds.vyMetersPerSecond
                 + chassisSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
-            chassisSpeeds.omegaRadiansPerSecond);
+            totalOmega);
     // Let chassisspeeds built in methods handle the conversion from robot relative to field
     // relative
     ChassisSpeeds turretFieldRelativeSpeeds =
@@ -168,8 +171,7 @@ public class LaunchCalculator {
           (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
       // Calculated using the standard angular velocity formula, by dividing by the distance. We
       // offset it with the robot's field angular velocity to get the true angular velocity
-      feedforwardAngularVelocity =
-          (tangentialVel / trueDistance) - turretFieldRelativeSpeeds.omegaRadiansPerSecond;
+      feedforwardAngularVelocity = (tangentialVel / trueDistance) - totalOmega;
     }
 
     double finalDrift = getDragCompensatedTOF(t);

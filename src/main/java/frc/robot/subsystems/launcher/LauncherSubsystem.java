@@ -50,10 +50,10 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   // Will use after week 1
-  public Command launcherAimCommandV2(CommandSwerveDrivetrain drive) {
+  public Command launcherAimCommandV2(CommandSwerveDrivetrain drive, TurretSubsystem turret) {
     return Commands.run(
         () -> {
-          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive);
+          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(drive, turret);
           hoodGoal = para.targetHood();
           flywheelsGoal = para.targetFlywheels();
 
