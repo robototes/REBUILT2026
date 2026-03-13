@@ -49,7 +49,7 @@ public class Hood extends SubsystemBase {
   private static final double STATOR_CURRENT_LIMIT = 10; // stator limit in amps
   // GEAR_RATIO = 2.90909;
   private static final double FORWARD_SOFT_LIMIT =
-      13; // LIMITED TO 13 FROM BREAK -TD //18.411; // 1.72 rotations
+      15; // LIMITED TO 15 FROM BREAK -TD //18.411; // 1.72 rotations
   private static final double BACKWARD_SOFT_LIMIT = -0.02; // -0.02 rotations, past zeroing point
 
   public final boolean TUNER_CONTROLLED = false; // boolean to check if tuner control is being used
