@@ -45,6 +45,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Positions
   private double targetPos;
+  private static final double BACKUP_CALC_TURRET_MOUNTING_ANGLE_OFFSET = -75;
   public static final double FRONT_POSITION = 0;
   public static final double LEFT_POSITION = -0.15;
   public static final double RIGHT_POSITION = 0.15;
@@ -200,7 +201,11 @@ public class TurretSubsystem extends SubsystemBase {
 
     // Add 180 degrees to account for 0 posistion
     Rotation2d turretRotation =
-        driveTrain.getState().Pose.getRotation().plus(new Rotation2d(Units.degreesToRadians(-75)));
+        driveTrain
+            .getState()
+            .Pose
+            .getRotation()
+            .plus(new Rotation2d(Units.degreesToRadians(BACKUP_CALC_TURRET_MOUNTING_ANGLE_OFFSET)));
 
     // Get hub position
     Translation2d targetTranslation = target;
