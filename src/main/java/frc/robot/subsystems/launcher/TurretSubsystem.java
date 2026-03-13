@@ -135,16 +135,15 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setTurretRawPosition(double pos, Double FFVelocity) {
-    if (FFVelocity != null && FFVelocity != 0) {
-      double ffRotationsPerSec = Units.radiansToRotations(FFVelocity);
-      double feedforwardVolts = ffRotationsPerSec * kV;
+    double feedforwardVolts = 0.0;
+    double ffRotationsPerSec = Units.radiansToRotations(FFVelocity);
+    feedforwardVolts = ffRotationsPerSec * kV;
+    turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
+    targetPos = pos;
+  }
 
-      // .withFeedForward() to actually apply the volts
-      turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
-    } else {
-      // Normal position control if no velocity is provided
-      turretMotor.setControl(request.withPosition(pos).withFeedForward(0));
-    }
+  public void setTurretRawPosition(double pos) {
+    turretMotor.setControl(request.withPosition(pos));
     targetPos = pos;
   }
 
@@ -247,7 +246,7 @@ public class TurretSubsystem extends SubsystemBase {
         () -> {
           double targetRotations =
               calculateTurretAngle(GetTargetFromPose.getTargetLocation(driveTrain));
-          setTurretRawPosition(targetRotations, null);
+          setTurretRawPosition(targetRotations);
           targetPos = targetRotations;
           // System.out.println("Target Rotations: " + targetRotations);
           Transform2d fieldRelativeOffset =
@@ -279,7 +278,7 @@ public class TurretSubsystem extends SubsystemBase {
           double turretDegrees =
               MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
           // System.out.println(Units.degreesToRotations(turretDegrees));
-          setTurretRawPosition(Units.degreesToRotations(turretDegrees), null);
+          setTurretRawPosition(Units.degreesToRotations(turretDegrees));
           targetPos = Units.degreesToRotations(turretDegrees);
         },
         () -> turretMotor.stopMotor());
