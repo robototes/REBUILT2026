@@ -8,15 +8,15 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.DoubleSubscriber;
-import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LaunchCalculator {
@@ -28,160 +28,202 @@ public class LaunchCalculator {
     return Holder.INSTANCE;
   }
 
-  public static Pose2d estimatedPose;
-  public static double estimatedDist;
+  // Transforms and pose2ds
+  private static final Transform2d turretTransform = LauncherConstants.turretTransform();
+  private static Pose2d staticEstimatedPose;
 
-  // Turret transform
-  private static final Transform2d turretTransform;
-  // private Rotation2d lastTurretAngle;
-  // private double lastHoodAngle;
-  private Rotation2d targetTurretAngle;
-  private double targetHoodAngle = Double.NaN;
+  private static final double DRAG_COEFFICIENT = 0.48;
+  private static final double PHASE_DELAY = 0.02;
+  private static final double CONVERGENCE_TOLERANCE = 0.001;
+  private static final double DRAG_TOLERANCE =
+      1e-3; // Drag tolerance. This should never really be used anyways because our interpolating
+  // map isn't accurate enough to have a delta drag of near 0, but it's just here to future proof
+  private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
+  private static final double MIN_SLOPE = 1e-4;
+  private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
+  private static final double VFF_DIST_TOLERANCE = 0.1;
 
-  private static int D_LOOKAHEAD_ITERATIONS = 10;
-
-  // private double turret_target_velocity;+
-  // private double hood_target_velocity;
-
-  public record LaunchingParameters(
-      boolean isValid, Rotation2d turretAngle, double hoodAngle, double flywheelSpeed) {}
-
-  private static double minDistance;
-  private static double maxDistance;
-  private static double D_PHASE_DELAY = 0.05;
-
-  // Network tables
-  // private final NtTunableDouble phaseDelay;
-  // private final NtTunableDouble LOOKAHEAD_ITERATIONS;
-
-  private final DoubleSubscriber phaseDelaySub;
-  private final IntegerSubscriber iterationsSub;
-
+  // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
-  private static final Collection<Pose2d> trenchTags =
-      List.of(
-          field.getTagPose(17).get().toPose2d(),
-          field.getTagPose(28).get().toPose2d(),
-          field.getTagPose(22).get().toPose2d(),
-          field.getTagPose(23).get().toPose2d(),
-          field.getTagPose(12).get().toPose2d(),
-          field.getTagPose(1).get().toPose2d(),
-          field.getTagPose(7).get().toPose2d(),
-          field.getTagPose(6).get().toPose2d());
+  private static final List<Pose2d> trenchTags = new ArrayList<>();
+  private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
-  // Static initializer
+  // Network tables
+  private NetworkTableEntry tl;
+  private NetworkTableEntry cl;
+
+  public record LaunchingParameters(
+      double targetHood,
+      Rotation2d targetTurret,
+      double targetFlywheels,
+      double targetTurretFeedforward) {}
+
   static {
-    turretTransform = LauncherConstants.turretTransform();
-    minDistance = 1.34;
-    maxDistance = 5.60;
+    for (int tag : tags) {
+      Pose2d tagpose =
+          field
+              .getTagPose(tag)
+              .orElseThrow(() -> new RuntimeException("Tag " + tag + " not found in field layout"))
+              .toPose2d();
+      trenchTags.add(tagpose);
+    }
   }
 
   private LaunchCalculator() {
-    // Get the table once
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
-    phaseDelaySub = table.getDoubleTopic("phaseDelay").subscribe(D_PHASE_DELAY);
-    iterationsSub = table.getIntegerTopic("Lookahead iterations").subscribe(D_LOOKAHEAD_ITERATIONS);
+    NetworkTable limelightNTEntry = NetworkTableInstance.getDefault().getTable("limelight");
+    tl = limelightNTEntry.getEntry("tl");
+    cl = limelightNTEntry.getEntry("cl");
   }
 
-  public LaunchingParameters getParameters(CommandSwerveDrivetrain robotState) {
+  // ------ MAIN LOGIC ------ //
+  public LaunchingParameters getParameters(CommandSwerveDrivetrain driveTrain) {
 
-    // Calculate estimated pose while accounting for phase delay
-    Pose2d estimatedPose = robotState.getState().Pose;
-    ChassisSpeeds robotRelativeVelocity = robotState.getState().Speeds;
-    /* This takes dX /s and dY /s, both multiplied by the estimated delta T (in this case it's the phase delay) to get the real dX dY for the Twist2d object.
-    Twist 2d objects gives us a transformation result that tells us where the robot will end up (individually by each component). We then integrate the velocity of the x and
-    y components (robot relative) from 0 to delta T. This gives us a delta X and delta Y, which we will then apply to the previous robot pose to get a new pose2d that
-    accurately represents the robot's position accounting in for angular velocity.
-    */
-    double phase = phaseDelaySub.get();
-    estimatedPose =
-        estimatedPose.exp(
+    // Take the pose when vision was captured rather than the instateneous pose of the robot
+    double visionLatencySeconds =
+        (tl.getDouble(0) + cl.getDouble(0))
+            / 1000.0; // adds pipeline latency and capture latency to get to total latency
+    double now = Timer.getFPGATimestamp();
+    double captureTime = now - visionLatencySeconds;
+
+    // Grab the EXACT pose the robot had when the camera got the frame
+    Pose2d instantPose = driveTrain.getPoseAtTimeStamp(captureTime);
+
+    // Predicted robot pose after calculations have finished
+    ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
+    Pose2d estimatedPose =
+        instantPose.exp(
             new Twist2d(
-                robotRelativeVelocity.vxMetersPerSecond * phase,
-                robotRelativeVelocity.vyMetersPerSecond * phase,
-                robotRelativeVelocity.omegaRadiansPerSecond * phase));
-
-    // - Calculate distance from turret to target - //
-    Translation2d target = GetTargetFromPose.getTargetLocation(estimatedPose);
-    Pose2d turretPosition = estimatedPose.transformBy(turretTransform);
-    // grab distance between turret and center of hub
-    double turretToTargetDistance = target.getDistance(turretPosition.getTranslation());
-
-    // Calculate field relative turret velocity
-    ChassisSpeeds robotVelocity =
-        ChassisSpeeds.fromRobotRelativeSpeeds(robotRelativeVelocity, estimatedPose.getRotation());
-    // Grab robot angle
-    double robotAngle = estimatedPose.getRotation().getRadians();
-    // calculate the turret's tangetial velocity field relative.
-    // take the turret's field relative position function, take the derivative of it and plug in
-    // your velocities.
+                chassisSpeeds.vxMetersPerSecond * PHASE_DELAY,
+                chassisSpeeds.vyMetersPerSecond * PHASE_DELAY,
+                chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY));
+    Rotation2d robotAngle = estimatedPose.getRotation();
+    ChassisSpeeds fieldVel = ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, robotAngle);
+    // Turret velocity's x and y velocities field relative
     double turretVelocityX =
-        robotVelocity.vxMetersPerSecond
-            - robotVelocity.omegaRadiansPerSecond
-                * (turretTransform.getY() * Math.cos(robotAngle)
-                    + turretTransform.getX() * Math.sin(robotAngle));
+        fieldVel.vxMetersPerSecond
+            - fieldVel.omegaRadiansPerSecond
+                * (turretTransform.getY() * Math.cos(robotAngle.getRadians())
+                    + turretTransform.getX() * Math.sin(robotAngle.getRadians()));
     double turretVelocityY =
-        robotVelocity.vyMetersPerSecond
-            + robotVelocity.omegaRadiansPerSecond
-                * (turretTransform.getX() * Math.cos(robotAngle)
-                    - turretTransform.getY() * Math.sin(robotAngle));
+        fieldVel.vyMetersPerSecond
+            + fieldVel.omegaRadiansPerSecond
+                * (turretTransform.getX() * Math.cos(robotAngle.getRadians())
+                    - turretTransform.getY() * Math.sin(robotAngle.getRadians()));
 
-    // Account for imparted velocity by robot (turret) to offset
-    double timeOfFlight;
-    Pose2d lookaheadPose = turretPosition;
-    // the distance from the turret to the hub. This will be updated in the for loop
-    double lookaheadTurretToTargetDistance = turretToTargetDistance;
+    // Target translation
+    Pose2d turretPose = estimatedPose.transformBy(turretTransform);
+    staticEstimatedPose = turretPose;
+    Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
 
-    int iterations = (int) iterationsSub.getAsLong();
-    for (int i = 0; i < iterations; i++) {
-      timeOfFlight = LauncherConstants.getTimeFromDistance(lookaheadTurretToTargetDistance);
-      double offsetX = turretVelocityX * timeOfFlight;
-      double offsetY = turretVelocityY * timeOfFlight;
-      lookaheadPose =
-          new Pose2d(
-              turretPosition.getTranslation().plus(new Translation2d(offsetX, offsetY)),
-              turretPosition.getRotation());
-      lookaheadTurretToTargetDistance = target.getDistance(lookaheadPose.getTranslation());
+    // Initial distances
+    double initialTurretToTarget = target.getDistance(turretPose.getTranslation());
+    double distanceX = target.getX() - turretPose.getX();
+    double distanceY = target.getY() - turretPose.getY();
+    double distance = Math.hypot(distanceX, distanceY);
+
+    // Final distances
+    double trueDistance = distance;
+    double trueDistanceX = distanceX;
+    double trueDistanceY = distanceY;
+    double t = LauncherConstants.getTimeFromDistance(initialTurretToTarget);
+    for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
+      double prevT = t;
+
+      double driftT = getDragCompensatedTOF(t);
+      trueDistanceX = distanceX - turretVelocityX * driftT;
+      trueDistanceY = distanceY - turretVelocityY * driftT;
+      trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
+
+      double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
+      double f = lookupT - t;
+      // Rate of change of the distance from turret to hub (derivative of pythagorean formula)
+      double dDist_Dt =
+          -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
+      double fPrime =
+          (derivativeOfTOF(trueDistance) * dDist_Dt * Math.exp(-DRAG_COEFFICIENT * t)) - 1.0;
+
+      // If the derivative is big enough, calculate
+      if (Math.abs(fPrime) > MIN_SLOPE) { // Prevent divide by zero error
+        t = t - f / fPrime;
+      } else {
+        t = lookupT; // Fallback to fixed-point
+      }
+
+      if (Math.abs(t - prevT) < CONVERGENCE_TOLERANCE) break;
     }
-    LaunchCalculator.estimatedPose = lookaheadPose;
-    LaunchCalculator.estimatedDist = lookaheadTurretToTargetDistance;
-    // Calculate parameters accounted for imparted velocity
+    // Velocity feedforward
+    double feedforwardAngularVelocity = 0;
+    if (trueDistance > VFF_DIST_TOLERANCE) {
+      // Calculated using the 2D cross product. We find the tangential velocity by taking the dot
+      // product of our velocity vector and a vector perpendicular to our target direction (swapped
+      // x and y), then dividing by the distance to normalize the magnitude.
+      double tangentialVel =
+          (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
+      // Calculated using the standard angular velocity formula, by dividing by the distance. We
+      // offset it with the robot's field angular velocity to get the true angular velocity
+      feedforwardAngularVelocity = (tangentialVel / trueDistance) - fieldVel.omegaRadiansPerSecond;
+    }
 
-    // // Target turret angle robot relative
-    Rotation2d targetAngleFieldRelative = target.minus(lookaheadPose.getTranslation()).getAngle();
-    targetTurretAngle =
-        targetAngleFieldRelative.minus(lookaheadPose.getRotation()).rotateBy(Rotation2d.k180deg);
-    // // Target hood angle
-    targetHoodAngle = getHoodAngle(lookaheadPose);
-    // System.out.println(targetTurretAngle.getDegrees());
+    double finalDrift = getDragCompensatedTOF(t);
+    Translation2d virtualTarget =
+        new Translation2d(
+            target.getX() - turretVelocityX * finalDrift,
+            target.getY() - turretVelocityY * finalDrift);
 
-    // Returns a final record, that contains the targetTurretAngle, targetHood angle, and flywheel
-    // speed
-    // with all velocities accounted for
+    Rotation2d targetAngleFieldRelative =
+        virtualTarget.minus(turretPose.getTranslation()).getAngle();
+
+    // FINAL NUMS
+    double targetHood = getHoodAngle(turretPose, trueDistance);
+    double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
+    Rotation2d targetTurret =
+        targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
     return new LaunchingParameters(
-        lookaheadTurretToTargetDistance >= minDistance
-            && lookaheadTurretToTargetDistance <= maxDistance,
-        targetTurretAngle,
-        targetHoodAngle,
-        LauncherConstants.getFlywheelSpeedFromDistance(lookaheadTurretToTargetDistance));
+        targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity);
   }
 
-  public double getHoodAngle(Pose2d lookaheadPose) {
-    if (isCloseToTrench()) {
+  /**
+   * returns the derivative of the Time of flight from the interpolating map
+   *
+   * @param distance instantaneous distance
+   */
+  public double derivativeOfTOF(double distance) {
+    double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
+    double max = LauncherConstants.getTimeFromDistance(distance + STEP_SIZE);
+    return (max - min) / (2 * STEP_SIZE);
+  }
+
+  /**
+   * This is using the low-speed fomrula for displacement due to drag. It returns the TOF accounting
+   * in drag
+   */
+  private double getDragCompensatedTOF(double tof) {
+    double newTOF = (1.0 - Math.exp(-DRAG_COEFFICIENT * tof)) / DRAG_COEFFICIENT;
+    if (Math.abs(newTOF - tof) < DRAG_TOLERANCE) {
+      return tof;
+    } // if really near zero, just return parameter
+    else {
+      return newTOF;
+    }
+  }
+
+  public double getHoodAngle(Pose2d lookaheadPose, double trueDist) {
+    if (isCloseToTrench(lookaheadPose)) {
       return 0;
     } else {
-      return LauncherConstants.getHoodAngleFromDistance(estimatedDist);
+      return LauncherConstants.getHoodAngleFromDistance(trueDist);
     }
   }
 
-  public static boolean isCloseToTrench() {
-    double nearestTagX = estimatedPose.nearest(trenchTags).getX();
-    if (Math.abs(nearestTagX - estimatedPose.getX()) < TURRET_TO_TRENCH_TOLERANCE) {
-      return true;
-    } else {
-      return false;
-    }
+  /** compares X net of the 2 poses */
+  public static boolean isCloseToTrench(Pose2d pose) {
+    double nearestTagX = pose.nearest(trenchTags).getX();
+    return Math.abs(nearestTagX - pose.getX()) < TURRET_TO_TRENCH_TOLERANCE;
+  }
+
+  public static Pose2d getEstTurretPose() {
+    return staticEstimatedPose;
   }
 }

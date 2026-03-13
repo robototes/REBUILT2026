@@ -134,6 +134,12 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
+  public void setTurretRawPosition(double pos, Double FFVelocity) {
+    double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV;
+    turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
+    targetPos = pos;
+  }
+
   public void setTurretRawPosition(double pos) {
     turretMotor.setControl(request.withPosition(pos));
     targetPos = pos;
@@ -262,7 +268,7 @@ public class TurretSubsystem extends SubsystemBase {
         () -> {
           double currentTurretDegrees = Units.rotationsToDegrees(getTurretPosition());
           LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain);
-          double targetTurretDegrees = para.turretAngle().getDegrees();
+          double targetTurretDegrees = para.targetTurret().getDegrees();
           targetTurretDegrees = -targetTurretDegrees;
           double shortestDelta =
               MathUtil.inputModulus(
@@ -287,8 +293,10 @@ public class TurretSubsystem extends SubsystemBase {
                   Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
 
           // Get the target from the calculator
-          double targetDegrees =
-              -LaunchCalculator.getInstance().getParameters(driveTrain).turretAngle().getDegrees();
+          LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
+          double targetDegrees = -params.targetTurret().getDegrees();
+
+          double FFV = params.targetTurretFeedforward();
 
           // Find the shortest distance to that target from our "wrapped" position
           double shortestDelta = MathUtil.inputModulus(targetDegrees - wrappedCurrent, -180, 180);
@@ -316,7 +324,7 @@ public class TurretSubsystem extends SubsystemBase {
 
           // Set position (Note: This assumes your PID/Controller uses these degrees)
           // System.out.println(Units.degreesToRotations(finalTarget));
-          setTurretRawPosition(Units.degreesToRotations(finalTarget));
+          setTurretRawPosition(Units.degreesToRotations(finalTarget), FFV);
           targetPos = Units.degreesToRotations(finalTarget);
         },
         () -> turretMotor.stopMotor());
