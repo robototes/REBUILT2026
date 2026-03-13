@@ -74,8 +74,8 @@ public class LaunchCalculator {
   private LaunchCalculator() {
     // Get the table once
     NetworkTable table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
-    phaseDelaySub = table.getDoubleTopic("phaseDelay").subscribe(D_PHASE_DELAY);
-    iterationsSub = table.getIntegerTopic("Lookahead iterations").subscribe(D_LOOKAHEAD_ITERATIONS);
+    phaseDelaySub = table.getDoubleTopic("phaseDelay").getEntry(D_PHASE_DELAY);
+    iterationsSub = table.getIntegerTopic("Lookahead iterations").getEntry(D_LOOKAHEAD_ITERATIONS);
   }
 
   public LaunchingParameters getParameters(CommandSwerveDrivetrain robotState) {
