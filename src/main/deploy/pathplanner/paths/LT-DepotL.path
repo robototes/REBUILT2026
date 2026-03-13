@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.664,
+        "x": 4.013,
         "y": 7.597
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.415180588580935,
+        "x": 3.7641805885809347,
         "y": 7.572732727778545
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "LT"
     },
     {
       "anchor": {
@@ -25,7 +25,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "DepotL"
     }
   ],
   "rotationTargets": [],
@@ -34,7 +34,7 @@
   "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.0,
-    "maxAcceleration": 5.0,
+    "maxAcceleration": 3.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,

@@ -12,20 +12,20 @@
         "y": 5.207301184435227
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "DepotR"
     },
     {
       "anchor": {
-        "x": 0.6129441624381722,
-        "y": 0.6664890016938023
+        "x": 0.613,
+        "y": 0.666
       },
       "prevControl": {
-        "x": 3.0465820642960466,
-        "y": 0.19163282572118173
+        "x": 3.046637901857874,
+        "y": 0.19114382402737934
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Outpost"
     }
   ],
   "rotationTargets": [],
@@ -34,7 +34,7 @@
   "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.0,
-    "maxAcceleration": 5.0,
+    "maxAcceleration": 3.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
