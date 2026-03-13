@@ -135,9 +135,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setTurretRawPosition(double pos, Double FFVelocity) {
-    double feedforwardVolts = 0.0;
-    double ffRotationsPerSec = Units.radiansToRotations(FFVelocity);
-    feedforwardVolts = ffRotationsPerSec * kV;
+    double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV;
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
   }
