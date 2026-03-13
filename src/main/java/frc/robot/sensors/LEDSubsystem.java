@@ -1,5 +1,6 @@
 package frc.robot.sensors;
 
+import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
@@ -42,6 +43,7 @@ public class LEDSubsystem extends SubsystemBase {
 
   private final CANdle candle = new CANdle(CAN_ID);
   private final SolidColor solidController = new SolidColor(0, END_INDEX);
+  private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
   private final RainbowAnimation rainbowAnimation =
       new RainbowAnimation(0, END_INDEX).withSlot(SLOT);
 
@@ -113,6 +115,7 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   private void setSolid(RGBWColor color) {
+    candle.setControl(emptyAnimation);
     currentPattern = LEDPattern.SOLID;
     primaryColor = color;
     setHardwareColor(color);
@@ -123,6 +126,7 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   private void setAlternating(RGBWColor a, RGBWColor b, double interval) {
+    candle.setControl(emptyAnimation);
     currentPattern = LEDPattern.ALTERNATE;
 
     primaryColor = a;
@@ -188,7 +192,9 @@ public class LEDSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     if (RobotState.isDisabled()) {
-      setMode(LEDMode.DISABLED);
+      if (currentMode != LEDMode.DISABLED) {
+        setMode(LEDMode.DISABLED);
+      }
       return;
     }
 

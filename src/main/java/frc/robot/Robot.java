@@ -196,7 +196,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    // subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -219,6 +219,7 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DISABLED);
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
