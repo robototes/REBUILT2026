@@ -50,8 +50,9 @@ public class LaunchCalculator {
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
   // Network tables
-  private NetworkTableEntry tl;
-  private NetworkTableEntry cl;
+  private NetworkTableEntry NT_piplineLatency; // latency from vision pipeline
+  private NetworkTableEntry
+      NT_captureLatency; // time between end of sensor exposure and beginning of processing pipeline
 
   public record LaunchingParameters(
       double targetHood,
@@ -72,16 +73,16 @@ public class LaunchCalculator {
 
   private LaunchCalculator() {
     NetworkTable limelightNTEntry = NetworkTableInstance.getDefault().getTable("limelight");
-    tl = limelightNTEntry.getEntry("tl");
-    cl = limelightNTEntry.getEntry("cl");
+    NT_piplineLatency = limelightNTEntry.getEntry("tl");
+    NT_captureLatency = limelightNTEntry.getEntry("cl");
   }
 
   // ------ MAIN LOGIC ------ //
   public LaunchingParameters getParameters(CommandSwerveDrivetrain driveTrain) {
 
-    // Take the pose when vision was captured rather than the instateneous pose of the robot
+    // Take the pose when vision was captured rather than the instantaneous pose of the robot
     double visionLatencySeconds =
-        (tl.getDouble(0) + cl.getDouble(0))
+        (NT_piplineLatency.getDouble(0) + NT_captureLatency.getDouble(0))
             / 1000.0; // adds pipeline latency and capture latency to get to total latency
     double now = Timer.getFPGATimestamp();
     double captureTime = now - visionLatencySeconds;
@@ -98,18 +99,23 @@ public class LaunchCalculator {
                 chassisSpeeds.vyMetersPerSecond * PHASE_DELAY,
                 chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY));
     Rotation2d robotAngle = estimatedPose.getRotation();
-    ChassisSpeeds fieldVel = ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, robotAngle);
-    // Turret velocity's x and y velocities field relative
-    double turretVelocityX =
-        fieldVel.vxMetersPerSecond
-            - fieldVel.omegaRadiansPerSecond
-                * (turretTransform.getY() * Math.cos(robotAngle.getRadians())
-                    + turretTransform.getX() * Math.sin(robotAngle.getRadians()));
-    double turretVelocityY =
-        fieldVel.vyMetersPerSecond
-            + fieldVel.omegaRadiansPerSecond
-                * (turretTransform.getX() * Math.cos(robotAngle.getRadians())
-                    - turretTransform.getY() * Math.sin(robotAngle.getRadians()));
+    // Turret VX robot relative is calculated using this formula: V_x_point = V_x_center + (-omega *
+    // offset_y)
+    // Turret VY robot relative is calculated using this formula: V_y_point= V_y_center + (omega *
+    // offset_x)
+    ChassisSpeeds turretRobotRelativeSpeeds =
+        new ChassisSpeeds(
+            chassisSpeeds.vxMetersPerSecond
+                - chassisSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
+            chassisSpeeds.vyMetersPerSecond
+                + chassisSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
+            chassisSpeeds.omegaRadiansPerSecond);
+    // Let chassisspeeds built in methods handle the conversion from robot relative to field
+    // relative
+    ChassisSpeeds turretFieldRelativeSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(turretRobotRelativeSpeeds, robotAngle);
+    double turretVelocityX = turretFieldRelativeSpeeds.vxMetersPerSecond;
+    double turretVelocityY = turretFieldRelativeSpeeds.vyMetersPerSecond;
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
@@ -162,7 +168,8 @@ public class LaunchCalculator {
           (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
       // Calculated using the standard angular velocity formula, by dividing by the distance. We
       // offset it with the robot's field angular velocity to get the true angular velocity
-      feedforwardAngularVelocity = (tangentialVel / trueDistance) - fieldVel.omegaRadiansPerSecond;
+      feedforwardAngularVelocity =
+          (tangentialVel / trueDistance) - turretFieldRelativeSpeeds.omegaRadiansPerSecond;
     }
 
     double finalDrift = getDragCompensatedTOF(t);
