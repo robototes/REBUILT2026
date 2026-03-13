@@ -39,7 +39,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
 
-  // Sean's new things
   private final TimeInterpolatableBuffer<Pose2d> poseHistory =
       TimeInterpolatableBuffer.createBuffer(1); // Store up to 1 second of history
 
