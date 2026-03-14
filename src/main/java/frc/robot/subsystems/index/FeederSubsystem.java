@@ -93,6 +93,8 @@ public class FeederSubsystem extends SubsystemBase {
     if (TUNABLE_ENABLE.get()) {
       feedMotor.setControl(
           TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
+    } else {
+      setVelocity(D_TARGET_RPS);
     }
   }
 

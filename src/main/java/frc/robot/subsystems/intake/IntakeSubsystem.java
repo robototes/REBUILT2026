@@ -23,7 +23,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE);
+    return intakeRollers.runRollersVelocity(false);
   }
 
   public Command deployPivot() {
@@ -37,7 +37,7 @@ public class IntakeSubsystem extends SubsystemBase {
   public Command intakeWhileLaunchCommand() {
     return intakePivot
         .setPivotPosition(IntakePivot.LAUNCH_POS)
-        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE));
+        .alongWith(Commands.runOnce(() -> intakeRollers.runAgitateVelocity()));
   }
 
   public Command smartIntake() {
@@ -48,23 +48,23 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runRollersVoid() {
-    intakeRollers.setRollerVolt(IntakeRollers.INTAKE_VOLTAGE);
+    intakeRollers.runRollersVelocity(false);
     intakePivot.setPivotPositionVoid(intakePivot.targetPos);
   }
 
   public void deployPivotVoid() {
     intakePivot.setPivotPositionVoid(IntakePivot.DEPLOYED_POS);
-    intakeRollers.setRollerVolt(0);
+    intakeRollers.stopMotor();
   }
 
   public void retractPivotVoid() {
     intakePivot.setPivotPositionVoid(IntakePivot.RETRACTED_POS);
-    intakeRollers.setRollerVolt(0);
+    intakeRollers.stopMotor();
   }
 
   public void intakeWhileLaunchVoid() {
     intakePivot.setPivotPositionVoid(IntakePivot.LAUNCH_POS);
-    intakeRollers.setRollerVolt(IntakeRollers.AGITATE_VOLTAGE);
+    intakeRollers.runAgitateVelocity();
   }
 
   public void smartIntakeVoid() {
@@ -78,6 +78,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void extakeIntake() {
     intakePivot.setPivotPositionVoid(IntakePivot.EXTAKE_POS);
-    intakeRollers.setReverseRollerVolt(IntakeRollers.INTAKE_VOLTAGE);
+    intakeRollers.runRollersVelocity(true);
   }
 }
