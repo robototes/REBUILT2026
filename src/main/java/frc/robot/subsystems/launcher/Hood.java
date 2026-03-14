@@ -149,12 +149,22 @@ public class Hood extends SubsystemBase {
 
   public Command hoodPositionCommand(double positionRotations) {
     return runEnd(() -> setHoodPosition(positionRotations), () -> hood.stopMotor())
-        .withName("setting Hood position");
+        .withName("setting Hood position")
+        .onlyIf(
+            () -> {
+              return hoodZeroed;
+            });
+    ;
   }
 
   public Command suppliedHoodPositionCommand(DoubleSupplier positionRotations) {
     return runEnd(() -> setHoodPosition(positionRotations.getAsDouble()), () -> hood.stopMotor())
-        .withName("Setting hood position - Supplied");
+        .withName("Setting hood position - Supplied")
+        .onlyIf(
+            () -> {
+              return hoodZeroed;
+            });
+    ;
   }
 
   public void zero() {
@@ -192,7 +202,11 @@ public class Hood extends SubsystemBase {
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .andThen(zeroHoodCommand())
         .withTimeout(3)
-        .withName("Automatic Zero hood");
+        .withName("Automatic Zero hood")
+        .onlyIf(
+            () -> {
+              return !hoodZeroed;
+            });
   }
 
   @Override
