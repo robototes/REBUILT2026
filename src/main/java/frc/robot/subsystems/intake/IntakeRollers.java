@@ -39,9 +39,9 @@ public class IntakeRollers extends SubsystemBase {
   private DoublePublisher rightRollerPub;
   private RollerSim rollerSim;
 
-  private final double D_TARGET_RPS = 5;
-  private final double D_TARGET_ACCEL = 10; // Rotations /s /s
-  private final double D_AGITATE_TARGET_RPS = 2.5;
+  public final double D_TARGET_RPS = 5;
+  public final double D_TARGET_ACCEL = 10; // Rotations /s /s
+  public final double D_AGITATE_TARGET_RPS = 2.5;
   private final NtTunableDouble TARGET_AGITATE =
       new NtTunableDouble("SmartDashboard/intake/TargetAgitateRPS", D_AGITATE_TARGET_RPS);
   private final NtTunableDouble TARGET_ACCEL =
@@ -50,7 +50,7 @@ public class IntakeRollers extends SubsystemBase {
       new NtTunableBoolean("SmartDashboard/Tunables/TuneIntakeRollers", false);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/intake/TargetVelocityRPS", D_TARGET_RPS);
-  private VelocityVoltage velocityRequest = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
+  private final VelocityVoltage velocityRequest = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   public IntakeRollers() {
     // define motors and configs
@@ -126,22 +126,34 @@ public class IntakeRollers extends SubsystemBase {
   public Command runRollersVelocity(boolean reverse) {
     return Commands.runEnd(
         () -> {
+          double accel;
+          double vel;
           if (TUNABLE_ENABLE.get()) {
-            double accel = reverse ? -TARGET_ACCEL.get() : TARGET_ACCEL.get();
-            double vel = reverse ? -TARGET_RPS.get() : TARGET_RPS.get();
-            leftRoller.setControl(velocityRequest.withVelocity(vel).withAcceleration(accel));
-            rightRoller.setControl(followRequest);
+            accel = reverse ? -TARGET_ACCEL.get() : TARGET_ACCEL.get();
+            vel = reverse ? -TARGET_RPS.get() : TARGET_RPS.get();
           } else {
-            double accel = reverse ? -D_TARGET_ACCEL : D_TARGET_ACCEL;
-            double vel = reverse ? -D_TARGET_RPS : D_TARGET_RPS;
-            setVelocity(vel, accel);
+            accel = reverse ? -D_TARGET_ACCEL : D_TARGET_ACCEL;
+            vel = reverse ? -D_TARGET_RPS : D_TARGET_RPS;
           }
+          setVelocity(vel, accel);
         },
         () -> {
           leftRoller.stopMotor();
           rightRoller.stopMotor();
         },
         this);
+  }
+
+  public void runRollersVelocityVoid(boolean reverse) {
+    if (TUNABLE_ENABLE.get()) {
+      double accel = reverse ? -TARGET_ACCEL.get() : TARGET_ACCEL.get();
+      double vel = reverse ? -TARGET_RPS.get() : TARGET_RPS.get();
+      setVelocity(vel, accel);
+    } else {
+      double accel = reverse ? -D_TARGET_ACCEL : D_TARGET_ACCEL;
+      double vel = reverse ? -D_TARGET_RPS : D_TARGET_RPS;
+      setVelocity(vel, accel);
+    }
   }
 
   public void setVelocity(double velocity, double acceleration) {
@@ -161,6 +173,7 @@ public class IntakeRollers extends SubsystemBase {
 
   public void runAgitateVelocity() {
     leftRoller.setControl(velocityRequest.withVelocity(TARGET_AGITATE.get()));
+    rightRoller.setControl(followRequest);
   }
 
   @Override

@@ -37,7 +37,8 @@ public class IntakeSubsystem extends SubsystemBase {
   public Command intakeWhileLaunchCommand() {
     return intakePivot
         .setPivotPosition(IntakePivot.LAUNCH_POS)
-        .alongWith(Commands.runOnce(() -> intakeRollers.runAgitateVelocity()));
+        .alongWith(
+            Commands.startEnd(() -> intakeRollers.runAgitateVelocity(), intakeRollers::stopMotor));
   }
 
   public Command smartIntake() {
@@ -48,7 +49,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runRollersVoid() {
-    intakeRollers.runRollersVelocity(false);
+    intakeRollers.runRollersVelocityVoid(false);
     intakePivot.setPivotPositionVoid(intakePivot.targetPos);
   }
 
@@ -78,6 +79,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void extakeIntake() {
     intakePivot.setPivotPositionVoid(IntakePivot.EXTAKE_POS);
-    intakeRollers.runRollersVelocity(true);
+    intakeRollers.runRollersVelocityVoid(true);
   }
 }

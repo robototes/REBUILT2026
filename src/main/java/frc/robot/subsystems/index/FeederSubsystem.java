@@ -29,14 +29,14 @@ public class FeederSubsystem extends SubsystemBase {
 
   private VoltageOut voltReq = new VoltageOut(0);
   private final double D_TARGET_RPS = 5;
-  private double D_TARGET_ACCEL = 10; // Rotations /s /s
+  private final double D_TARGET_ACCEL = 10; // Rotations /s /s
   private final NtTunableDouble TARGET_ACCEL =
       new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
-  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
+  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final TalonFX feedMotor;
 

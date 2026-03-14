@@ -26,14 +26,14 @@ public class SpindexerSubsystem extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
   private final double D_TARGET_RPS = 2;
-  private double D_TARGET_ACCEL = 2; // Rotations /s /s
+  private final double D_TARGET_ACCEL = 2; // Rotations /s /s
   private final NtTunableDouble TARGET_ACCEL =
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
-  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
+  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final FlywheelSim motorSim;
 
@@ -78,8 +78,11 @@ public class SpindexerSubsystem extends SubsystemBase {
 
   public void runDefaultVelocity() {
     if (TUNABLE_ENABLE.get()) {
-      spindexerMotor.setControl(
-          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
+      double vel = TARGET_RPS.get();
+      double accel = TARGET_ACCEL.get();
+      setVelocity(vel, accel);
+    } else {
+      setVelocity(D_TARGET_RPS);
     }
   }
 
