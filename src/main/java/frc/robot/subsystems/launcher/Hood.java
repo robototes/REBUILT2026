@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
+import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -53,6 +54,8 @@ public class Hood extends SubsystemBase {
   private static final double BACKWARD_SOFT_LIMIT = -0.02; // -0.02 rotations, past zeroing point
 
   public final boolean TUNER_CONTROLLED = false; // boolean to check if tuner control is being used
+  public final NtTunableBoolean tunerControlledTunable =
+      new NtTunableBoolean("/SmartDashBoard/Tunables/Hood", TUNER_CONTROLLED);
 
   // Mechanism tuning required !! TODO: TUNE
   private static final double AUTO_ZERO_VOLTAGE = -0.5;
@@ -130,10 +133,10 @@ public class Hood extends SubsystemBase {
   public void periodic() {
     positionPub.set(hood.getPosition().getValueAsDouble());
     goalPub.set(request.Position);
-    if (TUNER_CONTROLLED) {
+    if (tunerControlledTunable.get()) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetPosition.getAtomic();
-        // setHoodPosition(currentTarget.value);
+        setHoodPosition(currentTarget.value);
         lastPositionUpdateTime = currentTarget.timestamp;
       }
     }
