@@ -8,8 +8,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.DoubleSubscriber;
-import edu.wpi.first.networktables.IntegerSubscriber;
+import edu.wpi.first.networktables.DoubleEntry;
+import edu.wpi.first.networktables.IntegerEntry;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -54,8 +54,8 @@ public class LaunchCalculator {
   // private final NtTunableDouble phaseDelay;
   // private final NtTunableDouble LOOKAHEAD_ITERATIONS;
 
-  private final DoubleSubscriber phaseDelaySub;
-  private final IntegerSubscriber iterationsSub;
+  private final DoubleEntry phaseDelaySub;
+  private final IntegerEntry iterationsSub;
 
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
@@ -82,6 +82,8 @@ public class LaunchCalculator {
     NetworkTable table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
     phaseDelaySub = table.getDoubleTopic("phaseDelay").getEntry(D_PHASE_DELAY);
     iterationsSub = table.getIntegerTopic("Lookahead iterations").getEntry(D_LOOKAHEAD_ITERATIONS);
+    phaseDelaySub.set(D_PHASE_DELAY);
+    iterationsSub.set(D_LOOKAHEAD_ITERATIONS);
   }
 
   public LaunchingParameters getParameters(CommandSwerveDrivetrain robotState) {
