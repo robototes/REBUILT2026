@@ -1,8 +1,10 @@
 package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -18,12 +20,24 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableBoolean;
+import frc.robot.util.tuning.NtTunableDouble;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
   public static final double FEEDER_VOLTAGE = 11;
   private static final int feederRumbleThreshold = 67;
+
   private VoltageOut voltReq = new VoltageOut(0);
+  private final double D_TARGET_RPS = 92;
+  private final double D_TARGET_ACCEL = 10; // Rotations /s /s
+  private final NtTunableDouble TARGET_ACCEL =
+      new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
+  private final NtTunableBoolean TUNABLE_ENABLE =
+      new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
+  private final NtTunableDouble TARGET_RPS =
+      new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final TalonFX feedMotor;
 
@@ -69,11 +83,30 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
+    talonFXConfiguration.Slot0.kA = 0.0;
+    talonFXConfiguration.Slot0.kV = 11.28 / 92;
+
     cfg.apply(talonFXConfiguration);
   }
 
   public void setVoltage(double voltage) {
     feedMotor.setControl(voltReq.withOutput(voltage));
+  }
+
+  public void runDefaultVelocity() {
+    if (TUNABLE_ENABLE.get()) {
+      setVelocity(TARGET_RPS.get(), TARGET_ACCEL.get());
+    } else {
+      setVelocity(D_TARGET_RPS);
+    }
+  }
+
+  public void setVelocity(double velocity, double acceleration) {
+    feedMotor.setControl(TARGET_VELOCITY.withVelocity(velocity).withAcceleration(acceleration));
+  }
+
+  public void setVelocity(double velocity) {
+    feedMotor.setControl(TARGET_VELOCITY.withVelocity(velocity).withAcceleration(D_TARGET_ACCEL));
   }
 
   public Command startMotor() {
