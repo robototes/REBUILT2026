@@ -164,7 +164,7 @@ public class Flywheels extends SubsystemBase {
 
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
-    if (tunerControlledTunable.get()) {
+    if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetVelocity.getAtomic();
         setVelocityRPS(currentTarget.value);
