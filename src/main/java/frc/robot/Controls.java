@@ -233,10 +233,9 @@ public class Controls {
         .rightBumper()
         .onTrue(
             Commands.runOnce(
-                () -> {
-                  Translation2d hub = AllianceUtils.getHubTranslation2d();
-                  s.drivebaseSubsystem.resetPose(new Pose2d(hub, Rotation2d.kZero));
-                }));
+                () ->
+                    s.drivebaseSubsystem.resetPose(
+                        new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero))));
   }
 
   private void configureAutoAlignBindings() {
