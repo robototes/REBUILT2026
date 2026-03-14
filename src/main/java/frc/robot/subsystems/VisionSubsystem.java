@@ -233,7 +233,6 @@ public class VisionSubsystem extends SubsystemBase {
       pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
       avgTagDist = estimate.avgTagDist;
-
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
@@ -291,6 +290,8 @@ public class VisionSubsystem extends SubsystemBase {
           fieldPose3dEntry.set(fieldPose3d);
           lastFieldPose = fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
+          SmartDashboard.putNumber(
+              "/vision/visionError", getVisionPoseError(fieldPose3d.toPose2d(), timestampSeconds));
         }
         lastTimestampSeconds = timestampSeconds;
       }
@@ -428,5 +429,13 @@ public class VisionSubsystem extends SubsystemBase {
     // Use a different chance slot for LIMELIGHT_A
     double chance = camera.getName().equals(Hardware.LIMELIGHT_A) ? chanceSlots[1] : chanceSlots[0];
     return chance < FAKE_POSE_RATE;
+  }
+
+  private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {
+    if (drivetrain != null) {
+      return getDistanceToTargetViaPoseEstimation(
+          visionPose2d, drivetrain.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds)).get());
+    }
+    return 0;
   }
 }
