@@ -19,14 +19,22 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableBoolean;
+import frc.robot.util.tuning.NtTunableDouble;
 
 public class FeederSubsystem extends SubsystemBase {
   private int ballsDetectedNum = 0;
   public static final double FEEDER_VOLTAGE = 11;
   private static final int feederRumbleThreshold = 67;
+
   private VoltageOut voltReq = new VoltageOut(0);
-  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(15); // Rotations/s
+  private final double D_TARGET_RPS = 5;
+  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
   private double D_ANGULAR_ACCEL = 10; // Rotations /s /s
+  private final NtTunableBoolean TUNABLE_ENABLE =
+      new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
+  private final NtTunableDouble TARGET_RPS =
+      new NtTunableDouble("SmartDashboard/IndexerSubsystem/", D_TARGET_RPS);
   private final TalonFX feedMotor;
 
   private final FlywheelSim motorSim;
@@ -79,7 +87,10 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public void runDefaultVelocity() {
-    feedMotor.setControl(TARGET_VELOCITY.withAcceleration(D_ANGULAR_ACCEL));
+    if (TUNABLE_ENABLE.get()) {
+      feedMotor.setControl(
+          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(D_ANGULAR_ACCEL));
+    }
   }
 
   public void setVelocity(double velocity, double acceleration) {

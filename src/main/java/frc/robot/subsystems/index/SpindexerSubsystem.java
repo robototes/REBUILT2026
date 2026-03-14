@@ -16,15 +16,22 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.util.tuning.NtTunableBoolean;
+import frc.robot.util.tuning.NtTunableDouble;
 
 public class SpindexerSubsystem extends SubsystemBase {
 
   public static final double SPINDEXER_VOLTAGE = 11;
-  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(3); // Rotations/s
-  private double D_ANGULAR_ACCEL = 1.5; // Rotations /s /s
   private VoltageOut voltReq = new VoltageOut(0);
-
   private final TalonFX spindexerMotor;
+
+  private final double D_TARGET_RPS = 2;
+  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
+  private double D_ANGULAR_ACCEL = 2; // Rotations /s /s
+  private final NtTunableBoolean TUNABLE_ENABLE =
+      new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
+  private final NtTunableDouble TARGET_RPS =
+      new NtTunableDouble("SmartDashboard/SpindexerSubsystem/", D_TARGET_RPS);
 
   private final FlywheelSim motorSim;
 
@@ -68,7 +75,10 @@ public class SpindexerSubsystem extends SubsystemBase {
   }
 
   public void runDefaultVelocity() {
-    spindexerMotor.setControl(TARGET_VELOCITY.withAcceleration(D_ANGULAR_ACCEL));
+    if (TUNABLE_ENABLE.get()) {
+      spindexerMotor.setControl(
+          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(D_ANGULAR_ACCEL));
+    }
   }
 
   public void setVelocity(double velocity, double acceleration) {
