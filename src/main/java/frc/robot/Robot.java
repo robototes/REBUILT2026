@@ -43,8 +43,14 @@ public class Robot extends TimedRobot {
   private final int GAMEPIECE_PIPELINE = 2;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
+  private final double MAX_TIME_RECORD = 165;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
+
+  @Override
+  public void printWatchdogEpochs() {
+    super.printWatchdogEpochs();
+  }
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -231,6 +237,17 @@ public class Robot extends TimedRobot {
     }
   }
 
+  /** This function is called periodically during operator control. */
+  @Override
+  public void teleopExit() {
+    if (!RobotType.isAlpha()) {
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+    } else {
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_C, MAX_TIME_RECORD);
+    }
+  }
+
   @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.
@@ -272,7 +289,7 @@ public class Robot extends TimedRobot {
   private void supplyRobotYawToLimelight(String limelightName) {
     LimelightHelpers.SetRobotOrientation(
         limelightName,
-        subsystems.drivebaseSubsystem.getPigeon2().getYaw().getValueAsDouble(),
+        subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
         0,
         0,
         0,

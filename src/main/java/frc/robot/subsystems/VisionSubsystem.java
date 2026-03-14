@@ -18,6 +18,7 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -29,21 +30,40 @@ import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
-import java.util.ArrayList;
 
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
-
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
   private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
   private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
   public boolean limelightaOnline = false;
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
-  private boolean fakePoses = false;
-  private double chance = 0;
-  public static boolean useGetStdDev = false;
+  private final boolean FAKE_POSES = false;
+  public static boolean useGetStdDev = true;
   private Matrix<N3, N1> stdDevs = null;
+  private final Matrix<N3, N1> EST_STD_DEVS_MT1 =
+      VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Math.PI / 60);
+  private final Matrix<N3, N1> EST_STD_DEVS_MT2 = VecBuilder.fill(0.5, 0.5, Double.MAX_VALUE);
+  private final Matrix<N3, N1> REG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 0.5);
+  private final Pose2d BAD_POSE_2D = new Pose2d(-1, -1, new Rotation2d(0));
+  private final double LIMELIGHT4_BOOST_MT1 = 0.1;
+  private final double LIMELIGHT4_BOOST_MT2 = 0.8;
+  private final double MULTITARGET_BOOST_MT2 = 0.65;
+  private final double MAX_DISTANCE_MT1 = 2;
+  private final double MAX_DISTANCE_MT2 = 5;
+  private final double MAX_AMBIGUITY = 0.3;
+  private final double AMBIGUITY_BOOST_MT2 = 5;
+  private final double FINAL_BOOST_MT1 = 30;
+  private final double FINAL_BOOST_MT2 = 5;
+  private final double ONE_TAG = 1;
+  private final double MAX_XY_VELO_ALPHA = 0.001;
+  private final double MAX_TURN_VELO_ALPHA = 0.02;
+  private double stddevScalarMt1 = 1;
+  private double stddevScalarMt2 = 1;
+  private final double[] aCameraChanceSlots = new double[2];
+  private final double[] bCameraChanceSlots = new double[2];
+  private final double[] cCameraChanceSlots = new double[2];
 
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
@@ -60,6 +80,8 @@ public class VisionSubsystem extends SubsystemBase {
   private final FieldObject2d rawVisionFieldObject;
 
   private BooleanSubscriber disableVision;
+  private final double FAKE_POSE_RATE = 0.07;
+  private double avgTagDist = 0;
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
@@ -93,14 +115,12 @@ public class VisionSubsystem extends SubsystemBase {
   private double lastTimestampSeconds = 0;
   private double timestampSeconds = 0;
   private Pose2d lastFieldPose = null;
-  private double distance = 0;
   private double numOfTags = 0;
   private double avgAmbiguity = 0;
   private double sumOfAmbiguitys = 0;
-  private ArrayList<Double> ambiguitys = new ArrayList<Double>();
+  private int fakePoseCount = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
-  private static final double DISTANCE_TOLERANCE = 1.0;
   // degrees
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
@@ -122,6 +142,9 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
+    SmartDashboard.putBoolean("/vision/fakePoses", false);
+    SmartDashboard.putNumber("/vision/fakePoseRate", 0.07);
+    SmartDashboard.putNumber("/vision/fakePoseCount", 0);
   }
 
   public void update() {
@@ -129,49 +152,61 @@ public class VisionSubsystem extends SubsystemBase {
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
     if (!RobotType.isAlpha()) {
-      processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
-      processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
+      processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA, aCameraChanceSlots);
+      processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB, bCameraChanceSlots);
       updateCameraView(drivePose3d);
     }
 
     if (RobotType.isAlpha()) {
-      processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC);
+      processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC, cCameraChanceSlots);
     }
   }
 
   private void processCamera(
-      LLCamera camera, boolean cameraOnline, StructPublisher<Pose3d> rawFieldPose3dEntry) {
+      LLCamera camera,
+      boolean cameraOnline,
+      StructPublisher<Pose3d> rawFieldPose3dEntry,
+      double[] chanceSlots) {
     if (cameraOnline) {
       RawFiducial[] rawFiducials = camera.getRawFiducials();
       if (rawFiducials != null) {
         processTags(rawFiducials);
-        if (fakePoses) {
-          chance = Math.random();
+
+        // Roll independently for each pipeline
+        if (FAKE_POSES) {
+          chanceSlots[0] = Math.random();
+          chanceSlots[1] = Math.random();
+        } else {
+          chanceSlots[0] = 0;
+          chanceSlots[1] = 0;
         }
         if (!useGetStdDev) {
           if (rawFiducials.length != 1) {
             // Multi tag pose Estimation
-            if (chance > 0.5) {
-              processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, true, false);
-            } else {
-              processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, false, false);
-            }
+            processLimelight(
+                camera.getBetterPoseEstimate(),
+                rawFieldPose3dEntry,
+                shouldInjectFakePose(camera, chanceSlots),
+                false);
           } else {
             // Single tag pose Estimation
-            if (chance > 0.5) {
-              processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, true, false);
-            } else {
-              processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, false, false);
-            }
+            processLimelight(
+                camera.getPoseEstimateMegatag2(),
+                rawFieldPose3dEntry,
+                shouldInjectFakePose(camera, chanceSlots),
+                false);
           }
         } else {
-          if (chance > 0.5) {
-            processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, true, false);
-            processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, true, false);
-          } else {
-            processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, false, false);
-            processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, false, false);
-          }
+          processLimelight(
+              camera.getBetterPoseEstimate(),
+              rawFieldPose3dEntry,
+              shouldInjectFakePose(camera, chanceSlots),
+              false);
+          processLimelight(
+              camera.getPoseEstimateMegatag2(),
+              rawFieldPose3dEntry,
+              shouldInjectFakePose(camera, chanceSlots),
+              false);
         }
       }
     }
@@ -196,7 +231,7 @@ public class VisionSubsystem extends SubsystemBase {
       fieldPose3d = estimate.pose3d;
       pose_bad = false;
       rawFieldPoseEntry.set(fieldPose3d);
-
+      avgTagDist = estimate.avgTagDist;
       if (!MathUtil.isNear(0, fieldPose3d.getZ(), HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
               0, fieldPose3d.getRotation().getX(), Units.degreesToRadians(ROTATION_TOLERANCE))
@@ -204,20 +239,20 @@ public class VisionSubsystem extends SubsystemBase {
               0, fieldPose3d.getRotation().getY(), Units.degreesToRadians(ROTATION_TOLERANCE))
           || lastFieldPose != null && lastFieldPose.equals(fieldPose3d.toPose2d())
           || lastFieldPose != null
-              && Math.abs(swerveSpeeds.vxMetersPerSecond) < 0.001
-              && Math.abs(swerveSpeeds.vyMetersPerSecond) < 0.001
-              && Math.abs(swerveSpeeds.omegaRadiansPerSecond) < 0.02
+              && Math.abs(swerveSpeeds.vxMetersPerSecond) < MAX_XY_VELO_ALPHA
+              && Math.abs(swerveSpeeds.vyMetersPerSecond) < MAX_XY_VELO_ALPHA
+              && Math.abs(swerveSpeeds.omegaRadiansPerSecond) < MAX_TURN_VELO_ALPHA
               && RobotType.isAlpha()
-          || avgAmbiguity > 0.3) {
+          || avgAmbiguity > MAX_AMBIGUITY) {
         pose_bad = true;
       }
 
       if (!pose_bad) {
         if (useGetStdDevs) {
           if (estimate.isMegaTag2) {
-            stdDevs = getEstimationStdDevsLimelightMT2(estimate, true);
+            stdDevs = getEstimationStdDevsLimelightMT2(true);
           } else {
-            stdDevs = getEstimationStdDevsLimelightMT1(estimate, true);
+            stdDevs = getEstimationStdDevsLimelightMT1(true);
           }
         }
         if (!putBadPose) {
@@ -226,21 +261,23 @@ public class VisionSubsystem extends SubsystemBase {
                 fieldPose3d.toPose2d(), Utils.fpgaToCurrentTime(timestampSeconds), stdDevs);
           } else {
             drivetrain.addVisionMeasurement(
-                fieldPose3d.toPose2d(),
-                Utils.fpgaToCurrentTime(timestampSeconds),
-                VecBuilder.fill(0.5, 0.5, 0.5));
+                fieldPose3d.toPose2d(), Utils.fpgaToCurrentTime(timestampSeconds), REG_STD_DEVS);
           }
         } else {
+          fakePoseCount++;
+          SmartDashboard.putNumber("/vision/fakePoseCount", fakePoseCount);
+          DataLogManager.log(
+              String.format(
+                  "[VisionSubsystem] FAKE POSE INJECTED | t=%.4f | cam=%s | count=%d",
+                  Utils.fpgaToCurrentTime(timestampSeconds),
+                  rawFieldPoseEntry.getTopic().getName(), // identifies which camera fired
+                  fakePoseCount));
           if (useGetStdDevs) {
             drivetrain.addVisionMeasurement(
-                new Pose2d(-1, -1, new Rotation2d(0)),
-                Utils.fpgaToCurrentTime(timestampSeconds),
-                stdDevs);
+                BAD_POSE_2D, Utils.fpgaToCurrentTime(timestampSeconds), stdDevs);
           } else {
             drivetrain.addVisionMeasurement(
-                new Pose2d(-1, -1, new Rotation2d(0)),
-                Utils.fpgaToCurrentTime(timestampSeconds),
-                VecBuilder.fill(0.5, 0.5, 0.5));
+                BAD_POSE_2D, Utils.fpgaToCurrentTime(timestampSeconds), REG_STD_DEVS);
           }
         }
         // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
@@ -252,49 +289,44 @@ public class VisionSubsystem extends SubsystemBase {
           fieldPose3dEntry.set(fieldPose3d);
           lastFieldPose = fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
+          SmartDashboard.putNumber(
+              "/vision/visionError", getVisionPoseError(fieldPose3d.toPose2d(), timestampSeconds));
         }
         lastTimestampSeconds = timestampSeconds;
       }
     }
   }
 
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(
-      BetterPoseEstimate poseEstimate, boolean isLL4) {
-    // PI/60 is about 3 degrees
-    var estStdDevs = VecBuilder.fill(1e6, 1e6, Math.PI / 60);
-    double stddevScalar = 1;
-
-    // if no tags detected, ignorse the pose by returning very high std devs
-    if (numOfTags == 0) {
-      return VecBuilder.fill(1e6, 1e6, 1e6);
-    }
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(boolean isLL4) {
+    stddevScalarMt1 = 1;
 
     // Decrease std devs if limelight is LL4
     if (isLL4) {
-      stddevScalar *= .1;
+      stddevScalarMt1 *= LIMELIGHT4_BOOST_MT1;
     }
 
     // If the average ambiguity is too high, return very high std devs to ignore the
     // pose
-    if (avgAmbiguity > 0.3) {
-      return VecBuilder.fill(1e6, 1e6, 1e6);
+    if (avgAmbiguity > MAX_AMBIGUITY) {
+      return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
     // Scale the standard deviations based on the average ambiguity
-    stddevScalar *= (1 + (avgAmbiguity * 5));
+    // the 1 here is to make to not divide
+    stddevScalarMt1 *= (1 + (avgAmbiguity * AMBIGUITY_BOOST_MT2));
 
     // If the average distance is too far, return very high std devs to ignore the
     // pose
-    if (numOfTags == 1 && poseEstimate.avgTagDist > 2) {
-      estStdDevs = VecBuilder.fill(1e6, 1e6, 1e6);
-    } else { // Scale the standard deviations based on the average distance
-      stddevScalar *= (1 + (poseEstimate.avgTagDist * poseEstimate.avgTagDist / 30));
+    if (numOfTags == ONE_TAG && avgTagDist > MAX_DISTANCE_MT1) {
+      return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+    } else {
+      // Scale the standard deviations based on the average distance
+      // the 1 here is to make to not divide
+      stddevScalarMt1 *= (1 + (avgTagDist * avgTagDist / FINAL_BOOST_MT1));
     }
 
     // apply the calculated scalar to the standard deviations
-    estStdDevs = estStdDevs.times(stddevScalar);
-
-    return estStdDevs;
+    return EST_STD_DEVS_MT1.times(stddevScalarMt1);
   }
 
   /**
@@ -303,39 +335,29 @@ public class VisionSubsystem extends SubsystemBase {
    * @param poseEstimate the pose estimate from the limelight
    * @return the estimated standard deviations
    */
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(
-      BetterPoseEstimate poseEstimate, boolean isLL4) {
-    var estStdDevs = VecBuilder.fill(0.5, 0.5, 1e6);
-    double stddevScalar = 1;
-
-    double avgDist = poseEstimate.avgTagDist;
-
-    // if no tags detected, ignorse the pose by returning very high std devs
-    if (numOfTags == 0) {
-      return VecBuilder.fill(1e6, 1e6, 1e6);
-    }
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(boolean isLL4) {
+    stddevScalarMt2 = 1;
 
     // Decrease std devs if multiple targets are visible
-    if (numOfTags > 1) {
-      stddevScalar *= (0.65);
+    if (numOfTags > ONE_TAG) {
+      stddevScalarMt2 *= (MULTITARGET_BOOST_MT2);
     }
 
     // Decrease std devs if limelight is LL4
     if (isLL4) {
-      stddevScalar *= (.8);
+      stddevScalarMt2 *= (LIMELIGHT4_BOOST_MT2);
     }
 
     // Increase std devs based on (average) distance
-    if (numOfTags == 1 && avgDist > 5) {
-      estStdDevs = VecBuilder.fill(1e6, 1e6, 1e6);
+    if (numOfTags == ONE_TAG && avgTagDist > MAX_DISTANCE_MT2) {
+      return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     } else {
-      stddevScalar *= (1 + (avgDist * avgDist * .2));
+      // the 1 here is to make to not divide
+      stddevScalarMt2 *= (1 + (avgTagDist * avgTagDist / FINAL_BOOST_MT2));
     }
 
     // apply the calculated scalar to the standard deviations
-    estStdDevs = estStdDevs.times(stddevScalar);
-
-    return estStdDevs;
+    return EST_STD_DEVS_MT2.times(stddevScalarMt2);
   }
 
   public int getNumTargets() {
@@ -354,10 +376,6 @@ public class VisionSubsystem extends SubsystemBase {
 
   public double getTimeSinceLastReading() {
     return Timer.getFPGATimestamp() - lastTimestampSeconds;
-  }
-
-  public double getDistanceToTarget() {
-    return (double) Math.round(distance * 1000) / 1000;
   }
 
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
@@ -396,11 +414,27 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void processTags(RawFiducial[] rfs) {
     for (RawFiducial rf : rfs) {
-      ambiguitys.add(rf.ambiguity);
       sumOfAmbiguitys += rf.ambiguity;
     }
-    avgAmbiguity = sumOfAmbiguitys / ambiguitys.size();
-    ambiguitys.clear();
+    numOfTags = getNumTargets();
+    avgAmbiguity = sumOfAmbiguitys / numOfTags;
     sumOfAmbiguitys = 0;
+  }
+
+  private boolean shouldInjectFakePose(LLCamera camera, double[] chanceSlots) {
+    if (!FAKE_POSES) {
+      return false;
+    }
+    // Use a different chance slot for LIMELIGHT_A
+    double chance = camera.getName().equals(Hardware.LIMELIGHT_A) ? chanceSlots[1] : chanceSlots[0];
+    return chance < FAKE_POSE_RATE;
+  }
+
+  private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {
+    if (drivetrain != null) {
+      return getDistanceToTargetViaPoseEstimation(
+          visionPose2d, drivetrain.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds)).get());
+    }
+    return 0;
   }
 }
