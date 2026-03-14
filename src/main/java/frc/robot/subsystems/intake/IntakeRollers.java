@@ -39,9 +39,9 @@ public class IntakeRollers extends SubsystemBase {
   private DoublePublisher rightRollerPub;
   private RollerSim rollerSim;
 
-  public final double D_TARGET_RPS = 5;
-  public final double D_TARGET_ACCEL = 10; // Rotations /s /s
-  public final double D_AGITATE_TARGET_RPS = 2.5;
+  private final double D_TARGET_RPS = 5;
+  private final double D_TARGET_ACCEL = 10; // Rotations /s /s
+  private final double D_AGITATE_TARGET_RPS = 2.5;
   private final NtTunableDouble TARGET_AGITATE =
       new NtTunableDouble("SmartDashboard/intake/TargetAgitateRPS", D_AGITATE_TARGET_RPS);
   private final NtTunableDouble TARGET_ACCEL =
@@ -145,15 +145,16 @@ public class IntakeRollers extends SubsystemBase {
   }
 
   public void runRollersVelocityVoid(boolean reverse) {
+    double accel;
+    double vel;
     if (TUNABLE_ENABLE.get()) {
-      double accel = reverse ? -TARGET_ACCEL.get() : TARGET_ACCEL.get();
-      double vel = reverse ? -TARGET_RPS.get() : TARGET_RPS.get();
-      setVelocity(vel, accel);
+      accel = reverse ? -TARGET_ACCEL.get() : TARGET_ACCEL.get();
+      vel = reverse ? -TARGET_RPS.get() : TARGET_RPS.get();
     } else {
-      double accel = reverse ? -D_TARGET_ACCEL : D_TARGET_ACCEL;
-      double vel = reverse ? -D_TARGET_RPS : D_TARGET_RPS;
-      setVelocity(vel, accel);
+      accel = reverse ? -D_TARGET_ACCEL : D_TARGET_ACCEL;
+      vel = reverse ? -D_TARGET_RPS : D_TARGET_RPS;
     }
+    setVelocity(vel, accel);
   }
 
   public void setVelocity(double velocity, double acceleration) {
@@ -172,8 +173,7 @@ public class IntakeRollers extends SubsystemBase {
   }
 
   public void runAgitateVelocity() {
-    leftRoller.setControl(velocityRequest.withVelocity(TARGET_AGITATE.get()));
-    rightRoller.setControl(followRequest);
+    setVelocity(TARGET_AGITATE.get());
   }
 
   @Override

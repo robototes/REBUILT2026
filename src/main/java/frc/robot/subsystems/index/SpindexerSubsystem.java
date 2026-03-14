@@ -78,9 +78,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
   public void runDefaultVelocity() {
     if (TUNABLE_ENABLE.get()) {
-      double vel = TARGET_RPS.get();
-      double accel = TARGET_ACCEL.get();
-      setVelocity(vel, accel);
+      setVelocity(TARGET_RPS.get(), TARGET_ACCEL.get());
     } else {
       setVelocity(D_TARGET_RPS);
     }
