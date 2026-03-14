@@ -125,18 +125,7 @@ public class IntakeRollers extends SubsystemBase {
   // Using velocity
   public Command runRollersVelocity(boolean reverse) {
     return Commands.runEnd(
-        () -> {
-          double accel;
-          double vel;
-          if (TUNABLE_ENABLE.get()) {
-            accel = reverse ? -TARGET_ACCEL.get() : TARGET_ACCEL.get();
-            vel = reverse ? -TARGET_RPS.get() : TARGET_RPS.get();
-          } else {
-            accel = reverse ? -D_TARGET_ACCEL : D_TARGET_ACCEL;
-            vel = reverse ? -D_TARGET_RPS : D_TARGET_RPS;
-          }
-          setVelocity(vel, accel);
-        },
+        () -> runRollersVelocityVoid(reverse),
         () -> {
           leftRoller.stopMotor();
           rightRoller.stopMotor();
