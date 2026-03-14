@@ -4,9 +4,8 @@
 
 package frc.robot;
 
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
-
 import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -18,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
@@ -43,8 +43,14 @@ public class Robot extends TimedRobot {
   private final int GAMEPIECE_PIPELINE = 2;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
+  private final double MAX_TIME_RECORD = 165;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
+
+  @Override
+  public void printWatchdogEpochs() {
+    super.printWatchdogEpochs();
+  }
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -228,6 +234,17 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     if (subsystems.visionSubsystem != null) {
       subsystems.visionSubsystem.update();
+    }
+  }
+
+  /** This function is called periodically during operator control. */
+  @Override
+  public void teleopExit() {
+    if (!RobotType.isAlpha()) {
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+    } else {
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_C, MAX_TIME_RECORD);
     }
   }
 
