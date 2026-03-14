@@ -235,11 +235,7 @@ public class Controls {
             Commands.runOnce(
                 () ->
                     s.drivebaseSubsystem.resetPose(
-                        new Pose2d(
-                            (new Translation2d(Units.inchesToMeters(182.11), 0)),
-                            Rotation2d.kZero))));
-    // s.drivebaseSubsystem.runOnce(
-    //     () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+                        new Pose2d(AllianceUtils.getHubTranslation2d(), Rotation2d.kZero))));
   }
 
   private void configureAutoAlignBindings() {
