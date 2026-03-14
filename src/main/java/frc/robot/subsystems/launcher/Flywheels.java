@@ -40,9 +40,8 @@ public class Flywheels extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   public final double FLYWHEEL_TOLERANCE = 5; // RPS
-  public final boolean TUNER_CONTROLLED = false;
-  public final NtTunableBoolean tunerControlledTunable =
-      new NtTunableBoolean("/SmartDashBoard/Tunables/Flywheels", TUNER_CONTROLLED);
+  public final NtTunableBoolean TUNER_CONTROLLED =
+      new NtTunableBoolean("/SmartDashBoard/Tunables/Flywheels", false);
 
   // Constructor
   public Flywheels() {
