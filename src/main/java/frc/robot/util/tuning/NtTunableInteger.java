@@ -33,7 +33,7 @@ public final class NtTunableInteger {
 
   /** Gets the latest value from the dashboard (or the default if never changed). */
   public int get() {
-    return (int) sub.get();
+    return Math.toIntExact(sub.get());
   }
 
   public TimestampedInteger getAtomic() {
