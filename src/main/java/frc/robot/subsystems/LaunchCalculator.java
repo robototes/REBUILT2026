@@ -79,7 +79,10 @@ public class LaunchCalculator {
 
   private LaunchCalculator() {
     // Get the table once
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("SmartDashboard");
+    NetworkTable table =
+        NetworkTableInstance.getDefault()
+            .getTable("SmartDashboard")
+            .getSubTable("LaunchCalculator");
     phaseDelaySub = table.getDoubleTopic("phaseDelay").getEntry(D_PHASE_DELAY);
     iterationsSub = table.getIntegerTopic("Lookahead iterations").getEntry(D_LOOKAHEAD_ITERATIONS);
     phaseDelaySub.set(D_PHASE_DELAY);
