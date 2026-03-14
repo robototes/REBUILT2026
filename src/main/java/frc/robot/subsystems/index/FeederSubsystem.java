@@ -1,6 +1,7 @@
 package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -28,7 +29,7 @@ public class FeederSubsystem extends SubsystemBase {
   private static final int feederRumbleThreshold = 67;
 
   private VoltageOut voltReq = new VoltageOut(0);
-  private final double D_TARGET_RPS = 5;
+  private final double D_TARGET_RPS = 92;
   private final double D_TARGET_ACCEL = 10; // Rotations /s /s
   private final NtTunableDouble TARGET_ACCEL =
       new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
@@ -81,6 +82,9 @@ public class FeederSubsystem extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
+
+    talonFXConfiguration.Slot0.kA = 0.0;
+    talonFXConfiguration.Slot0.kV = 11.28 / 92;
 
     cfg.apply(talonFXConfiguration);
   }

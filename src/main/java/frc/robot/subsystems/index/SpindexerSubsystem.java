@@ -69,6 +69,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
+    talonFXConfiguration.Slot0.kA = 0.0;
+    talonFXConfiguration.Slot0.kV = 11.2 / 90.7;
+
     cfg.apply(talonFXConfiguration);
   }
 

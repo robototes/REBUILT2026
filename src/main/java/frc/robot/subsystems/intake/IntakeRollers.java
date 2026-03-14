@@ -80,6 +80,9 @@ public class IntakeRollers extends SubsystemBase {
     talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
+    talonFXConfigs.Slot0.kA = 0.0;
+    talonFXConfigs.Slot0.kV = 10.7 / 83;
+
     // configurator
     leftRoller.getConfigurator().apply(talonFXConfigs);
     rightRoller.getConfigurator().apply(talonFXConfigs);
