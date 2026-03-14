@@ -233,13 +233,10 @@ public class Controls {
         .rightBumper()
         .onTrue(
             Commands.runOnce(
-                () ->
-                    s.drivebaseSubsystem.resetPose(
-                        new Pose2d(
-                            (new Translation2d(Units.inchesToMeters(182.11), 0)),
-                            Rotation2d.kZero))));
-    // s.drivebaseSubsystem.runOnce(
-    //     () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+                () -> {
+                  Translation2d hub = AllianceUtils.getHubTranslation2d();
+                  s.drivebaseSubsystem.resetPose(new Pose2d(hub, Rotation2d.kZero));
+                }));
   }
 
   private void configureAutoAlignBindings() {
