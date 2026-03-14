@@ -46,10 +46,10 @@ public class Hood extends SubsystemBase {
   private static final double TARGET_TOLERANCE = 0.05; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
       1; // voltage/speed to control the motor for manual control
-  private static final double STATOR_CURRENT_LIMIT = 10; // stator limit in amps
-  // GEAR_RATIO = 2.90909;
+  private static final double STATOR_CURRENT_LIMIT = 80; // stator limit in amps
+  // both forward and backward soft limits are in Rotor rotations
   private static final double FORWARD_SOFT_LIMIT =
-      15; // LIMITED TO 15 FROM BREAK -TD //18.411; // 1.72 rotations
+      19; // LIMITED TO 19 - March 14th Physical limit
   private static final double BACKWARD_SOFT_LIMIT = -0.02; // -0.02 rotations, past zeroing point
 
   public final boolean TUNER_CONTROLLED = false; // boolean to check if tuner control is being used
@@ -84,7 +84,7 @@ public class Hood extends SubsystemBase {
     TalonFXConfigurator hood_Configurator = hood.getConfigurator();
 
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 5;
+    config.CurrentLimits.SupplyCurrentLimit = 40;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -118,8 +118,8 @@ public class Hood extends SubsystemBase {
     simPID.kS = 0;
     simPID.kG = 0.0;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 32;
-    config.MotionMagic.MotionMagicAcceleration = 64;
+    config.MotionMagic.MotionMagicCruiseVelocity = 130;
+    config.MotionMagic.MotionMagicAcceleration = 3500;
 
     config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 
