@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -186,34 +187,26 @@ public class VisionSubsystem extends SubsystemBase {
             processLimelight(
                 camera.getBetterPoseEstimate(),
                 rawFieldPose3dEntry,
-                camera.getName().equals(Hardware.LIMELIGHT_A)
-                    ? FAKE_POSES && chanceSlots[1] < FAKE_POSE_RATE
-                    : FAKE_POSES && chanceSlots[0] < FAKE_POSE_RATE,
+                shouldInjectFakePose(camera, chanceSlots),
                 false);
           } else {
             // Single tag pose Estimation
             processLimelight(
                 camera.getPoseEstimateMegatag2(),
                 rawFieldPose3dEntry,
-                camera.getName().equals(Hardware.LIMELIGHT_A)
-                    ? FAKE_POSES && chanceSlots[1] < FAKE_POSE_RATE
-                    : FAKE_POSES && chanceSlots[0] < FAKE_POSE_RATE,
+                shouldInjectFakePose(camera, chanceSlots),
                 false);
           }
         } else {
           processLimelight(
               camera.getBetterPoseEstimate(),
               rawFieldPose3dEntry,
-              camera.getName().equals(Hardware.LIMELIGHT_A)
-                  ? FAKE_POSES && chanceSlots[1] < FAKE_POSE_RATE
-                  : FAKE_POSES && chanceSlots[0] < FAKE_POSE_RATE,
+              shouldInjectFakePose(camera, chanceSlots),
               false);
           processLimelight(
               camera.getPoseEstimateMegatag2(),
               rawFieldPose3dEntry,
-              camera.getName().equals(Hardware.LIMELIGHT_A)
-                  ? FAKE_POSES && chanceSlots[1] < FAKE_POSE_RATE
-                  : FAKE_POSES && chanceSlots[0] < FAKE_POSE_RATE,
+              shouldInjectFakePose(camera, chanceSlots),
               false);
         }
       }
@@ -426,5 +419,14 @@ public class VisionSubsystem extends SubsystemBase {
     numOfTags = getNumTargets();
     avgAmbiguity = sumOfAmbiguitys / numOfTags;
     sumOfAmbiguitys = 0;
+  }
+
+  private boolean shouldInjectFakePose(LLCamera camera, double[] chanceSlots) {
+    if (!FAKE_POSES) {
+      return false;
+    }
+    // Use a different chance slot for LIMELIGHT_A
+    double chance = camera.getName().equals(Hardware.LIMELIGHT_A) ? chanceSlots[1] : chanceSlots[0];
+    return chance < FAKE_POSE_RATE;
   }
 }
