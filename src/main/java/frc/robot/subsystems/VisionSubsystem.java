@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -40,7 +41,7 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
   private final boolean FAKE_POSES = false;
-  public static boolean useGetStdDev = false;
+  public static boolean useGetStdDev = true;
   private Matrix<N3, N1> stdDevs = null;
   private final Matrix<N3, N1> EST_STD_DEVS_MT1 =
       VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Math.PI / 60);
