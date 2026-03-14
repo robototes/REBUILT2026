@@ -2,6 +2,7 @@ package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -19,6 +20,8 @@ import frc.robot.Hardware;
 public class SpindexerSubsystem extends SubsystemBase {
 
   public static final double SPINDEXER_VOLTAGE = 11;
+  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(3); // Rotations/s
+  private double D_ANGULAR_ACCEL = 1.5; // Rotations /s /s
   private VoltageOut voltReq = new VoltageOut(0);
 
   private final TalonFX spindexerMotor;
@@ -62,6 +65,18 @@ public class SpindexerSubsystem extends SubsystemBase {
 
   public void setVoltage(double voltage) {
     spindexerMotor.setControl(voltReq.withOutput(voltage));
+  }
+
+  public void runDefaultVelocity() {
+    spindexerMotor.setControl(TARGET_VELOCITY.withAcceleration(D_ANGULAR_ACCEL));
+  }
+
+  public void setVelocity(double velocity, double acceleration) {
+    spindexerMotor.setControl(TARGET_VELOCITY.withAcceleration(acceleration));
+  }
+
+  public void setVelocity(double velocity) {
+    spindexerMotor.setControl(TARGET_VELOCITY.withAcceleration(D_ANGULAR_ACCEL));
   }
 
   public Command startMotor() {

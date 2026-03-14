@@ -3,6 +3,7 @@ package frc.robot.subsystems.index;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -24,7 +25,8 @@ public class FeederSubsystem extends SubsystemBase {
   public static final double FEEDER_VOLTAGE = 11;
   private static final int feederRumbleThreshold = 67;
   private VoltageOut voltReq = new VoltageOut(0);
-
+  private VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(15); // Rotations/s
+  private double D_ANGULAR_ACCEL = 10; // Rotations /s /s
   private final TalonFX feedMotor;
 
   private final FlywheelSim motorSim;
@@ -74,6 +76,18 @@ public class FeederSubsystem extends SubsystemBase {
 
   public void setVoltage(double voltage) {
     feedMotor.setControl(voltReq.withOutput(voltage));
+  }
+
+  public void runDefaultVelocity() {
+    feedMotor.setControl(TARGET_VELOCITY.withAcceleration(D_ANGULAR_ACCEL));
+  }
+
+  public void setVelocity(double velocity, double acceleration) {
+    feedMotor.setControl(TARGET_VELOCITY.withAcceleration(acceleration));
+  }
+
+  public void setVelocity(double velocity) {
+    feedMotor.setControl(TARGET_VELOCITY.withAcceleration(D_ANGULAR_ACCEL));
   }
 
   public Command startMotor() {
