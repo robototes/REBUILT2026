@@ -293,18 +293,6 @@ public class Controls {
                     s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
-<<<<<<< HEAD
-
-    // driverController
-    //     .start()
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 s.hood.autoZeroCommand(),
-    //                 s.intakePivot.autoZeroCommand(),
-    //                 s.turretSubsystem.autoZeroCommand(),
-    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
-=======
->>>>>>> main
 
     // driverController
     //     .start()
