@@ -194,8 +194,7 @@ public class Hood extends SubsystemBase {
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .andThen(zeroHoodCommand())
         .withTimeout(3)
-        .withName("Automatic Zero hood")
-        .onlyIf(() -> !hoodZeroed);
+        .withName("Automatic Zero hood");
   }
 
   @Override
