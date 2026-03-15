@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
+import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 
@@ -39,8 +40,8 @@ public class Flywheels extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   public final double FLYWHEEL_TOLERANCE = 5; // RPS
-  public final boolean TUNER_CONTROLLED =
-      false; // boolean to decide if it should be controlled using the NtTunableDouble
+  public final NtTunableBoolean TUNER_CONTROLLED =
+      new NtTunableBoolean("/SmartDashBoard/Tunables/Flywheels", false);
 
   // Constructor
   public Flywheels() {
@@ -163,7 +164,7 @@ public class Flywheels extends SubsystemBase {
 
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
-    if (TUNER_CONTROLLED) {
+    if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetVelocity.getAtomic();
         // setVelocityRPS(currentTarget.value);
