@@ -257,11 +257,7 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-<<<<<<< HEAD
                 s.launcherSubsystem.launcherAimCommandV2(),
-=======
-                s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
->>>>>>> main
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
