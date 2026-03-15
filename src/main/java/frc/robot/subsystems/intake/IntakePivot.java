@@ -120,15 +120,7 @@ public class IntakePivot extends SubsystemBase {
     zeroPublisher.set(false);
   }
 
-  public Command setPivotPosition(double pos) {
-    return runOnce(
-        () -> {
-          pivotMotor.setControl(request.withPosition(pos));
-          targetPos = pos;
-        });
-  }
-
-  public void setPivotPositionVoid(double pos) {
+  public void setPivotPosition(double pos) {
     targetPos = pos;
     pivotMotor.setControl(request.withPosition(pos));
   }
@@ -140,10 +132,6 @@ public class IntakePivot extends SubsystemBase {
           targetPos = RETRACTED_POS;
           zeroPublisher.set(true);
         });
-  }
-
-  public Command manualMovingVoltage(Supplier<Voltage> speed) {
-    return runEnd(() -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor());
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
@@ -165,14 +153,13 @@ public class IntakePivot extends SubsystemBase {
     return targetPos;
   }
 
-  public boolean isAtTargetPose(double degreeTolerance) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPos)
+  public boolean isAtTarget(double degreeTolerance, double pose) {
+    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - pose)
         < Units.degreesToRotations(degreeTolerance);
   }
 
-  public boolean isDeployed(double degreeTolerance) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - DEPLOYED_POS)
-        < Units.degreesToRotations(degreeTolerance);
+  public boolean isAtTarget(double degreeTolerance) {
+    return isAtTarget(degreeTolerance, targetPos);
   }
 
   public Command autoZeroCommand() {

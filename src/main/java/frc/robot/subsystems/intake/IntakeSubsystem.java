@@ -1,7 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IntakeSubsystem extends SubsystemBase {
@@ -22,63 +20,37 @@ public class IntakeSubsystem extends SubsystemBase {
     this.intakeRollers = intakeRollers;
   }
 
-  public Command runRollersCommand() {
-    return intakeRollers.runRollersWithDefaultVelocity(IntakeMode.INTAKE);
+  public void runRollers() {
+    intakeRollers.runRollers(intakeRollers.TARGET_RPS);
+    intakePivot.setPivotPosition(intakePivot.targetPos);
   }
 
-  public Command deployPivot() {
-    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
-  }
-
-  public Command retractPivot() {
-    return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
-  }
-
-  public Command intakeWhileLaunchCommand() {
-    return intakePivot
-        .setPivotPosition(IntakePivot.LAUNCH_POS)
-        .alongWith(
-            Commands.startEnd(() -> intakeRollers.runAgitateVelocity(), intakeRollers::stopMotor));
-  }
-
-  public Command smartIntake() {
-    return Commands.either(
-        runRollersCommand(),
-        Commands.sequence(deployPivot(), runRollersCommand()),
-        () -> intakePivot.isDeployed(5));
-  }
-
-  public void runRollersVoid() {
-    intakeRollers.runRollersVelocityVoid(IntakeMode.INTAKE);
-    intakePivot.setPivotPositionVoid(intakePivot.targetPos);
-  }
-
-  public void deployPivotVoid() {
-    intakePivot.setPivotPositionVoid(IntakePivot.DEPLOYED_POS);
+  public void deployPivot() {
+    intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
     intakeRollers.stopMotor();
   }
 
-  public void retractPivotVoid() {
-    intakePivot.setPivotPositionVoid(IntakePivot.RETRACTED_POS);
+  public void retractPivot() {
+    intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
     intakeRollers.stopMotor();
   }
 
-  public void intakeWhileLaunchVoid() {
-    intakePivot.setPivotPositionVoid(IntakePivot.LAUNCH_POS);
-    intakeRollers.runAgitateVelocity();
+  public void intakeWhileLaunch() {
+    intakePivot.setPivotPosition(IntakePivot.LAUNCH_POS);
+    intakeRollers.runRollers(intakeRollers.AGITATE_RPS);
   }
 
-  public void smartIntakeVoid() {
-    if (intakePivot.isDeployed(5)) {
-      runRollersVoid();
+  public void smartIntake() {
+    if (intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
+      runRollers();
     } else {
-      deployPivotVoid();
-      runRollersVoid();
+      deployPivot();
+      runRollers();
     }
   }
 
   public void extakeIntake() {
-    intakePivot.setPivotPositionVoid(IntakePivot.EXTAKE_POS);
-    intakeRollers.runRollersVelocityVoid(IntakeMode.EXTAKE);
+    intakePivot.setPivotPosition(IntakePivot.EXTAKE_POS);
+    intakeRollers.runRollers(-intakeRollers.TARGET_RPS);
   }
 }
