@@ -303,13 +303,13 @@ public class Controls {
     //                 s.turretSubsystem.autoZeroCommand(),
     //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
 
-    if (s.flywheels.TUNER_CONTROLLED) {
+    if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
           .and(launcherTuningController.leftBumper())
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
       launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
     }
-    if (s.hood.TUNER_CONTROLLED) {
+    if (s.hood.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
           .and(launcherTuningController.rightBumper())
           .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
