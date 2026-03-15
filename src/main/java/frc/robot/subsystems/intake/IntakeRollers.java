@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
+import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
@@ -39,13 +40,10 @@ public class IntakeRollers extends SubsystemBase {
   private DoublePublisher rightRollerPub;
   private RollerSim rollerSim;
 
-  private final double D_TARGET_RPS = 5;
-  private final double D_TARGET_ACCEL = 10; // Rotations /s /s
-  private final double D_AGITATE_TARGET_RPS = 2.5;
+  private final double D_TARGET_RPS = 68;
+  private final double D_AGITATE_TARGET_RPS = D_TARGET_RPS / 2;
   private final NtTunableDouble TARGET_AGITATE =
       new NtTunableDouble("SmartDashboard/intake/TargetAgitateRPS", D_AGITATE_TARGET_RPS);
-  private final NtTunableDouble TARGET_ACCEL =
-      new NtTunableDouble("SmartDashboard/intake/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/TuneIntakeRollers", false);
   private final NtTunableDouble TARGET_RPS =
@@ -126,9 +124,9 @@ public class IntakeRollers extends SubsystemBase {
   }
 
   // Using velocity
-  public Command runRollersVelocity(boolean reverse) {
+  public Command runRollersWithDefaultVelocity(IntakeMode mode) {
     return Commands.runEnd(
-        () -> runRollersVelocityVoid(reverse),
+        () -> runRollersVelocityVoid(mode),
         () -> {
           leftRoller.stopMotor();
           rightRoller.stopMotor();
@@ -136,26 +134,19 @@ public class IntakeRollers extends SubsystemBase {
         this);
   }
 
-  public void runRollersVelocityVoid(boolean reverse) {
+  public void runRollersVelocityVoid(IntakeMode mode) {
     double accel;
     double vel;
     if (TUNABLE_ENABLE.get()) {
-      accel = reverse ? -TARGET_ACCEL.get() : TARGET_ACCEL.get();
-      vel = reverse ? -TARGET_RPS.get() : TARGET_RPS.get();
+      vel = mode == IntakeMode.EXTAKE ? -TARGET_RPS.get() : TARGET_RPS.get();
     } else {
-      accel = reverse ? -D_TARGET_ACCEL : D_TARGET_ACCEL;
-      vel = reverse ? -D_TARGET_RPS : D_TARGET_RPS;
+      vel = mode == IntakeMode.EXTAKE ? -D_TARGET_RPS : D_TARGET_RPS;
     }
-    setVelocity(vel, accel);
-  }
-
-  public void setVelocity(double velocity, double acceleration) {
-    leftRoller.setControl(velocityRequest.withVelocity(velocity).withAcceleration(acceleration));
-    rightRoller.setControl(followRequest);
+    setVelocity(vel);
   }
 
   public void setVelocity(double velocity) {
-    leftRoller.setControl(velocityRequest.withVelocity(velocity).withAcceleration(D_TARGET_ACCEL));
+    leftRoller.setControl(velocityRequest.withVelocity(velocity));
     rightRoller.setControl(followRequest);
   }
 

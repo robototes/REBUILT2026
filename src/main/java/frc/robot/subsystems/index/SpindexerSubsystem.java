@@ -25,8 +25,8 @@ public class SpindexerSubsystem extends SubsystemBase {
   private VoltageOut voltReq = new VoltageOut(0);
   private final TalonFX spindexerMotor;
 
-  private final double D_TARGET_RPS = 2;
-  private final double D_TARGET_ACCEL = 2; // Rotations /s /s
+  private final double D_TARGET_RPS = 90.7;
+  private final double D_TARGET_ACCEL = 332; // Rotations /s /s
   private final NtTunableDouble TARGET_ACCEL =
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableBoolean TUNABLE_ENABLE =

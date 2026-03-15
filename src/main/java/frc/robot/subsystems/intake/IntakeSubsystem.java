@@ -23,7 +23,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollersVelocity(false);
+    return intakeRollers.runRollersWithDefaultVelocity(IntakeMode.INTAKE);
   }
 
   public Command deployPivot() {
@@ -49,7 +49,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runRollersVoid() {
-    intakeRollers.runRollersVelocityVoid(false);
+    intakeRollers.runRollersVelocityVoid(IntakeMode.INTAKE);
     intakePivot.setPivotPositionVoid(intakePivot.targetPos);
   }
 
@@ -79,6 +79,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void extakeIntake() {
     intakePivot.setPivotPositionVoid(IntakePivot.EXTAKE_POS);
-    intakeRollers.runRollersVelocityVoid(true);
+    intakeRollers.runRollersVelocityVoid(IntakeMode.EXTAKE);
   }
 }

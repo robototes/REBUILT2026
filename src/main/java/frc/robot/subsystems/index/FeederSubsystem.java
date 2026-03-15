@@ -1,7 +1,6 @@
 package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -30,9 +29,6 @@ public class FeederSubsystem extends SubsystemBase {
 
   private VoltageOut voltReq = new VoltageOut(0);
   private final double D_TARGET_RPS = 92;
-  private final double D_TARGET_ACCEL = 10; // Rotations /s /s
-  private final NtTunableDouble TARGET_ACCEL =
-      new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
@@ -95,18 +91,14 @@ public class FeederSubsystem extends SubsystemBase {
 
   public void runDefaultVelocity() {
     if (TUNABLE_ENABLE.get()) {
-      setVelocity(TARGET_RPS.get(), TARGET_ACCEL.get());
+      setVelocity(TARGET_RPS.get());
     } else {
       setVelocity(D_TARGET_RPS);
     }
   }
 
-  public void setVelocity(double velocity, double acceleration) {
-    feedMotor.setControl(TARGET_VELOCITY.withVelocity(velocity).withAcceleration(acceleration));
-  }
-
   public void setVelocity(double velocity) {
-    feedMotor.setControl(TARGET_VELOCITY.withVelocity(velocity).withAcceleration(D_TARGET_ACCEL));
+    feedMotor.setControl(TARGET_VELOCITY.withVelocity(velocity));
   }
 
   public Command startMotor() {
