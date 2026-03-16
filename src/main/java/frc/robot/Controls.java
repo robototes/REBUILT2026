@@ -30,7 +30,6 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
-import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -371,10 +370,10 @@ public class Controls {
         .onTrue(Commands.runOnce(() -> s.intakeRollers.runRollers(IntakeMode.INTAKE)));
     connected(intakeTestController)
         .and(intakeTestController.x())
-        .onTrue(Commands.runOnce(() -> s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS)));
+        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     connected(intakeTestController)
         .and(intakeTestController.y())
-        .onTrue(Commands.runOnce(() -> s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS)));
+        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
   }
 
   /**
