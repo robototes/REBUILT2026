@@ -145,6 +145,9 @@ public class Hood extends SubsystemBase {
 
   public void setHoodPosition(double positionRotations) {
     if (isHoodZeroed()) hood.setControl(request.withPosition(positionRotations));
+    else {
+      DriverStation.reportWarning("Hood IS NOT ZEROED!", false);
+    }
   }
 
   public void zero() {
