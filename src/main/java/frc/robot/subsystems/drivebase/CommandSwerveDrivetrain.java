@@ -180,7 +180,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @return Command to run
    */
   public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
-    return run(() -> this.setControl(requestSupplier.get())).withName("Drivebase applyRequest()").withName("Apple Drivebase Request");
+    return run(() -> this.setControl(requestSupplier.get()))
+        .withName("Drivebase applyRequest()")
+        .withName("Apple Drivebase Request");
   }
 
   /**
