@@ -309,11 +309,6 @@ public class Controls {
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
       launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
     }
-    if (s.hood.TUNER_CONTROLLED.get()) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.rightBumper())
-          .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
-    }
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
