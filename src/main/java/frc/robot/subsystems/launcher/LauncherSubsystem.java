@@ -14,9 +14,6 @@ import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 
 public class LauncherSubsystem extends SubsystemBase {
-  protected Hood hood;
-  protected Flywheels flywheels;
-  protected CommandSwerveDrivetrain driveTrain;
   protected double flywheelsGoal;
   protected double hoodGoal;
   protected Subsystems s;
@@ -26,8 +23,6 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
-    this.hood = s.hood;
-    this.flywheels = s.flywheels;
 
     var nt = NetworkTableInstance.getDefault();
     hoodGoalPub = nt.getDoubleTopic("/AutoAim/hoodGoal").publish();
@@ -48,8 +43,8 @@ public class LauncherSubsystem extends SubsystemBase {
           hoodGoalPub.set(hoodGoal);
           flywheelGoalPub.set(flywheelsGoal);
 
-          hood.setHoodPosition(hoodGoal);
-          flywheels.setVelocityRPS(flywheelsGoal);
+          s.hood.setHoodPosition(hoodGoal);
+          s.flywheels.setVelocityRPS(flywheelsGoal);
         });
   }
 
@@ -62,38 +57,38 @@ public class LauncherSubsystem extends SubsystemBase {
           hoodGoal = para.targetHood();
           flywheelsGoal = para.targetFlywheels();
 
-          hood.setHoodPosition(hoodGoal);
-          flywheels.setVelocityRPS(flywheelsGoal);
+          s.hood.setHoodPosition(hoodGoal);
+          s.flywheels.setVelocityRPS(flywheelsGoal);
         });
   }
 
   // TODO: add tolerance range calculation
   public boolean isAtTarget() {
-    return flywheels.atTargetVelocity(flywheelsGoal, flywheels.FLYWHEEL_TOLERANCE)
-        && hood.atTargetPosition()
+    return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
+        && s.hood.atTargetPosition()
         && !LaunchCalculator.isCloseToTrench(
             LaunchCalculator.getInstance()
-                .getParameters(driveTrain, s.turretSubsystem)
+                .getParameters(s.drivebaseSubsystem, s.turretSubsystem)
                 .turretPose());
   }
 
   public boolean isHoodAtTarget() {
-    return hood.atTargetPosition();
+    return s.hood.atTargetPosition();
   }
 
   public Command zeroSubsystemCommand() {
-    return hood.zeroHoodCommand();
+    return s.hood.zeroHoodCommand();
   }
 
   public Command stowCommand() {
-    return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.stopCommand());
+    return Commands.parallel(s.hood.hoodPositionCommand(0.0), s.flywheels.stopCommand());
   }
 
   public Command rawStowCommand() {
     hoodGoal = 0;
     flywheelsGoal = 0;
     return Commands.parallel(
-        Commands.runOnce(() -> hood.setHoodPosition(0)),
-        Commands.runOnce(() -> flywheels.stopVoid()));
+        Commands.runOnce(() -> s.hood.setHoodPosition(0)),
+        Commands.runOnce(() -> s.flywheels.stopVoid()));
   }
 }
