@@ -93,12 +93,12 @@ public class LaunchCalculator {
     double captureTime = now - visionLatencySeconds;
 
     // Grab the EXACT pose the robot had when the camera got the frame
-    Pose2d instantPose = driveTrain.getPoseAtTimeStamp(captureTime);
+    Pose2d currentPose = driveTrain.getState().Pose;
 
     // Predicted robot pose after calculations have finished
     ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
     Pose2d estimatedPose =
-        instantPose.exp(
+        currentPose.exp(
             new Twist2d(
                 chassisSpeeds.vxMetersPerSecond * PHASE_DELAY,
                 chassisSpeeds.vyMetersPerSecond * PHASE_DELAY,
