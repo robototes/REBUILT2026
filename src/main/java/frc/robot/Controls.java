@@ -398,7 +398,7 @@ public class Controls {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Commands.none().withName("Get Autonomous Command");
+    return Commands.none().withName("Empty Autonomous Command");
   }
 
   public void vibrateDriveController(double vibration) {
