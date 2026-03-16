@@ -15,14 +15,14 @@ public class IndexerSubsystem extends SubsystemBase {
 
   public Command runIndexer() {
     return Commands.runEnd(
-        () -> {
-          feeder.setVoltage(FeederSubsystem.FEEDER_VOLTAGE);
-          spindexerSubsystem.setVoltage(SpindexerSubsystem.SPINDEXER_VOLTAGE);
-        },
-        () -> {
-          feeder.stopMotorVoid();
-          spindexerSubsystem.stopMotorVoid();
-        })
-      .withName("Run Indexer");
+            () -> {
+              feeder.setVoltage(FeederSubsystem.FEEDER_VOLTAGE);
+              spindexerSubsystem.setVoltage(SpindexerSubsystem.SPINDEXER_VOLTAGE);
+            },
+            () -> {
+              feeder.stopMotorVoid();
+              spindexerSubsystem.stopMotorVoid();
+            })
+        .withName("Run Indexer");
   }
 }

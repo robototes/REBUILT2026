@@ -136,12 +136,12 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command zeroTurret() {
     return runOnce(
-        () -> {
-          turretMotor.setPosition(0);
-          targetPos = 0;
-          zeroPublisher.set(true);
-        })
-      .withName("Zero Turret");
+            () -> {
+              turretMotor.setPosition(0);
+              targetPos = 0;
+              zeroPublisher.set(true);
+            })
+        .withName("Zero Turret");
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
@@ -192,48 +192,52 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command rotateToTargetWithCalc() {
     return runEnd(
-        () -> {
+            () -> {
 
-          // This represents where the turret is within a single circle (-180 to 180)
-          double wrappedCurrent =
-              MathUtil.inputModulus(
-                  Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
+              // This represents where the turret is within a single circle (-180 to 180)
+              double wrappedCurrent =
+                  MathUtil.inputModulus(
+                      Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
 
-          // Get the target from the calculator
-          double targetDegrees =
-              -LaunchCalculator.getInstance().getParameters(driveTrain).turretAngle().getDegrees();
+              // Get the target from the calculator
+              double targetDegrees =
+                  -LaunchCalculator.getInstance()
+                      .getParameters(driveTrain)
+                      .turretAngle()
+                      .getDegrees();
 
-          // Find the shortest distance to that target from our "wrapped" position
-          double shortestDelta = MathUtil.inputModulus(targetDegrees - wrappedCurrent, -180, 180);
+              // Find the shortest distance to that target from our "wrapped" position
+              double shortestDelta =
+                  MathUtil.inputModulus(targetDegrees - wrappedCurrent, -180, 180);
 
-          // This is the "ideal" target in the range closest to our current wrapped pos
-          double baseTarget = wrappedCurrent + shortestDelta;
+              // This is the "ideal" target in the range closest to our current wrapped pos
+              double baseTarget = wrappedCurrent + shortestDelta;
 
-          // Check multiple rotations to see which one fits in the hardware limits
-          // We check: baseTarget, baseTarget + 360, and baseTarget - 360
-          double finalTarget = baseTarget;
+              // Check multiple rotations to see which one fits in the hardware limits
+              // We check: baseTarget, baseTarget + 360, and baseTarget - 360
+              double finalTarget = baseTarget;
 
-          if (baseTarget < TURRET_MIN) {
-            if (baseTarget + 360 <= TURRET_MAX) {
-              finalTarget = baseTarget + 360;
-            } else {
-              finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
-            }
-          } else if (baseTarget > TURRET_MAX) {
-            if (baseTarget - 360 >= TURRET_MIN) {
-              finalTarget = baseTarget - 360;
-            } else {
-              finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
-            }
-          }
+              if (baseTarget < TURRET_MIN) {
+                if (baseTarget + 360 <= TURRET_MAX) {
+                  finalTarget = baseTarget + 360;
+                } else {
+                  finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
+                }
+              } else if (baseTarget > TURRET_MAX) {
+                if (baseTarget - 360 >= TURRET_MIN) {
+                  finalTarget = baseTarget - 360;
+                } else {
+                  finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
+                }
+              }
 
-          // Set position (Note: This assumes your PID/Controller uses these degrees)
-          // System.out.println(Units.degreesToRotations(finalTarget));
-          setTurretRawPosition(Units.degreesToRotations(finalTarget));
-          targetPos = Units.degreesToRotations(finalTarget);
-        },
-        () -> turretMotor.stopMotor())
-      .withName("Rotate to Target With Calc");
+              // Set position (Note: This assumes your PID/Controller uses these degrees)
+              // System.out.println(Units.degreesToRotations(finalTarget));
+              setTurretRawPosition(Units.degreesToRotations(finalTarget));
+              targetPos = Units.degreesToRotations(finalTarget);
+            },
+            () -> turretMotor.stopMotor())
+        .withName("Rotate to Target With Calc");
   }
 
   @Override
