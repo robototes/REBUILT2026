@@ -8,22 +8,34 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.sensors.LEDSubsystem;
+import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakePivot;
+import frc.robot.subsystems.intake.IntakeRollers;
+import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 
@@ -45,8 +57,6 @@ public class Controls {
   private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
   private static final int VISION_TEST_CONTROLLER_PORT = 5;
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
 
@@ -65,8 +75,20 @@ public class Controls {
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
+  AprilTagFieldLayout aprilTagFieldLayout =
+      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+  // Robot with bumpers is 36.875 inches by 30.750 inches
+  Transform2d robotOffsetFromTag =
+      new Transform2d(
+          new Translation2d(Units.inchesToMeters(30.750 / 2), 0), Rotation2d.fromDegrees(180));
+  Pose2d redHub = aprilTagFieldLayout.getTagPose(10).get().toPose2d().plus(robotOffsetFromTag);
+  Pose2d blueHub = aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
+
+  private LEDMode ledsMode = LEDMode.DEFAULT;
+  public static IntakeMode intakeMode = IntakeMode.RETRACTED;
+
   public static final double MaxSpeed =
-      (RobotType.type == RobotTypesEnum.ALPHA)
+      (RobotType.TYPE == RobotTypesEnum.ALPHA)
           ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
           : CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
@@ -96,6 +118,7 @@ public class Controls {
     configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
+    configureLedBindings();
   }
 
   private Trigger connected(CommandXboxController controller) {
@@ -204,6 +227,13 @@ public class Controls {
 
     // logging the telemetry
     s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+
+    // reset pose incase vision is bugging
+    driverController
+        .rightBumper()
+        .onTrue(
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
   }
 
   private void configureAutoAlignBindings() {
@@ -217,9 +247,9 @@ public class Controls {
   }
 
   private void configureLauncherBindings() {
-    if (s.flywheels == null || s.hood == null) {
+    if (s.flywheels == null || s.hood == null || s.ledSubsystem == null) {
       // Stop running this method
-      DataLogManager.log("Flywheels and/or Hood are disabled");
+      DataLogManager.log("Flywheels and/or Hood and/or LEDs are disabled");
       return;
     }
 
@@ -227,22 +257,64 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    s.launcherSubsystem.launcherAimCommand(s.drivebaseSubsystem),
-                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(s.indexerSubsystem.runIndexer()))
-                .withName("Aim turret then feeder and spindexer started"));
-    driverController.y().onTrue(s.launcherSubsystem.zeroSubsystemCommand().ignoringDisable(true));
+                s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
+                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                    .andThen(
+                        Commands.parallel(
+                            s.indexerSubsystem.runIndexer(),
+                            Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                            Commands.waitSeconds(1)
+                                .andThen(
+                                    Commands.runOnce(
+                                        () ->
+                                            intakeMode =
+                                                driverController.leftTrigger().getAsBoolean()
+                                                    ? IntakeMode.INTAKE
+                                                    : IntakeMode.LAUNCH))))))
+        .onFalse(
+            s.launcherSubsystem
+                .rawStowCommand()
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          ledsMode = LEDMode.DEFAULT;
+                          intakeMode =
+                              driverController.leftTrigger().getAsBoolean()
+                                  ? IntakeMode.INTAKE
+                                  : IntakeMode.DEPLOYED;
+                        })));
+    driverController
+        .start()
+        .onTrue(
+            Commands.parallel(
+                    s.launcherSubsystem.zeroSubsystemCommand(),
+                    s.intakePivot.zeroPivot(),
+                    s.turretSubsystem.zeroTurret(),
+                    s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
+                .ignoringDisable(true));
 
-    if (s.flywheels.TUNER_CONTROLLED) {
+    // driverController
+    //     .start()
+    //     .onTrue(
+    //         Commands.parallel(
+    //                 s.hood.autoZeroCommand(),
+    //                 s.intakePivot.autoZeroCommand(),
+    //                 s.turretSubsystem.autoZeroCommand(),
+    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
+
+    if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
           .and(launcherTuningController.leftBumper())
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
+      launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
     }
-    if (s.hood.TUNER_CONTROLLED) {
+    if (s.hood.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
           .and(launcherTuningController.rightBumper())
           .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
     }
+
     connected(launcherTuningController)
         .and(launcherTuningController.start())
         .onTrue(s.hood.autoZeroCommand());
@@ -262,18 +334,54 @@ public class Controls {
   }
 
   private void configureIntakeBindings() {
-    if (s.intakeRollers == null || s.intakePivot == null) {
-      DataLogManager.log("Controls.java: intakeRollers or intakeArm is disabled, bindings skipped");
+    if (s.intakeRollers == null || s.intakePivot == null || s.ledSubsystem == null) {
+      DataLogManager.log(
+          "Controls.java: intakeRollers or intakeArm or LEDs is disabled, bindings skipped");
       return;
     }
 
-    driverController.leftTrigger().whileTrue(s.intakeSubsystem.smartIntake());
-    driverController.povUp().onTrue(s.intakeSubsystem.deployPivot());
-    driverController.povDown().onTrue(s.intakeSubsystem.retractPivot());
+    s.intakeSubsystem.setDefaultCommand(
+        Commands.run(
+                () -> {
+                  switch (intakeMode) {
+                    case DEPLOYED -> s.intakeSubsystem.deployPivotVoid();
+                    case RETRACTED -> s.intakeSubsystem.retractPivotVoid();
+                    case SPIN -> s.intakeSubsystem.runRollersVoid();
+                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchVoid();
+                    case INTAKE -> s.intakeSubsystem.smartIntakeVoid();
+                    case EXTAKE -> s.intakeSubsystem.extakeIntake();
+                  }
+                },
+                s.intakeSubsystem)
+            .withName("Intake Default Command"));
+
+    driverController
+        .leftTrigger()
+        .whileTrue(
+            Commands.runOnce(
+                () -> {
+                  intakeMode = IntakeMode.INTAKE;
+                  ledsMode = LEDMode.INTAKE;
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  intakeMode =
+                      driverController.rightTrigger().getAsBoolean()
+                          ? IntakeMode.LAUNCH
+                          : IntakeMode.DEPLOYED;
+                  ledsMode = LEDMode.DEFAULT;
+                }));
+    driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
+    driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+    driverController
+        .leftBumper()
+        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE))
+        .onFalse(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
 
     connected(intakeTestController)
         .and(intakeTestController.a())
-        .whileTrue(s.intakeRollers.runRollers());
+        .whileTrue(s.intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE));
     connected(intakeTestController)
         .and(intakeTestController.x())
         .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
@@ -327,7 +435,8 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
-    // use static position constants from TurretSubsystem
+
+    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
@@ -357,16 +466,37 @@ public class Controls {
                 () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
     connected(turretTestController)
         .and(turretTestController.rightTrigger())
-        .whileTrue(s.turretSubsystem.rotateToHub());
+        .whileTrue(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.rightBumper())
         .onTrue(
             s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(new Pose2d(13, 4, Rotation2d.kZero))));
+                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
     driverController
-        .rightTrigger()
+        .rightStick()
         .whileTrue(
             s.turretSubsystem.pointFacingJoystick(
-                () -> driverController.getLeftX(), () -> driverController.getLeftY()));
+                () -> driverController.getRightX(), () -> driverController.getRightY()));
+  }
+
+  public void configureLedBindings() {
+    if (s.ledSubsystem == null) {
+      return;
+    }
+    s.ledSubsystem.setDefaultCommand(
+        Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
+            .withName("LED Default Command"));
+
+    Trigger shiftWarning =
+        new Trigger(
+            () -> {
+              if (RobotState.isAutonomous()) return false;
+
+              var shiftInfo = HubShiftUtil.getOfficialShiftInfo();
+
+              return shiftInfo.remainingTime() <= 4.0;
+            });
+
+    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 5, 0.1));
   }
 }

@@ -71,6 +71,10 @@ public class LLCamera {
     return getBetterBotPoseEstimate_wpiBlue();
   }
 
+  public String getName() {
+    return name;
+  }
+
   public BetterPoseEstimate getPoseEstimateMegatag2() {
     return getBetterBotPoseEstimate_wpiBlue_Megatag2();
   }

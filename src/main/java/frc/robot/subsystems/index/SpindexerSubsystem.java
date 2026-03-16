@@ -18,7 +18,7 @@ import frc.robot.Hardware;
 
 public class SpindexerSubsystem extends SubsystemBase {
 
-  public static final double SPINDEXER_VOLTAGE = 12;
+  public static final double SPINDEXER_VOLTAGE = 11;
   private VoltageOut voltReq = new VoltageOut(0);
 
   private final TalonFX spindexerMotor;
@@ -47,7 +47,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
