@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -15,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.generated.CompTunerConstants;
+import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
 
 public class IntakeRollers extends SubsystemBase {
@@ -24,7 +25,9 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private static final double INTAKE_SPEED = 1.0; // full speed
+  private final VoltageOut voltReq = new VoltageOut(0).withEnableFOC(false);
+  public static final double INTAKE_VOLTAGE = 8;
+  public static final double AGITATE_VOLTAGE = 4;
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -38,7 +41,7 @@ public class IntakeRollers extends SubsystemBase {
     leftRoller =
         new TalonFX(
             Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus));
+            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     networktables();
@@ -53,7 +56,7 @@ public class IntakeRollers extends SubsystemBase {
   private void motorConfigs() {
     var talonFXConfigs = new TalonFXConfiguration();
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
-    talonFXConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    talonFXConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // motor limits idk if i need to add anymore
     talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
@@ -80,17 +83,27 @@ public class IntakeRollers extends SubsystemBase {
     rightRollerPub.set(0);
   }
 
-  public Command runRollers() {
+  public Command runRollers(double voltage) {
     return Commands.runEnd(
-            () -> {
-              leftRoller.set(INTAKE_SPEED);
-              rightRoller.setControl(followRequest);
-            },
-            () -> {
-              leftRoller.stopMotor();
-              rightRoller.stopMotor();
-            })
-        .withName("Run Intake Rollers");
+        () -> {
+          leftRoller.setControl(voltReq.withOutput(voltage));
+          rightRoller.setControl(followRequest);
+        },
+        () -> {
+          leftRoller.stopMotor();
+          rightRoller.stopMotor();
+        })
+      .withName("Run Intake Rollers");
+  }
+
+  public void setRollerVolt(double voltage) {
+    leftRoller.setControl(voltReq.withOutput(voltage));
+    rightRoller.setControl(followRequest);
+  }
+
+  public void setReverseRollerVolt(double voltage) {
+    leftRoller.setControl(voltReq.withOutput(-voltage));
+    rightRoller.setControl(followRequest);
   }
 
   public void stopMotor() {

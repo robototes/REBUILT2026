@@ -2,8 +2,18 @@ package frc.robot.subsystems.intake;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class IntakeSubsystem {
+public class IntakeSubsystem extends SubsystemBase {
+  public enum IntakeMode {
+    DEPLOYED,
+    RETRACTED,
+    SPIN,
+    LAUNCH,
+    INTAKE,
+    EXTAKE
+  }
+
   protected IntakePivot intakePivot;
   protected IntakeRollers intakeRollers;
 
@@ -13,7 +23,7 @@ public class IntakeSubsystem {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollers().withName("Run Intake Rollers");
+    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE).withName("Run Intake Rollers");
   }
 
   public Command deployPivot() {
@@ -24,11 +34,51 @@ public class IntakeSubsystem {
     return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS).withName("Retract Intake Pivot");
   }
 
+  public Command intakeWhileLaunchCommand() {
+    return intakePivot
+        .setPivotPosition(IntakePivot.LAUNCH_POS)
+        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE));
+  }
+
   public Command smartIntake() {
     return Commands.either(
             runRollersCommand(),
             Commands.sequence(deployPivot(), runRollersCommand()),
             () -> intakePivot.isDeployed(5))
         .withName("Smart Intake");
+  }
+
+  public void runRollersVoid() {
+    intakeRollers.setRollerVolt(IntakeRollers.INTAKE_VOLTAGE);
+    intakePivot.setPivotPositionVoid(intakePivot.targetPos);
+  }
+
+  public void deployPivotVoid() {
+    intakePivot.setPivotPositionVoid(IntakePivot.DEPLOYED_POS);
+    intakeRollers.setRollerVolt(0);
+  }
+
+  public void retractPivotVoid() {
+    intakePivot.setPivotPositionVoid(IntakePivot.RETRACTED_POS);
+    intakeRollers.setRollerVolt(0);
+  }
+
+  public void intakeWhileLaunchVoid() {
+    intakePivot.setPivotPositionVoid(IntakePivot.LAUNCH_POS);
+    intakeRollers.setRollerVolt(IntakeRollers.AGITATE_VOLTAGE);
+  }
+
+  public void smartIntakeVoid() {
+    if (intakePivot.isDeployed(5)) {
+      runRollersVoid();
+    } else {
+      deployPivotVoid();
+      runRollersVoid();
+    }
+  }
+
+  public void extakeIntake() {
+    intakePivot.setPivotPositionVoid(IntakePivot.EXTAKE_POS);
+    intakeRollers.setReverseRollerVolt(IntakeRollers.INTAKE_VOLTAGE);
   }
 }
