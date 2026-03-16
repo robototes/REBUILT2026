@@ -74,7 +74,8 @@ public class SpindexerSubsystem extends SubsystemBase {
   }
 
   public Command stopMotorCommand() {
-    return runOnce(() -> spindexerMotor.stopMotor());
+    return runOnce(() -> spindexerMotor.stopMotor())
+        .withName("Stop Spindexer Motor");
   }
 
   public void stopMotorVoid() {

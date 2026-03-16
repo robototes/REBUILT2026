@@ -22,7 +22,8 @@ public class IndexerSubsystem {
             () -> {
               feeder.stopMotorVoid();
               spindexerSubsystem.stopMotorVoid();
-            });
+            })
+            .withName("Run Indexer");
     runcommand.addRequirements(feeder);
     runcommand.addRequirements(spindexerSubsystem);
     return runcommand;

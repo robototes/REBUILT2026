@@ -111,10 +111,11 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command setTurretPosition(double pos) {
     return runOnce(
-        () -> {
-          turretMotor.setControl(request.withPosition(pos));
-          targetPos = pos;
-        });
+            () -> {
+              turretMotor.setControl(request.withPosition(pos));
+              targetPos = pos;
+            })
+        .withName("Set Turret Position");
   }
 
   public void setTurretRawPosition(double pos) {
@@ -124,20 +125,21 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command zeroTurret() {
     return runOnce(
-        () -> {
-          turretMotor.setPosition(0);
-          targetPos = 0;
-        });
+            () -> {
+              turretMotor.setPosition(0);
+              targetPos = 0;
+            })
+        .withName("Zero Turret");
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
     return runEnd(
-        () -> turretMotor.setVoltage(speed.get().in(Volts)), () -> turretMotor.stopMotor());
+            () -> turretMotor.setVoltage(speed.get().in(Volts)), () -> turretMotor.stopMotor())
+        .withName("Manual Moving Voltage");
   }
 
   public Command pointFacingJoystick(Supplier<Double> xSupplier, Supplier<Double> ySupplier) {
-    return run(
-        () -> {
+    return run(() -> {
           double x = xSupplier.get();
           double y = ySupplier.get();
 
@@ -163,7 +165,8 @@ public class TurretSubsystem extends SubsystemBase {
 
           turretMotor.setControl(request.withPosition(rotations));
           targetPos = rotations;
-        });
+        })
+        .withName("Point Facing Joystick");
   }
 
   public double getTurretPosition() {
@@ -217,24 +220,25 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command rotateToHub() {
     return runEnd(
-        () -> {
-          double targetRotations = calculateTurretAngle();
-          turretMotor.setControl(request.withPosition(targetRotations));
-          targetPos = targetRotations;
-          Transform2d fieldRelativeOffset =
-              new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
-          Pose2d turretPose2 =
-              new Pose2d(
-                  LauncherConstants.launcherFromRobot(driveTrain.getState().Pose),
-                  driveTrain
-                      .getState()
-                      .Pose
-                      .getRotation()
-                      .minus(Rotation2d.fromRotations(targetRotations)));
-          var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
-          turretRotation.set(array2, 0);
-        },
-        () -> turretMotor.stopMotor());
+            () -> {
+              double targetRotations = calculateTurretAngle();
+              turretMotor.setControl(request.withPosition(targetRotations));
+              targetPos = targetRotations;
+              Transform2d fieldRelativeOffset =
+                  new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
+              Pose2d turretPose2 =
+                  new Pose2d(
+                      LauncherConstants.launcherFromRobot(driveTrain.getState().Pose),
+                      driveTrain
+                          .getState()
+                          .Pose
+                          .getRotation()
+                          .minus(Rotation2d.fromRotations(targetRotations)));
+              var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
+              turretRotation.set(array2, 0);
+            },
+            () -> turretMotor.stopMotor())
+        .withName("Rotate to Hub");
   }
 
   @Override

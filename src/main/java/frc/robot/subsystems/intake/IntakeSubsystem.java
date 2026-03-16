@@ -13,21 +13,21 @@ public class IntakeSubsystem {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollers();
+    return intakeRollers.runRollers().withName("Run Intake Rollers");
   }
 
   public Command deployPivot() {
-    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
+    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS).withName("Deploy Intake Pivot");
   }
 
   public Command retractPivot() {
-    return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
+    return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS).withName("Retract Intake Pivot");
   }
 
   public Command smartIntake() {
     return Commands.either(
         runRollersCommand(),
         Commands.sequence(deployPivot(), runRollersCommand()),
-        () -> intakePivot.isDeployed(5));
+        () -> intakePivot.isDeployed(5)).withName("Smart Intake");
   }
 }

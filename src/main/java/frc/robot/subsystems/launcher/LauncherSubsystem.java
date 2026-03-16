@@ -39,23 +39,25 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
     return Commands.runEnd(
-        () -> {
-          Translation2d targetPose = (AllianceUtils.getHubTranslation2d());
+            () -> {
+              Translation2d targetPose = (AllianceUtils.getHubTranslation2d());
 
-          hoodGoal = LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
-          flywheelsGoal =
-              LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
-          turretGoal = turret.calculateTurretAngle();
+              hoodGoal =
+                  LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
+              flywheelsGoal =
+                  LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
+              turretGoal = turret.calculateTurretAngle();
 
-          hoodGoalPub.set(hoodGoal);
-          flywheelGoalPub.set(flywheelsGoal);
-          turretGoalPub.set(turretGoal);
+              hoodGoalPub.set(hoodGoal);
+              flywheelGoalPub.set(flywheelsGoal);
+              turretGoalPub.set(turretGoal);
 
-          hood.setHoodPosition(hoodGoal);
-          flywheels.setVelocityRPS(flywheelsGoal);
-          turret.setTurretRawPosition(turretGoal);
-        },
-        () -> CommandScheduler.getInstance().schedule(stowCommand()));
+              hood.setHoodPosition(hoodGoal);
+              flywheels.setVelocityRPS(flywheelsGoal);
+              turret.setTurretRawPosition(turretGoal);
+            },
+            () -> CommandScheduler.getInstance().schedule(stowCommand()))
+        .withName("Launcher Aim Command");
   }
 
   // TODO: add tolerance range calculation
@@ -66,10 +68,12 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public Command zeroSubsystemCommand() {
-    return Commands.parallel(hood.zeroHoodCommand(), turret.zeroTurret());
+    return Commands.parallel(hood.zeroHoodCommand(), turret.zeroTurret())
+        .withName("Zero Launcher Subsystem");
   }
 
   public Command stowCommand() {
-    return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.setVelocityCommand(0.0));
+    return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.setVelocityCommand(0.0))
+        .withName("Stow Launcher");
   }
 }

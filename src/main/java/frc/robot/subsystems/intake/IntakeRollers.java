@@ -89,7 +89,8 @@ public class IntakeRollers extends SubsystemBase {
         () -> {
           leftRoller.stopMotor();
           rightRoller.stopMotor();
-        });
+        })
+        .withName("Run Intake Rollers");
   }
 
   public void stopMotor() {
