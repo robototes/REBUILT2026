@@ -39,7 +39,7 @@ public class AutoLogic {
         "Left Trench", new Pose2d(4.013, 7.597, new Rotation2d(Units.degreesToRadians(90)))),
     CENTER("Center", new Pose2d(3.600, 4.035, new Rotation2d(Units.degreesToRadians(0)))),
     RIGHT_TRENCH(
-        "Right Trench", new Pose2d(4.013, 0.473, new Rotation2d(Units.degreesToRadians(-90)))),
+        "Right Trench", new Pose2d(4.1, 0.473, new Rotation2d(Units.degreesToRadians(-90)))),
     MISC("Misc", null);
 
     final String title;
