@@ -27,6 +27,7 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
+import java.util.Arrays;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -235,12 +236,13 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopExit() {
-    if (!RobotType.isAlpha()) {
-      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
-      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
-    } else {
-      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_C, MAX_TIME_RECORD);
-    }
+    String[] limeLightSet =
+        !RobotType.isAlpha()
+            ? new String[] {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B}
+            : new String[] {Hardware.LIMELIGHT_C};
+
+    Arrays.stream(limeLightSet)
+        .forEach(name -> LimelightHelpers.triggerRewindCapture(name, MAX_TIME_RECORD));
   }
 
   @Override
