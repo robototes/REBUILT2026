@@ -40,7 +40,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private double m_lastSimTime;
 
   private final TimeInterpolatableBuffer<Pose2d> poseHistory =
-      TimeInterpolatableBuffer.createBuffer(1); // Store up to 1 second of history
+      TimeInterpolatableBuffer.createBuffer(1.0); // Store up to 1 second of history
 
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
   private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;

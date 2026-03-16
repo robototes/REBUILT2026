@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -19,6 +20,7 @@ import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -63,12 +65,13 @@ public class LaunchCalculator {
 
   static {
     for (int tag : tags) {
-      Pose2d tagpose =
-          field
-              .getTagPose(tag)
-              .orElseThrow(() -> new RuntimeException("Tag " + tag + " not found in field layout"))
-              .toPose2d();
-      trenchTags.add(tagpose);
+      Optional<Pose3d> t = field.getTagPose(tag);
+      if (t.isPresent()) {
+        trenchTags.add(t.get().toPose2d());
+      } else {
+        edu.wpi.first.wpilibj.DriverStation.reportWarning(
+            "Tag " + tag + " not found in launch calculator", false);
+      }
     }
   }
 
