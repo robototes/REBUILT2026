@@ -145,10 +145,6 @@ public class Hood extends SubsystemBase {
 
   public void setHoodPosition(double positionRotations) {
     if (isHoodZeroed()) hood.setControl(request.withPosition(positionRotations));
-    else {
-      Commands.runOnce(() -> autoZeroCommand(), this);
-    }
-    ;
   }
 
   public void zero() {
