@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -42,22 +43,25 @@ public class VisionSubsystem extends SubsystemBase {
   private final boolean FAKE_POSES = false;
   private static boolean useGetStdDev = true;
   private Matrix<N3, N1> stdDevs = null;
-  private final Matrix<N3, N1> EST_STD_DEVS_MT1 =
-      VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Math.PI / 60);
-  private final Matrix<N3, N1> EST_STD_DEVS_MT2 = VecBuilder.fill(0.5, 0.5, Double.MAX_VALUE);
-  private final Matrix<N3, N1> REG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 0.5);
-  private final Pose2d BAD_POSE_2D = new Pose2d(-1, -1, new Rotation2d(0));
-  private final double LIMELIGHT4_BOOST_MT1 = 0.1;
-  private final double LIMELIGHT4_BOOST_MT2 = 0.8;
-  private final double MULTITARGET_BOOST_MT2 = 0.65;
-  private final double MAX_DISTANCE_MT1 = 2;
-  private final double MAX_DISTANCE_MT2 = 5;
-  private final double MAX_AMBIGUITY = 0.3;
-  private final double AMBIGUITY_BOOST_MT2 = 5;
-  private final double FINAL_BOOST_MT1 = 30;
-  private final double FINAL_BOOST_MT2 = 5;
-  private final double MAX_XY_VELO_ALPHA = 2;
-  private final double MAX_TURN_VELO_ALPHA = 0.2;
+  private static class VisionConstants {
+    private static final Matrix<N3, N1> EST_STD_DEVS_MT1 =
+        VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Math.PI / 60);
+    private static  final Matrix<N3, N1> EST_STD_DEVS_MT2 = VecBuilder.fill(0.5, 0.5, Double.MAX_VALUE);
+    private static final Matrix<N3, N1> REG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 0.5);
+    private static final Pose2d BAD_POSE_2D = new Pose2d(-1, -1, new Rotation2d(0));
+    private static final double LIMELIGHT4_BOOST_MT1 = 0.1;
+    private static final double LIMELIGHT4_BOOST_MT2 = 0.8;
+    private static final double MULTITARGET_BOOST_MT2 = 0.65;
+    private static final double MAX_DISTANCE_MT1 = 2;
+    private static final double MAX_DISTANCE_MT2 = 5;
+    private static final double MAX_AMBIGUITY = 0.4;
+    private static final double AMBIGUITY_BOOST_MT2 = 5;
+    private static  final double FINAL_BOOST_MT1 = 30;
+    private static final double FINAL_BOOST_MT2 = 5;
+    private static final double MAX_XY_VELO_ALPHA = 2;
+    private static final double MAX_TURN_VELO_ALPHA = 0.2;
+    private static final double AMBIGUITY_SCALAR = 8;
+  }
   private final double[] aCameraChanceSlots = {0, 0};
   private final double[] bCameraChanceSlots = {0, 0};
   private final double[] cCameraChanceSlots = {0, 0};
@@ -181,26 +185,26 @@ public class VisionSubsystem extends SubsystemBase {
                 camera.getBetterPoseEstimate(),
                 rawFieldPose3dEntry,
                 shouldInjectFakePose(camera, chanceSlots),
-                false);
+                useGetStdDev);
           } else {
             // Single tag pose Estimation
             processLimelight(
                 camera.getPoseEstimateMegatag2(),
                 rawFieldPose3dEntry,
                 shouldInjectFakePose(camera, chanceSlots),
-                false);
+                useGetStdDev);
           }
         } else {
           processLimelight(
               camera.getBetterPoseEstimate(),
               rawFieldPose3dEntry,
               shouldInjectFakePose(camera, chanceSlots),
-              false);
+              useGetStdDev);
           processLimelight(
               camera.getPoseEstimateMegatag2(),
               rawFieldPose3dEntry,
               shouldInjectFakePose(camera, chanceSlots),
-              false);
+              useGetStdDev);
         }
       }
     }
@@ -237,12 +241,11 @@ public class VisionSubsystem extends SubsystemBase {
           || lastFieldPose != null
               && lastFieldPose.equals(VisionPoseTracking.fieldPose3d.toPose2d())
           || lastFieldPose != null
-              && Math.abs(VisionPoseTracking.swerveSpeeds.vxMetersPerSecond) > MAX_XY_VELO_ALPHA
-              && Math.abs(VisionPoseTracking.swerveSpeeds.vyMetersPerSecond) > MAX_XY_VELO_ALPHA
+              && Math.abs(VisionPoseTracking.swerveSpeeds.vxMetersPerSecond) > VisionConstants.MAX_XY_VELO_ALPHA
+              && Math.abs(VisionPoseTracking.swerveSpeeds.vyMetersPerSecond) > VisionConstants.MAX_XY_VELO_ALPHA
               && Math.abs(VisionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                  > MAX_TURN_VELO_ALPHA
-              && RobotType.isAlpha()
-          || avgAmbiguity > MAX_AMBIGUITY) {
+                  > VisionConstants.MAX_TURN_VELO_ALPHA
+              && RobotType.isAlpha()) {
         VisionPoseTracking.pose_bad = true;
       }
 
@@ -264,7 +267,7 @@ public class VisionSubsystem extends SubsystemBase {
             drivetrain.addVisionMeasurement(
                 VisionPoseTracking.fieldPose3d.toPose2d(),
                 Utils.fpgaToCurrentTime(estimate.timestampSeconds),
-                REG_STD_DEVS);
+                VisionConstants.REG_STD_DEVS);
           }
         } else {
           fakePoseCount++;
@@ -277,10 +280,10 @@ public class VisionSubsystem extends SubsystemBase {
                   fakePoseCount));
           if (useGetStdDevs) {
             drivetrain.addVisionMeasurement(
-                BAD_POSE_2D, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+                VisionConstants.BAD_POSE_2D, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
           } else {
             drivetrain.addVisionMeasurement(
-                BAD_POSE_2D, Utils.fpgaToCurrentTime(estimate.timestampSeconds), REG_STD_DEVS);
+                VisionConstants.BAD_POSE_2D, Utils.fpgaToCurrentTime(estimate.timestampSeconds), VisionConstants.REG_STD_DEVS);
           }
         }
         // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
@@ -310,31 +313,33 @@ public class VisionSubsystem extends SubsystemBase {
     }
     // Decrease std devs if limelight is LL4
     if (isLL4) {
-      stddevScalarMt1 *= LIMELIGHT4_BOOST_MT1;
+      stddevScalarMt1 *= VisionConstants.LIMELIGHT4_BOOST_MT1;
     }
 
     // If the average ambiguity is too high, return very high std devs to ignore the
     // pose
-    if (avgAmbiguity > MAX_AMBIGUITY) {
-      return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+    if (avgAmbiguity > VisionConstants.MAX_AMBIGUITY) {
+      return VecBuilder.fill(Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
+        Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
+        Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR));
     }
 
     // Scale the standard deviations based on the average ambiguity
     // the 1 here is to make to not divide
-    stddevScalarMt1 *= (1 + (avgAmbiguity * AMBIGUITY_BOOST_MT2));
+    stddevScalarMt1 *= (1 + (avgAmbiguity * VisionConstants.AMBIGUITY_BOOST_MT2));
 
     // If the average distance is too far, return very high std devs to ignore the
     // pose
-    if (numOfTags == 1 && avgTagDist > MAX_DISTANCE_MT1) {
+    if (numOfTags == 1 && avgTagDist > VisionConstants.MAX_DISTANCE_MT1) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     } else {
       // Scale the standard deviations based on the average distance
       // the 1 here is to make to not divide
-      stddevScalarMt1 *= (1 + (avgTagDist * avgTagDist / FINAL_BOOST_MT1));
+      stddevScalarMt1 *= (1 + (avgTagDist * avgTagDist / VisionConstants.FINAL_BOOST_MT1));
     }
 
     // apply the calculated scalar to the standard deviations
-    return EST_STD_DEVS_MT1.times(stddevScalarMt1);
+    return VisionConstants.EST_STD_DEVS_MT1.times(stddevScalarMt1);
   }
 
   /**
@@ -352,24 +357,24 @@ public class VisionSubsystem extends SubsystemBase {
     }
     // Decrease std devs if multiple targets are visible
     if (numOfTags > 1) {
-      stddevScalarMt2 *= (MULTITARGET_BOOST_MT2);
+      stddevScalarMt2 *= (VisionConstants.MULTITARGET_BOOST_MT2);
     }
 
     // Decrease std devs if limelight is LL4
     if (isLL4) {
-      stddevScalarMt2 *= (LIMELIGHT4_BOOST_MT2);
+      stddevScalarMt2 *= (VisionConstants.LIMELIGHT4_BOOST_MT2);
     }
 
     // Increase std devs based on (average) distance
-    if (numOfTags == 1 && avgTagDist > MAX_DISTANCE_MT2) {
+    if (numOfTags == 1 && avgTagDist > VisionConstants.MAX_DISTANCE_MT2) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     } else {
       // the 1 here is to make to not divide
-      stddevScalarMt2 *= (1 + (avgTagDist * avgTagDist / FINAL_BOOST_MT2));
+      stddevScalarMt2 *= (1 + (avgTagDist * avgTagDist / VisionConstants.FINAL_BOOST_MT2));
     }
 
     // apply the calculated scalar to the standard deviations
-    return EST_STD_DEVS_MT2.times(stddevScalarMt2);
+    return VisionConstants.EST_STD_DEVS_MT2.times(stddevScalarMt2);
   }
 
   public int getNumTargets() {
@@ -448,4 +453,4 @@ public class VisionSubsystem extends SubsystemBase {
     }
     return 0;
   }
-}
+  }
