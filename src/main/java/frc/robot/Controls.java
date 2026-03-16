@@ -314,13 +314,6 @@ public class Controls {
         .and(launcherTuningController.start())
         .onTrue(s.hood.autoZeroCommand());
     connected(launcherTuningController)
-        .and(launcherTuningController.a())
-        .onTrue(s.hood.hoodPositionCommand(0.5));
-    connected(launcherTuningController)
-        .and(launcherTuningController.b())
-        .onTrue(s.hood.hoodPositionCommand(1));
-
-    connected(launcherTuningController)
         .and(launcherTuningController.x())
         .onTrue(s.flywheels.setVelocityCommand(50));
     connected(launcherTuningController)
