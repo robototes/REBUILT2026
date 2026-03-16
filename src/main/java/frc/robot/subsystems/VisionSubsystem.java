@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -43,10 +42,12 @@ public class VisionSubsystem extends SubsystemBase {
   private final boolean FAKE_POSES = false;
   private static boolean useGetStdDev = true;
   private Matrix<N3, N1> stdDevs = null;
+
   private static class VisionConstants {
     private static final Matrix<N3, N1> EST_STD_DEVS_MT1 =
         VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Math.PI / 60);
-    private static  final Matrix<N3, N1> EST_STD_DEVS_MT2 = VecBuilder.fill(0.5, 0.5, Double.MAX_VALUE);
+    private static final Matrix<N3, N1> EST_STD_DEVS_MT2 =
+        VecBuilder.fill(0.5, 0.5, Double.MAX_VALUE);
     private static final Matrix<N3, N1> REG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 0.5);
     private static final Pose2d BAD_POSE_2D = new Pose2d(-1, -1, new Rotation2d(0));
     private static final double LIMELIGHT4_BOOST_MT1 = 0.1;
@@ -56,12 +57,13 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double MAX_DISTANCE_MT2 = 5;
     private static final double MAX_AMBIGUITY = 0.4;
     private static final double AMBIGUITY_BOOST_MT2 = 5;
-    private static  final double FINAL_BOOST_MT1 = 30;
+    private static final double FINAL_BOOST_MT1 = 30;
     private static final double FINAL_BOOST_MT2 = 5;
     private static final double MAX_XY_VELO_ALPHA = 2;
     private static final double MAX_TURN_VELO_ALPHA = 0.2;
     private static final double AMBIGUITY_SCALAR = 8;
   }
+
   private final double[] aCameraChanceSlots = {0, 0};
   private final double[] bCameraChanceSlots = {0, 0};
   private final double[] cCameraChanceSlots = {0, 0};
@@ -241,8 +243,10 @@ public class VisionSubsystem extends SubsystemBase {
           || lastFieldPose != null
               && lastFieldPose.equals(VisionPoseTracking.fieldPose3d.toPose2d())
           || lastFieldPose != null
-              && Math.abs(VisionPoseTracking.swerveSpeeds.vxMetersPerSecond) > VisionConstants.MAX_XY_VELO_ALPHA
-              && Math.abs(VisionPoseTracking.swerveSpeeds.vyMetersPerSecond) > VisionConstants.MAX_XY_VELO_ALPHA
+              && Math.abs(VisionPoseTracking.swerveSpeeds.vxMetersPerSecond)
+                  > VisionConstants.MAX_XY_VELO_ALPHA
+              && Math.abs(VisionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+                  > VisionConstants.MAX_XY_VELO_ALPHA
               && Math.abs(VisionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                   > VisionConstants.MAX_TURN_VELO_ALPHA
               && RobotType.isAlpha()) {
@@ -280,10 +284,14 @@ public class VisionSubsystem extends SubsystemBase {
                   fakePoseCount));
           if (useGetStdDevs) {
             drivetrain.addVisionMeasurement(
-                VisionConstants.BAD_POSE_2D, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+                VisionConstants.BAD_POSE_2D,
+                Utils.fpgaToCurrentTime(estimate.timestampSeconds),
+                stdDevs);
           } else {
             drivetrain.addVisionMeasurement(
-                VisionConstants.BAD_POSE_2D, Utils.fpgaToCurrentTime(estimate.timestampSeconds), VisionConstants.REG_STD_DEVS);
+                VisionConstants.BAD_POSE_2D,
+                Utils.fpgaToCurrentTime(estimate.timestampSeconds),
+                VisionConstants.REG_STD_DEVS);
           }
         }
         // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
@@ -319,9 +327,10 @@ public class VisionSubsystem extends SubsystemBase {
     // If the average ambiguity is too high, return very high std devs to ignore the
     // pose
     if (avgAmbiguity > VisionConstants.MAX_AMBIGUITY) {
-      return VecBuilder.fill(Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
-        Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
-        Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR));
+      return VecBuilder.fill(
+          Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
+          Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
+          Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR));
     }
 
     // Scale the standard deviations based on the average ambiguity
@@ -453,4 +462,4 @@ public class VisionSubsystem extends SubsystemBase {
     }
     return 0;
   }
-  }
+}
