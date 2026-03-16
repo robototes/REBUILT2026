@@ -135,6 +135,9 @@ public class Controls {
       DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
       return;
     }
+    connected(indexingTestController)
+        .and(indexingTestController.leftTrigger())
+        .whileTrue(s.indexerSubsystem.runIndexer());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
