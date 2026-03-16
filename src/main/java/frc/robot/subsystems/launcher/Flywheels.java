@@ -118,7 +118,7 @@ public class Flywheels extends SubsystemBase {
               FlywheelOne.stopMotor();
               FlywheelTwo.stopMotor();
             })
-        .withName("Set Flywheel Velocity");
+        .withName("Set Flywheel Supplied Velocity");
   }
 
   public void setVelocityRPS(double rps) {

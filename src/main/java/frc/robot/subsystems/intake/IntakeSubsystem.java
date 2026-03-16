@@ -37,7 +37,8 @@ public class IntakeSubsystem extends SubsystemBase {
   public Command intakeWhileLaunchCommand() {
     return intakePivot
         .setPivotPosition(IntakePivot.LAUNCH_POS)
-        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE));
+        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE))
+        .withName("Intake While Launch");
   }
 
   public Command smartIntake() {
