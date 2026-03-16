@@ -24,7 +24,6 @@ import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
 
@@ -145,19 +144,11 @@ public class Hood extends SubsystemBase {
   }
 
   public void setHoodPosition(double positionRotations) {
-    hood.setControl(request.withPosition(positionRotations));
-  }
-
-  public Command hoodPositionCommand(double positionRotations) {
-    return runEnd(() -> setHoodPosition(positionRotations), () -> hood.stopMotor())
-        .withName("setting Hood position")
-        .onlyIf(() -> hoodZeroed);
-  }
-
-  public Command suppliedHoodPositionCommand(DoubleSupplier positionRotations) {
-    return runEnd(() -> setHoodPosition(positionRotations.getAsDouble()), () -> hood.stopMotor())
-        .withName("Setting hood position - Supplied")
-        .onlyIf(() -> hoodZeroed);
+    if (isHoodZeroed()) hood.setControl(request.withPosition(positionRotations));
+    else {
+      Commands.runOnce(() -> autoZeroCommand(), this);
+    }
+    ;
   }
 
   public void zero() {

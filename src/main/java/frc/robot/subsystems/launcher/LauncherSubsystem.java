@@ -77,10 +77,6 @@ public class LauncherSubsystem extends SubsystemBase {
     return hood.zeroHoodCommand();
   }
 
-  public Command stowCommand() {
-    return Commands.parallel(hood.hoodPositionCommand(0.0), flywheels.stopCommand());
-  }
-
   public Command rawStowCommand() {
     hoodGoal = 0;
     flywheelsGoal = 0;
