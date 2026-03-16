@@ -61,9 +61,9 @@ public class VisionSubsystem extends SubsystemBase {
   private final double MAX_TURN_VELO_ALPHA = 0.02;
   private double stddevScalarMt1 = 1;
   private double stddevScalarMt2 = 1;
-  private final double[] aCameraChanceSlots = new double[2];
-  private final double[] bCameraChanceSlots = new double[2];
-  private final double[] cCameraChanceSlots = new double[2];
+  private final double[] aCameraChanceSlots = {0, 0};
+  private final double[] bCameraChanceSlots = {0, 0};
+  private final double[] cCameraChanceSlots = {0, 0};
 
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
@@ -142,9 +142,9 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
-    SmartDashboard.putBoolean("/vision/fakePoses", false);
-    SmartDashboard.putNumber("/vision/fakePoseRate", 0.07);
-    SmartDashboard.putNumber("/vision/fakePoseCount", 0);
+    SmartDashboard.putBoolean("/vision/fakePoses", FAKE_POSES);
+    SmartDashboard.putNumber("/vision/fakePoseRate", FAKE_POSE_RATE);
+    SmartDashboard.putNumber("/vision/fakePoseCount", fakePoseCount);
   }
 
   public void update() {
@@ -176,9 +176,6 @@ public class VisionSubsystem extends SubsystemBase {
         if (FAKE_POSES) {
           chanceSlots[0] = Math.random();
           chanceSlots[1] = Math.random();
-        } else {
-          chanceSlots[0] = 0;
-          chanceSlots[1] = 0;
         }
         if (!useGetStdDev) {
           if (rawFiducials.length != 1) {

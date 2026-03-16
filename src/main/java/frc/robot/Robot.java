@@ -47,11 +47,6 @@ public class Robot extends TimedRobot {
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
 
-  @Override
-  public void printWatchdogEpochs() {
-    super.printWatchdogEpochs();
-  }
-
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
