@@ -218,14 +218,8 @@ public class Controls {
     driverController
         .rightBumper()
         .onTrue(
-            Commands.runOnce(
-                () ->
-                    s.drivebaseSubsystem.resetPose(
-                        new Pose2d(
-                            (new Translation2d(Units.inchesToMeters(182.11), 0)),
-                            Rotation2d.kZero))));
-    // s.drivebaseSubsystem.runOnce(
-    //     () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
   }
 
   private void configureAutoAlignBindings() {
@@ -295,13 +289,13 @@ public class Controls {
     //                 s.turretSubsystem.autoZeroCommand(),
     //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
 
-    if (s.flywheels.TUNER_CONTROLLED) {
+    if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
           .and(launcherTuningController.leftBumper())
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
       launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
     }
-    if (s.hood.TUNER_CONTROLLED) {
+    if (s.hood.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
           .and(launcherTuningController.rightBumper())
           .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
