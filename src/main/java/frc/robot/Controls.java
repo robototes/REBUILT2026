@@ -30,6 +30,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
+import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -135,11 +136,23 @@ public class Controls {
       DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
       return;
     }
+    // TODO: wait for sensor to reach threshold, and trigger rumble
+
+    // run feeder motor
+    connected(indexingTestController)
+        .and(indexingTestController.a())
+        .whileTrue(s.feederSubsystem.startMotor());
+
+    // run spindexer motor
+    connected(indexingTestController)
+        .and(indexingTestController.x())
+        .whileTrue(s.spindexerSubsystem.startMotor());
 
     // run both while left trigger is held
     connected(indexingTestController)
         .and(indexingTestController.leftTrigger())
-        .whileTrue(s.indexerSubsystem.runIndexer());
+        .whileTrue(
+            Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -295,22 +308,10 @@ public class Controls {
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
       launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
     }
-    if (s.hood.TUNER_CONTROLLED.get()) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.rightBumper())
-          .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
-    }
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
         .onTrue(s.hood.autoZeroCommand());
-    connected(launcherTuningController)
-        .and(launcherTuningController.a())
-        .onTrue(s.hood.hoodPositionCommand(0.5));
-    connected(launcherTuningController)
-        .and(launcherTuningController.b())
-        .onTrue(s.hood.hoodPositionCommand(1));
-
     connected(launcherTuningController)
         .and(launcherTuningController.x())
         .onTrue(s.flywheels.setVelocityCommand(50));
@@ -330,11 +331,11 @@ public class Controls {
         Commands.run(
                 () -> {
                   switch (intakeMode) {
-                    case DEPLOYED -> s.intakeSubsystem.deployPivot();
-                    case RETRACTED -> s.intakeSubsystem.retractPivot();
-                    case SPIN -> s.intakeSubsystem.runRollers();
-                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
-                    case INTAKE -> s.intakeSubsystem.smartIntake();
+                    case DEPLOYED -> s.intakeSubsystem.deployPivotVoid();
+                    case RETRACTED -> s.intakeSubsystem.retractPivotVoid();
+                    case SPIN -> s.intakeSubsystem.runRollersVoid();
+                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchVoid();
+                    case INTAKE -> s.intakeSubsystem.smartIntakeVoid();
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },
@@ -367,13 +368,13 @@ public class Controls {
 
     connected(intakeTestController)
         .and(intakeTestController.a())
-        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.SPIN));
+        .onTrue(Commands.runOnce(() -> s.intakeRollers.runRollers(IntakeMode.INTAKE)));
     connected(intakeTestController)
         .and(intakeTestController.x())
-        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
+        .onTrue(Commands.runOnce(() -> s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS)));
     connected(intakeTestController)
         .and(intakeTestController.y())
-        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+        .onTrue(Commands.runOnce(() -> s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS)));
   }
 
   /**
