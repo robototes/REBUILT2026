@@ -23,7 +23,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE).withName("Run Intake Rollers");
+    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE).withName("Run Intake Rollers In");
   }
 
   public Command deployPivot() {
