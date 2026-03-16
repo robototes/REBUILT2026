@@ -6,7 +6,6 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
@@ -46,7 +45,6 @@ public class Robot extends TimedRobot {
   private final int THROTTLE_OFF = 0;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
-  private SwerveDriveState swerveState;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -119,15 +117,14 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
-      swerveState = subsystems.drivebaseSubsystem.getState();
       if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
-        supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_C);
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_C);
       } else {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_A);
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          supplyRobotYawToLimelight(swerveState, Hardware.LIMELIGHT_B);
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B);
         }
       }
     }
@@ -272,11 +269,11 @@ public class Robot extends TimedRobot {
     }
   }
 
-  private void supplyRobotYawToLimelight(SwerveDriveState swerveState, String limelightName) {
+  private void supplyRobotYawToLimelight(String limelightName) {
     LimelightHelpers.SetRobotOrientation(
         limelightName,
-        swerveState.Pose.getRotation().getDegrees(),
-        swerveState.Speeds.omegaRadiansPerSecond * (180 / Math.PI),
+        subsystems.drivebaseSubsystem.getPigeon2().getYaw().getValueAsDouble(),
+        0,
         0,
         0,
         0,

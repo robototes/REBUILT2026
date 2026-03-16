@@ -3,12 +3,16 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
@@ -25,6 +29,7 @@ import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
+import java.util.ArrayList;
 
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
@@ -35,6 +40,10 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightaOnline = false;
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
+  private boolean fakePoses = false;
+  private double chance = 0;
+  public static boolean useGetStdDev = false;
+  private Matrix<N3, N1> stdDevs = null;
 
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
@@ -85,6 +94,10 @@ public class VisionSubsystem extends SubsystemBase {
   private double timestampSeconds = 0;
   private Pose2d lastFieldPose = null;
   private double distance = 0;
+  private double numOfTags = 0;
+  private double avgAmbiguity = 0;
+  private double sumOfAmbiguitys = 0;
+  private ArrayList<Double> ambiguitys = new ArrayList<Double>();
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
   private static final double DISTANCE_TOLERANCE = 1.0;
@@ -131,28 +144,51 @@ public class VisionSubsystem extends SubsystemBase {
     if (cameraOnline) {
       RawFiducial[] rawFiducials = camera.getRawFiducials();
       if (rawFiducials != null) {
-        if (rawFiducials.length != 1) {
-          // Multi tag pose Estimation
-          processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry);
+        processTags(rawFiducials);
+        if (fakePoses) {
+          chance = Math.random();
+        }
+        if (!useGetStdDev) {
+          if (rawFiducials.length != 1) {
+            // Multi tag pose Estimation
+            if (chance > 0.5) {
+              processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, true, false);
+            } else {
+              processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, false, false);
+            }
+          } else {
+            // Single tag pose Estimation
+            if (chance > 0.5) {
+              processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, true, false);
+            } else {
+              processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, false, false);
+            }
+          }
         } else {
-          // Single tag pose Estimation
-          processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry);
+          if (chance > 0.5) {
+            processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, true, false);
+            processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, true, false);
+          } else {
+            processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, false, false);
+            processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, false, false);
+          }
         }
       }
     }
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry) {
+      BetterPoseEstimate estimate,
+      StructPublisher<Pose3d> rawFieldPoseEntry,
+      boolean putBadPose,
+      boolean useGetStdDevs) {
     if (getDisableVision()) {
       return;
     }
-
     if (estimate != null) {
       if (estimate.tagCount <= 0) {
         return;
       }
-
       timestampSeconds = estimate.timestampSeconds;
       swerveState = drivetrain.getState();
       swerveSpeeds = swerveState.Speeds;
@@ -171,17 +207,42 @@ public class VisionSubsystem extends SubsystemBase {
               && Math.abs(swerveSpeeds.vxMetersPerSecond) < 0.001
               && Math.abs(swerveSpeeds.vyMetersPerSecond) < 0.001
               && Math.abs(swerveSpeeds.omegaRadiansPerSecond) < 0.02
-              && RobotType.isAlpha()) {
+              && RobotType.isAlpha()
+          || avgAmbiguity > 0.3) {
         pose_bad = true;
       }
 
       if (!pose_bad) {
-        // use this instead of .addVisionMeasurement() because the limelight hardware is good enough
-        // to not need kalman filtering
-        drivetrain.addVisionMeasurement(
-            fieldPose3d.toPose2d(),
-            Utils.fpgaToCurrentTime(timestampSeconds),
-            VecBuilder.fill(0.1, 0.1, 0.1));
+        if (useGetStdDevs) {
+          if (estimate.isMegaTag2) {
+            stdDevs = getEstimationStdDevsLimelightMT2(estimate, true);
+          } else {
+            stdDevs = getEstimationStdDevsLimelightMT1(estimate, true);
+          }
+        }
+        if (!putBadPose) {
+          if (useGetStdDevs) {
+            drivetrain.addVisionMeasurement(
+                fieldPose3d.toPose2d(), Utils.fpgaToCurrentTime(timestampSeconds), stdDevs);
+          } else {
+            drivetrain.addVisionMeasurement(
+                fieldPose3d.toPose2d(),
+                Utils.fpgaToCurrentTime(timestampSeconds),
+                VecBuilder.fill(0.5, 0.5, 0.5));
+          }
+        } else {
+          if (useGetStdDevs) {
+            drivetrain.addVisionMeasurement(
+                new Pose2d(-1, -1, new Rotation2d(0)),
+                Utils.fpgaToCurrentTime(timestampSeconds),
+                stdDevs);
+          } else {
+            drivetrain.addVisionMeasurement(
+                new Pose2d(-1, -1, new Rotation2d(0)),
+                Utils.fpgaToCurrentTime(timestampSeconds),
+                VecBuilder.fill(0.5, 0.5, 0.5));
+          }
+        }
         // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
         robotField.setRobotPose(drivetrain.getState().Pose);
         // DataLogManager.log("put pose in");
@@ -195,6 +256,86 @@ public class VisionSubsystem extends SubsystemBase {
         lastTimestampSeconds = timestampSeconds;
       }
     }
+  }
+
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(
+      BetterPoseEstimate poseEstimate, boolean isLL4) {
+    // PI/60 is about 3 degrees
+    var estStdDevs = VecBuilder.fill(1e6, 1e6, Math.PI / 60);
+    double stddevScalar = 1;
+
+    // if no tags detected, ignorse the pose by returning very high std devs
+    if (numOfTags == 0) {
+      return VecBuilder.fill(1e6, 1e6, 1e6);
+    }
+
+    // Decrease std devs if limelight is LL4
+    if (isLL4) {
+      stddevScalar *= .1;
+    }
+
+    // If the average ambiguity is too high, return very high std devs to ignore the
+    // pose
+    if (avgAmbiguity > 0.3) {
+      return VecBuilder.fill(1e6, 1e6, 1e6);
+    }
+
+    // Scale the standard deviations based on the average ambiguity
+    stddevScalar *= (1 + (avgAmbiguity * 5));
+
+    // If the average distance is too far, return very high std devs to ignore the
+    // pose
+    if (numOfTags == 1 && poseEstimate.avgTagDist > 2) {
+      estStdDevs = VecBuilder.fill(1e6, 1e6, 1e6);
+    } else { // Scale the standard deviations based on the average distance
+      stddevScalar *= (1 + (poseEstimate.avgTagDist * poseEstimate.avgTagDist / 30));
+    }
+
+    // apply the calculated scalar to the standard deviations
+    estStdDevs = estStdDevs.times(stddevScalar);
+
+    return estStdDevs;
+  }
+
+  /**
+   * Retrieve estimated standard deviations for a Megatag 2 estimate
+   *
+   * @param poseEstimate the pose estimate from the limelight
+   * @return the estimated standard deviations
+   */
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(
+      BetterPoseEstimate poseEstimate, boolean isLL4) {
+    var estStdDevs = VecBuilder.fill(0.5, 0.5, 1e6);
+    double stddevScalar = 1;
+
+    double avgDist = poseEstimate.avgTagDist;
+
+    // if no tags detected, ignorse the pose by returning very high std devs
+    if (numOfTags == 0) {
+      return VecBuilder.fill(1e6, 1e6, 1e6);
+    }
+
+    // Decrease std devs if multiple targets are visible
+    if (numOfTags > 1) {
+      stddevScalar *= (0.65);
+    }
+
+    // Decrease std devs if limelight is LL4
+    if (isLL4) {
+      stddevScalar *= (.8);
+    }
+
+    // Increase std devs based on (average) distance
+    if (numOfTags == 1 && avgDist > 5) {
+      estStdDevs = VecBuilder.fill(1e6, 1e6, 1e6);
+    } else {
+      stddevScalar *= (1 + (avgDist * avgDist * .2));
+    }
+
+    // apply the calculated scalar to the standard deviations
+    estStdDevs = estStdDevs.times(stddevScalar);
+
+    return estStdDevs;
   }
 
   public int getNumTargets() {
@@ -250,6 +391,16 @@ public class VisionSubsystem extends SubsystemBase {
       return false;
     }
     // tl = timestamp, tv = valid target (supossedly tv updates every ll frame)
-    return table.getEntry("tl").getLastChange() > 0;
+    return table.getEntry("hb").getLastChange() > 0;
+  }
+
+  public void processTags(RawFiducial[] rfs) {
+    for (RawFiducial rf : rfs) {
+      ambiguitys.add(rf.ambiguity);
+      sumOfAmbiguitys += rf.ambiguity;
+    }
+    avgAmbiguity = sumOfAmbiguitys / ambiguitys.size();
+    ambiguitys.clear();
+    sumOfAmbiguitys = 0;
   }
 }
