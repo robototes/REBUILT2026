@@ -58,10 +58,9 @@ public class AutoLogic {
   private static final List<AutoPath> rebuiltPaths =
       List.of(
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-          new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
           new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
-          new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
+          new AutoPath("RT-Neutral-Hub", "Other-RT-Neutral-Hub"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
           new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
 
