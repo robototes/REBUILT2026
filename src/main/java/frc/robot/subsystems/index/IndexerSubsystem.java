@@ -22,6 +22,8 @@ public class IndexerSubsystem extends SubsystemBase {
         () -> {
           feeder.stopMotor();
           spindexerSubsystem.stopMotor();
-        });
+        },
+        feeder,
+        spindexerSubsystem);
   }
 }

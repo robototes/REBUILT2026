@@ -21,7 +21,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runRollers() {
-    intakeRollers.runRollers(intakeRollers.TARGET_RPS);
+    intakeRollers.runRollers(IntakeMode.INTAKE);
     intakePivot.setPivotPosition(intakePivot.targetPos);
   }
 
@@ -37,20 +37,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void intakeWhileLaunch() {
     intakePivot.setPivotPosition(IntakePivot.LAUNCH_POS);
-    intakeRollers.runRollers(intakeRollers.AGITATE_RPS);
+    intakeRollers.runRollers(IntakeMode.LAUNCH);
   }
 
   public void smartIntake() {
-    if (intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
-      runRollers();
-    } else {
-      deployPivot();
-      runRollers();
-    }
+    intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
+    intakeRollers.runRollers(IntakeMode.INTAKE);
   }
 
   public void extakeIntake() {
     intakePivot.setPivotPosition(IntakePivot.EXTAKE_POS);
-    intakeRollers.runRollers(-intakeRollers.TARGET_RPS);
+    intakeRollers.runRollers(IntakeMode.EXTAKE);
   }
 }
