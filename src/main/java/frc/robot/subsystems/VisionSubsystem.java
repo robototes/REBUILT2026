@@ -63,6 +63,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double MAX_XY_VELO_ALPHA = 2;
     private static final double MAX_TURN_VELO_ALPHA = 0.2;
     private static final double AMBIGUITY_SCALAR = 8;
+    private static final double STALENESS_THRESHOLD = 1;
   }
 
   // hub pose blue X: 4.625m, Y: 4.035m
@@ -239,12 +240,12 @@ public class VisionSubsystem extends SubsystemBase {
           || lastFieldPose != null
               && lastFieldPose.equals(visionPoseTracking.fieldPose3d.toPose2d())
           || (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
-                  > VisionConstants.MAX_XY_VELO_ALPHA
-              || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
-                  > VisionConstants.MAX_XY_VELO_ALPHA
-              || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                      > VisionConstants.MAX_TURN_VELO_ALPHA
-                  && RobotType.isAlpha())) {
+                      > VisionConstants.MAX_XY_VELO_ALPHA
+                  || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+                      > VisionConstants.MAX_XY_VELO_ALPHA
+                  || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+                      > VisionConstants.MAX_TURN_VELO_ALPHA)
+              && RobotType.isAlpha()) {
         visionPoseTracking.poseBad.set(true);
       }
 
@@ -431,7 +432,13 @@ public class VisionSubsystem extends SubsystemBase {
     }
     // tl = timestamp, tv = valid target (supossedly tv updates every ll frame), hb monitors more of
     // an what the limelight is internally
-    return table.getEntry("hb").getLastChange() > 0;
+    long lastChange = table.getEntry("hb").getLastChange();
+    if (lastChange == 0) {
+      return false;
+    }
+    // getLastChange() returns microseconds, Timer.getFPGATimestamp() returns seconds
+    double lastChangeSecs = lastChange / 1_000_000.0;
+    return (Timer.getFPGATimestamp() - lastChangeSecs) < VisionConstants.STALENESS_THRESHOLD;
   }
 
   public void processTags(RawFiducial[] rfs) {
