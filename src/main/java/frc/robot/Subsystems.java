@@ -23,9 +23,9 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.index.FeederSubsystem;
+import frc.robot.subsystems.index.Feeder;
 import frc.robot.subsystems.index.IndexerSubsystem;
-import frc.robot.subsystems.index.SpindexerSubsystem;
+import frc.robot.subsystems.index.Spindexer;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakeRollers;
 import frc.robot.subsystems.intake.IntakeSubsystem;
@@ -64,8 +64,8 @@ public class Subsystems {
   public final Flywheels flywheels;
   public final Hood hood;
   public final DetectionSubsystem detectionSubsystem;
-  public final SpindexerSubsystem spindexerSubsystem;
-  public final FeederSubsystem feederSubsystem;
+  public final Spindexer spindexerSubsystem;
+  public final Feeder feederSubsystem;
   public final IntakeRollers intakeRollers;
   public final IntakePivot intakePivot;
   public final IntakeSubsystem intakeSubsystem;
@@ -125,13 +125,13 @@ public class Subsystems {
     }
 
     if (SPINDEXER_ENABLED) {
-      spindexerSubsystem = new SpindexerSubsystem();
+      spindexerSubsystem = new Spindexer();
     } else {
       spindexerSubsystem = null;
     }
 
     if (FEEDER_ENABLED) {
-      feederSubsystem = new FeederSubsystem();
+      feederSubsystem = new Feeder();
     } else {
       feederSubsystem = null;
     }

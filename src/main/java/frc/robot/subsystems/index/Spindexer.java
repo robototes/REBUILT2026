@@ -2,7 +2,7 @@ package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -12,20 +12,28 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableBoolean;
+import frc.robot.util.tuning.NtTunableDouble;
 
-public class SpindexerSubsystem extends SubsystemBase {
-
-  public static final double SPINDEXER_VOLTAGE = 11;
-  private VoltageOut voltReq = new VoltageOut(0);
-
+public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
+
+  private final double D_TARGET_RPS = 90.7;
+  private final double D_TARGET_ACCEL = 332; // Rotations /s /s
+  private final NtTunableBoolean TUNABLE_ENABLE =
+      new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
+  private final NtTunableDouble TARGET_ACCEL =
+      new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
+  private final NtTunableDouble TARGET_RPS =
+      new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final FlywheelSim motorSim;
 
-  public SpindexerSubsystem() {
+  public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
 
@@ -47,7 +55,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted =
+        (RobotType.isAlpha())
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
@@ -57,27 +68,22 @@ public class SpindexerSubsystem extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
+    talonFXConfiguration.Slot0.kV = 11.2 / 90.7;
+
     cfg.apply(talonFXConfiguration);
   }
 
-  public void setVoltage(double voltage) {
-    spindexerMotor.setControl(voltReq.withOutput(voltage));
+  public void runVelocity() {
+    if (TUNABLE_ENABLE.get()) {
+      spindexerMotor.setControl(
+          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
+    } else {
+      spindexerMotor.setControl(
+          TARGET_VELOCITY.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
+    }
   }
 
-  public Command startMotor() {
-    return runEnd(
-            () -> {
-              setVoltage(SPINDEXER_VOLTAGE);
-            },
-            () -> spindexerMotor.stopMotor())
-        .withName("Start Spindexer Motor");
-  }
-
-  public Command stopMotorCommand() {
-    return runOnce(() -> spindexerMotor.stopMotor()).withName("Stop Spindexer Motor");
-  }
-
-  public void stopMotorVoid() {
+  public void stopMotor() {
     spindexerMotor.stopMotor();
   }
 
