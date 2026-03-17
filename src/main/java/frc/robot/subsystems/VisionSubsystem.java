@@ -57,7 +57,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double MAX_DISTANCE_MT1 = 2;
     private static final double MAX_DISTANCE_MT2 = 5;
     private static final double MAX_AMBIGUITY = 0.4;
-    private static final double AMBIGUITY_BOOST_MT2 = 5;
+    private static final double AMBIGUITY_BOOST_MT1 = 5;
     private static final double FINAL_BOOST_MT1 = 30;
     private static final double FINAL_BOOST_MT2 = 5;
     private static final double MAX_XY_VELO_ALPHA = 2;
@@ -193,7 +193,7 @@ public class VisionSubsystem extends SubsystemBase {
           }
         } else {
           processLimelight(
-              camera.getBetterPoseEstimate(), rawFieldPose3dEntry, injectFakePoseMT2, useGetStdDev);
+              camera.getBetterPoseEstimate(), rawFieldPose3dEntry, injectFakePoseMT1, useGetStdDev);
           processLimelight(
               camera.getPoseEstimateMegatag2(),
               rawFieldPose3dEntry,
@@ -329,7 +329,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     // Scale the standard deviations based on the average ambiguity
     // the 1 here is to make to not divide
-    stddevScalarMt1 *= (1 + (avgAmbiguity * VisionConstants.AMBIGUITY_BOOST_MT2));
+    stddevScalarMt1 *= (1 + (avgAmbiguity * VisionConstants.AMBIGUITY_BOOST_MT1));
 
     // If the average distance is too far, return very high std devs to ignore the
     // pose
@@ -359,12 +359,12 @@ public class VisionSubsystem extends SubsystemBase {
     }
     // Decrease std devs if multiple targets are visible
     if (numOfTags > 1) {
-      stddevScalarMt2 *= (VisionConstants.MULTITARGET_BOOST_MT2);
+      stddevScalarMt2 *= VisionConstants.MULTITARGET_BOOST_MT2;
     }
 
     // Decrease std devs if limelight is LL4
     if (isLL4) {
-      stddevScalarMt2 *= (VisionConstants.LIMELIGHT4_BOOST_MT2);
+      stddevScalarMt2 *= VisionConstants.LIMELIGHT4_BOOST_MT2;
     }
 
     // Increase std devs based on (average) distance
@@ -444,8 +444,10 @@ public class VisionSubsystem extends SubsystemBase {
 
   private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {
     if (drivetrain != null) {
-      return getDistanceToTargetViaPoseEstimation(
-          visionPose2d, drivetrain.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds)).get());
+      var historicPose = drivetrain.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
+      if (historicPose.isPresent()) {
+        return getDistanceToTargetViaPoseEstimation(visionPose2d, historicPose.get());
+      }
     }
     return 0;
   }
