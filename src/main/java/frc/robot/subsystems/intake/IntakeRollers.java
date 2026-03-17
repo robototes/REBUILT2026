@@ -40,7 +40,8 @@ public class IntakeRollers extends SubsystemBase {
       new NtTunableBoolean("SmartDashboard/Tunables/TuneIntakeRollers", false);
   private final NtTunableDouble NT_TARGET_RPS =
       new NtTunableDouble("SmartDashboard/intake/TargetVelocityRPS", TARGET_RPS);
-  private final VelocityVoltage velocityRequest = new VelocityVoltage(TARGET_RPS); // Rotations/s
+  private final VelocityVoltage velocityRequest =
+      new VelocityVoltage(TARGET_RPS).withEnableFOC(false); // Rotations/s
 
   public IntakeRollers() {
     // define motors and configs

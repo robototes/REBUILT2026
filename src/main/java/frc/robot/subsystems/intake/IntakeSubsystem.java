@@ -22,7 +22,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void runRollers() {
     intakeRollers.runRollers(IntakeMode.INTAKE);
-    intakePivot.setPivotPosition(intakePivot.targetPos);
+    intakePivot.setPivotPosition(intakePivot.getPivotTargetPosition());
   }
 
   public void deployPivot() {

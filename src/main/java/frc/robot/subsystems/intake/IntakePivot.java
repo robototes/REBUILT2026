@@ -29,7 +29,7 @@ public class IntakePivot extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
 
   // Positions
-  public double targetPos;
+  private double targetPos;
   public static final double DEPLOYED_POS = -0.39;
   public static final double LAUNCH_POS = -0.21;
   public static final double RETRACTED_POS = 0.0;
