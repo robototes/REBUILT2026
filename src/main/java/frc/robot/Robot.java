@@ -280,7 +280,7 @@ public class Robot extends TimedRobot {
   private void supplyRobotYawToLimelight(String limelightName) {
     LimelightHelpers.SetRobotOrientation(
         limelightName,
-        subsystems.drivebaseSubsystem.getPigeon2().getYaw().getValueAsDouble(),
+        subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
         0,
         0,
         0,
