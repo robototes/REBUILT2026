@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -40,7 +41,7 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
   private final boolean FAKE_POSES = false;
-  private static boolean useGetStdDev = true;
+  private static final boolean useGetStdDev = true;
   private Matrix<N3, N1> stdDevs = null;
 
   private static class VisionConstants {
@@ -63,10 +64,6 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double MAX_TURN_VELO_ALPHA = 0.2;
     private static final double AMBIGUITY_SCALAR = 8;
   }
-
-  private final double[] aCameraChanceSlots = {0, 0};
-  private final double[] bCameraChanceSlots = {0, 0};
-  private final double[] cCameraChanceSlots = {0, 0};
 
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
@@ -155,30 +152,31 @@ public class VisionSubsystem extends SubsystemBase {
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
     if (!RobotType.isAlpha()) {
-      processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA, aCameraChanceSlots);
-      processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB, bCameraChanceSlots);
+      processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
+      processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
       updateCameraView(VisionPoseTracking.drivePose3d);
     }
 
     if (RobotType.isAlpha()) {
-      processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC, cCameraChanceSlots);
+      processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC);
     }
   }
 
   private void processCamera(
       LLCamera camera,
       boolean cameraOnline,
-      StructPublisher<Pose3d> rawFieldPose3dEntry,
-      double[] chanceSlots) {
+      StructPublisher<Pose3d> rawFieldPose3dEntry) {
     if (cameraOnline) {
       RawFiducial[] rawFiducials = camera.getRawFiducials();
       if (rawFiducials != null) {
         processTags(rawFiducials);
 
         // Roll independently for each pipeline
+        boolean injectFakePoseMT1 = false;
+        boolean injectFakePoseMT2 = false;
         if (FAKE_POSES) {
-          chanceSlots[0] = Math.random();
-          chanceSlots[1] = Math.random();
+          injectFakePoseMT1 = Math.random() < FAKE_POSE_RATE;
+          injectFakePoseMT2 = Math.random() < FAKE_POSE_RATE;
         }
         if (!useGetStdDev) {
           if (rawFiducials.length != 1) {
@@ -186,26 +184,26 @@ public class VisionSubsystem extends SubsystemBase {
             processLimelight(
                 camera.getBetterPoseEstimate(),
                 rawFieldPose3dEntry,
-                shouldInjectFakePose(camera, chanceSlots),
+                injectFakePoseMT1,
                 useGetStdDev);
           } else {
             // Single tag pose Estimation
             processLimelight(
                 camera.getPoseEstimateMegatag2(),
                 rawFieldPose3dEntry,
-                shouldInjectFakePose(camera, chanceSlots),
+                injectFakePoseMT2,
                 useGetStdDev);
           }
         } else {
           processLimelight(
               camera.getBetterPoseEstimate(),
               rawFieldPose3dEntry,
-              shouldInjectFakePose(camera, chanceSlots),
+              injectFakePoseMT2,
               useGetStdDev);
           processLimelight(
               camera.getPoseEstimateMegatag2(),
               rawFieldPose3dEntry,
-              shouldInjectFakePose(camera, chanceSlots),
+              injectFakePoseMT2,
               useGetStdDev);
         }
       }
@@ -444,15 +442,6 @@ public class VisionSubsystem extends SubsystemBase {
     }
     avgAmbiguity = (rfs.length == 0) ? 0 : (sumOfAmbiguitys / rfs.length);
     sumOfAmbiguitys = 0;
-  }
-
-  private boolean shouldInjectFakePose(LLCamera camera, double[] chanceSlots) {
-    if (!FAKE_POSES) {
-      return false;
-    }
-    // Use a different chance slot for LIMELIGHT_A
-    double chance = camera.getName().equals(Hardware.LIMELIGHT_A) ? chanceSlots[1] : chanceSlots[0];
-    return chance < FAKE_POSE_RATE;
   }
 
   private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {
