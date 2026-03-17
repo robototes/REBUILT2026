@@ -9,10 +9,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -51,11 +47,6 @@ public class LaunchCalculator {
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
-  // Network tables
-  private NetworkTableEntry NT_piplineLatency; // latency from vision pipeline
-  private NetworkTableEntry
-      NT_captureLatency; // time between end of sensor exposure and beginning of processing pipeline
-
   public record LaunchingParameters(
       double targetHood,
       Rotation2d targetTurret,
@@ -75,24 +66,11 @@ public class LaunchCalculator {
     }
   }
 
-  private LaunchCalculator() {
-    NetworkTable limelightNTEntry = NetworkTableInstance.getDefault().getTable("limelight");
-    NT_piplineLatency = limelightNTEntry.getEntry("tl");
-    NT_captureLatency = limelightNTEntry.getEntry("cl");
-  }
-
   // ------ MAIN LOGIC ------ //
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
-    // Take the pose when vision was captured rather than the instantaneous pose of the robot
-    double visionLatencySeconds =
-        (NT_piplineLatency.getDouble(0) + NT_captureLatency.getDouble(0))
-            / 1000.0; // adds pipeline latency and capture latency to get to total latency
-    double now = Timer.getFPGATimestamp();
-    double captureTime = now - visionLatencySeconds;
-
-    // Grab the EXACT pose the robot had when the camera got the frame
+    // Grab current pose
     Pose2d currentPose = driveTrain.getState().Pose;
 
     // Predicted robot pose after calculations have finished
