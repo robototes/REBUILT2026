@@ -41,8 +41,12 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void smartIntake() {
-    intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
-    intakeRollers.runRollers(IntakeMode.INTAKE);
+    if (intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
+      runRollers();
+    } else {
+      deployPivot();
+      runRollers();
+    }
   }
 
   public void extakeIntake() {

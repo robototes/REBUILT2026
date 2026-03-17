@@ -97,22 +97,12 @@ public class IntakeRollers extends SubsystemBase {
       leftRoller.setControl(velocityRequest.withVelocity(NT_TARGET_RPS.get()));
       rightRoller.setControl(followRequest);
     } else {
-      double rps;
+      double rps = 10;
       switch (mode) {
-        case EXTAKE:
-          {
-            rps = -TARGET_RPS;
-          }
-        case INTAKE:
-          {
-            rps = TARGET_RPS;
-          }
-        case LAUNCH:
-          {
-            rps = AGITATE_RPS;
-          }
-        default:
-          rps = 0;
+        case EXTAKE -> rps = -TARGET_RPS;
+        case INTAKE -> rps = TARGET_RPS;
+        case LAUNCH -> rps = AGITATE_RPS;
+        case SPIN -> rps = TARGET_RPS;
       }
       leftRoller.setControl(velocityRequest.withVelocity(rps));
       rightRoller.setControl(followRequest);
