@@ -128,6 +128,14 @@ public class VisionSubsystem extends SubsystemBase {
     // vision
     public Pose3d fieldPose3d;
     public boolean pose_bad = false;
+
+    public void clear() {
+      this.drivePose3d = null;
+      this.swerveState = null;
+      this.swerveSpeeds = null;
+      fieldPose3d = null;
+      pose_bad = false;
+    }
   }
 
   private final VisionPoseTracking visionPoseTracking;
@@ -154,8 +162,9 @@ public class VisionSubsystem extends SubsystemBase {
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
     if (!RobotType.isAlpha()) {
       processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
+      updateCameraView(visionPoseTracking);
       processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
-      updateCameraView(visionPoseTracking.drivePose3d);
+      updateCameraView(visionPoseTracking);
     }
 
     if (RobotType.isAlpha()) {
@@ -218,6 +227,7 @@ public class VisionSubsystem extends SubsystemBase {
       if (estimate.tagCount <= 0) {
         return;
       }
+      visionPoseTracking.clear();
       visionPoseTracking.swerveState = drivetrain.getState();
       visionPoseTracking.swerveSpeeds = visionPoseTracking.swerveState.Speeds;
       visionPoseTracking.drivePose3d = new Pose3d(visionPoseTracking.swerveState.Pose);
@@ -288,9 +298,8 @@ public class VisionSubsystem extends SubsystemBase {
                 VisionConstants.REG_STD_DEVS);
           }
         }
-        // drivetrain.resetTranslation(fieldPose3d.getTranslation().toTranslation2d());
+        // needs to get new pose here
         robotField.setRobotPose(drivetrain.getState().Pose);
-        // DataLogManager.log("put pose in");
       }
       if (estimate.timestampSeconds > lastTimestampSeconds) {
         if (!visionPoseTracking.pose_bad) {
@@ -416,10 +425,12 @@ public class VisionSubsystem extends SubsystemBase {
     return lastFieldPose;
   }
 
-  private void updateCameraView(Pose3d robotPose3d) {
-    if (robotPose3d != null) {
-      compBotLeftCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_LEFT_CAMERA));
-      compBotFrontCameraViewEntry.set(robotPose3d.transformBy(COMP_BOT_FRONT_CAMERA));
+  private void updateCameraView(VisionPoseTracking visionPoseTracking) {
+    if (visionPoseTracking != null) {
+      compBotLeftCameraViewEntry.set(
+          visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA));
+      compBotFrontCameraViewEntry.set(
+          visionPoseTracking.drivePose3d.transformBy(COMP_BOT_FRONT_CAMERA));
     }
   }
 
@@ -428,7 +439,8 @@ public class VisionSubsystem extends SubsystemBase {
     if (table == null) {
       return false;
     }
-    // tl = timestamp, tv = valid target (supossedly tv updates every ll frame)
+    // tl = timestamp, tv = valid target (supossedly tv updates every ll frame), hb monitors more of
+    // an what the limelight is internally
     return table.getEntry("hb").getLastChange() > 0;
   }
 
