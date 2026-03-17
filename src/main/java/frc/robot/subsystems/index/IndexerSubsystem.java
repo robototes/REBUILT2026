@@ -5,24 +5,23 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class IndexerSubsystem extends SubsystemBase {
-  protected FeederSubsystem feeder;
-  protected SpindexerSubsystem spindexerSubsystem;
+  protected Feeder feeder;
+  protected Spindexer spindexerSubsystem;
 
-  public IndexerSubsystem(FeederSubsystem feeder, SpindexerSubsystem spindexerSubsystem) {
+  public IndexerSubsystem(Feeder feeder, Spindexer spindexerSubsystem) {
     this.feeder = feeder;
     this.spindexerSubsystem = spindexerSubsystem;
   }
 
   public Command runIndexer() {
     return Commands.runEnd(
-            () -> {
-              feeder.setVoltage(FeederSubsystem.FEEDER_VOLTAGE);
-              spindexerSubsystem.setVoltage(SpindexerSubsystem.SPINDEXER_VOLTAGE);
-            },
-            () -> {
-              feeder.stopMotorVoid();
-              spindexerSubsystem.stopMotorVoid();
-            })
-        .withName("Run Indexer");
+        () -> {
+          feeder.runVelocity();
+          spindexerSubsystem.runVelocity();
+        },
+        () -> {
+          feeder.stopMotor();
+          spindexerSubsystem.stopMotor();
+        });
   }
 }
