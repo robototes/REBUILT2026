@@ -4,10 +4,9 @@
 
 package frc.robot;
 
-import java.util.Arrays;
+import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
-
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -21,7 +20,6 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
@@ -32,6 +30,7 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
+import java.util.Arrays;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
