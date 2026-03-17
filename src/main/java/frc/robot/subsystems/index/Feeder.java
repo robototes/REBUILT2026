@@ -56,10 +56,7 @@ public class Feeder extends SubsystemBase {
     TalonFXConfigurator cfg = feedMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
-    talonFXConfiguration.MotorOutput.Inverted =
-        (RobotType.isAlpha())
-            ? InvertedValue.Clockwise_Positive
-            : InvertedValue.CounterClockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;

@@ -244,18 +244,21 @@ public class Controls {
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                Commands.parallel(
-                        s.indexerSubsystem.runIndexer(),
-                        Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                        Commands.waitSeconds(1)
-                            .andThen(
-                                Commands.runOnce(
-                                    () ->
-                                        intakeMode =
-                                            driverController.leftTrigger().getAsBoolean()
-                                                ? IntakeMode.INTAKE
-                                                : IntakeMode.LAUNCH)))
-                    .onlyWhile(() -> s.launcherSubsystem.isAtTarget())))
+                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                    .andThen(
+                        Commands.parallel(
+                                s.indexerSubsystem.runIndexer(),
+                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                Commands.waitSeconds(1)
+                                    .andThen(
+                                        Commands.runOnce(
+                                            () ->
+                                                intakeMode =
+                                                    driverController.leftTrigger().getAsBoolean()
+                                                        ? IntakeMode.INTAKE
+                                                        : IntakeMode.LAUNCH)))
+                            .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
+                    .repeatedly()))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()

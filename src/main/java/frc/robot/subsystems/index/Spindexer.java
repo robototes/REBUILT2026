@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 
@@ -54,7 +55,10 @@ public class Spindexer extends SubsystemBase {
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
     // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    talonFXConfiguration.MotorOutput.Inverted =
+        (RobotType.isAlpha())
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
