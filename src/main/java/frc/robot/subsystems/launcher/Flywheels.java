@@ -39,6 +39,15 @@ public class Flywheels extends SubsystemBase {
   public NtTunableDouble targetVelocity;
   private long lastPositionUpdateTime = 0;
 
+  DEFAULT_AT_SPEED = 55.0;
+  DEFAULT_DROP_MIN = 8.0;
+  DEFAULT_FLOOR = 30.0;
+  DEFAULT_RECOVERY = 5.0;
+  DEFAULT_DEBOUNCE_MS = 80;
+  DEFAULT_WINDOW = 5;
+  //counter var
+  //clear command
+
   public final double FLYWHEEL_TOLERANCE = 5; // RPS
   public final NtTunableBoolean TUNER_CONTROLLED =
       new NtTunableBoolean("/SmartDashBoard/Tunables/Flywheels", false);
