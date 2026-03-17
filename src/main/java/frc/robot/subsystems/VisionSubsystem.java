@@ -1,10 +1,7 @@
 package frc.robot.subsystems;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -33,6 +30,7 @@ import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VisionSubsystem extends SubsystemBase {
   // Limelight names must match your NT names
@@ -124,12 +122,11 @@ public class VisionSubsystem extends SubsystemBase {
   private CommandSwerveDrivetrain drivetrain;
 
   private record VisionPoseTracking(
-    SwerveDriveState swerveState,
-    ChassisSpeeds swerveSpeeds,
-    Pose3d drivePose3d,
-    Pose3d fieldPose3d,
-    AtomicBoolean poseBad
-) {}
+      SwerveDriveState swerveState,
+      ChassisSpeeds swerveSpeeds,
+      Pose3d drivePose3d,
+      Pose3d fieldPose3d,
+      AtomicBoolean poseBad) {}
 
   private VisionPoseTracking visionPoseTracking;
 
@@ -221,7 +218,13 @@ public class VisionSubsystem extends SubsystemBase {
       }
       // needs to be here to refrence one drive state i think
       SwerveDriveState swerveDriveState = drivetrain.getState();
-      visionPoseTracking = new VisionPoseTracking(swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose), estimate.pose3d, new AtomicBoolean(false));
+      visionPoseTracking =
+          new VisionPoseTracking(
+              swerveDriveState,
+              swerveDriveState.Speeds,
+              new Pose3d(swerveDriveState.Pose),
+              estimate.pose3d,
+              new AtomicBoolean(false));
       rawFieldPoseEntry.set(visionPoseTracking.fieldPose3d);
       double avgTagDist = estimate.avgTagDist;
       if (!MathUtil.isNear(0, visionPoseTracking.fieldPose3d.getZ(), HEIGHT_TOLERANCE)
