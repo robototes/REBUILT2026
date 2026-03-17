@@ -85,14 +85,15 @@ public class IntakeRollers extends SubsystemBase {
 
   public Command runRollers(double voltage) {
     return Commands.runEnd(
-        () -> {
-          leftRoller.setControl(voltReq.withOutput(voltage));
-          rightRoller.setControl(followRequest);
-        },
-        () -> {
-          leftRoller.stopMotor();
-          rightRoller.stopMotor();
-        });
+            () -> {
+              leftRoller.setControl(voltReq.withOutput(voltage));
+              rightRoller.setControl(followRequest);
+            },
+            () -> {
+              leftRoller.stopMotor();
+              rightRoller.stopMotor();
+            })
+        .withName("Run Intake Rollers");
   }
 
   public void setRollerVolt(double voltage) {

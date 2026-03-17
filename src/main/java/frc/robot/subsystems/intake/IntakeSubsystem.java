@@ -23,28 +23,30 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public Command runRollersCommand() {
-    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE);
+    return intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE).withName("Run Intake Rollers In");
   }
 
   public Command deployPivot() {
-    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
+    return intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS).withName("Deploy Intake Pivot");
   }
 
   public Command retractPivot() {
-    return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
+    return intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS).withName("Retract Intake Pivot");
   }
 
   public Command intakeWhileLaunchCommand() {
     return intakePivot
         .setPivotPosition(IntakePivot.LAUNCH_POS)
-        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE));
+        .alongWith(intakeRollers.runRollers(IntakeRollers.AGITATE_VOLTAGE))
+        .withName("Intake While Launch");
   }
 
   public Command smartIntake() {
     return Commands.either(
-        runRollersCommand(),
-        Commands.sequence(deployPivot(), runRollersCommand()),
-        () -> intakePivot.isDeployed(5));
+            runRollersCommand(),
+            Commands.sequence(deployPivot(), runRollersCommand()),
+            () -> intakePivot.isDeployed(5))
+        .withName("Smart Intake");
   }
 
   public void runRollersVoid() {

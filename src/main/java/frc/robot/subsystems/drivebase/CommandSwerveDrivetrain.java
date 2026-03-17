@@ -186,7 +186,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @return Command to run
    */
   public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
-    return run(() -> this.setControl(requestSupplier.get())).withName("Drivebase applyRequest()");
+    return run(() -> this.setControl(requestSupplier.get())).withName("Apply Drivebase Request");
   }
 
   /**
@@ -197,7 +197,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @return Command to run
    */
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineToApply.quasistatic(direction);
+    return m_sysIdRoutineToApply.quasistatic(direction).withName("SysId Quasistatic");
   }
 
   /**
@@ -208,7 +208,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @return Command to run
    */
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineToApply.dynamic(direction);
+    return m_sysIdRoutineToApply.dynamic(direction).withName("SysId Dynamic");
   }
 
   @Override

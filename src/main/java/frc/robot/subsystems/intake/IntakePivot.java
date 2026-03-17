@@ -122,10 +122,11 @@ public class IntakePivot extends SubsystemBase {
 
   public Command setPivotPosition(double pos) {
     return runOnce(
-        () -> {
-          pivotMotor.setControl(request.withPosition(pos));
-          targetPos = pos;
-        });
+            () -> {
+              pivotMotor.setControl(request.withPosition(pos));
+              targetPos = pos;
+            })
+        .withName("Set Pivot Position");
   }
 
   public void setPivotPositionVoid(double pos) {
@@ -135,15 +136,17 @@ public class IntakePivot extends SubsystemBase {
 
   public Command zeroPivot() {
     return runOnce(
-        () -> {
-          pivotMotor.setPosition(RETRACTED_POS);
-          targetPos = RETRACTED_POS;
-          zeroPublisher.set(true);
-        });
+            () -> {
+              pivotMotor.setPosition(RETRACTED_POS);
+              targetPos = RETRACTED_POS;
+              zeroPublisher.set(true);
+            })
+        .withName("Zero Pivot");
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
-    return runEnd(() -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor());
+    return runEnd(() -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor())
+        .withName("Manual Moving Voltage");
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {

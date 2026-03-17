@@ -127,9 +127,10 @@ public class Controls {
 
   public Command setRumble(RumbleType type, double value) {
     return Commands.runOnce(
-        () -> {
-          driverController.setRumble(type, value);
-        });
+            () -> {
+              driverController.setRumble(type, value);
+            })
+        .withName("Set Rumble");
   }
 
   private void configureIndexingBindings() {
@@ -259,19 +260,18 @@ public class Controls {
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                    .andThen(
-                        Commands.parallel(
-                            s.indexerSubsystem.runIndexer(),
-                            Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                            Commands.waitSeconds(1)
-                                .andThen(
-                                    Commands.runOnce(
-                                        () ->
-                                            intakeMode =
-                                                driverController.leftTrigger().getAsBoolean()
-                                                    ? IntakeMode.INTAKE
-                                                    : IntakeMode.LAUNCH))))))
+                Commands.parallel(
+                        s.indexerSubsystem.runIndexer(),
+                        Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                        Commands.waitSeconds(1)
+                            .andThen(
+                                Commands.runOnce(
+                                    () ->
+                                        intakeMode =
+                                            driverController.leftTrigger().getAsBoolean()
+                                                ? IntakeMode.INTAKE
+                                                : IntakeMode.LAUNCH)))
+                    .onlyWhile(() -> s.launcherSubsystem.isAtTarget())))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
@@ -397,7 +397,7 @@ public class Controls {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Commands.none();
+    return Commands.none().withName("Empty Autonomous Command");
   }
 
   public void vibrateDriveController(double vibration) {
@@ -411,7 +411,8 @@ public class Controls {
             () -> vibrateDriveController(vibration), // start
             () -> vibrateDriveController(0.0) // end
             )
-        .withTimeout(seconds);
+        .withTimeout(seconds)
+        .withName("Rumble Drive Controller");
   }
 
   private void configureVisionBindings() {
