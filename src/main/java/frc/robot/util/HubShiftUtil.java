@@ -1,11 +1,12 @@
 package frc.robot.util;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.util.tuning.LauncherConstants;
-import java.util.Optional;
-import java.util.function.Supplier;
 import lombok.Setter;
 
 public class HubShiftUtil {
@@ -184,6 +185,5 @@ public class HubShiftUtil {
       140.0
     };
     return getShiftInfo(shiftSchedule, shiftedShiftStartTimes, shiftedShiftEndTimes);
-    // }
   }
 }
