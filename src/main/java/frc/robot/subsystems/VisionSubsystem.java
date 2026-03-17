@@ -1,7 +1,10 @@
 package frc.robot.subsystems;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -120,28 +123,18 @@ public class VisionSubsystem extends SubsystemBase {
   private static final double ROTATION_TOLERANCE = 12;
   private CommandSwerveDrivetrain drivetrain;
 
-  private class VisionPoseTracking {
-    public Pose3d drivePose3d;
-    public SwerveDriveState swerveState;
-    public ChassisSpeeds swerveSpeeds;
-    // vision
-    public Pose3d fieldPose3d;
-    public boolean pose_bad = false;
+  private record VisionPoseTracking(
+    SwerveDriveState swerveState,
+    ChassisSpeeds swerveSpeeds,
+    Pose3d drivePose3d,
+    Pose3d fieldPose3d,
+    AtomicBoolean poseBad
+) {}
 
-    public void clear() {
-      this.drivePose3d = null;
-      this.swerveState = null;
-      this.swerveSpeeds = null;
-      fieldPose3d = null;
-      pose_bad = false;
-    }
-  }
-
-  private final VisionPoseTracking visionPoseTracking;
+  private VisionPoseTracking visionPoseTracking;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
-    visionPoseTracking = new VisionPoseTracking();
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
@@ -226,12 +219,9 @@ public class VisionSubsystem extends SubsystemBase {
       if (estimate.tagCount <= 0) {
         return;
       }
-      visionPoseTracking.clear();
-      visionPoseTracking.swerveState = drivetrain.getState();
-      visionPoseTracking.swerveSpeeds = visionPoseTracking.swerveState.Speeds;
-      visionPoseTracking.drivePose3d = new Pose3d(visionPoseTracking.swerveState.Pose);
-      visionPoseTracking.fieldPose3d = estimate.pose3d;
-      visionPoseTracking.pose_bad = false;
+      // needs to be here to refrence one drive state i think
+      SwerveDriveState swerveDriveState = drivetrain.getState();
+      visionPoseTracking = new VisionPoseTracking(swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose), estimate.pose3d, new AtomicBoolean(false));
       rawFieldPoseEntry.set(visionPoseTracking.fieldPose3d);
       double avgTagDist = estimate.avgTagDist;
       if (!MathUtil.isNear(0, visionPoseTracking.fieldPose3d.getZ(), HEIGHT_TOLERANCE)
@@ -252,10 +242,10 @@ public class VisionSubsystem extends SubsystemBase {
               || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                       > VisionConstants.MAX_TURN_VELO_ALPHA
                   && RobotType.isAlpha())) {
-        visionPoseTracking.pose_bad = true;
+        visionPoseTracking.poseBad.set(true);
       }
 
-      if (!visionPoseTracking.pose_bad) {
+      if (!visionPoseTracking.poseBad.get()) {
         if (useGetStdDevs) {
           if (estimate.isMegaTag2) {
             stdDevs = getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount);
@@ -300,7 +290,7 @@ public class VisionSubsystem extends SubsystemBase {
         robotField.setRobotPose(drivetrain.getState().Pose);
       }
       if (estimate.timestampSeconds >= lastTimestampSeconds) {
-        if (!visionPoseTracking.pose_bad) {
+        if (!visionPoseTracking.poseBad.get()) {
           fieldPose3dEntry.set(visionPoseTracking.fieldPose3d);
           lastFieldPose = visionPoseTracking.fieldPose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
