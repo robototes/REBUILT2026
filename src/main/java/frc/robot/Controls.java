@@ -356,7 +356,7 @@ public class Controls {
 
     connected(intakeTestController)
         .and(intakeTestController.a())
-        .onTrue(Commands.runOnce(() -> s.intakeRollers.runRollers(IntakeMode.INTAKE)));
+        .onTrue(Commands.runOnce(() -> s.intakeSubsystem.runRollers()));
     connected(intakeTestController)
         .and(intakeTestController.x())
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));

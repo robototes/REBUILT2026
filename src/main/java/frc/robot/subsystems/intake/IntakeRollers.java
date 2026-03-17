@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
-import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
@@ -92,19 +91,12 @@ public class IntakeRollers extends SubsystemBase {
     rightRollerPub.set(0);
   }
 
-  public void runRollers(IntakeMode mode) {
+  public void runRollers(double velocity) {
     if (TUNABLE_ENABLE.get()) {
       leftRoller.setControl(velocityRequest.withVelocity(NT_TARGET_RPS.get()));
       rightRoller.setControl(followRequest);
     } else {
-      double rps = 10;
-      switch (mode) {
-        case EXTAKE -> rps = -TARGET_RPS;
-        case INTAKE -> rps = TARGET_RPS;
-        case LAUNCH -> rps = AGITATE_RPS;
-        case SPIN -> rps = TARGET_RPS;
-      }
-      leftRoller.setControl(velocityRequest.withVelocity(rps));
+      leftRoller.setControl(velocityRequest.withVelocity(velocity));
       rightRoller.setControl(followRequest);
     }
   }
