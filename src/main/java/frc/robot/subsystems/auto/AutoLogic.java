@@ -60,7 +60,7 @@ public class AutoLogic {
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
           new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
-          new AutoPath("RT-Neutral-Hub", "Other-RT-Neutral-Hub"),
+          new AutoPath("RT-Neutral-Close-Hub", "RT-Neutral-Close-Hub"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
           new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
 
