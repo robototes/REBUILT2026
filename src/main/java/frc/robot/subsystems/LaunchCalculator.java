@@ -190,20 +190,16 @@ public class LaunchCalculator {
    */
   private double getDragCompensatedTOF(double tof) {
     double newTOF = (1.0 - Math.exp(-DRAG_COEFFICIENT * tof)) / DRAG_COEFFICIENT;
-    if (Math.abs(newTOF - tof) < DRAG_TOLERANCE) {
-      return tof;
-    } // if really near zero, just return parameter
-    else {
-      return newTOF;
-    }
+    return (Math.abs(newTOF - tof) < DRAG_TOLERANCE)
+        ? tof
+        : // if really near zero, just return parameter
+        newTOF;
   }
 
   public double getHoodAngle(Pose2d lookaheadPose, double trueDist) {
-    if (isCloseToTrench(lookaheadPose)) {
-      return 0;
-    } else {
-      return LauncherConstants.getHoodAngleFromDistance(trueDist);
-    }
+    return isCloseToTrench(lookaheadPose)
+        ? 0
+        : LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
   /** compares X net of the 2 poses */

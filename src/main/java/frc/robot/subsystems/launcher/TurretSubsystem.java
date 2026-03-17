@@ -134,7 +134,7 @@ public class TurretSubsystem extends SubsystemBase {
         });
   }
 
-  public void setTurretRawPosition(double pos, Double FFVelocity) {
+  public void setTurretRawPosition(double pos, double FFVelocity) {
     double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV;
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
@@ -147,11 +147,12 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command zeroTurret() {
     return runOnce(
-        () -> {
-          turretMotor.setPosition(0);
-          targetPos = 0;
-          zeroPublisher.set(true);
-        });
+            () -> {
+              turretMotor.setPosition(0);
+              targetPos = 0;
+              zeroPublisher.set(true);
+            })
+        .withName("zeroed turret");
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
