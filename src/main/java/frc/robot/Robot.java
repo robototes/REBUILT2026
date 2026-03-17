@@ -10,8 +10,10 @@ import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -23,6 +25,7 @@ import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.BuildInfo;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
@@ -56,6 +59,16 @@ public class Robot extends TimedRobot {
 
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
+
+    // logging
+    if (RobotBase.isReal()) {
+      DataLogManager.start();
+      DriverStation.startDataLog(DataLogManager.getLog(), true);
+    }
+    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
+    LiveWindow.disableAllTelemetry();
+    LiveWindow.enableTelemetry(PDH);
+    BuildInfo.logBuildInfo();
 
     // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
@@ -96,12 +109,7 @@ public class Robot extends TimedRobot {
       AutoLogic.initSmartDashBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
-
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
-
-    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
-    LiveWindow.disableAllTelemetry();
-    LiveWindow.enableTelemetry(PDH);
   }
 
   /**

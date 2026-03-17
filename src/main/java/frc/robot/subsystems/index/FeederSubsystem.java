@@ -86,7 +86,7 @@ public class FeederSubsystem extends SubsystemBase {
   }
 
   public Command stopMotorCommand() {
-    return runOnce(() -> feedMotor.stopMotor());
+    return runOnce(() -> feedMotor.stopMotor()).withName("Stop Feeder Motor");
   }
 
   public void stopMotorVoid() {
