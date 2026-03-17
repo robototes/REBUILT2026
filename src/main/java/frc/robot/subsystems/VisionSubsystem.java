@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -113,7 +114,6 @@ public class VisionSubsystem extends SubsystemBase {
   private double lastTimestampSeconds = 0;
   private Pose2d lastFieldPose = null;
   private double avgAmbiguity = 0;
-  private double sumOfAmbiguitys = 0;
   private int fakePoseCount = 0;
   // meters
   private static final double HEIGHT_TOLERANCE = 0.15;
@@ -246,23 +246,22 @@ public class VisionSubsystem extends SubsystemBase {
               Units.degreesToRadians(ROTATION_TOLERANCE))
           || lastFieldPose != null
               && lastFieldPose.equals(visionPoseTracking.fieldPose3d.toPose2d())
-          || lastFieldPose != null
-              && Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
+          || (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
                   > VisionConstants.MAX_XY_VELO_ALPHA
-              && Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+              || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
                   > VisionConstants.MAX_XY_VELO_ALPHA
-              && Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+              || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                   > VisionConstants.MAX_TURN_VELO_ALPHA
-              && RobotType.isAlpha()) {
+              && RobotType.isAlpha())) {
         visionPoseTracking.pose_bad = true;
       }
 
       if (!visionPoseTracking.pose_bad) {
         if (useGetStdDevs) {
           if (estimate.isMegaTag2) {
-            stdDevs = getEstimationStdDevsLimelightMT2(true, avgTagDist);
+            stdDevs = getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount);
           } else {
-            stdDevs = getEstimationStdDevsLimelightMT1(true, avgTagDist);
+            stdDevs = getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount);
           }
         }
         if (!putBadPose) {
@@ -301,7 +300,7 @@ public class VisionSubsystem extends SubsystemBase {
         // needs to get new pose here
         robotField.setRobotPose(drivetrain.getState().Pose);
       }
-      if (estimate.timestampSeconds > lastTimestampSeconds) {
+      if (estimate.timestampSeconds >= lastTimestampSeconds) {
         if (!visionPoseTracking.pose_bad) {
           fieldPose3dEntry.set(visionPoseTracking.fieldPose3d);
           lastFieldPose = visionPoseTracking.fieldPose3d.toPose2d();
@@ -316,9 +315,8 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(boolean isLL4, double avgTagDist) {
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(boolean isLL4, double avgTagDist, int numOfTags) {
     double stddevScalarMt1 = 1;
-    double numOfTags = getNumTargets();
     if (numOfTags == 0) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     }
@@ -360,10 +358,8 @@ public class VisionSubsystem extends SubsystemBase {
    * @param poseEstimate the pose estimate from the limelight
    * @return the estimated standard deviations
    */
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(boolean isLL4, double avgTagDist) {
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(boolean isLL4, double avgTagDist, int numOfTags) {
     double stddevScalarMt2 = 1;
-
-    double numOfTags = getNumTargets();
     if (numOfTags == 0) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     }
@@ -426,7 +422,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void updateCameraView(VisionPoseTracking visionPoseTracking) {
-    if (visionPoseTracking != null) {
+    if (visionPoseTracking != null && visionPoseTracking.drivePose3d != null) {
       compBotLeftCameraViewEntry.set(
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA));
       compBotFrontCameraViewEntry.set(
@@ -445,11 +441,11 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void processTags(RawFiducial[] rfs) {
+    double sumOfAmbiguitys = 0;
     for (RawFiducial rf : rfs) {
       sumOfAmbiguitys += rf.ambiguity;
     }
     avgAmbiguity = (rfs.length == 0) ? 0 : (sumOfAmbiguitys / rfs.length);
-    sumOfAmbiguitys = 0;
   }
 
   private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {
