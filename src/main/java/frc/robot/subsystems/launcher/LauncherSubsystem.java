@@ -20,6 +20,7 @@ public class LauncherSubsystem extends SubsystemBase {
 
   private final DoublePublisher hoodGoalPub;
   private final DoublePublisher flywheelGoalPub;
+  private LaunchingParameters launchParameters;
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -57,6 +58,7 @@ public class LauncherSubsystem extends SubsystemBase {
               LaunchingParameters para =
                   LaunchCalculator.getInstance()
                       .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
+              this.launchParameters = para;
               hoodGoal = para.targetHood();
               flywheelsGoal = para.targetFlywheels();
 
@@ -70,10 +72,7 @@ public class LauncherSubsystem extends SubsystemBase {
   public boolean isAtTarget() {
     return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
         && s.hood.atTargetPosition()
-        && !LaunchCalculator.isCloseToTrench(
-            LaunchCalculator.getInstance()
-                .getParameters(s.drivebaseSubsystem, s.turretSubsystem)
-                .turretPose());
+        && !LaunchCalculator.isCloseToTrench(launchParameters.turretPose());
   }
 
   public boolean isHoodAtTarget() {
