@@ -128,7 +128,6 @@ public class LaunchCalculator {
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
 
     // Initial distances
-    double initialTurretToTarget = target.getDistance(turretPose.getTranslation());
     double distanceX = target.getX() - turretPose.getX();
     double distanceY = target.getY() - turretPose.getY();
     double distance = Math.hypot(distanceX, distanceY);
@@ -137,7 +136,7 @@ public class LaunchCalculator {
     double trueDistance = distance;
     double trueDistanceX = distanceX;
     double trueDistanceY = distanceY;
-    double t = LauncherConstants.getTimeFromDistance(initialTurretToTarget);
+    double t = LauncherConstants.getTimeFromDistance(distance);
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
@@ -173,7 +172,8 @@ public class LaunchCalculator {
           (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
       // Calculated using the standard angular velocity formula, by dividing by the distance. We
       // offset it with the robot's field angular velocity to get the true angular velocity
-      feedforwardAngularVelocity = (tangentialVel / trueDistance) - totalOmega;
+      feedforwardAngularVelocity =
+          (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond;
     }
 
     double finalDrift = getDragCompensatedTOF(t);
