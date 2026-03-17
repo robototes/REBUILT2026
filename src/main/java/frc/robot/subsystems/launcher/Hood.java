@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
+import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
@@ -121,8 +122,8 @@ public class Hood extends SubsystemBase {
     simPID.kS = 0;
     simPID.kG = 0.0;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 130;
-    config.MotionMagic.MotionMagicAcceleration = 3500;
+    config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 130;
+    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 3500;
 
     config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 
