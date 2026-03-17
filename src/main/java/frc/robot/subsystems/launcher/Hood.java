@@ -44,13 +44,14 @@ public class Hood extends SubsystemBase {
   public NtTunableDouble targetPosition;
   private long lastPositionUpdateTime = 0;
 
-  //mechanism gear ratio = 104.65278
+  // mechanism gear ratio = 104.65278
   private static final double TARGET_TOLERANCE = 0.05; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
       1; // voltage/speed to control the motor for manual control
   private static final double STATOR_CURRENT_LIMIT = 60; // stator limit in amps
   // both forward and backward soft limits are in Rotor rotations
-  private static final double FORWARD_SOFT_LIMIT = 11.628; // LIMITED TO 19 - March 14th Physical limit
+  private static final double FORWARD_SOFT_LIMIT =
+      11.628; // LIMITED TO 19 - March 14th Physical limit
   private static final double BACKWARD_SOFT_LIMIT = -0.01224; // -0.02 rotations, past zeroing point
 
   public final NtTunableBoolean TUNER_CONTROLLED =
