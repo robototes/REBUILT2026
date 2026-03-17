@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -251,8 +250,8 @@ public class VisionSubsystem extends SubsystemBase {
               || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
                   > VisionConstants.MAX_XY_VELO_ALPHA
               || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                  > VisionConstants.MAX_TURN_VELO_ALPHA
-              && RobotType.isAlpha())) {
+                      > VisionConstants.MAX_TURN_VELO_ALPHA
+                  && RobotType.isAlpha())) {
         visionPoseTracking.pose_bad = true;
       }
 
@@ -315,7 +314,8 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(boolean isLL4, double avgTagDist, int numOfTags) {
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(
+      boolean isLL4, double avgTagDist, int numOfTags) {
     double stddevScalarMt1 = 1;
     if (numOfTags == 0) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
@@ -358,7 +358,8 @@ public class VisionSubsystem extends SubsystemBase {
    * @param poseEstimate the pose estimate from the limelight
    * @return the estimated standard deviations
    */
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(boolean isLL4, double avgTagDist, int numOfTags) {
+  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(
+      boolean isLL4, double avgTagDist, int numOfTags) {
     double stddevScalarMt2 = 1;
     if (numOfTags == 0) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
