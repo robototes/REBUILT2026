@@ -61,13 +61,7 @@
         {
           "type": "named",
           "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
+            "name": "climb"
           }
         }
       ]
