@@ -71,12 +71,12 @@ public class LaunchCalculator {
       CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
-    Pose2d currentPose = driveTrain.getState().Pose;
+    Pose2d estimatedPose = driveTrain.getState().Pose;
 
     // Predicted robot pose after calculations have finished
     ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
-    Pose2d estimatedPose =
-        currentPose.exp(
+    estimatedPose =
+        estimatedPose.exp(
             new Twist2d(
                 chassisSpeeds.vxMetersPerSecond * PHASE_DELAY,
                 chassisSpeeds.vyMetersPerSecond * PHASE_DELAY,
@@ -118,16 +118,24 @@ public class LaunchCalculator {
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
+      // Get the true time
       double driftT = getDragCompensatedTOF(t);
+      // true distance is calculated by substracting the displacement of the ball to the initial
+      // calculated distance of the hub. We're essentially trying to find the distance of the ball's
+      // landing spot and the hub.
       trueDistanceX = distanceX - turretVelocityX * driftT;
       trueDistanceY = distanceY - turretVelocityY * driftT;
       trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
 
+      // begin newton raphson's method to find the converged time of flight
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
+      // calculate time error
       double f = lookupT - t;
-      // Rate of change of the distance from turret to hub (derivative of pythagorean formula)
+      // Rate of change of the distance from turret to hub with respect to time (derivative of
+      // pythagorean formula)
       double dDist_Dt =
           -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
+      // Slope of error, or the derivative of f as instantiated above
       double fPrime =
           (derivativeOfTOF(trueDistance) * dDist_Dt * Math.exp(-DRAG_COEFFICIENT * t)) - 1.0;
 
@@ -145,13 +153,16 @@ public class LaunchCalculator {
     if (trueDistance > VFF_DIST_TOLERANCE) {
       // Calculated using the 2D cross product. We find the tangential velocity by taking the dot
       // product of our velocity vector and a vector perpendicular to our target direction (swapped
-      // x and y), then dividing by the distance to normalize the magnitude.
+      // x and y) to get the velocity component that is tangent to the target. then divide by the
+      // distance to normalize the magnitude in m/s
       double tangentialVel =
           (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
-      // Calculated using the standard angular velocity formula, by dividing by the distance. We
-      // offset it with the robot's field angular velocity to get the true angular velocity
+
+      // Calculated using the standard angular velocity formula (linear velocity / radius). We
+      // offset it with the robot's field angular velocity to get the true angular velocity in
+      // radians per second
       feedforwardAngularVelocity =
-          (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond;
+          (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
     }
 
     double finalDrift = getDragCompensatedTOF(t);
@@ -174,7 +185,8 @@ public class LaunchCalculator {
   }
 
   /**
-   * returns the derivative of the Time of flight from the interpolating map
+   * returns the derivative of the Time of flight from the interpolating map, with the change in x
+   * being 2*step_size
    *
    * @param distance instantaneous distance
    */
@@ -185,8 +197,15 @@ public class LaunchCalculator {
   }
 
   /**
-   * This is using the low-speed fomrula for displacement due to drag. It returns the TOF accounting
-   * in drag
+   * This is using the low-speed fomrula for displacement due to linear drag. It returns the
+   * effective TOF accounting in drag. Derived from -b*v = m*a, where b equals the drag coefficient,
+   * a equals acceleration, v equals velocity and m equals mass. both equal the net force. After
+   * setting a = dV/dT, integrating both sides and exponentiate with base e, you get v_initial *
+   * e^((-b/m)*t) to get the velocity as a function of time. Integrate to get a position as a
+   * function of time. remove initial velocity from v_intial*time and we result with a drag
+   * compensated function of time
+   *
+   * @param tof instantaneous tof
    */
   private double getDragCompensatedTOF(double tof) {
     double newTOF = (1.0 - Math.exp(-DRAG_COEFFICIENT * tof)) / DRAG_COEFFICIENT;
