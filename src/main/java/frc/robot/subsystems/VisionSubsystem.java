@@ -225,12 +225,12 @@ public class VisionSubsystem extends SubsystemBase {
           || lastFieldPose != null
               && lastFieldPose.equals(visionPoseTracking.fieldPose3d.toPose2d())
           || (RobotType.isAlpha()
-                  && Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
+              && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
                       > VisionConstants.MAX_XY_VELO_ALPHA
-              || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
-                  > VisionConstants.MAX_XY_VELO_ALPHA
-              || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                  > VisionConstants.MAX_TURN_VELO_ALPHA)) {
+                  || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+                      > VisionConstants.MAX_XY_VELO_ALPHA
+                  || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+                      > VisionConstants.MAX_TURN_VELO_ALPHA))) {
         poseBad = true;
       }
 
