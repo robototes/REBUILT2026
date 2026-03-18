@@ -428,7 +428,7 @@ public class ClimbSubsystem extends SubsystemBase {
   public void periodic() {
     // set motor position in network tables
     ntVoltage.set(SS_voltage.refresh().getValueAsDouble());
-    ntMotorPos.set(SS_current.refresh().getValueAsDouble());
-    ntMotorCurrent.set(SS_MotorPos.refresh().getValueAsDouble());
+    ntMotorPos.set(SS_MotorPos.refresh().getValueAsDouble());
+    ntMotorCurrent.set(SS_current.refresh().getValueAsDouble());
   }
 }
