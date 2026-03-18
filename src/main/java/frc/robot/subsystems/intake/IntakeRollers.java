@@ -3,7 +3,7 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -12,12 +12,12 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableBoolean;
+import frc.robot.util.tuning.NtTunableDouble;
 
 public class IntakeRollers extends SubsystemBase {
   // motors
@@ -25,9 +25,6 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
   private final Follower followRequest =
       new Follower(Hardware.INTAKE_MOTOR_ONE_ID, MotorAlignmentValue.Opposed);
-  private final VoltageOut voltReq = new VoltageOut(0).withEnableFOC(false);
-  public static final double INTAKE_VOLTAGE = 8;
-  public static final double AGITATE_VOLTAGE = 4;
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -35,6 +32,15 @@ public class IntakeRollers extends SubsystemBase {
   private DoublePublisher leftRollerPub;
   private DoublePublisher rightRollerPub;
   private RollerSim rollerSim;
+
+  public final double TARGET_RPS = 68;
+  public final double AGITATE_RPS = TARGET_RPS / 2;
+  private final NtTunableBoolean TUNABLE_ENABLE =
+      new NtTunableBoolean("SmartDashboard/Tunables/TuneIntakeRollers", false);
+  private final NtTunableDouble NT_TARGET_RPS =
+      new NtTunableDouble("SmartDashboard/intake/TargetVelocityRPS", TARGET_RPS);
+  private final VelocityVoltage velocityRequest =
+      new VelocityVoltage(TARGET_RPS).withEnableFOC(false); // Rotations/s
 
   public IntakeRollers() {
     // define motors and configs
@@ -64,6 +70,8 @@ public class IntakeRollers extends SubsystemBase {
     talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
+    talonFXConfigs.Slot0.kV = 10.7 / 83;
+
     // configurator
     leftRoller.getConfigurator().apply(talonFXConfigs);
     rightRoller.getConfigurator().apply(talonFXConfigs);
@@ -83,26 +91,14 @@ public class IntakeRollers extends SubsystemBase {
     rightRollerPub.set(0);
   }
 
-  public Command runRollers(double voltage) {
-    return Commands.runEnd(
-        () -> {
-          leftRoller.setControl(voltReq.withOutput(voltage));
-          rightRoller.setControl(followRequest);
-        },
-        () -> {
-          leftRoller.stopMotor();
-          rightRoller.stopMotor();
-        });
-  }
-
-  public void setRollerVolt(double voltage) {
-    leftRoller.setControl(voltReq.withOutput(voltage));
-    rightRoller.setControl(followRequest);
-  }
-
-  public void setReverseRollerVolt(double voltage) {
-    leftRoller.setControl(voltReq.withOutput(-voltage));
-    rightRoller.setControl(followRequest);
+  public void runRollers(double velocity) {
+    if (TUNABLE_ENABLE.get() && velocity == TARGET_RPS) {
+      leftRoller.setControl(velocityRequest.withVelocity(NT_TARGET_RPS.get()));
+      rightRoller.setControl(followRequest);
+    } else {
+      leftRoller.setControl(velocityRequest.withVelocity(velocity));
+      rightRoller.setControl(followRequest);
+    }
   }
 
   public void stopMotor() {

@@ -10,8 +10,10 @@ import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -23,10 +25,12 @@ import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.BuildInfo;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
+import java.util.Arrays;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -43,6 +47,7 @@ public class Robot extends TimedRobot {
   private final int GAMEPIECE_PIPELINE = 2;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
+  private final double MAX_TIME_RECORD = 165;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
 
@@ -54,6 +59,16 @@ public class Robot extends TimedRobot {
 
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
+
+    // logging
+    if (RobotBase.isReal()) {
+      DataLogManager.start();
+      DriverStation.startDataLog(DataLogManager.getLog(), true);
+    }
+    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
+    LiveWindow.disableAllTelemetry();
+    LiveWindow.enableTelemetry(PDH);
+    BuildInfo.logBuildInfo();
 
     // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
@@ -94,12 +109,7 @@ public class Robot extends TimedRobot {
       AutoLogic.initSmartDashBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
-
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
-
-    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
-    LiveWindow.disableAllTelemetry();
-    LiveWindow.enableTelemetry(PDH);
   }
 
   /**
@@ -231,6 +241,18 @@ public class Robot extends TimedRobot {
     }
   }
 
+  /** This function is called once when teleop mode is exited. */
+  @Override
+  public void teleopExit() {
+    String[] limeLightSet =
+        !RobotType.isAlpha()
+            ? new String[] {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B}
+            : new String[] {Hardware.LIMELIGHT_C};
+
+    Arrays.stream(limeLightSet)
+        .forEach(name -> LimelightHelpers.triggerRewindCapture(name, MAX_TIME_RECORD));
+  }
+
   @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.
@@ -272,7 +294,7 @@ public class Robot extends TimedRobot {
   private void supplyRobotYawToLimelight(String limelightName) {
     LimelightHelpers.SetRobotOrientation(
         limelightName,
-        subsystems.drivebaseSubsystem.getPigeon2().getYaw().getValueAsDouble(),
+        subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
         0,
         0,
         0,

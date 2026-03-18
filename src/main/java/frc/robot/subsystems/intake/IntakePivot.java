@@ -29,7 +29,7 @@ public class IntakePivot extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
 
   // Positions
-  public double targetPos;
+  private double targetPos;
   public static final double DEPLOYED_POS = -0.39;
   public static final double LAUNCH_POS = -0.21;
   public static final double RETRACTED_POS = 0.0;
@@ -120,30 +120,19 @@ public class IntakePivot extends SubsystemBase {
     zeroPublisher.set(false);
   }
 
-  public Command setPivotPosition(double pos) {
-    return runOnce(
-        () -> {
-          pivotMotor.setControl(request.withPosition(pos));
-          targetPos = pos;
-        });
-  }
-
-  public void setPivotPositionVoid(double pos) {
+  public void setPivotPosition(double pos) {
     targetPos = pos;
     pivotMotor.setControl(request.withPosition(pos));
   }
 
   public Command zeroPivot() {
     return runOnce(
-        () -> {
-          pivotMotor.setPosition(RETRACTED_POS);
-          targetPos = RETRACTED_POS;
-          zeroPublisher.set(true);
-        });
-  }
-
-  public Command manualMovingVoltage(Supplier<Voltage> speed) {
-    return runEnd(() -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor());
+            () -> {
+              pivotMotor.setPosition(RETRACTED_POS);
+              targetPos = RETRACTED_POS;
+              zeroPublisher.set(true);
+            })
+        .withName("Zero Pivot");
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
@@ -165,14 +154,13 @@ public class IntakePivot extends SubsystemBase {
     return targetPos;
   }
 
-  public boolean isAtTargetPose(double degreeTolerance) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPos)
+  public boolean isAtTarget(double degreeTolerance, double pose) {
+    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - pose)
         < Units.degreesToRotations(degreeTolerance);
   }
 
-  public boolean isDeployed(double degreeTolerance) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - DEPLOYED_POS)
-        < Units.degreesToRotations(degreeTolerance);
+  public boolean isAtTarget(double degreeTolerance) {
+    return isAtTarget(degreeTolerance, targetPos);
   }
 
   public Command autoZeroCommand() {
