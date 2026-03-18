@@ -92,7 +92,7 @@ public class IntakeRollers extends SubsystemBase {
   }
 
   public void runRollers(double velocity) {
-    if (TUNABLE_ENABLE.get()) {
+    if (TUNABLE_ENABLE.get() && velocity == TARGET_RPS) {
       leftRoller.setControl(velocityRequest.withVelocity(NT_TARGET_RPS.get()));
       rightRoller.setControl(followRequest);
     } else {
