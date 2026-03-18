@@ -55,25 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-IntakeFar"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "BackFromIntakeRightFar"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "RT-Climb"
           }
         },
         {
@@ -92,6 +74,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WEEK 1",
+  "folder": "WIP",
   "choreoAuto": false
 }

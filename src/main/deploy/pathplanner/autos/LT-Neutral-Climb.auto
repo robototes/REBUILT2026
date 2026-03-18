@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
+            "pathName": "LT-Intake"
           }
         },
         {
@@ -25,19 +25,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-Intake"
+            "pathName": "NeutralLeft-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeRight"
+            "pathName": "BackFromIntakeLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "Back-LeftTrench"
           }
         },
         {
@@ -55,37 +55,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "NeutralRight-IntakeFar"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "BackFromIntakeRightFar"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "LT-Climb"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
+            "name": "climb"
           }
         }
       ]
