@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -177,12 +176,14 @@ public class VisionSubsystem extends SubsystemBase {
             camera.getBetterPoseEstimate(),
             rawFieldPose3dEntry,
             injectFakePoseMT1,
-            VisionConstants.USE_GET_STD_DEV, avgAmbiguity);
+            VisionConstants.USE_GET_STD_DEV,
+            avgAmbiguity);
         processLimelight(
             camera.getPoseEstimateMegatag2(),
             rawFieldPose3dEntry,
             injectFakePoseMT2,
-            VisionConstants.USE_GET_STD_DEV, avgAmbiguity);
+            VisionConstants.USE_GET_STD_DEV,
+            avgAmbiguity);
       }
     }
   }
@@ -191,7 +192,8 @@ public class VisionSubsystem extends SubsystemBase {
       BetterPoseEstimate estimate,
       StructPublisher<Pose3d> rawFieldPoseEntry,
       boolean putBadPose,
-      boolean useGetStdDevs, double avgAmbiguity) {
+      boolean useGetStdDevs,
+      double avgAmbiguity) {
     if (getDisableVision()) {
       return;
     }
@@ -222,12 +224,13 @@ public class VisionSubsystem extends SubsystemBase {
               Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
           || lastFieldPose != null
               && lastFieldPose.equals(visionPoseTracking.fieldPose3d.toPose2d())
-          || (RobotType.isAlpha() && Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
+          || (RobotType.isAlpha()
+                  && Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
                       > VisionConstants.MAX_XY_VELO_ALPHA
-                  || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
-                      > VisionConstants.MAX_XY_VELO_ALPHA
-                  || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                      > VisionConstants.MAX_TURN_VELO_ALPHA)) {
+              || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+                  > VisionConstants.MAX_XY_VELO_ALPHA
+              || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+                  > VisionConstants.MAX_TURN_VELO_ALPHA)) {
         poseBad = true;
       }
 
@@ -236,7 +239,8 @@ public class VisionSubsystem extends SubsystemBase {
           if (estimate.isMegaTag2) {
             stdDevs = getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount);
           } else {
-            stdDevs = getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+            stdDevs =
+                getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
           }
         }
         if (!putBadPose) {
