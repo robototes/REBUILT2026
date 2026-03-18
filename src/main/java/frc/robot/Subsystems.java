@@ -21,13 +21,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
-import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.index.FeederSubsystem;
+import frc.robot.subsystems.index.Feeder;
 import frc.robot.subsystems.index.IndexerSubsystem;
-import frc.robot.subsystems.index.SpindexerSubsystem;
+import frc.robot.subsystems.index.Spindexer;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakeRollers;
 import frc.robot.subsystems.intake.IntakeSubsystem;
@@ -51,7 +50,6 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
-    public static final boolean CLIMB_ENABLED = true;
     public static final boolean TURRET_ENABLED = true;
     public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean LAUNCHER_ENABLED =
@@ -67,9 +65,8 @@ public class Subsystems {
   public final Flywheels flywheels;
   public final Hood hood;
   public final DetectionSubsystem detectionSubsystem;
-  public final SpindexerSubsystem spindexerSubsystem;
-  public final FeederSubsystem feederSubsystem;
-  public final ClimbSubsystem climbSubsystem;
+  public final Spindexer spindexerSubsystem;
+  public final Feeder feederSubsystem;
   public final IntakeRollers intakeRollers;
   public final IntakePivot intakePivot;
   public final IntakeSubsystem intakeSubsystem;
@@ -129,13 +126,13 @@ public class Subsystems {
     }
 
     if (SPINDEXER_ENABLED) {
-      spindexerSubsystem = new SpindexerSubsystem();
+      spindexerSubsystem = new Spindexer();
     } else {
       spindexerSubsystem = null;
     }
 
     if (FEEDER_ENABLED) {
-      feederSubsystem = new FeederSubsystem();
+      feederSubsystem = new Feeder();
     } else {
       feederSubsystem = null;
     }

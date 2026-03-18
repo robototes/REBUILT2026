@@ -30,8 +30,6 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.auto.FuelAutoAlign;
-import frc.robot.subsystems.intake.IntakePivot;
-import frc.robot.subsystems.intake.IntakeRollers;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -127,9 +125,10 @@ public class Controls {
 
   public Command setRumble(RumbleType type, double value) {
     return Commands.runOnce(
-        () -> {
-          driverController.setRumble(type, value);
-        });
+            () -> {
+              driverController.setRumble(type, value);
+            })
+        .withName("Set Rumble");
   }
 
   private void configureIndexingBindings() {
@@ -137,23 +136,9 @@ public class Controls {
       DataLogManager.log("Feeder and/or Spindexer subsystem is disabled, indexer bindings skipped");
       return;
     }
-    // TODO: wait for sensor to reach threshold, and trigger rumble
-
-    // run feeder motor
-    connected(indexingTestController)
-        .and(indexingTestController.a())
-        .whileTrue(s.feederSubsystem.startMotor());
-
-    // run spindexer motor
-    connected(indexingTestController)
-        .and(indexingTestController.x())
-        .whileTrue(s.spindexerSubsystem.startMotor());
-
-    // run both while left trigger is held
     connected(indexingTestController)
         .and(indexingTestController.leftTrigger())
-        .whileTrue(
-            Commands.parallel(s.feederSubsystem.startMotor(), s.spindexerSubsystem.startMotor()));
+        .whileTrue(s.indexerSubsystem.runIndexer());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -232,14 +217,8 @@ public class Controls {
     driverController
         .rightBumper()
         .onTrue(
-            Commands.runOnce(
-                () ->
-                    s.drivebaseSubsystem.resetPose(
-                        new Pose2d(
-                            (new Translation2d(Units.inchesToMeters(182.11), 0)),
-                            Rotation2d.kZero))));
-    // s.drivebaseSubsystem.runOnce(
-    //     () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
   }
 
   private void configureAutoAlignBindings() {
@@ -268,16 +247,18 @@ public class Controls {
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
                         Commands.parallel(
-                            s.indexerSubsystem.runIndexer(),
-                            Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                            Commands.waitSeconds(1)
-                                .andThen(
-                                    Commands.runOnce(
-                                        () ->
-                                            intakeMode =
-                                                driverController.leftTrigger().getAsBoolean()
-                                                    ? IntakeMode.INTAKE
-                                                    : IntakeMode.LAUNCH))))))
+                                s.indexerSubsystem.runIndexer(),
+                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                Commands.waitSeconds(1)
+                                    .andThen(
+                                        Commands.runOnce(
+                                            () ->
+                                                intakeMode =
+                                                    driverController.leftTrigger().getAsBoolean()
+                                                        ? IntakeMode.INTAKE
+                                                        : IntakeMode.LAUNCH)))
+                            .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
+                    .repeatedly()))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
@@ -309,28 +290,16 @@ public class Controls {
     //                 s.turretSubsystem.autoZeroCommand(),
     //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
 
-    if (s.flywheels.TUNER_CONTROLLED) {
+    if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
           .and(launcherTuningController.leftBumper())
           .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
       launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
     }
-    if (s.hood.TUNER_CONTROLLED) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.rightBumper())
-          .onTrue(s.hood.suppliedHoodPositionCommand(() -> s.hood.targetPosition.get()));
-    }
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
         .onTrue(s.hood.autoZeroCommand());
-    connected(launcherTuningController)
-        .and(launcherTuningController.a())
-        .onTrue(s.hood.hoodPositionCommand(0.5));
-    connected(launcherTuningController)
-        .and(launcherTuningController.b())
-        .onTrue(s.hood.hoodPositionCommand(1));
-
     connected(launcherTuningController)
         .and(launcherTuningController.x())
         .onTrue(s.flywheels.setVelocityCommand(50));
@@ -350,11 +319,11 @@ public class Controls {
         Commands.run(
                 () -> {
                   switch (intakeMode) {
-                    case DEPLOYED -> s.intakeSubsystem.deployPivotVoid();
-                    case RETRACTED -> s.intakeSubsystem.retractPivotVoid();
-                    case SPIN -> s.intakeSubsystem.runRollersVoid();
-                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunchVoid();
-                    case INTAKE -> s.intakeSubsystem.smartIntakeVoid();
+                    case DEPLOYED -> s.intakeSubsystem.deployPivot();
+                    case RETRACTED -> s.intakeSubsystem.retractPivot();
+                    case SPIN -> s.intakeSubsystem.runRollers();
+                    case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
+                    case INTAKE -> s.intakeSubsystem.smartIntake();
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },
@@ -387,13 +356,13 @@ public class Controls {
 
     connected(intakeTestController)
         .and(intakeTestController.a())
-        .whileTrue(s.intakeRollers.runRollers(IntakeRollers.INTAKE_VOLTAGE));
+        .onTrue(Commands.runOnce(() -> s.intakeSubsystem.runRollers()));
     connected(intakeTestController)
         .and(intakeTestController.x())
-        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS));
+        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     connected(intakeTestController)
         .and(intakeTestController.y())
-        .onTrue(s.intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS));
+        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
   }
 
   /**
@@ -403,7 +372,7 @@ public class Controls {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Commands.none();
+    return Commands.none().withName("Empty Autonomous Command");
   }
 
   public void vibrateDriveController(double vibration) {
@@ -417,7 +386,8 @@ public class Controls {
             () -> vibrateDriveController(vibration), // start
             () -> vibrateDriveController(0.0) // end
             )
-        .withTimeout(seconds);
+        .withTimeout(seconds)
+        .withName("Rumble Drive Controller");
   }
 
   private void configureVisionBindings() {

@@ -56,14 +56,14 @@ public class LauncherConstants {
   };
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1.31, 3, 65, 0.6),
-    new LauncherDistanceDataPoint(2.52, 6, 72, 1.18),
-    new LauncherDistanceDataPoint(3.32, 8, 75, 1.2),
-    new LauncherDistanceDataPoint(3.87, 10, 79, 1.36),
-    new LauncherDistanceDataPoint(4.27, 11, 82, 32.0 / 30.0), // pending james TOF
+    new LauncherDistanceDataPoint(1.31, 1.836, 65, 0.6),
+    new LauncherDistanceDataPoint(2.52, 3.672, 72, 1.18),
+    new LauncherDistanceDataPoint(3.32, 4.896, 75, 1.2),
+    new LauncherDistanceDataPoint(3.87, 6.12, 79, 1.36),
+    new LauncherDistanceDataPoint(4.27, 6.732, 82, 32.0 / 30.0), // pending james TOF
     new LauncherDistanceDataPoint(
         5.6,
-        12.9,
+        8.568,
         100,
         36.0 / 30.0) // HOOD USED TO BE 14, LOWERED DUE TO HOOD LIMIT CHANGING FROM BREAK -TD
   };

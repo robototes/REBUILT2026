@@ -29,14 +29,14 @@ public class IntakePivot extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
 
   // Positions
-  public double targetPos;
+  private double targetPos;
   public static final double DEPLOYED_POS = -0.39;
   public static final double LAUNCH_POS = -0.21;
   public static final double RETRACTED_POS = 0.0;
   public static final double EXTAKE_POS = -0.30;
 
   // PID variables
-  private static final double kP = 20;
+  private static final double kP = 23;
   private static final double kI = 0;
   private static final double kD = 0;
   private static final double kG = 0.6;
@@ -49,9 +49,9 @@ public class IntakePivot extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 30; // amps
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 25;
-  private static final double ACCELERATION = 10;
-  private static final double JERK = 50;
+  private static final double CRUISE_VELOCITY = 100;
+  private static final double ACCELERATION = 50;
+  private static final double JERK = 0;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 35;
@@ -120,12 +120,9 @@ public class IntakePivot extends SubsystemBase {
     zeroPublisher.set(false);
   }
 
-  public Command setPivotPosition(double pos) {
-    return runOnce(
-        () -> {
-          pivotMotor.setControl(request.withPosition(pos));
-          targetPos = pos;
-        });
+  public void setPivotPosition(double pos) {
+    targetPos = pos;
+    pivotMotor.setControl(request.withPosition(pos));
   }
 
   public void setPivotPositionVoid(double pos) {
@@ -135,15 +132,23 @@ public class IntakePivot extends SubsystemBase {
 
   public Command zeroPivot() {
     return runOnce(
-        () -> {
-          pivotMotor.setPosition(RETRACTED_POS);
-          targetPos = RETRACTED_POS;
-          zeroPublisher.set(true);
-        });
+            () -> {
+              pivotMotor.setPosition(RETRACTED_POS);
+              targetPos = RETRACTED_POS;
+              zeroPublisher.set(true);
+            })
+        .withName("Zero Pivot");
   }
 
-  public Command manualMovingVoltage(Supplier<Voltage> speed) {
-    return runEnd(() -> pivotMotor.setVoltage(speed.get().in(Volts)), () -> pivotMotor.stopMotor());
+  public Command voltageControl(Supplier<Voltage> voltageSupplier) {
+    return runEnd(
+            () -> {
+              pivotMotor.setControl(voltageRequest.withOutput(voltageSupplier.get()));
+            },
+            () -> {
+              pivotMotor.stopMotor();
+            })
+        .withName("Voltage Control");
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
@@ -165,14 +170,24 @@ public class IntakePivot extends SubsystemBase {
     return targetPos;
   }
 
-  public boolean isAtTargetPose(double degreeTolerance) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPos)
+  public boolean isAtTarget(double degreeTolerance, double pose) {
+    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - pose)
         < Units.degreesToRotations(degreeTolerance);
   }
 
-  public boolean isDeployed(double degreeTolerance) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - DEPLOYED_POS)
-        < Units.degreesToRotations(degreeTolerance);
+  public boolean isAtTarget(double degreeTolerance) {
+    return isAtTarget(degreeTolerance, targetPos);
+  }
+
+  public Command autoZeroCommand() {
+    if (Robot.isSimulation()) {
+      return zeroPivot();
+    }
+    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
+        .until(() -> pivotMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
+        .andThen(zeroPivot())
+        .withTimeout(3)
+        .withName("Automatic Zero pivot");
   }
 
   public Command autoZeroCommand() {
