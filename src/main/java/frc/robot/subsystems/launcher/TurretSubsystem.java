@@ -334,7 +334,7 @@ public class TurretSubsystem extends SubsystemBase {
 
               // Set position (Note: This assumes your PID/Controller uses these degrees)
               // System.out.println(Units.degreesToRotations(finalTarget));
-              setTurretRawPosition(Units.degreesToRotations(finalTarget), FFV);
+              setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
               targetPos = Units.degreesToRotations(finalTarget);
             },
             () -> turretMotor.stopMotor())
