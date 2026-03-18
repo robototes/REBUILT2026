@@ -136,12 +136,10 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setTurretRawPosition(double pos, double FFVelocity) {
-    double feedforwardVolts =
-        Units.radiansToRotations(FFVelocity)
-            * kV
-            * NOMINAL_BATTERY_VOLTAGE; // KV must be converted to volts. Right now it's only in
+    // KV must be converted to volts. Right now it's only in
     // dutycycle per requested rotation per second, so multiply
     // 12 to get true voltage
+    double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV * NOMINAL_BATTERY_VOLTAGE;
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
   }
