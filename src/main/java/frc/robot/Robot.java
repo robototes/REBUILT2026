@@ -30,6 +30,7 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
+import java.util.Arrays;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -46,6 +47,7 @@ public class Robot extends TimedRobot {
   private final int GAMEPIECE_PIPELINE = 2;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
+  private final double MAX_TIME_RECORD = 165;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
 
@@ -237,6 +239,18 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
+  }
+
+  /** This function is called once when teleop mode is exited. */
+  @Override
+  public void teleopExit() {
+    String[] limeLightSet =
+        !RobotType.isAlpha()
+            ? new String[] {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B}
+            : new String[] {Hardware.LIMELIGHT_C};
+
+    Arrays.stream(limeLightSet)
+        .forEach(name -> LimelightHelpers.triggerRewindCapture(name, MAX_TIME_RECORD));
   }
 
   @Override
