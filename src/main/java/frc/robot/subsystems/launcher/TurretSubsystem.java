@@ -150,7 +150,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
     return runEnd(
-        () -> turretMotor.setVoltage(speed.get().in(Volts)), () -> turretMotor.stopMotor());
+        () -> turretMotor.setVoltage(speed.get().in(Volts)), () -> turretMotor.stopMotor()).withName("Manual Voltage");
   }
 
   public Command pointFacingJoystick(Supplier<Double> xSupplier, Supplier<Double> ySupplier) {
@@ -254,7 +254,7 @@ public class TurretSubsystem extends SubsystemBase {
           var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
           turretRotation.set(array2, 0);
         },
-        () -> turretMotor.stopMotor());
+        () -> turretMotor.stopMotor()).withName("Rotate to Target");
   }
 
   public Command rotateToTargetWithCalcx() {

@@ -22,6 +22,6 @@ public class IndexerSubsystem extends SubsystemBase {
         () -> {
           feeder.stopMotorVoid();
           spindexerSubsystem.stopMotorVoid();
-        });
+        }).withName("Run Indexer");
   }
 }
