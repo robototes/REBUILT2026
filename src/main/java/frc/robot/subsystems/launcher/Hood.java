@@ -122,8 +122,8 @@ public class Hood extends SubsystemBase {
     simPID.kS = 0;
     simPID.kG = 0.0;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 130;
-    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 3500;
+    config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 60;
+    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 2500;
 
     config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 
