@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -174,16 +173,16 @@ public class VisionSubsystem extends SubsystemBase {
           injectFakePoseMT1 = Math.random() < VisionConstants.FAKE_POSE_RATE;
           injectFakePoseMT2 = Math.random() < VisionConstants.FAKE_POSE_RATE;
         }
-          processLimelight(
-              camera.getBetterPoseEstimate(),
-              rawFieldPose3dEntry,
-              injectFakePoseMT1,
-              VisionConstants.USE_GET_STD_DEV);
-          processLimelight(
-              camera.getPoseEstimateMegatag2(),
-              rawFieldPose3dEntry,
-              injectFakePoseMT2,
-              VisionConstants.USE_GET_STD_DEV);
+        processLimelight(
+            camera.getBetterPoseEstimate(),
+            rawFieldPose3dEntry,
+            injectFakePoseMT1,
+            VisionConstants.USE_GET_STD_DEV);
+        processLimelight(
+            camera.getPoseEstimateMegatag2(),
+            rawFieldPose3dEntry,
+            injectFakePoseMT2,
+            VisionConstants.USE_GET_STD_DEV);
       }
     }
   }
