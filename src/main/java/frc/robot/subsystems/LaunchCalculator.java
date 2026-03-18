@@ -132,7 +132,7 @@ public class LaunchCalculator {
       // calculate time error
       double f = lookupT - t;
       // Rate of change of the distance from turret to hub with respect to time (derivative of
-      // pythagorean formula)
+      // (pythagorean formula: sqrt((X_distance)^2+(Y_distance)^2) )
       double dDist_Dt =
           -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
       // Slope of error, or the derivative of f as instantiated above
