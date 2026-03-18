@@ -139,6 +139,10 @@ public class Controls {
     connected(indexingTestController)
         .and(indexingTestController.leftTrigger())
         .whileTrue(s.indexerSubsystem.runIndexer());
+
+    connected(indexingTestController)
+        .and(indexingTestController.a())
+        .onTrue(s.spindexerSubsystem.checkForBallsCommand());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {

@@ -12,6 +12,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
@@ -20,6 +21,7 @@ import frc.robot.util.tuning.NtTunableDouble;
 
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
+  private final double SPINDEXER_FREE_STATOR_AVG = 4;
 
   private final double D_TARGET_RPS = 90.7;
   private final double D_TARGET_ACCEL = 332; // Rotations /s /s
@@ -85,6 +87,24 @@ public class Spindexer extends SubsystemBase {
 
   public void stopMotor() {
     spindexerMotor.stopMotor();
+  }
+
+  public boolean checkForBallsWithJiggle() {
+    int n = 0;
+    for (int i = 0; i < 10; i++) {
+      runVelocity();
+      double stator = spindexerMotor.getStatorCurrent().getValueAsDouble();
+      if (stator > SPINDEXER_FREE_STATOR_AVG) n++;
+      stopMotor();
+    }
+    if (n > 7) return true;
+    return false;
+  }
+
+  public Command checkForBallsCommand() {
+    if (checkForBallsWithJiggle() == true) System.out.println("BALLS DETECTED :3");
+    else System.out.println("NO BALLS DETECTED :3");
+    return null;
   }
 
   @Override
