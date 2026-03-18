@@ -30,6 +30,8 @@ public class ClockAndHubStatus {
   private static final double END_GAME_START_TIME = 30;
   private static final Timer shiftTimer = new Timer();
 
+  boolean redInactiveFirst = false;
+
 
   public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
     if (isHubActive(0)) {
@@ -89,14 +91,14 @@ public class ClockAndHubStatus {
     String message = DriverStation.getGameSpecificMessage();
     if (message.length() > 0) {
       char character = message.charAt(0);
-      if (character == 'R' && matchTime ) {
-
+      if (character == 'R') {
+        return redInactiveFirst = true;
       } else if (character == 'B') {
-        return Alliance.Blue;
+        return redInactiveFirst = false;
       }
     }
 
-    boolean redInactiveFirst = false;
+
     switch (gameData.charAt(0)) {
       case 'R' -> redInactiveFirst = true;
       case 'B' -> redInactiveFirst = false;
@@ -135,7 +137,7 @@ public class ClockAndHubStatus {
   }
 
   public boolean isGameDataValid() {
-    if (!DriverStation.isTeleopEnabled()){
+    if (DriverStation.isTeleopEnabled()){
       String gameData = DriverStation.getGameSpecificMessage();
       if (gameData.isEmpty()) {
         return false;
@@ -151,6 +153,7 @@ public class ClockAndHubStatus {
         }
     }
   }
+  return false;
 }
 
  @Setter private static Supplier<Optional<Boolean>> allianceWinOverride = () -> Optional.empty();

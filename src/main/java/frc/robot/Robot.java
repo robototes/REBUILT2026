@@ -22,6 +22,7 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 
@@ -186,6 +187,8 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    HubShiftUtil instance = new HubShiftUtil();
+    instance.initialize();
   }
 
   /** This function is called periodically during operator control. */
