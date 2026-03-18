@@ -7,7 +7,61 @@
         {
           "type": "path",
           "data": {
+            "pathName": "RT-Intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BackFromIntakeRight"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Back-RightTrench"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "RT-CLOSE-RIGHT"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake"
           }
         },
         {
@@ -26,6 +80,18 @@
           "type": "path",
           "data": {
             "pathName": "Neutral-RT-BACK"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
           }
         }
       ]
