@@ -150,7 +150,6 @@ public class VisionSubsystem extends SubsystemBase {
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
     if (!RobotType.isAlpha()) {
       processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
-      updateCameraView(visionPoseTracking);
       processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
       updateCameraView(visionPoseTracking);
     }
