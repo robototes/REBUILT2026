@@ -22,7 +22,7 @@ public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
   private final double D_TARGET_RPS = 90.7;
-  private final double D_TARGET_ACCEL = 332; // Rotations /s /s
+  private final double D_TARGET_ACCEL = 1000; // Rotations /s /s
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
   private final NtTunableDouble TARGET_ACCEL =
@@ -65,10 +65,12 @@ public class Spindexer extends SubsystemBase {
     // enabling current limits
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     talonFXConfiguration.Slot0.kV = 11.2 / 90.7;
+    talonFXConfiguration.Slot0.kP = 0.6;
+
 
     cfg.apply(talonFXConfiguration);
   }

@@ -49,7 +49,7 @@ public class Hood extends SubsystemBase {
   private static final double TARGET_TOLERANCE = 0.05; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
       1; // voltage/speed to control the motor for manual control
-  private static final double STATOR_CURRENT_LIMIT = 60; // stator limit in amps
+  private static final double STATOR_CURRENT_LIMIT = 30; // stator limit in amps
   // both forward and backward soft limits are in Rotor rotations
   private static final double FORWARD_SOFT_LIMIT =
       11.628; // LIMITED TO 19 - March 14th Physical limit
@@ -88,7 +88,7 @@ public class Hood extends SubsystemBase {
     TalonFXConfigurator hood_Configurator = hood.getConfigurator();
 
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 40;
+    config.CurrentLimits.SupplyCurrentLimit = 20;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -104,9 +104,9 @@ public class Hood extends SubsystemBase {
 
     // IRL PID gains
     var irlPID = new Slot0Configs();
-    irlPID.kP = 45;
+    irlPID.kP = 40;
     irlPID.kI = 0.0;
-    irlPID.kD = 0.0;
+    irlPID.kD = 2.0;
     irlPID.kA = 0.0;
     irlPID.kV = 0;
     irlPID.kS = 0.155;
