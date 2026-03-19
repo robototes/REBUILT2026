@@ -46,7 +46,7 @@ public class Hood extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   // mechanism gear ratio = 104.65278
-  private static final double TARGET_TOLERANCE = 0.05; // tolerance in motor rotations
+  private static final double TARGET_TOLERANCE = 0.23; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
       1; // voltage/speed to control the motor for manual control
   private static final double STATOR_CURRENT_LIMIT = 30; // stator limit in amps
@@ -106,7 +106,7 @@ public class Hood extends SubsystemBase {
     var irlPID = new Slot0Configs();
     irlPID.kP = 40;
     irlPID.kI = 0.0;
-    irlPID.kD = 2.0;
+    irlPID.kD = 0;
     irlPID.kA = 0.0;
     irlPID.kV = 0;
     irlPID.kS = 0.155;
@@ -123,7 +123,8 @@ public class Hood extends SubsystemBase {
     simPID.kG = 0.0;
 
     config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 60;
-    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 2500;
+    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 600;
+    config.MotionMagic.MotionMagicJerk = RobotType.isAlpha() ? 0 : 6000;
 
     config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 

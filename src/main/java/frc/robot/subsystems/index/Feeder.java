@@ -62,9 +62,9 @@ public class Feeder extends SubsystemBase {
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 60;
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 40;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 60;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 20;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     talonFXConfiguration.Slot0.kV = 11.28 / 92;
