@@ -29,7 +29,7 @@ public class LaunchCalculator {
   }
 
   // Cached variables (mostly for throttling method)
-  private static LaunchingParameters cachedParams;
+  //private static LaunchingParameters cachedParams;
   private static ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private static Pose2d lastPose = new Pose2d();
 
@@ -89,40 +89,40 @@ public class LaunchCalculator {
    *     the entirety of run time
    * @return LaunchingParameters record holding all the target values.
    */
-  public LaunchingParameters getParameters(
-      CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
-    SwerveDriveState driveState = drivetrain.getState();
-    Pose2d currentPose = drivetrain.getState().Pose;
-    ChassisSpeeds currentSpeeds = driveState.Speeds;
-    // If the robot has moved within a certain threshold
-    boolean hasMovedSignificantly =
-        Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
-            <= MIN_DIST_TOLERANCE;
-    boolean hasRotatedSigificantly =
-        Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
-            <= MIN_ROTATION_TOLERANCE;
-    boolean isMovingFastEnough =
-        Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
-                >= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
-                >= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
-                >= MIN_ROTATION_TOLERANCE;
-    // Check to see if all conditions are met
-    if (hasMovedSignificantly
-        && hasRotatedSigificantly
-        && isMovingFastEnough
-        && cachedParams != null) {
-      return cachedParams;
-    }
-    // cache the pose and chassis speeds
-    lastPose = currentPose;
-    lastSpeeds = currentSpeeds;
+  // public LaunchingParameters getParametersx(
+  //     CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
+  //   SwerveDriveState driveState = drivetrain.getState();
+  //   Pose2d currentPose = drivetrain.getState().Pose;
+  //   ChassisSpeeds currentSpeeds = driveState.Speeds;
+  //   // If the robot has moved within a certain threshold
+  //   boolean hasMovedSignificantly =
+  //       Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
+  //           <= MIN_DIST_TOLERANCE;
+  //   boolean hasRotatedSigificantly =
+  //       Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
+  //           <= MIN_ROTATION_TOLERANCE;
+  //   boolean isMovingFastEnough =
+  //       Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
+  //               >= MIN_VELOCITY_TOLERANCE
+  //           && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
+  //               >= MIN_VELOCITY_TOLERANCE
+  //           && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
+  //               >= MIN_ROTATION_TOLERANCE;
+  //   // Check to see if all conditions are met
+  //   if (hasMovedSignificantly
+  //       && hasRotatedSigificantly
+  //       && isMovingFastEnough
+  //       && cachedParams != null) {
+  //     return cachedParams;
+  //   }
+  //   // cache the pose and chassis speeds
+  //   lastPose = currentPose;
+  //   lastSpeeds = currentSpeeds;
 
-    // Recalcualate
-    cachedParams = calculate(drivetrain, turretSubsystem);
-    return cachedParams;
-  }
+  //   // Recalcualate
+  //   cachedParams = calculate(drivetrain, turretSubsystem);
+  //   return cachedParams;
+  // }
 
   /**
    * This method returns a new record of all the numbers calculation heavy nature comes from the
@@ -136,7 +136,7 @@ public class LaunchCalculator {
    * @return LaunchingParameters record holding all the target values. Record is defined in the
    *     LaunchCalculator class
    */
-  public LaunchingParameters calculate(
+  public LaunchingParameters getParameters(
       CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
