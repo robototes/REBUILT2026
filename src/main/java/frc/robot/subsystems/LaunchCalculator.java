@@ -291,8 +291,8 @@ public class LaunchCalculator {
    *     pose
    * @param trueDist The distance from the curretPose to the hub
    * @return returns a double representing the hood angle (should be tuned in launcher constants).
-   *     This does not have an apparant . If you want to convert the units, please convert in the
-   *     interpolating map in LauncherConstants
+   *     This does not have an apparant unit. If you want to convert the units, please convert in
+   *     the interpolating map in LauncherConstants
    */
   public double getHoodAngle(Pose2d lookaheadPose, double trueDist) {
     return isCloseToTrench(lookaheadPose)
