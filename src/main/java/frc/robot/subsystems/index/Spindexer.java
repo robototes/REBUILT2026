@@ -11,8 +11,10 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
@@ -22,6 +24,9 @@ import frc.robot.util.tuning.NtTunableDouble;
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
   private final double SPINDEXER_FREE_STATOR_AVG = 4;
+  double currentStator = 0.0;
+  boolean highStator = false;
+  int loop_count = 0;
 
   private final double D_TARGET_RPS = 90.7;
   private final double D_TARGET_ACCEL = 332; // Rotations /s /s
@@ -89,27 +94,46 @@ public class Spindexer extends SubsystemBase {
     spindexerMotor.stopMotor();
   }
 
-  public boolean checkForBallsWithJiggle() {
-    int n = 0;
-    for (int i = 0; i < 10; i++) {
-      runVelocity();
-      double stator = spindexerMotor.getStatorCurrent().getValueAsDouble();
-      if (stator > SPINDEXER_FREE_STATOR_AVG) n++;
-      stopMotor();
-    }
-    if (n > 7) return true;
-    return false;
+  public Command checkForBallsWithStator() {
+    return Commands.sequence(
+        Commands.runOnce(() -> spindexerMotor.setControl(
+            TARGET_VELOCITY.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL)
+        )),
+        Commands.waitSeconds(0.1),
+        Commands.runOnce(() -> {
+            double stator = spindexerMotor.getStatorCurrent().getValueAsDouble();
+            highStator = (stator > (SPINDEXER_FREE_STATOR_AVG + 1));
+        }),
+        Commands.runOnce(() -> spindexerMotor.stopMotor())
+    );
+  }
+
+  public boolean getHighStator() {
+    if (!highStator) return false;
+    return highStator;
   }
 
   public Command checkForBallsCommand() {
-    if (checkForBallsWithJiggle() == true) System.out.println("BALLS DETECTED :3");
-    else System.out.println("NO BALLS DETECTED :3");
-    return null;
+    return Commands.runOnce(() -> {
+      checkForBallsWithStator();
+      if (getHighStator() == true) System.out.println("BALLS DETECTED");
+      else System.out.println("NO BALLS DETECTED");
+    });
   }
 
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
+  }
+
+  public void periodic() {
+    currentStator = spindexerMotor.getStatorCurrent().getValueAsDouble();
+    loop_count++;
+
+    if (loop_count > 5) {
+      if (currentStator > SPINDEXER_FREE_STATOR_AVG + 1) highStator = true;
+      else highStator = false;
+    }
   }
 }
