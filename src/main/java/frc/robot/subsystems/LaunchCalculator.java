@@ -34,9 +34,9 @@ public class LaunchCalculator {
   private static Pose2d lastPose = new Pose2d();
 
   // Throttling Magic numbers
-  private static final double MIN_DIST_TOLERANCE = 0.01; // Meters
-  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(3); // Radians
-  private static final double MIN_VELOCITY_TOLERANCE = 0.1; // M/s
+  private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
+  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(1); // Radians
+  private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(2); // M/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
