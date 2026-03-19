@@ -52,11 +52,11 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = RobotType.isAlpha() ? 2.97 : 1000;
+  private static final double kP = RobotType.isAlpha() ? 2.97 : 500;
   private static final double kI = 0;
-  private static final double kD = RobotType.isAlpha() ? 1 : 0;
+  private static final double kD = RobotType.isAlpha() ? 1 : 2;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.82;
+  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.346;
   private static final double kV = 0.88/1.14;
   private static final double kA = 0.12;
 
@@ -66,7 +66,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 200;
-  private static final double ACCELERATION = 600;
+  private static final double ACCELERATION = 1200;
   private static final double JERK = 2000;
 
   // Gear Ratio
@@ -77,6 +77,7 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
+
       NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
 
   StructArrayPublisher<Pose2d> turretRotation =

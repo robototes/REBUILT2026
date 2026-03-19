@@ -40,7 +40,7 @@ public class Flywheels extends SubsystemBase {
   public NtTunableDouble targetVelocity;
   private long lastPositionUpdateTime = 0;
 
-  public final double FLYWHEEL_TOLERANCE = 5; // RPS
+  public final double FLYWHEEL_TOLERANCE = 15; // RPS // increased on drive practice 3/18 from 5 -> 10 //Increased to 15 by TD 3/18
   public final NtTunableBoolean TUNER_CONTROLLED =
       new NtTunableBoolean("/SmartDashBoard/Tunables/Flywheels", false);
 
@@ -70,8 +70,9 @@ public class Flywheels extends SubsystemBase {
     TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
     TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 40;
+    config.CurrentLimits.SupplyCurrentLimit = 60;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
+    config.CurrentLimits.SupplyCurrentLowerLimit = 0;
     config.CurrentLimits.StatorCurrentLimit = 80;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
@@ -83,7 +84,7 @@ public class Flywheels extends SubsystemBase {
             : InvertedValue.CounterClockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.8;
+    config.Slot0.kP = 1;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
@@ -91,7 +92,7 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
-    config.MotionMagic.MotionMagicAcceleration = 74 / 0.246; // RPS^2
+    config.MotionMagic.MotionMagicAcceleration = 1000; // RPS^2
 
     flConfigurator.apply(config);
     frConfigurator.apply(config);
