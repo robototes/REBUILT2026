@@ -108,15 +108,18 @@ public class LaunchCalculator {
                 >= MIN_VELOCITY_TOLERANCE
             && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
                 >= MIN_ROTATION_TOLERANCE;
+    // Check to see if all conditions are met
     if (hasMovedSignificantly
         && hasRotatedSigificantly
         && isMovingFastEnough
         && cachedParams != null) {
       return cachedParams;
     }
+    // cache the pose and chassis speeds
     lastPose = currentPose;
     lastSpeeds = currentSpeeds;
 
+    // Recalcualate
     LaunchingParameters cachedParams = calculate(drivetrain, turretSubsystem);
     return cachedParams;
   }
