@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -26,6 +27,16 @@ public class LaunchCalculator {
   public static LaunchCalculator getInstance() {
     return Holder.INSTANCE;
   }
+
+  // Cached variables (mostly for throttling method)
+  private static LaunchingParameters cachedParams;
+  private static ChassisSpeeds lastSpeeds = new ChassisSpeeds();
+  private static Pose2d lastPose = new Pose2d();
+
+  // Throttling Magic numbers
+  private static final double MIN_DIST_TOLERANCE = 0.01; // Meters
+  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(3); // Radians
+  private static final double MIN_VELOCITY_TOLERANCE = 0.1; // M/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
@@ -68,6 +79,38 @@ public class LaunchCalculator {
 
   // ------ MAIN LOGIC ------ //
   public LaunchingParameters getParameters(
+      CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
+    SwerveDriveState driveState = drivetrain.getState();
+    Pose2d currentPose = drivetrain.getState().Pose;
+    ChassisSpeeds currentSpeeds = driveState.Speeds;
+    // If the robot has moved within a certain threshold
+    boolean hasMovedSignificantly =
+        Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
+            <= MIN_DIST_TOLERANCE;
+    boolean hasRotatedSigificantly =
+        Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
+            <= MIN_ROTATION_TOLERANCE;
+    boolean isMovingFastEnough =
+        Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
+                >= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
+                >= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
+                >= MIN_ROTATION_TOLERANCE;
+    if (hasMovedSignificantly
+        && hasRotatedSigificantly
+        && isMovingFastEnough
+        && cachedParams != null) {
+      return cachedParams;
+    }
+    lastPose = currentPose;
+    lastSpeeds = currentSpeeds;
+
+    LaunchingParameters cachedParams = calculate(drivetrain, turretSubsystem);
+    return cachedParams;
+  }
+
+  public LaunchingParameters calculate(
       CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
