@@ -78,6 +78,17 @@ public class LaunchCalculator {
   }
 
   // ------ MAIN LOGIC ------ //
+
+  /**
+   * This method returns the cached LaunchingParameter. It updates this cache only if the robot has
+   * moved, and is moving within a specified threshold of values. This includes minimum distance,
+   * velocity, rotation, and angular velocity
+   *
+   * @param drivetrain the drivebase's CommandSwerveDrivetrain object
+   * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
+   *     the entirety of run time
+   * @return LaunchingParameters record holding all the target values.
+   */
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
     SwerveDriveState driveState = drivetrain.getState();
@@ -110,6 +121,18 @@ public class LaunchCalculator {
     return cachedParams;
   }
 
+  /**
+   * This method returns a new record of all the numbers calculation heavy nature comes from the
+   * turret's target angle calculation. It uses newton's method (f(x)/f'(x)) to find the root, and
+   * calculate the converged TOF (time of flight) iteratively. TOF Converges quickly, often within 5
+   * iterations.
+   *
+   * @param drivetrain the drivebase's CommandSwerveDrivetrain object
+   * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
+   *     the entirety of run time
+   * @return LaunchingParameters record holding all the target values. Record is defined in the
+   *     LaunchCalculator class
+   */
   public LaunchingParameters calculate(
       CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
@@ -228,10 +251,11 @@ public class LaunchCalculator {
   }
 
   /**
-   * returns the derivative of the Time of flight from the interpolating map, with the change in x
-   * being 2*step_size
+   * Calculates the derivative of Time with respect to distance, at a given distance.
    *
    * @param distance instantaneous distance
+   * @return returns returns the derivative of the Time of flight from the interpolating map, with
+   *     the change in time being 2*STEP_SIZE
    */
   public double derivativeOfTOF(double distance) {
     double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
@@ -240,7 +264,7 @@ public class LaunchCalculator {
   }
 
   /**
-   * This is using the low-speed fomrula for displacement due to linear drag. It returns the
+   * This is using the low-speed formula for displacement due to linear drag. It returns the
    * effective TOF accounting in drag. Derived from -b*v = m*a, where b equals the drag coefficient,
    * a equals acceleration, v equals velocity and m equals mass. both equal the net force. After
    * setting a = dV/dT, integrating both sides and exponentiate with base e, you get v_initial *
@@ -248,7 +272,8 @@ public class LaunchCalculator {
    * function of time. remove initial velocity from v_intial*time and we result with a drag
    * compensated function of time
    *
-   * @param tof instantaneous tof
+   * @param tof instantaneous TOF, without drag
+   * @return new TOF with drag compensation
    */
   private double getDragCompensatedTOF(double tof) {
     double newTOF = (1.0 - Math.exp(-DRAG_COEFFICIENT * tof)) / DRAG_COEFFICIENT;
@@ -258,13 +283,30 @@ public class LaunchCalculator {
         newTOF;
   }
 
+  /**
+   * returns the hood angle, as defined in launcherConstants's interpolating map. Checks
+   * isCloseToTrench(). If true, set it to 0 so that we don't rip our hood.
+   *
+   * @param lookaheadPose currentPose. This should be the robot's pose, or a point on the robot's
+   *     pose
+   * @param trueDist The distance from the curretPose to the hub
+   * @return returns a double representing the hood angle (should be tuned in launcher constants).
+   *     This does not have an apparant . If you want to convert the units, please convert in the
+   *     interpolating map in LauncherConstants
+   */
   public double getHoodAngle(Pose2d lookaheadPose, double trueDist) {
     return isCloseToTrench(lookaheadPose)
         ? 0
         : LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
-  /** compares X net of the 2 poses */
+  /**
+   * Checks to see if a point's x value (in an x,y field) on the robot is close to the trench or
+   * not.
+   *
+   * @param pose the point (pose2d) on the robot you would like to check
+   * @return True if close, false if not close
+   */
   public static boolean isCloseToTrench(Pose2d pose) {
     double nearestTagX = pose.nearest(trenchTags).getX();
     return Math.abs(nearestTagX - pose.getX()) < TURRET_TO_TRENCH_TOLERANCE;
