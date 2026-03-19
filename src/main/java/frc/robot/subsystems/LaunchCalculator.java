@@ -189,7 +189,7 @@ public class LaunchCalculator {
 
       // Get the true time
       double driftT = getDragCompensatedTOF(t);
-      // true distance is calculated by substracting the displacement of the ball to the initial
+      // true distance is calculated by subtracting the displacement of the ball to the initial
       // calculated distance of the hub. We're essentially trying to find the distance of the ball's
       // landing spot and the hub.
       trueDistanceX = distanceX - turretVelocityX * driftT;
@@ -282,7 +282,7 @@ public class LaunchCalculator {
     double newTOF = (1.0 - Math.exp(-DRAG_COEFFICIENT * tof)) / DRAG_COEFFICIENT;
     return (Math.abs(newTOF - tof) < DRAG_TOLERANCE)
         ? tof
-        : // if really near zero, just return parameter
+        : // if the difference is negligible, return the original parameter
         newTOF;
   }
 

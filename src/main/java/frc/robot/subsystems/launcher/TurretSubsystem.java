@@ -161,7 +161,8 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
     return runEnd(
-        () -> turretMotor.setVoltage(speed.get().in(Volts)), () -> turretMotor.stopMotor());
+            () -> turretMotor.setVoltage(speed.get().in(Volts)), () -> turretMotor.stopMotor())
+        .withName("Turret Manual moving voltage command ");
   }
 
   public Command pointFacingJoystick(Supplier<Double> xSupplier, Supplier<Double> ySupplier) {
