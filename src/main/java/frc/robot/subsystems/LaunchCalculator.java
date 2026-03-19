@@ -120,7 +120,7 @@ public class LaunchCalculator {
     lastSpeeds = currentSpeeds;
 
     // Recalcualate
-    LaunchingParameters cachedParams = calculate(drivetrain, turretSubsystem);
+    cachedParams = calculate(drivetrain, turretSubsystem);
     return cachedParams;
   }
 
