@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -50,6 +51,7 @@ public class Robot extends TimedRobot {
   private final double MAX_TIME_RECORD = 165;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
+  private final double BROWNOUT_VOLTAGE = 3.3; // Limelight's minimum operating voltage is 3.3volts
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -69,6 +71,9 @@ public class Robot extends TimedRobot {
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
     BuildInfo.logBuildInfo();
+
+    // Set brownout Voltage
+    RobotController.setBrownoutVoltage(BROWNOUT_VOLTAGE);
 
     // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
