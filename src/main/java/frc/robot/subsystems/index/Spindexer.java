@@ -71,7 +71,6 @@ public class Spindexer extends SubsystemBase {
     talonFXConfiguration.Slot0.kV = 11.2 / 90.7;
     talonFXConfiguration.Slot0.kP = 0.6;
 
-
     cfg.apply(talonFXConfiguration);
   }
 

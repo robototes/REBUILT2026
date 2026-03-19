@@ -70,7 +70,6 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
-
       NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
 
   StructArrayPublisher<Pose2d> turretRotation =
