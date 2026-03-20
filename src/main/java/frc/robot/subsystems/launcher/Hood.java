@@ -10,8 +10,8 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.Voltage;
@@ -22,6 +22,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
+import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -31,10 +33,10 @@ public class Hood extends SubsystemBase {
   private final TalonFX hood;
   private HoodSim hoodSim;
 
-  private DoubleTopic positionTopic; // hood pose in rotations
-  private DoublePublisher positionPub;
-  private DoubleTopic goalTopic; // hood pose in rotations
-  private DoublePublisher goalPub;
+  private DoublePublisher positionPub; // hood pose in rotations
+  private DoublePublisher goalPub; // hood pose in rotations
+  private BooleanPublisher zeroPublisher;
+
   @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
@@ -43,15 +45,18 @@ public class Hood extends SubsystemBase {
   public NtTunableDouble targetPosition;
   private long lastPositionUpdateTime = 0;
 
-  private static final double TARGET_TOLERANCE = 0.1; // tolerance in motor rotations
+  // mechanism gear ratio = 104.65278
+  private static final double TARGET_TOLERANCE = 0.05; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
       1; // voltage/speed to control the motor for manual control
-  private static final double STATOR_CURRENT_LIMIT = 10; // stator limit in amps
-  // GEAR_RATIO = 2.90909;
-  private static final double FORWARD_SOFT_LIMIT = 1.72; // 1.72 rotations
-  private static final double BACKWARD_SOFT_LIMIT = -0.02; // -0.02 rotations, past zeroing point
+  private static final double STATOR_CURRENT_LIMIT = 60; // stator limit in amps
+  // both forward and backward soft limits are in Rotor rotations
+  private static final double FORWARD_SOFT_LIMIT =
+      11.628; // LIMITED TO 19 - March 14th Physical limit
+  private static final double BACKWARD_SOFT_LIMIT = -0.01224; // -0.02 rotations, past zeroing point
 
-  public final boolean TUNER_CONTROLLED = false; // boolean to check if tuner control is being used
+  public final NtTunableBoolean TUNER_CONTROLLED =
+      new NtTunableBoolean("/SmartDashBoard/Tunables/Hood", false);
 
   // Mechanism tuning required !! TODO: TUNE
   private static final double AUTO_ZERO_VOLTAGE = -0.5;
@@ -68,13 +73,12 @@ public class Hood extends SubsystemBase {
 
   public void initializeNT() {
     var nt = NetworkTableInstance.getDefault();
-    positionTopic = nt.getDoubleTopic("/hood/position");
-    positionPub = positionTopic.publish();
+    positionPub = nt.getDoubleTopic("/hood/position").publish();
     positionPub.set(0);
-    goalTopic = nt.getDoubleTopic("/hood/goal");
-    goalPub = goalTopic.publish();
+    goalPub = nt.getDoubleTopic("/hood/goal").publish();
     goalPub.set(request.Position);
-
+    zeroPublisher = nt.getBooleanTopic("/Zero/hoodZero").publish();
+    zeroPublisher.set(false);
     targetPosition = new NtTunableDouble("/launcher/hoodTuner", 0.0);
   }
 
@@ -84,7 +88,7 @@ public class Hood extends SubsystemBase {
     TalonFXConfigurator hood_Configurator = hood.getConfigurator();
 
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 5;
+    config.CurrentLimits.SupplyCurrentLimit = 40;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -118,8 +122,8 @@ public class Hood extends SubsystemBase {
     simPID.kS = 0;
     simPID.kG = 0.0;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = 32;
-    config.MotionMagic.MotionMagicAcceleration = 64;
+    config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 130;
+    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 3500;
 
     config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 
@@ -130,7 +134,7 @@ public class Hood extends SubsystemBase {
   public void periodic() {
     positionPub.set(hood.getPosition().getValueAsDouble());
     goalPub.set(request.Position);
-    if (TUNER_CONTROLLED) {
+    if (TUNER_CONTROLLED.get()) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetPosition.getAtomic();
         setHoodPosition(currentTarget.value);
@@ -144,35 +148,33 @@ public class Hood extends SubsystemBase {
   }
 
   public void setHoodPosition(double positionRotations) {
-    if (!hoodZeroed) {
-      System.out.println("Hood not zero'd!");
-      return;
-    }
     hood.setControl(request.withPosition(positionRotations));
   }
 
   public Command hoodPositionCommand(double positionRotations) {
     return runEnd(() -> setHoodPosition(positionRotations), () -> hood.stopMotor())
-        .withName("setting Hood position");
+        .withName("Setting Hood position")
+        .onlyIf(() -> hoodZeroed);
   }
 
   public Command suppliedHoodPositionCommand(DoubleSupplier positionRotations) {
     return runEnd(() -> setHoodPosition(positionRotations.getAsDouble()), () -> hood.stopMotor())
-        .withName("Setting hood position - Supplied");
+        .withName("Setting hood position - Supplied")
+        .onlyIf(() -> hoodZeroed);
   }
 
   public void zero() {
     hood.setPosition(0);
     hoodZeroed = true;
+    zeroPublisher.set(true);
   }
 
   public Command zeroHoodCommand() {
-    return runOnce(this::zero).withName("Zeroing Hood");
+    return runOnce(() -> zero()).withName("Zeroing Hood");
   }
 
   public boolean atTargetPosition() {
     return DriverStation.isEnabled()
-        && hoodZeroed
         && Math.abs(hood.getPosition().getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
   }
 

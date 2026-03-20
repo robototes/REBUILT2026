@@ -5,15 +5,21 @@
     "data": {
       "commands": [
         {
+          "type": "path",
+          "data": {
+            "pathName": "Drive"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "launch"
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "Drive"
+            "name": "stow"
           }
         }
       ]
