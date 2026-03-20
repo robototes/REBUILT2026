@@ -249,7 +249,9 @@ public class AutoLogic {
   }
 
   public static Command intakeCommand() {
-    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE);
+    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
+        .alongWith(
+            s.flywheels.setVelocityCommand(-5).onlyWhile(Controls.intakeMode = IntakeMode.INTAKE));
   }
 
   public static Command climbCommand() {
