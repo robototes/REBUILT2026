@@ -59,9 +59,11 @@ public class AutoLogic {
       List.of(
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
           new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
+          new AutoPath("LT-Neutral", "LT-Neutral"),
           new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
+          new AutoPath("RT-Neutral", "RT-Neutral"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
           new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
 
@@ -250,8 +252,7 @@ public class AutoLogic {
 
   public static Command intakeCommand() {
     return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
-        .alongWith(
-            s.flywheels.setVelocityCommand(-5).onlyWhile(Controls.intakeMode = IntakeMode.INTAKE));
+        .alongWith(s.flywheels.setVelocityCommand(-5));
   }
 
   public static Command climbCommand() {
