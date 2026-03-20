@@ -29,7 +29,7 @@ public class LaunchCalculator {
   }
 
   // Cached variables (mostly for throttling method)
-  //private static LaunchingParameters cachedParams;
+  private static LaunchingParameters cachedParams;
   private static ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private static Pose2d lastPose = new Pose2d();
 
@@ -41,12 +41,8 @@ public class LaunchCalculator {
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
-  private static final double DRAG_COEFFICIENT = 0.48;
   private static final double PHASE_DELAY = 0.02;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
-  private static final double DRAG_TOLERANCE =
-      1e-3; // Drag tolerance. This should never really be used anyways because our interpolating
-  // map isn't accurate enough to have a delta drag of near 0, but it's just here to future proof
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
@@ -89,40 +85,40 @@ public class LaunchCalculator {
    *     the entirety of run time
    * @return LaunchingParameters record holding all the target values.
    */
-  // public LaunchingParameters getParametersx(
-  //     CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
-  //   SwerveDriveState driveState = drivetrain.getState();
-  //   Pose2d currentPose = drivetrain.getState().Pose;
-  //   ChassisSpeeds currentSpeeds = driveState.Speeds;
-  //   // If the robot has moved within a certain threshold
-  //   boolean hasMovedSignificantly =
-  //       Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
-  //           <= MIN_DIST_TOLERANCE;
-  //   boolean hasRotatedSigificantly =
-  //       Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
-  //           <= MIN_ROTATION_TOLERANCE;
-  //   boolean isMovingFastEnough =
-  //       Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
-  //               >= MIN_VELOCITY_TOLERANCE
-  //           && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
-  //               >= MIN_VELOCITY_TOLERANCE
-  //           && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
-  //               >= MIN_ROTATION_TOLERANCE;
-  //   // Check to see if all conditions are met
-  //   if (hasMovedSignificantly
-  //       && hasRotatedSigificantly
-  //       && isMovingFastEnough
-  //       && cachedParams != null) {
-  //     return cachedParams;
-  //   }
-  //   // cache the pose and chassis speeds
-  //   lastPose = currentPose;
-  //   lastSpeeds = currentSpeeds;
+  public LaunchingParameters getParameters(
+      CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
+    SwerveDriveState driveState = drivetrain.getState();
+    Pose2d currentPose = drivetrain.getState().Pose;
+    ChassisSpeeds currentSpeeds = driveState.Speeds;
+    // If the robot has moved within a certain threshold
+    boolean hasMovedSignificantly =
+        Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
+            <= MIN_DIST_TOLERANCE;
+    boolean hasRotatedSigificantly =
+        Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
+            <= MIN_ROTATION_TOLERANCE;
+    boolean isMovingFastEnough =
+        Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
+                >= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
+                >= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
+                >= MIN_ROTATION_TOLERANCE;
+    // Check to see if all conditions are met
+    if (hasMovedSignificantly
+        && hasRotatedSigificantly
+        && isMovingFastEnough
+        && cachedParams != null) {
+      return cachedParams;
+    }
+    // cache the pose and chassis speeds
+    lastPose = currentPose;
+    lastSpeeds = currentSpeeds;
 
-  //   // Recalcualate
-  //   cachedParams = calculate(drivetrain, turretSubsystem);
-  //   return cachedParams;
-  // }
+    // Recalcualate
+    cachedParams = calculate(drivetrain, turretSubsystem);
+    return cachedParams;
+  }
 
   /**
    * This method returns a new record of all the numbers calculation heavy nature comes from the
@@ -136,7 +132,7 @@ public class LaunchCalculator {
    * @return LaunchingParameters record holding all the target values. Record is defined in the
    *     LaunchCalculator class
    */
-  public LaunchingParameters getParameters(
+  public LaunchingParameters calculate(
       CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
@@ -187,13 +183,12 @@ public class LaunchCalculator {
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
-      // Get the true time
-      double driftT = getDragCompensatedTOF(t);
       // true distance is calculated by subtracting the displacement of the ball to the initial
       // calculated distance of the hub. We're essentially trying to find the distance of the ball's
       // landing spot and the hub.
-      trueDistanceX = distanceX - turretVelocityX * driftT;
-      trueDistanceY = distanceY - turretVelocityY * driftT;
+      // NOTE: Drag compensation removed as it is accounted for in the interpolating map.
+      trueDistanceX = distanceX - turretVelocityX * t;
+      trueDistanceY = distanceY - turretVelocityY * t;
       trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
 
       // begin newton raphson's method to find the converged time of flight
@@ -205,8 +200,7 @@ public class LaunchCalculator {
       double dDist_Dt =
           -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
       // Slope of error, or the derivative of f as instantiated above
-      double fPrime =
-          (derivativeOfTOF(trueDistance) * dDist_Dt * Math.exp(-DRAG_COEFFICIENT * t)) - 1.0;
+      double fPrime = (derivativeOfTOF(trueDistance) * dDist_Dt) - 1.0;
 
       // If the derivative is big enough, calculate
       if (Math.abs(fPrime) > MIN_SLOPE) { // Prevent divide by zero error
@@ -234,11 +228,8 @@ public class LaunchCalculator {
           (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
     }
 
-    double finalDrift = getDragCompensatedTOF(t);
     Translation2d virtualTarget =
-        new Translation2d(
-            target.getX() - turretVelocityX * finalDrift,
-            target.getY() - turretVelocityY * finalDrift);
+        new Translation2d(target.getX() - turretVelocityX * t, target.getY() - turretVelocityY * t);
 
     Rotation2d targetAngleFieldRelative =
         virtualTarget.minus(turretPose.getTranslation()).getAngle();
@@ -264,26 +255,6 @@ public class LaunchCalculator {
     double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
     double max = LauncherConstants.getTimeFromDistance(distance + STEP_SIZE);
     return (max - min) / (2 * STEP_SIZE);
-  }
-
-  /**
-   * This is using the low-speed formula for displacement due to linear drag. It returns the
-   * effective TOF accounting in drag. Derived from -b*v = m*a, where b equals the drag coefficient,
-   * a equals acceleration, v equals velocity and m equals mass. both equal the net force. After
-   * setting a = dV/dT, integrating both sides and exponentiate with base e, you get v_initial *
-   * e^((-b/m)*t) to get the velocity as a function of time. Integrate to get a position as a
-   * function of time. remove initial velocity from v_intial*time and we result with a drag
-   * compensated function of time
-   *
-   * @param tof instantaneous TOF, without drag
-   * @return new TOF with drag compensation
-   */
-  private double getDragCompensatedTOF(double tof) {
-    double newTOF = (1.0 - Math.exp(-DRAG_COEFFICIENT * tof)) / DRAG_COEFFICIENT;
-    return (Math.abs(newTOF - tof) < DRAG_TOLERANCE)
-        ? tof
-        : // if the difference is negligible, return the original parameter
-        newTOF;
   }
 
   /**
