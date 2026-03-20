@@ -67,8 +67,7 @@ public class Feeder extends SubsystemBase {
 
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
-        talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
-
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
 
     talonFXConfiguration.Slot0.kV = 11.28 / 92;
     talonFXConfiguration.Slot0.kP = 0.5;
