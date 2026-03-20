@@ -55,19 +55,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-DepotFull"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
+            "pathName": "LT-DepotL"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "DepotFull-DepotIntake"
+            "pathName": "DepotL-DepotF"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DepotF-DepotR"
           }
         },
         {
@@ -86,6 +86,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WEEK 1",
+  "folder": null,
   "choreoAuto": false
 }
