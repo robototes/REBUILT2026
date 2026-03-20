@@ -237,7 +237,8 @@ public class VisionSubsystem extends SubsystemBase {
       if (!poseBad) {
         if (useGetStdDevs) {
           if (estimate.isMegaTag2) {
-            stdDevs = getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount);
+            stdDevs =
+                getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount, avgAmbiguity);
           } else {
             stdDevs =
                 getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
@@ -336,8 +337,17 @@ public class VisionSubsystem extends SubsystemBase {
    * @return the estimated standard deviations
    */
   private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(
-      boolean isLL4, double avgTagDist, int numOfTags) {
+      boolean isLL4, double avgTagDist, int numOfTags, double avgAmbiguity) {
     double stddevScalarMt2 = 1;
+
+    // If the average ambiguity is too high, return very high std devs to ignore the
+    // pose
+    if (avgAmbiguity > VisionConstants.MAX_AMBIGUITY) {
+      return VecBuilder.fill(
+          Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
+          Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR),
+          Math.exp(avgAmbiguity * VisionConstants.AMBIGUITY_SCALAR));
+    }
     // Decrease std devs if multiple targets are visible
     if (numOfTags > 1) {
       stddevScalarMt2 *= VisionConstants.MULTITARGET_BOOST_MT2;
