@@ -29,9 +29,9 @@ public class LaunchCalculator {
   }
 
   // Cached variables (mostly for throttling method)
-  private static LaunchingParameters cachedParams;
-  private static ChassisSpeeds lastSpeeds = new ChassisSpeeds();
-  private static Pose2d lastPose = new Pose2d();
+  private LaunchingParameters cachedParams;
+  private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
+  private Pose2d lastPose = new Pose2d();
 
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
@@ -91,23 +91,23 @@ public class LaunchCalculator {
     Pose2d currentPose = drivetrain.getState().Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
     // If the robot has moved within a certain threshold
-    boolean hasMovedSignificantly =
+    boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
             <= MIN_DIST_TOLERANCE;
-    boolean hasRotatedSigificantly =
+    boolean hasNotRotatedSigificantly =
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
-    boolean isMovingFastEnough =
+    boolean isNotMovingFastEnough =
         Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
-                >= MIN_VELOCITY_TOLERANCE
+                <= MIN_VELOCITY_TOLERANCE
             && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
-                >= MIN_VELOCITY_TOLERANCE
+                <= MIN_VELOCITY_TOLERANCE
             && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
-                >= MIN_ROTATION_TOLERANCE;
+                <= MIN_ROTATION_TOLERANCE;
     // Check to see if all conditions are met
-    if (hasMovedSignificantly
-        && hasRotatedSigificantly
-        && isMovingFastEnough
+    if (hasNotMovedSignificantly
+        && hasNotRotatedSigificantly
+        && isNotMovingFastEnough
         && cachedParams != null) {
       return cachedParams;
     }
