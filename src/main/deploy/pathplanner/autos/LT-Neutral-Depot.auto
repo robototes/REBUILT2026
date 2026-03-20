@@ -61,22 +61,9 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "LT-DepotFull"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "launch"
-                }
-              }
-            ]
+            "pathName": "LT-DepotFull"
           }
         },
         {

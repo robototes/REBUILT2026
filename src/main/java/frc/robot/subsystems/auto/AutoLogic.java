@@ -193,7 +193,7 @@ public class AutoLogic {
             "superlaunch", launcherSimCommand().andThen(Commands.print("superlaunch")));
       } else {
         NamedCommands.registerCommand(
-            "superlaunch", launcherCommand().andThen(Commands.print("superlaunch")));
+            "launch", launcherCommand().andThen(Commands.print("launch")));
         NamedCommands.registerCommand(
             "superlaunch", superLauncherCommand().andThen(Commands.print("superlaunch")));
       }
