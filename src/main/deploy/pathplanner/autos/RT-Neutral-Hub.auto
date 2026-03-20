@@ -77,6 +77,18 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "RT-HUB-SWEEP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-HUB-BACK"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "launch"
@@ -92,6 +104,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "wip",
+  "folder": "WIP",
   "choreoAuto": false
 }

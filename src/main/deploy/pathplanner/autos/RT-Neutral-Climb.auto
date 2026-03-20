@@ -74,6 +74,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "wip",
+  "folder": "WIP",
   "choreoAuto": false
 }

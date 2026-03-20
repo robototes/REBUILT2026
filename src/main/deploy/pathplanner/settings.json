@@ -4,8 +4,8 @@
   "holonomicMode": true,
   "pathFolders": [],
   "autoFolders": [
-    "COMP",
-    "wip"
+    "WIP",
+    "COMP"
   ],
   "defaultMaxVel": 5.0,
   "defaultMaxAccel": 3.75,

@@ -8,52 +8,52 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.981482076009115,
-        "y": 0.9484150379322192
+        "x": 5.621226944534867,
+        "y": 0.6588378273292822
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 5.755510175916884,
-        "y": 2.214861827143917
+        "x": 5.857170107806171,
+        "y": 1.367196814643013
       },
       "prevControl": {
-        "x": 5.881553476077072,
-        "y": 1.8472862873914304
+        "x": 6.031845804838597,
+        "y": 1.0875071233317093
       },
       "nextControl": {
-        "x": 5.661028874313089,
-        "y": 2.490394246474377
+        "x": 5.707658574111144,
+        "y": 1.6065937966907173
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 5.825207526878074,
-        "y": 3.1114492306179478
+        "x": 5.799292681361672,
+        "y": 2.5927318234817887
       },
       "prevControl": {
-        "x": 5.6197762570359355,
-        "y": 2.968978204191356
+        "x": 5.834685345046039,
+        "y": 2.345249785027833
       },
       "nextControl": {
-        "x": 6.054977661697953,
-        "y": 3.2707997860378693
+        "x": 5.763900017677305,
+        "y": 2.8402138619357444
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 7.3,
-        "y": 3.5
+        "x": 5.8,
+        "y": 3.05
       },
       "prevControl": {
-        "x": 6.9441587637442135,
-        "y": 3.471951939335576
+        "x": 5.804124721653913,
+        "y": 2.8000340289733865
       },
       "nextControl": null,
       "isLocked": false,
@@ -62,11 +62,25 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1.1,
+      "waypointRelativePos": 1.2,
       "rotationDegrees": -90.0
     }
   ],
-  "constraintZones": [],
+  "constraintZones": [
+    {
+      "name": "Constraints Zone",
+      "minWaypointRelativePos": 0.2,
+      "maxWaypointRelativePos": 3.0,
+      "constraints": {
+        "maxVelocity": 1.75,
+        "maxAcceleration": 1.5,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0,
+        "nominalVoltage": 12.0,
+        "unlimited": false
+      }
+    }
+  ],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
@@ -85,7 +99,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0.0,
-    "rotation": -90.0
+    "rotation": -45.0
   },
   "useDefaultConstraints": true
 }
