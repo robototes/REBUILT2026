@@ -41,12 +41,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "LT-DepotFull"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"
@@ -56,6 +50,18 @@
           "type": "named",
           "data": {
             "name": "stow"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-DepotFull"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake"
           }
         },
         {
