@@ -237,7 +237,8 @@ public class VisionSubsystem extends SubsystemBase {
       if (!poseBad) {
         if (useGetStdDevs) {
           if (estimate.isMegaTag2) {
-            stdDevs = getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+            stdDevs =
+                getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount, avgAmbiguity);
           } else {
             stdDevs =
                 getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
