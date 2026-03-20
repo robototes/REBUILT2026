@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -156,22 +155,14 @@ public class VisionSubsystem extends SubsystemBase {
       RawFiducial[] rawFiducials = camera.getRawFiducials();
       if (rawFiducials != null) {
         double avgAmbiguity = getAvgAmbiguity(rawFiducials);
-        processLimelight(
-            camera.getBetterPoseEstimate(),
-            rawFieldPose3dEntry,
-            avgAmbiguity);
-        processLimelight(
-            camera.getPoseEstimateMegatag2(),
-            rawFieldPose3dEntry,
-            avgAmbiguity);
+        processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, avgAmbiguity);
+        processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, avgAmbiguity);
       }
     }
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate,
-      StructPublisher<Pose3d> rawFieldPoseEntry,
-      double avgAmbiguity) {
+      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, double avgAmbiguity) {
     if (getDisableVision()) {
       return;
     }
@@ -209,22 +200,24 @@ public class VisionSubsystem extends SubsystemBase {
                       > VisionConstants.MAX_XY_VELO_ALPHA
                   || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                       > VisionConstants.MAX_TURN_VELO_ALPHA))
-                      || lastFieldPose != null && getVisionPoseError(estimate.pose3d.toPose2d(), estimate.timestampSeconds) > VisionConstants.MAX_VISION_ERROR) {
+          || lastFieldPose != null
+              && getVisionPoseError(estimate.pose3d.toPose2d(), estimate.timestampSeconds)
+                  > VisionConstants.MAX_VISION_ERROR) {
         poseBad = true;
       }
-          if (estimate.isMegaTag2) {
-            stdDevs =
-                getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount, avgAmbiguity);
-          } else {
-            stdDevs =
-                getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
-          }
-            drivetrain.addVisionMeasurement(
-                visionPoseTracking.fieldPose3d.toPose2d(),
-                Utils.fpgaToCurrentTime(estimate.timestampSeconds),
-                stdDevs);
-        // needs to get new pose here
-        robotField.setRobotPose(drivetrain.getState().Pose);
+      if (estimate.isMegaTag2) {
+        stdDevs =
+            getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+      } else {
+        stdDevs =
+            getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+      }
+      drivetrain.addVisionMeasurement(
+          visionPoseTracking.fieldPose3d.toPose2d(),
+          Utils.fpgaToCurrentTime(estimate.timestampSeconds),
+          stdDevs);
+      // needs to get new pose here
+      robotField.setRobotPose(drivetrain.getState().Pose);
       if (estimate.timestampSeconds >= lastTimestampSeconds) {
         if (!poseBad) {
           fieldPose3dEntry.set(visionPoseTracking.fieldPose3d);
