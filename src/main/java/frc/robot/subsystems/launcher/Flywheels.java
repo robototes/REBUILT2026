@@ -173,7 +173,7 @@ public class Flywheels extends SubsystemBase {
     if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetVelocity.getAtomic();
-        // setVelocityRPS(currentTarget.value);
+        setVelocityRPS(currentTarget.value);
         lastPositionUpdateTime = currentTarget.timestamp;
       }
     }
