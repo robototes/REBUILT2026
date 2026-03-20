@@ -70,6 +70,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "COMP",
+  "folder": "wip",
   "choreoAuto": false
 }
