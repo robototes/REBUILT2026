@@ -142,6 +142,7 @@ public class Robot extends TimedRobot {
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_B);
         }
       }
+      subsystems.visionSubsystem.update();
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
@@ -233,19 +234,8 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
-  }
-
-  /** This function is called periodically during operator control. */
-  @Override
-  public void teleopPeriodic() {
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
   }
 
   /** This function is called once when teleop mode is exited. */
