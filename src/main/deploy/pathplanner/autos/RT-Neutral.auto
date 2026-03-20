@@ -57,7 +57,7 @@
         {
           "type": "named",
           "data": {
-            "name": "launch"
+            "name": "superlaunch"
           }
         },
         {
@@ -70,6 +70,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WIP",
+  "folder": null,
   "choreoAuto": false
 }
