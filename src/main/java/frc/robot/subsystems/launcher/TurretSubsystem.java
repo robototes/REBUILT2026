@@ -11,6 +11,9 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -24,8 +27,11 @@ import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -36,6 +42,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
+  private static final double NOMINAL_BATTERY_VOLTAGE = 12;
 
   // Positions
   private double targetPos;
@@ -45,12 +52,12 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = RobotType.isAlpha() ? 2.97 : 1000;
+  private static final double kP = RobotType.isAlpha() ? 2.97 : 500;
   private static final double kI = 0;
-  private static final double kD = RobotType.isAlpha() ? 1 : 0;
+  private static final double kD = 0;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.82;
-  private static final double kV = 0.9;
+  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.346;
+  private static final double kV = 0.884766 / 1.125;
   private static final double kA = 0.12;
 
   // Current limits
@@ -59,8 +66,8 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 200;
-  private static final double ACCELERATION = 600;
-  private static final double JERK = 2000;
+  private static final double ACCELERATION = 1200;
+  private static final double JERK = 6000;
 
   // Gear Ratio
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
@@ -122,11 +129,19 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command setTurretPosition(double pos) {
     return runOnce(
-            () -> {
-              turretMotor.setControl(request.withPosition(pos));
-              targetPos = pos;
-            })
-        .withName("Set Turret Position");
+        () -> {
+          turretMotor.setControl(request.withPosition(pos));
+          targetPos = pos;
+        });
+  }
+
+  public void setTurretRawPosition(double pos, double FFVelocity) {
+    // KV must be converted to volts. Right now it's only in
+    // dutycycle per requested rotation per second, so multiply
+    // 12 to get true voltage
+    double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV * NOMINAL_BATTERY_VOLTAGE;
+    turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
+    targetPos = pos;
   }
 
   public void setTurretRawPosition(double pos) {
@@ -141,13 +156,13 @@ public class TurretSubsystem extends SubsystemBase {
               targetPos = 0;
               zeroPublisher.set(true);
             })
-        .withName("Zero Turret");
+        .withName("zeroed turret");
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
     return runEnd(
             () -> turretMotor.setVoltage(speed.get().in(Volts)), () -> turretMotor.stopMotor())
-        .withName("Manual Moving Voltage");
+        .withName("Turret Manual moving voltage command ");
   }
 
   public Command pointFacingJoystick(Supplier<Double> xSupplier, Supplier<Double> ySupplier) {
@@ -178,7 +193,7 @@ public class TurretSubsystem extends SubsystemBase {
           turretMotor.setControl(request.withPosition(rotations));
           targetPos = rotations;
         })
-        .withName("Point Facing Joystick");
+        .withName("Set Turret Position: Joystick point");
   }
 
   public double getTurretPosition() {
@@ -190,6 +205,97 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(degreeTolerance);
   }
 
+  /**
+   * @return the angular velocity of the turret in rad/s
+   */
+  public double getOmega() {
+    return Units.rotationsToRadians(turretMotor.getVelocity().getValueAsDouble());
+  }
+
+  public double calculateTurretAngle(Translation2d target) {
+    // Get current turret pose
+    Translation2d turretTranslation =
+        LauncherConstants.launcherFromRobot(driveTrain.getState().Pose);
+
+    // Add 180 degrees to account for 0 posistion
+    Rotation2d turretRotation =
+        driveTrain.getState().Pose.getRotation().plus(new Rotation2d(Units.degreesToRadians(-75)));
+
+    // Get hub position
+    Translation2d targetTranslation = target;
+
+    // Calculate vector from turret to target
+    Translation2d turretToTarget = targetTranslation.minus(turretTranslation);
+
+    // Calculate absolute field angle to target
+    Rotation2d absoluteAngleToTarget =
+        new Rotation2d(Math.atan2(turretToTarget.getY(), turretToTarget.getX()));
+
+    // Calculate turret angle relative to robot's forward direction
+    // Subtract turret's rotation to get robot-relative angle
+    Rotation2d turretAngle = absoluteAngleToTarget.minus(turretRotation);
+    // Convert to degrees
+    double degrees = turretAngle.getDegrees();
+
+    // Convert to clockwise positive
+    degrees = -degrees;
+
+    // Normalize to soft limits (inout modulus always needs 360)
+    degrees = MathUtil.inputModulus(degrees, -360, 0);
+
+    // Clamp to soft limits
+    degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
+
+    // Convert to rotations
+    double rotations = Units.degreesToRotations(degrees);
+
+    return rotations;
+  }
+
+  public Command rotateToTarget() {
+    return runEnd(
+        () -> {
+          double targetRotations =
+              calculateTurretAngle(GetTargetFromPose.getTargetLocation(driveTrain));
+          setTurretRawPosition(targetRotations);
+          targetPos = targetRotations;
+          // System.out.println("Target Rotations: " + targetRotations);
+          Transform2d fieldRelativeOffset =
+              new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
+          Pose2d turretPose2 =
+              new Pose2d(
+                  LauncherConstants.launcherFromRobot(driveTrain.getState().Pose),
+                  driveTrain
+                      .getState()
+                      .Pose
+                      .getRotation()
+                      .minus(Rotation2d.fromRotations(targetRotations)));
+          var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
+          turretRotation.set(array2, 0);
+        },
+        () -> turretMotor.stopMotor());
+  }
+
+  public Command rotateToTargetWithCalcx() {
+    return runEnd(
+        () -> {
+          double currentTurretDegrees = Units.rotationsToDegrees(getTurretPosition());
+          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain, this);
+          double targetTurretDegrees = para.targetTurret().getDegrees();
+          targetTurretDegrees = -targetTurretDegrees;
+          double shortestDelta =
+              MathUtil.inputModulus(
+                  targetTurretDegrees - currentTurretDegrees, TURRET_MIN, TURRET_MAX);
+          double turretDegrees =
+              MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
+          // System.out.println(Units.degreesToRotations(turretDegrees));
+          setTurretRawPosition(Units.degreesToRotations(turretDegrees));
+          targetPos = Units.degreesToRotations(turretDegrees);
+        },
+        () -> turretMotor.stopMotor());
+  }
+
+  // Experimental IF WITHIN BOUNDS go to it instead of clamping
   public Command rotateToTargetWithCalc() {
     return runEnd(
             () -> {
@@ -200,11 +306,11 @@ public class TurretSubsystem extends SubsystemBase {
                       Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
 
               // Get the target from the calculator
-              double targetDegrees =
-                  -LaunchCalculator.getInstance()
-                      .getParameters(driveTrain)
-                      .turretAngle()
-                      .getDegrees();
+              LaunchingParameters params =
+                  LaunchCalculator.getInstance().getParameters(driveTrain, this);
+              double targetDegrees = -params.targetTurret().getDegrees();
+
+              double FFV = params.targetTurretFeedforward();
 
               // Find the shortest distance to that target from our "wrapped" position
               double shortestDelta =
@@ -233,11 +339,11 @@ public class TurretSubsystem extends SubsystemBase {
 
               // Set position (Note: This assumes your PID/Controller uses these degrees)
               // System.out.println(Units.degreesToRotations(finalTarget));
-              setTurretRawPosition(Units.degreesToRotations(finalTarget));
+              setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
               targetPos = Units.degreesToRotations(finalTarget);
             },
             () -> turretMotor.stopMotor())
-        .withName("Rotate to Target With Calc");
+        .withName("Set Turret Position: SOTM calculation");
   }
 
   @Override
