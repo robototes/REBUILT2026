@@ -38,7 +38,7 @@ public class LaunchCalculator {
   private Rotation2d targetTurretAngle;
   private double targetHoodAngle = Double.NaN;
 
-  private static int D_LOOKAHEAD_ITERATIONS = 10;
+  private static int D_LOOKAHEAD_ITERATIONS = 20;
 
   // private double turret_target_velocity;+
   // private double hood_target_velocity;
@@ -48,7 +48,7 @@ public class LaunchCalculator {
 
   private static double minDistance;
   private static double maxDistance;
-  private static double D_PHASE_DELAY = 0.05;
+  private static double D_PHASE_DELAY = 0.02;
 
   // Network tables
   // private final NtTunableDouble phaseDelay;
