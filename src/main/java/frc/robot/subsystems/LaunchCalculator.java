@@ -121,10 +121,10 @@ public class LaunchCalculator {
   }
 
   /**
-   * This method returns a new record of all the numbers calculation heavy nature comes from the
-   * turret's target angle calculation. It uses newton's method (f(x)/f'(x)) to find the root, and
-   * calculate the converged TOF (time of flight) iteratively. TOF Converges quickly, often within 5
-   * iterations.
+   * This method returns a new record of all the numbers required to shoot a ball the moment it's
+   * done with one code loop. Its' calculation heavy nature comes from the turret's target angle
+   * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
+   * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
    * @param drivetrain the drivebase's CommandSwerveDrivetrain object
    * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
