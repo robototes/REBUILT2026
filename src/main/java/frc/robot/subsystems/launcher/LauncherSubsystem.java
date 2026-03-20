@@ -47,8 +47,12 @@ public class LauncherSubsystem extends SubsystemBase {
 
               hood.setHoodPosition(hoodGoal);
               flywheels.setVelocityRPS(flywheelsGoal);
-            })
+            },
+            this,
+            hood,
+            flywheels)
         .withName("Launcher Aim Command");
+    ;
   }
 
   // Will use after week 1
@@ -61,8 +65,12 @@ public class LauncherSubsystem extends SubsystemBase {
 
               hood.setHoodPosition(hoodGoal);
               flywheels.setVelocityRPS(flywheelsGoal);
-            })
+            },
+            this,
+            hood,
+            flywheels)
         .withName("Launcher Aim Command V2");
+    ;
   }
 
   // TODO: add tolerance range calculation
@@ -89,8 +97,8 @@ public class LauncherSubsystem extends SubsystemBase {
     hoodGoal = 0;
     flywheelsGoal = 0;
     return Commands.parallel(
-            Commands.runOnce(() -> hood.setHoodPosition(0)),
-            Commands.runOnce(() -> flywheels.stopVoid()))
+            Commands.runOnce(() -> hood.setHoodPosition(0), hood),
+            Commands.runOnce(() -> flywheels.stopVoid(), flywheels))
         .withName("Raw Stow Command");
   }
 }

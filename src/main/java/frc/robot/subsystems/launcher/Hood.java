@@ -25,7 +25,6 @@ import frc.robot.Robot;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
 
@@ -135,13 +134,20 @@ public class Hood extends SubsystemBase {
   public void periodic() {
     positionPub.set(hood.getPosition().getValueAsDouble());
     goalPub.set(request.Position);
-    if (TUNER_CONTROLLED.get()) {
-      if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
-        TimestampedDouble currentTarget = targetPosition.getAtomic();
-        setHoodPosition(currentTarget.value);
-        lastPositionUpdateTime = currentTarget.timestamp;
-      }
-    }
+  }
+
+  public Command runTunableAngle() {
+    return Commands.run(
+        () -> {
+          if (TUNER_CONTROLLED.get()) {
+            if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
+              TimestampedDouble currentTarget = targetPosition.getAtomic();
+              setHoodPosition(currentTarget.value);
+              lastPositionUpdateTime = currentTarget.timestamp;
+            }
+          }
+        },
+        this);
   }
 
   public double getHoodPosition() {
@@ -149,19 +155,10 @@ public class Hood extends SubsystemBase {
   }
 
   public void setHoodPosition(double positionRotations) {
-    hood.setControl(request.withPosition(positionRotations));
-  }
-
-  public Command hoodPositionCommand(double positionRotations) {
-    return runEnd(() -> setHoodPosition(positionRotations), () -> hood.stopMotor())
-        .withName("Setting Hood position")
-        .onlyIf(() -> hoodZeroed);
-  }
-
-  public Command suppliedHoodPositionCommand(DoubleSupplier positionRotations) {
-    return runEnd(() -> setHoodPosition(positionRotations.getAsDouble()), () -> hood.stopMotor())
-        .withName("Setting hood position - Supplied")
-        .onlyIf(() -> hoodZeroed);
+    if (isHoodZeroed()) hood.setControl(request.withPosition(positionRotations));
+    else {
+      DriverStation.reportWarning("Hood IS NOT ZEROED!", false);
+    }
   }
 
   public void zero() {
@@ -195,7 +192,7 @@ public class Hood extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroHoodCommand();
     }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
+    return voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .andThen(zeroHoodCommand())
         .withTimeout(3)
