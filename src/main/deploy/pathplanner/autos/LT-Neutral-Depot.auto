@@ -55,19 +55,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-DepotL"
+            "pathName": "LT-DepotFull"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "DepotL-DepotF"
+            "pathName": "DepotFull-DepotIntake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "DepotF-DepotR"
+            "pathName": "Depot-Center-Launch"
           }
         },
         {
