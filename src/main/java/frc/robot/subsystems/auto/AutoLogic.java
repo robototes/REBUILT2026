@@ -187,9 +187,13 @@ public class AutoLogic {
       if (Robot.isSimulation()) {
         NamedCommands.registerCommand(
             "launch", launcherSimCommand().andThen(Commands.print("launch")));
+        NamedCommands.registerCommand(
+            "superlaunch", launcherSimCommand().andThen(Commands.print("superlaunch")));
       } else {
         NamedCommands.registerCommand(
-            "launch", launcherCommand().andThen(Commands.print("launch")));
+            "superlaunch", launcherCommand().andThen(Commands.print("superlaunch")));
+        NamedCommands.registerCommand(
+            "superlaunch", superLauncherCommand().andThen(Commands.print("superlaunch")));
       }
 
       NamedCommands.registerCommand("intake", intakeCommand());
@@ -214,6 +218,14 @@ public class AutoLogic {
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
         .withTimeout(4.5);
+  }
+
+  public static Command superLauncherCommand() {
+    return Commands.parallel(
+            s.launcherSubsystem.launcherAimCommandV2(),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
+        .withTimeout(8);
   }
 
   public static Command autoStowCommand() {
