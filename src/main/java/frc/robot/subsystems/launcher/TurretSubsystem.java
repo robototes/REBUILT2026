@@ -38,7 +38,11 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
   private static final double NOMINAL_BATTERY_VOLTAGE = 12;
-  // Open phoenix tuner x, and plot closedLoopError and this value should be the maximum error
+
+  /**
+   * The tolerance for the turret to be considered "at target" in degrees. To find a good value,
+   * open Phoenix Tuner X, plot the closed loop error, and this value should be the maximum error.
+   */
   public static final double TURRET_DEGREE_TOLERANCE = 0.2; // Degrees
 
   // Positions
