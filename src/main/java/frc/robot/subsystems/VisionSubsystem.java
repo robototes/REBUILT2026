@@ -61,7 +61,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double HEIGHT_TOLERANCE = 0.15;
     // degrees
     private static final double ROTATION_TOLERANCE = 12;
-    // qmeters
+    // meters
     private static final double MAX_VISION_ERROR = 1;
   }
 
@@ -205,19 +205,21 @@ public class VisionSubsystem extends SubsystemBase {
                   > VisionConstants.MAX_VISION_ERROR) {
         poseBad = true;
       }
-      if (estimate.isMegaTag2) {
-        stdDevs =
-            getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount, avgAmbiguity);
-      } else {
-        stdDevs =
-            getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+      if (!poseBad) {
+        if (estimate.isMegaTag2) {
+          stdDevs =
+              getEstimationStdDevsLimelightMT2(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+        } else {
+          stdDevs =
+              getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+        }
+        drivetrain.addVisionMeasurement(
+            visionPoseTracking.fieldPose3d.toPose2d(),
+            Utils.fpgaToCurrentTime(estimate.timestampSeconds),
+            stdDevs);
+        // needs to get new pose here
+        robotField.setRobotPose(drivetrain.getState().Pose);
       }
-      drivetrain.addVisionMeasurement(
-          visionPoseTracking.fieldPose3d.toPose2d(),
-          Utils.fpgaToCurrentTime(estimate.timestampSeconds),
-          stdDevs);
-      // needs to get new pose here
-      robotField.setRobotPose(drivetrain.getState().Pose);
       if (estimate.timestampSeconds >= lastTimestampSeconds) {
         if (!poseBad) {
           fieldPose3dEntry.set(visionPoseTracking.fieldPose3d);
