@@ -117,8 +117,7 @@ public class VisionSubsystem extends SubsystemBase {
   private record VisionPoseTracking(
       SwerveDriveState swerveState,
       ChassisSpeeds swerveSpeeds,
-      Pose3d drivePose3d,
-      Pose3d fieldPose3d) {}
+      Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
 
@@ -155,14 +154,16 @@ public class VisionSubsystem extends SubsystemBase {
       RawFiducial[] rawFiducials = camera.getRawFiducials();
       if (rawFiducials != null) {
         double avgAmbiguity = getAvgAmbiguity(rawFiducials);
-        processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, avgAmbiguity);
-        processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, avgAmbiguity);
+        SwerveDriveState swerveDriveState = drivetrain.getState();
+        visionPoseTracking = new VisionPoseTracking(swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
+        processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
+        processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
       }
     }
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, double avgAmbiguity) {
+      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, double avgAmbiguity, VisionPoseTracking visionPoseTracking) {
     if (getDisableVision()) {
       return;
     }
@@ -173,26 +174,20 @@ public class VisionSubsystem extends SubsystemBase {
       // needs to be here to refrence one drive state i think
       SwerveDriveState swerveDriveState = drivetrain.getState();
       boolean poseBad = false;
-      visionPoseTracking =
-          new VisionPoseTracking(
-              swerveDriveState,
-              swerveDriveState.Speeds,
-              new Pose3d(swerveDriveState.Pose),
-              estimate.pose3d);
-      rawFieldPoseEntry.set(visionPoseTracking.fieldPose3d);
+      rawFieldPoseEntry.set(estimate.pose3d);
       double avgTagDist = estimate.avgTagDist;
       if (!MathUtil.isNear(
-              0, visionPoseTracking.fieldPose3d.getZ(), VisionConstants.HEIGHT_TOLERANCE)
+              0, estimate.pose3d.getZ(), VisionConstants.HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
               0,
-              visionPoseTracking.fieldPose3d.getRotation().getX(),
+              estimate.pose3d.getRotation().getX(),
               Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
           || !MathUtil.isNear(
               0,
-              visionPoseTracking.fieldPose3d.getRotation().getY(),
+              estimate.pose3d.getRotation().getY(),
               Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
           || lastFieldPose != null
-              && lastFieldPose.equals(visionPoseTracking.fieldPose3d.toPose2d())
+              && lastFieldPose.equals(estimate.pose3d.toPose2d())
           || (RobotType.isAlpha()
               && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
                       > VisionConstants.MAX_XY_VELO_ALPHA
@@ -201,7 +196,7 @@ public class VisionSubsystem extends SubsystemBase {
                   || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                       > VisionConstants.MAX_TURN_VELO_ALPHA))
           || lastFieldPose != null
-              && Math.abs(getVisionPoseError(estimate.pose3d.toPose2d(), estimate.timestampSeconds))
+              && Math.abs(getDistanceToTargetViaPoseEstimation(visionPoseTracking.drivePose3d.toPose2d(), estimate.pose3d.toPose2d()))
                   > VisionConstants.MAX_VISION_ERROR) {
         poseBad = true;
       }
@@ -214,7 +209,7 @@ public class VisionSubsystem extends SubsystemBase {
               getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
         }
         drivetrain.addVisionMeasurement(
-            visionPoseTracking.fieldPose3d.toPose2d(),
+            estimate.pose3d.toPose2d(),
             Utils.fpgaToCurrentTime(estimate.timestampSeconds),
             stdDevs);
         // needs to get new pose here
@@ -222,13 +217,13 @@ public class VisionSubsystem extends SubsystemBase {
       }
       if (estimate.timestampSeconds >= lastTimestampSeconds) {
         if (!poseBad) {
-          fieldPose3dEntry.set(visionPoseTracking.fieldPose3d);
-          lastFieldPose = visionPoseTracking.fieldPose3d.toPose2d();
+          fieldPose3dEntry.set(estimate.pose3d);
+          lastFieldPose = estimate.pose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
           SmartDashboard.putNumber(
               "/vision/visionError",
               getVisionPoseError(
-                  visionPoseTracking.fieldPose3d.toPose2d(), estimate.timestampSeconds));
+                  estimate.pose3d.toPose2d(), estimate.timestampSeconds));
         }
         SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
         SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
