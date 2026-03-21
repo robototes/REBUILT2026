@@ -11,9 +11,6 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -29,9 +26,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.LaunchCalculator;
 import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -43,6 +38,12 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
   private static final double NOMINAL_BATTERY_VOLTAGE = 12;
+
+  /**
+   * The tolerance for the turret to be considered "at target" in degrees. To find a good value,
+   * open Phoenix Tuner X, plot the closed loop error, and this value should be the maximum error.
+   */
+  public static final double TURRET_DEGREE_TOLERANCE = 8; // Degrees
 
   // Positions
   private double targetPos;
@@ -210,89 +211,6 @@ public class TurretSubsystem extends SubsystemBase {
    */
   public double getOmega() {
     return Units.rotationsToRadians(turretMotor.getVelocity().getValueAsDouble());
-  }
-
-  public double calculateTurretAngle(Translation2d target) {
-    // Get current turret pose
-    Translation2d turretTranslation =
-        LauncherConstants.launcherFromRobot(driveTrain.getState().Pose);
-
-    // Add 180 degrees to account for 0 posistion
-    Rotation2d turretRotation =
-        driveTrain.getState().Pose.getRotation().plus(new Rotation2d(Units.degreesToRadians(-75)));
-
-    // Get hub position
-    Translation2d targetTranslation = target;
-
-    // Calculate vector from turret to target
-    Translation2d turretToTarget = targetTranslation.minus(turretTranslation);
-
-    // Calculate absolute field angle to target
-    Rotation2d absoluteAngleToTarget =
-        new Rotation2d(Math.atan2(turretToTarget.getY(), turretToTarget.getX()));
-
-    // Calculate turret angle relative to robot's forward direction
-    // Subtract turret's rotation to get robot-relative angle
-    Rotation2d turretAngle = absoluteAngleToTarget.minus(turretRotation);
-    // Convert to degrees
-    double degrees = turretAngle.getDegrees();
-
-    // Convert to clockwise positive
-    degrees = -degrees;
-
-    // Normalize to soft limits (inout modulus always needs 360)
-    degrees = MathUtil.inputModulus(degrees, -360, 0);
-
-    // Clamp to soft limits
-    degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
-
-    // Convert to rotations
-    double rotations = Units.degreesToRotations(degrees);
-
-    return rotations;
-  }
-
-  public Command rotateToTarget() {
-    return runEnd(
-        () -> {
-          double targetRotations =
-              calculateTurretAngle(GetTargetFromPose.getTargetLocation(driveTrain));
-          setTurretRawPosition(targetRotations);
-          targetPos = targetRotations;
-          // System.out.println("Target Rotations: " + targetRotations);
-          Transform2d fieldRelativeOffset =
-              new Transform2d(new Translation2d(2.0, 0.0), Rotation2d.kZero);
-          Pose2d turretPose2 =
-              new Pose2d(
-                  LauncherConstants.launcherFromRobot(driveTrain.getState().Pose),
-                  driveTrain
-                      .getState()
-                      .Pose
-                      .getRotation()
-                      .minus(Rotation2d.fromRotations(targetRotations)));
-          var array2 = new Pose2d[] {turretPose2, turretPose2.plus(fieldRelativeOffset)};
-          turretRotation.set(array2, 0);
-        },
-        () -> turretMotor.stopMotor());
-  }
-
-  public Command rotateToTargetWithCalcx() {
-    return runEnd(
-        () -> {
-          double currentTurretDegrees = Units.rotationsToDegrees(getTurretPosition());
-          LaunchingParameters para = LaunchCalculator.getInstance().getParameters(driveTrain, this);
-          double targetTurretDegrees = para.targetTurret().getDegrees();
-          targetTurretDegrees = -targetTurretDegrees;
-          double shortestDelta =
-              MathUtil.inputModulus(
-                  targetTurretDegrees - currentTurretDegrees, TURRET_MIN, TURRET_MAX);
-          double turretDegrees =
-              MathUtil.clamp(currentTurretDegrees + shortestDelta, TURRET_MIN, TURRET_MAX);
-          // System.out.println(Units.degreesToRotations(turretDegrees));
-          setTurretRawPosition(Units.degreesToRotations(turretDegrees));
-          targetPos = Units.degreesToRotations(turretDegrees);
-        },
-        () -> turretMotor.stopMotor());
   }
 
   // Experimental IF WITHIN BOUNDS go to it instead of clamping
