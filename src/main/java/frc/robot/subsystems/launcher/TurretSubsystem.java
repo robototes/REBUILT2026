@@ -39,7 +39,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
   private static final double NOMINAL_BATTERY_VOLTAGE = 12;
   // Open phoenix tuner x, and plot closedLoopError and this value should be the maximum error
-  public static final double TURRET_DEGREE_TOLERANCE = Units.degreesToRotations(0.5);
+  public static final double TURRET_DEGREE_TOLERANCE = Units.degreesToRotations(0.2);
 
   // Positions
   private double targetPos;
