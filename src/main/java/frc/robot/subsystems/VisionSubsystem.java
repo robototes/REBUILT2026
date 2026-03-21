@@ -155,9 +155,11 @@ public class VisionSubsystem extends SubsystemBase {
       if (rawFiducials != null) {
         double avgAmbiguity = getAvgAmbiguity(rawFiducials);
         SwerveDriveState swerveDriveState = drivetrain.getState();
+        BetterPoseEstimate mt1Estimate = camera.getBetterPoseEstimate();
+        BetterPoseEstimate mt2Estimate = camera.getPoseEstimateMegatag2();
         visionPoseTracking = new VisionPoseTracking(swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
-        processLimelight(camera.getBetterPoseEstimate(), rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
-        processLimelight(camera.getPoseEstimateMegatag2(), rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
+        processLimelight(mt1Estimate, rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
+        processLimelight(mt2Estimate, rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
       }
     }
   }
