@@ -201,7 +201,7 @@ public class VisionSubsystem extends SubsystemBase {
                   || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                       > VisionConstants.MAX_TURN_VELO_ALPHA))
           || lastFieldPose != null
-              && getVisionPoseError(estimate.pose3d.toPose2d(), estimate.timestampSeconds)
+              && Math.abs(getVisionPoseError(estimate.pose3d.toPose2d(), estimate.timestampSeconds))
                   > VisionConstants.MAX_VISION_ERROR) {
         poseBad = true;
       }
@@ -386,7 +386,7 @@ public class VisionSubsystem extends SubsystemBase {
     if (drivetrain != null) {
       var historicPose = drivetrain.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
       if (historicPose.isPresent()) {
-        return getDistanceToTargetViaPoseEstimation(visionPose2d, historicPose.get());
+        return getDistanceToTargetViaPoseEstimation(historicPose.get(), visionPose2d);
       }
     }
     return 0;
