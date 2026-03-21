@@ -241,13 +241,8 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop mode is exited. */
   @Override
   public void teleopExit() {
-    String[] limeLightSet =
-        !RobotType.isAlpha()
-            ? new String[] {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B}
-            : new String[] {Hardware.LIMELIGHT_C};
-
-    Arrays.stream(limeLightSet)
-        .forEach(name -> LimelightHelpers.triggerRewindCapture(name, MAX_TIME_RECORD));
+    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
   }
 
   @Override
