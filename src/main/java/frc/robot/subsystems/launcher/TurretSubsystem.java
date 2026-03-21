@@ -43,7 +43,7 @@ public class TurretSubsystem extends SubsystemBase {
    * The tolerance for the turret to be considered "at target" in degrees. To find a good value,
    * open Phoenix Tuner X, plot the closed loop error, and this value should be the maximum error.
    */
-  public static final double TURRET_DEGREE_TOLERANCE = 0.2; // Degrees
+  public static final double TURRET_DEGREE_TOLERANCE = 8; // Degrees
 
   // Positions
   private double targetPos;
