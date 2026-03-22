@@ -31,7 +31,6 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
-import java.util.Arrays;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in

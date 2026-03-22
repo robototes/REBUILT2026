@@ -115,9 +115,7 @@ public class VisionSubsystem extends SubsystemBase {
   private CommandSwerveDrivetrain drivetrain;
 
   private record VisionPoseTracking(
-      SwerveDriveState swerveState,
-      ChassisSpeeds swerveSpeeds,
-      Pose3d drivePose3d) {}
+      SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
 
@@ -157,7 +155,9 @@ public class VisionSubsystem extends SubsystemBase {
         SwerveDriveState swerveDriveState = drivetrain.getState();
         BetterPoseEstimate mt1Estimate = camera.getBetterPoseEstimate();
         BetterPoseEstimate mt2Estimate = camera.getPoseEstimateMegatag2();
-        visionPoseTracking = new VisionPoseTracking(swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
+        visionPoseTracking =
+            new VisionPoseTracking(
+                swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
         processLimelight(mt1Estimate, rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
         processLimelight(mt2Estimate, rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking);
       }
@@ -165,7 +165,10 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate, StructPublisher<Pose3d> rawFieldPoseEntry, double avgAmbiguity, VisionPoseTracking visionPoseTracking) {
+      BetterPoseEstimate estimate,
+      StructPublisher<Pose3d> rawFieldPoseEntry,
+      double avgAmbiguity,
+      VisionPoseTracking visionPoseTracking) {
     if (getDisableVision()) {
       return;
     }
@@ -178,8 +181,7 @@ public class VisionSubsystem extends SubsystemBase {
       boolean poseBad = false;
       rawFieldPoseEntry.set(estimate.pose3d);
       double avgTagDist = estimate.avgTagDist;
-      if (!MathUtil.isNear(
-              0, estimate.pose3d.getZ(), VisionConstants.HEIGHT_TOLERANCE)
+      if (!MathUtil.isNear(0, estimate.pose3d.getZ(), VisionConstants.HEIGHT_TOLERANCE)
           || !MathUtil.isNear(
               0,
               estimate.pose3d.getRotation().getX(),
@@ -188,8 +190,7 @@ public class VisionSubsystem extends SubsystemBase {
               0,
               estimate.pose3d.getRotation().getY(),
               Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
-          || lastFieldPose != null
-              && lastFieldPose.equals(estimate.pose3d.toPose2d())
+          || lastFieldPose != null && lastFieldPose.equals(estimate.pose3d.toPose2d())
           || (RobotType.isAlpha()
               && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
                       > VisionConstants.MAX_XY_VELO_ALPHA
@@ -197,10 +198,12 @@ public class VisionSubsystem extends SubsystemBase {
                       > VisionConstants.MAX_XY_VELO_ALPHA
                   || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                       > VisionConstants.MAX_TURN_VELO_ALPHA))
-          // || lastFieldPose != null
-          //     && Math.abs(getDistanceToTargetViaPoseEstimation(visionPoseTracking.drivePose3d.toPose2d(), estimate.pose3d.toPose2d()))
-          //         > VisionConstants.MAX_VISION_ERROR
-          ) {
+      // || lastFieldPose != null
+      //     &&
+      // Math.abs(getDistanceToTargetViaPoseEstimation(visionPoseTracking.drivePose3d.toPose2d(),
+      // estimate.pose3d.toPose2d()))
+      //         > VisionConstants.MAX_VISION_ERROR
+      ) {
         poseBad = true;
       }
       if (!poseBad) {
@@ -224,10 +227,9 @@ public class VisionSubsystem extends SubsystemBase {
           lastFieldPose = estimate.pose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
         }
-         SmartDashboard.putNumber(
-              "/vision/visionError",
-              getVisionPoseError(
-                  estimate.pose3d.toPose2d(), estimate.timestampSeconds));
+        SmartDashboard.putNumber(
+            "/vision/visionError",
+            getVisionPoseError(estimate.pose3d.toPose2d(), estimate.timestampSeconds));
         SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
         SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
         SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
