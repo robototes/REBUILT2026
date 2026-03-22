@@ -197,9 +197,10 @@ public class VisionSubsystem extends SubsystemBase {
                       > VisionConstants.MAX_XY_VELO_ALPHA
                   || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                       > VisionConstants.MAX_TURN_VELO_ALPHA))
-          || lastFieldPose != null
-              && Math.abs(getDistanceToTargetViaPoseEstimation(visionPoseTracking.drivePose3d.toPose2d(), estimate.pose3d.toPose2d()))
-                  > VisionConstants.MAX_VISION_ERROR) {
+          // || lastFieldPose != null
+          //     && Math.abs(getDistanceToTargetViaPoseEstimation(visionPoseTracking.drivePose3d.toPose2d(), estimate.pose3d.toPose2d()))
+          //         > VisionConstants.MAX_VISION_ERROR
+          ) {
         poseBad = true;
       }
       if (!poseBad) {
@@ -222,11 +223,11 @@ public class VisionSubsystem extends SubsystemBase {
           fieldPose3dEntry.set(estimate.pose3d);
           lastFieldPose = estimate.pose3d.toPose2d();
           rawVisionFieldObject.setPose(lastFieldPose);
-          SmartDashboard.putNumber(
+        }
+         SmartDashboard.putNumber(
               "/vision/visionError",
               getVisionPoseError(
                   estimate.pose3d.toPose2d(), estimate.timestampSeconds));
-        }
         SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
         SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
         SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
