@@ -15,6 +15,7 @@ import frc.robot.subsystems.LaunchCalculator;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;
 
 public class AutoDriveRotate {
@@ -67,7 +68,11 @@ public class AutoDriveRotate {
     @Override
     public void execute() {
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
-      Rotation2d targetRotate = calcInst.getParameters(drive, turretSub).targetTurret();
+      Rotation2d targetRotate =
+          calcInst
+              .getParameters(drive, turretSub)
+              .targetTurret()
+              .plus(drive.getState().Pose.getRotation());
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
@@ -77,7 +82,8 @@ public class AutoDriveRotate {
           driveRequest
               .withVelocityX(xSupplier.getAsDouble())
               .withVelocityY(ySupplier.getAsDouble())
-              .withRotationalRate(rotationOutput);
+              .withRotationalRate(rotationOutput)
+              .withCenterOfRotation(LauncherConstants.turretTransform().getTranslation());
       // Set the drive control with the created request
       drive.setControl(request);
     }
