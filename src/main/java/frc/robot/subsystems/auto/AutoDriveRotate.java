@@ -11,16 +11,17 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Subsystems;
+import frc.robot.subsystems.LaunchCalculator;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import java.util.function.DoubleSupplier;
 
 public class AutoDriveRotate {
   public static Command autoRotate(
-      CommandSwerveDrivetrain drivebaseSubsystem,
-      DoubleSupplier xSupplier,
-      DoubleSupplier ySupplier) {
-    return new AutoRotateCommand(drivebaseSubsystem, xSupplier, ySupplier).withName("Auto Align");
+      Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+    return new AutoRotateCommand(s, xSupplier, ySupplier).withName("Auto Align");
   }
 
   // Tunable:
@@ -35,6 +36,7 @@ public class AutoDriveRotate {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
 
     protected final CommandSwerveDrivetrain drive;
+    protected final TurretSubsystem turretSub;
     protected Translation2d targetTranslation;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
@@ -43,9 +45,9 @@ public class AutoDriveRotate {
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    public AutoRotateCommand(
-        CommandSwerveDrivetrain drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
-      this.drive = drive;
+    public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+      this.drive = s.drivebaseSubsystem;
+      this.turretSub = s.turretSubsystem;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
       anglePub =
@@ -68,7 +70,7 @@ public class AutoDriveRotate {
       Translation2d toTarget = targetTranslation.minus(currentPose.getTranslation());
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
       Rotation2d targetRotate =
-          new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
+          LaunchCalculator.getInstance().getParameters(drive, turretSub).targetTurret();
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
