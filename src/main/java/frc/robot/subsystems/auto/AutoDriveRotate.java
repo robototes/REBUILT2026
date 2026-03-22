@@ -4,7 +4,6 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -34,7 +33,7 @@ public class AutoDriveRotate {
 
   private static class AutoRotateCommand extends Command {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
-
+    private final LaunchCalculator calcInst;
     protected final CommandSwerveDrivetrain drive;
     protected final TurretSubsystem turretSub;
     protected Translation2d targetTranslation;
@@ -46,6 +45,7 @@ public class AutoDriveRotate {
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
     public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+      calcInst = LaunchCalculator.getInstance();
       this.drive = s.drivebaseSubsystem;
       this.turretSub = s.turretSubsystem;
       this.xSupplier = xSupplier;
@@ -66,11 +66,8 @@ public class AutoDriveRotate {
 
     @Override
     public void execute() {
-      Pose2d currentPose = drive.getState().Pose;
-      Translation2d toTarget = targetTranslation.minus(currentPose.getTranslation());
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
-      Rotation2d targetRotate =
-          LaunchCalculator.getInstance().getParameters(drive, turretSub).targetTurret();
+      Rotation2d targetRotate = calcInst.getParameters(drive, turretSub).targetTurret();
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
