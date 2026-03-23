@@ -114,7 +114,6 @@ public class Controls {
     configureIndexingBindings();
     configureIntakeBindings();
     configureAutoAlignBindings();
-    configureVisionBindings();
     configureTurretBindings();
     configureLedBindings();
   }
