@@ -78,12 +78,29 @@ public class LauncherSubsystem extends SubsystemBase {
         && !LaunchCalculator.isCloseToTrench(launchParameters.turretPose());
   }
 
+  public boolean isAtTargetFallback() {
+    if (launchParameters == null) {
+      return false;
+    }
+    return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
+        && s.hood.atTargetPosition()
+        && !LaunchCalculator.isCloseToTrench(launchParameters.turretPose())
+        && isDriveBaseAtTarget();
+  }
+
   public boolean isHoodAtTarget() {
     return s.hood.atTargetPosition();
   }
 
   public Command zeroSubsystemCommand() {
     return s.hood.zeroHoodCommand();
+  }
+
+  public boolean isDriveBaseAtTarget() {
+    return Math.abs(
+            launchParameters.targetTurret().getDegrees()
+                - s.drivebaseSubsystem.getState().Pose.getRotation().getDegrees())
+        <= TurretSubsystem.TURRET_DEGREE_TOLERANCE;
   }
 
   public Command stowCommand() {
