@@ -287,8 +287,7 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommandV2(),
-                Commands.run(() -> s.turretSubsystem.setTurretRawPosition(0))
-                    .andThen(s.turretSubsystem.idle()),
+                Commands.run(() -> s.turretSubsystem.setTurretRawPosition(0)),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTargetFallback())
                     .andThen(
                         Commands.parallel(

@@ -150,10 +150,6 @@ public class TurretSubsystem extends SubsystemBase {
     targetPos = pos;
   }
 
-  public Command Idle() {
-    return Commands.idle(this);
-  }
-
   public Command zeroTurret() {
     return runOnce(
             () -> {
