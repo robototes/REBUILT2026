@@ -21,7 +21,6 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.DetectionSubsystem;
-import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.VisionSubsystemV2;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
@@ -61,7 +60,6 @@ public class Subsystems {
   // Subsystems go here
   public final CommandSwerveDrivetrain drivebaseSubsystem;
   public final LauncherSubsystem launcherSubsystem;
-  public final VisionSubsystem visionSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
   public final DetectionSubsystem detectionSubsystem;
