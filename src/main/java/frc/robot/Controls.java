@@ -390,23 +390,6 @@ public class Controls {
         .withName("Rumble Drive Controller");
   }
 
-  private void configureVisionBindings() {
-    if (s.visionSubsystem != null && s.drivebaseSubsystem != null) {
-      connected(visionTestController)
-          .and(visionTestController.leftBumper())
-          .onTrue(
-              s.drivebaseSubsystem
-                  .runOnce(
-                      () -> {
-                        Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
-                        if (referenceVisionPose != null) {
-                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
-                        }
-                      })
-                  .withName("Now Drive Pose is Vision Pose"));
-    }
-  }
-
   private void configureTurretBindings() {
     if (s.turretSubsystem == null) {
       return;
