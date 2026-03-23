@@ -43,9 +43,6 @@ public class Robot extends TimedRobot {
   private final Controls controls;
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
-  private final int APRILTAG_PIPELINE = 0;
-  private final int THROTTLE_ON = 150;
-  private final int THROTTLE_OFF = 0;
   private final double MAX_TIME_RECORD = 165;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
@@ -142,23 +139,8 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
-      }
-      if (subsystems.visionSubsystem.limelightbOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
-      }
-    }
-    if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
-      // && subsystems.visionSubsystem.limelightcOnline) {
-      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
-    }
-    if (subsystems.detectionSubsystem != null) {
-      subsystems.detectionSubsystem.fuelPose3d = null;
-      // Throttle to reduce heat
-      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+    if (subsystems.visionSubsystemV2 != null) {
+      subsystems.visionSubsystemV2.limelightRobotDisabled();
     }
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.coastTurret();
@@ -170,20 +152,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {
     // If comp bot, setup limelight for pre match
-    if (subsystems.visionSubsystemV2 != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystemV2.LIMELIGHT_A_ENABLED) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
-      }
-      if (subsystems.visionSubsystemV2.LIMELIGHT_B_ENABLED) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
-      }
-    }
-    // else use alpha bot pre setup
-    if (subsystems.visionSubsystem != null
-        && RobotType.isAlpha()
-        && subsystems.visionSubsystemV2.LIMELIGHT_C_ENABLED) {
-      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
-    }
+    subsystems.visionSubsystemV2.limelightDisabledExit();
 
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.brakeTurret();
@@ -231,7 +200,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    if (subsystems.visionSubsystem != null) {
+    if (subsystems.visionSubsystemV2 != null) {
       subsystems.visionSubsystemV2.update();
     }
   }
@@ -268,21 +237,5 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     robotSim.updateFuelSim();
-  }
-
-  private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
-    if (isEnteringDisabled) {
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
-      // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(limelightName, 1);
-      LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
-
-    } else {
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
-      // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(limelightName, 4);
-    }
   }
 }

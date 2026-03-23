@@ -11,23 +11,33 @@ import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
+import frc.robot.util.robotType.RobotType;
+import java.util.HashMap;
 
 public class VisionSubsystemV2 extends SubsystemBase {
   // Required subsystem(s)
   private final CommandSwerveDrivetrain driveBase;
 
-  // -- LIMELIGHT ENABLED -- //
-  public boolean LIMELIGHT_A_ENABLED = true;
-  public boolean LIMELIGHT_B_ENABLED = true;
-  public boolean LIMELIGHT_C_ENABLED = false;
+  // -- LIMELIGHT ENABLED MAP -- //
+  public static final HashMap<String, Boolean> LL_status = new HashMap<>();
+
+  static {
+    if (RobotType.isAlpha()) {
+      LL_status.put(Hardware.LIMELIGHT_C, true);
+      LL_status.put(Hardware.LIMELIGHT_A, false);
+      LL_status.put(Hardware.LIMELIGHT_B, false);
+    } else {
+      LL_status.put(Hardware.LIMELIGHT_C, false);
+      LL_status.put(Hardware.LIMELIGHT_A, true);
+      LL_status.put(Hardware.LIMELIGHT_B, true);
+    }
+  }
 
   // Hardware objects
   private final Pigeon2 gyro;
 
-  // Limelight names
-  private final String N_LL_A;
-  private final String N_LL_B;
-  private final String N_LL_C;
+  // Limelight names (derived from map keys)
+  private final String[] names = {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C};
 
   // Pigeon 2 gyro data
   private final StatusSignal<Angle> gyro_yaw;
@@ -45,7 +55,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final double SCALAR_RANK_1 = 0.001;
   private final double SCALAR_RANK_2 = 0.03;
   private final double DEVIATION_BASE_1 = 0.05;
-  private static final double DEVIATION_BASE_2 = 0.15;
+  private final double DEVIATION_BASE_2 = 0.15;
+  private final int THROTTLE_ON = 150;
+  private final int THROTTLE_OFF = 0;
+  private final int APRILTAG_PIPELINE = 0;
   // Field dimensions
   private final double FIELD_LENGTH = 16; // Meters
   private final double FIELD_WIDTH = 8; // Meters
@@ -70,11 +83,6 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // Grab third party IMU
     this.gyro = driveBase.getPigeon2();
 
-    // set names
-    N_LL_A = Hardware.LIMELIGHT_A;
-    N_LL_B = Hardware.LIMELIGHT_B;
-    N_LL_C = Hardware.LIMELIGHT_C;
-
     // Fill the array with status signals providing data for the class
     gyro_yaw = gyro.getYaw(); // Deg
     gyro_pitch = gyro.getPitch(); // Deg
@@ -83,18 +91,12 @@ public class VisionSubsystemV2 extends SubsystemBase {
     gyro_AngularVelocity_Y = gyro.getAngularVelocityYWorld(); // Deg/s
     gyro_AngularVelocity_Z = gyro.getAngularVelocityZWorld(); // Deg/s
 
-    // Set IMU mode. Uses pigeon 2's data to support robot prediction
-    if (LIMELIGHT_A_ENABLED) {
-      LimelightHelpers.SetIMUMode(N_LL_A, 4);
-      LimelightHelpers.SetIMUAssistAlpha(N_LL_A, IMU_ASSIST_ALPHA);
-    }
-    if (LIMELIGHT_B_ENABLED) {
-      LimelightHelpers.SetIMUMode(N_LL_B, 4);
-      LimelightHelpers.SetIMUAssistAlpha(N_LL_B, IMU_ASSIST_ALPHA);
-    }
-    if (LIMELIGHT_C_ENABLED) {
-      LimelightHelpers.SetIMUMode(N_LL_C, 4);
-      LimelightHelpers.SetIMUAssistAlpha(N_LL_C, IMU_ASSIST_ALPHA);
+    // Set IMU mode for all enabled cameras
+    for (String name : names) {
+      if (LL_status.getOrDefault(name, false)) {
+        LimelightHelpers.SetIMUMode(name, 4);
+        LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
+      }
     }
   }
 
@@ -107,6 +109,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
         gyro_AngularVelocity_X,
         gyro_AngularVelocity_Y,
         gyro_AngularVelocity_Z);
+
     // Grab values
     yaw = gyro_yaw.getValueAsDouble();
     pitch = gyro_pitch.getValueAsDouble();
@@ -115,27 +118,18 @@ public class VisionSubsystemV2 extends SubsystemBase {
     vx = gyro_AngularVelocity_X.getValueAsDouble();
     vz = gyro_AngularVelocity_Z.getValueAsDouble();
 
-    // get the gyro data from the IMU, and apply to the robot pose
-    LimelightHelpers.SetRobotOrientation(N_LL_A, yaw, vz, pitch, vy, roll, vx);
+    // process vision for all enabled cameras
+    for (String name : names) {
+      if (LL_status.getOrDefault(name, false)) {
+        // Apply gyro data to the robot pose for this specific camera
+        LimelightHelpers.SetRobotOrientation(name, yaw, vz, pitch, vy, roll, vx);
 
-    // process vision
-    if (LIMELIGHT_A_ENABLED) {
-      LimelightHelpers.PoseEstimate LL_A_mt2 =
-          LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(N_LL_A);
-      LimelightHelpers.SetRobotOrientation(N_LL_A, yaw, vz, pitch, vy, roll, vx);
-      processVision(LL_A_mt2, vz);
-    }
-    if (LIMELIGHT_B_ENABLED) {
-      LimelightHelpers.PoseEstimate LL_B_mt2 =
-          LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(N_LL_B);
-      LimelightHelpers.SetRobotOrientation(N_LL_B, yaw, vz, pitch, vy, roll, vx);
-      processVision(LL_B_mt2, vz);
-    }
-    if (LIMELIGHT_C_ENABLED) {
-      LimelightHelpers.PoseEstimate LL_C_mt2 =
-          LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(N_LL_C);
-      LimelightHelpers.SetRobotOrientation(N_LL_C, yaw, vz, pitch, vy, roll, vx);
-      processVision(LL_C_mt2, vz);
+        // Get MegaTag2 estimate and process
+        LimelightHelpers.PoseEstimate estimate =
+            LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
+
+        processVision(estimate, vz);
+      }
     }
   }
 
@@ -179,5 +173,38 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // rotation should be 999999 because we already trust the pigeon 2. Keep things simple
     driveBase.addVisionMeasurement(
         estimate.pose, estimate.timestampSeconds, VecBuilder.fill(xyStdDev, xyStdDev, 999999));
+  }
+
+  /** Pre-match setup for all enabled Limelights */
+  public void limelightRobotDisabled() {
+    for (String name : names) {
+      if (LL_status.getOrDefault(name, false)) {
+        setupLimelightForAprilTags(name, true);
+      }
+    }
+  }
+
+  public void limelightDisabledExit() {
+    for (String name : names) {
+      if (LL_status.getOrDefault(name, false)) {
+        setupLimelightForAprilTags(name, false);
+      }
+    }
+  }
+
+  /** Configures a specific Limelight for either disabled (low heat) or enabled (active) mode. */
+  public void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
+    if (isEnteringDisabled) {
+      // Throttle to reduce heat
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
+      // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUMode(limelightName, 1);
+      LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
+    } else {
+      // get rid of throttle to get rid of throttle "glazing"
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
+      // Limelight Use internal IMU + external IMU
+      LimelightHelpers.SetIMUMode(limelightName, 4);
+    }
   }
 }
