@@ -4,23 +4,24 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Subsystems;
+import frc.robot.subsystems.LaunchCalculator;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;
 
 public class AutoDriveRotate {
   public static Command autoRotate(
-      CommandSwerveDrivetrain drivebaseSubsystem,
-      DoubleSupplier xSupplier,
-      DoubleSupplier ySupplier) {
-    return new AutoRotateCommand(drivebaseSubsystem, xSupplier, ySupplier).withName("Auto Align");
+      Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+    return new AutoRotateCommand(s, xSupplier, ySupplier).withName("Auto Align");
   }
 
   // Tunable:
@@ -33,8 +34,9 @@ public class AutoDriveRotate {
 
   private static class AutoRotateCommand extends Command {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
-
+    private final LaunchCalculator calcInst;
     protected final CommandSwerveDrivetrain drive;
+    protected final TurretSubsystem turretSub;
     protected Translation2d targetTranslation;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
@@ -43,9 +45,10 @@ public class AutoDriveRotate {
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    public AutoRotateCommand(
-        CommandSwerveDrivetrain drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
-      this.drive = drive;
+    public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+      calcInst = LaunchCalculator.getInstance();
+      this.drive = s.drivebaseSubsystem;
+      this.turretSub = s.turretSubsystem;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
       anglePub =
@@ -64,11 +67,12 @@ public class AutoDriveRotate {
 
     @Override
     public void execute() {
-      Pose2d currentPose = drive.getState().Pose;
-      Translation2d toTarget = targetTranslation.minus(currentPose.getTranslation());
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
       Rotation2d targetRotate =
-          new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
+          calcInst
+              .getParameters(drive, turretSub)
+              .targetTurret()
+              .plus(drive.getState().Pose.getRotation());
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
@@ -78,7 +82,8 @@ public class AutoDriveRotate {
           driveRequest
               .withVelocityX(xSupplier.getAsDouble())
               .withVelocityY(ySupplier.getAsDouble())
-              .withRotationalRate(rotationOutput);
+              .withRotationalRate(rotationOutput)
+              .withCenterOfRotation(LauncherConstants.turretTransform().getTranslation());
       // Set the drive control with the created request
       drive.setControl(request);
     }

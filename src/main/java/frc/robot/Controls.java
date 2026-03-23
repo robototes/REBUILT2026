@@ -281,6 +281,40 @@ public class Controls {
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
 
+    // When the back button is pressed, use the fallback
+    driverController
+        .back()
+        .whileTrue(
+            Commands.parallel(
+                s.launcherSubsystem.launcherAimCommandV2(),
+                Commands.run(() -> s.turretSubsystem.setTurretPosition(0), s.turretSubsystem),
+                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                    .andThen(
+                        Commands.parallel(
+                                s.indexerSubsystem.runIndexer(),
+                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                Commands.waitSeconds(1)
+                                    .andThen(
+                                        Commands.runOnce(
+                                            () ->
+                                                intakeMode =
+                                                    driverController.leftTrigger().getAsBoolean()
+                                                        ? IntakeMode.INTAKE
+                                                        : IntakeMode.LAUNCH)))
+                            .onlyWhile(() -> s.launcherSubsystem.isAtTargetFallback())
+                            .repeatedly())))
+        .onFalse(
+            s.launcherSubsystem
+                .rawStowCommand()
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          ledsMode = LEDMode.DEFAULT;
+                          intakeMode =
+                              driverController.leftTrigger().getAsBoolean()
+                                  ? IntakeMode.INTAKE
+                                  : IntakeMode.DEPLOYED;
+                        })));
     // driverController
     //     .start()
     //     .onTrue(
