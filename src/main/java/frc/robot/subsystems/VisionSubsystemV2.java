@@ -102,7 +102,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
     // Set IMU mode for all enabled cameras
     for (String name : names) {
-      if (LL_enabled.getOrDefault(name, false)) {
+      if (checkStatus(name)) {
         LimelightHelpers.SetIMUMode(name, 4);
         LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
       }
@@ -131,7 +131,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
     // process vision for all enabled cameras
     for (String name : names) {
-      if (LL_enabled.getOrDefault(name, false) && LL_online.getOrDefault(name, false)) {
+      if (isEnabled(name) && checkStatus(name)) {
         // Apply gyro data to the robot pose for this specific camera
         LimelightHelpers.SetRobotOrientation(name, yaw, vz, pitch, vy, roll, vx);
 
@@ -188,7 +188,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   public void updateLimeLightStatus() {
     for (String name : names) {
-      if (!LL_enabled.getOrDefault(name, false)) continue; // skip intentionally disabled
+      if (!isEnabled(name)) continue; // skip intentionally disabled
 
       NetworkTable table = NetworkTableInstance.getDefault().getTable(name);
       if (table == null) {
@@ -240,6 +240,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   private void changeStatus(String name, boolean status) {
     LL_online.put(name, status);
+  }
+
+  public boolean isEnabled(String name) {
+    return LL_enabled.getOrDefault(name, false);
   }
 
   /** Configures a specific Limelight for either disabled (low heat) or enabled (active) mode. */
