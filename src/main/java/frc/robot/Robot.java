@@ -128,11 +128,6 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    if (subsystems.detectionSubsystem != null) {
-      subsystems.detectionSubsystem.update();
-    }
-    // var robotState = subsystems.drivebaseSubsystem.getState();
-    // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
   }
 
@@ -150,19 +145,19 @@ public class Robot extends TimedRobot {
   }
 
   @Override
+  public void disabledPeriodic() {
+    if (subsystems.visionSubsystemV2 != null && VISION_BEFORE_AUTO) {
+      subsystems.visionSubsystemV2.update();
+    }
+  }
+
+  @Override
   public void disabledExit() {
     // If comp bot, setup limelight for pre match
     subsystems.visionSubsystemV2.limelightDisabledExit();
 
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.brakeTurret();
-    }
-  }
-
-  @Override
-  public void disabledPeriodic() {
-    if (subsystems.visionSubsystemV2 != null && VISION_BEFORE_AUTO) {
-      subsystems.visionSubsystemV2.update();
     }
   }
 
