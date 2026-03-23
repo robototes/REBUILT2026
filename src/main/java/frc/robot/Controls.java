@@ -287,7 +287,7 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommandV2(),
-                Commands.run(s.turretSubsystem.setTurretPosition(0)), TurretSubsystem),
+                Commands.run(() -> s.turretSubsystem.setTurretPosition(0), s.turretSubsystem),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
                         Commands.parallel(
@@ -301,8 +301,8 @@ public class Controls {
                                                     driverController.leftTrigger().getAsBoolean()
                                                         ? IntakeMode.INTAKE
                                                         : IntakeMode.LAUNCH)))
-                            .onlyWhile(() -> s.launcherSubsystem.isAtTargetFallback()))
-                    .repeatedly()))
+                            .onlyWhile(() -> s.launcherSubsystem.isAtTargetFallback())
+                            .repeatedly())))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
