@@ -22,6 +22,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.subsystems.VisionSubsystemV2;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
 import frc.robot.subsystems.index.IndexerSubsystem;
@@ -72,6 +73,7 @@ public class Subsystems {
   public final TurretSubsystem turretSubsystem;
   public final IndexerSubsystem indexerSubsystem;
   public final LEDSubsystem ledSubsystem;
+  public final VisionSubsystemV2 visionSubsystemV2;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -167,10 +169,10 @@ public class Subsystems {
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystem);
+      visionSubsystemV2 = new VisionSubsystemV2(drivebaseSubsystem);
+      SmartDashboard.putData(visionSubsystemV2);
     } else {
-      visionSubsystem = null;
+      visionSubsystemV2 = null;
     }
   }
 }

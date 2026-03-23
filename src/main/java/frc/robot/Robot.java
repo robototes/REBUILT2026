@@ -44,14 +44,14 @@ public class Robot extends TimedRobot {
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
-  private final int VIEWFINDER_PIPELINE = 1;
-  private final int GAMEPIECE_PIPELINE = 2;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
   private final double MAX_TIME_RECORD = 165;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
   private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
+  private final boolean VISION_DURING_AUTO = true;
+  private final boolean VISION_BEFORE_AUTO = true;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -131,18 +131,6 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
-      if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
-        supplyRobotYawToLimelight(Hardware.LIMELIGHT_C);
-      } else {
-        if (subsystems.visionSubsystem.limelightaOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A);
-        }
-        if (subsystems.visionSubsystem.limelightbOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B);
-        }
-      }
-    }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
     }
@@ -181,23 +169,20 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledExit() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
+    // If comp bot, setup limelight for pre match
+    if (subsystems.visionSubsystemV2 != null && !RobotType.isAlpha()) {
+      if (subsystems.visionSubsystemV2.LIMELIGHT_A_ENABLED) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
       }
-      if (subsystems.visionSubsystem.limelightbOnline) {
+      if (subsystems.visionSubsystemV2.LIMELIGHT_B_ENABLED) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
       }
     }
+    // else use alpha bot pre setup
     if (subsystems.visionSubsystem != null
         && RobotType.isAlpha()
-        && subsystems.visionSubsystem.limelightcOnline) {
+        && subsystems.visionSubsystemV2.LIMELIGHT_C_ENABLED) {
       setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
-    }
-    if (subsystems.detectionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
-      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
     }
 
     if (subsystems.turretSubsystem != null) {
@@ -206,7 +191,11 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    if (subsystems.visionSubsystemV2 != null && VISION_BEFORE_AUTO) {
+      subsystems.visionSubsystemV2.update();
+    }
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
@@ -223,7 +212,11 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    if (subsystems.visionSubsystemV2 != null && VISION_DURING_AUTO) {
+      subsystems.visionSubsystemV2.update();
+    }
+  }
 
   @Override
   public void teleopInit() {
@@ -231,9 +224,6 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
@@ -242,7 +232,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
+      subsystems.visionSubsystemV2.update();
     }
   }
 
@@ -294,16 +284,5 @@ public class Robot extends TimedRobot {
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(limelightName, 4);
     }
-  }
-
-  private void supplyRobotYawToLimelight(String limelightName) {
-    LimelightHelpers.SetRobotOrientation(
-        limelightName,
-        subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
-        0,
-        0,
-        0,
-        0,
-        0);
   }
 }
