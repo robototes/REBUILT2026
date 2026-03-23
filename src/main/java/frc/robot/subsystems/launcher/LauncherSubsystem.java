@@ -98,9 +98,10 @@ public class LauncherSubsystem extends SubsystemBase {
   }
 
   public boolean isDriveBaseAtTarget() {
-    return Math.abs(
-            launchParameters.targetTurret().getDegrees()
-                - s.drivebaseSubsystem.getState().Pose.getRotation().getDegrees())
+    if (launchParameters == null) {
+      return false;
+    }
+    return Math.abs(launchParameters.targetTurret().getDegrees())
         <= TurretSubsystem.TURRET_DEGREE_TOLERANCE;
   }
 
