@@ -43,7 +43,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double MAX_TILT = 10;
 
   private static final double STALENESS_THRESHOLD = 1.0;
-  private static final double AMBIGUITY_THRESHOLD = 0.2;
+  private static final double AMBIGUITY_THRESHOLD = 0.4;
   private static final double REJECT = 999999;
   private static final double STD_DEV_SCALAR = 0.035;
   private static final double POWER = 1.4;
