@@ -14,6 +14,7 @@ import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
+import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import java.util.HashMap;
@@ -41,6 +42,9 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double MAX_DISTANCE_METERS = 8.5;
   private static final double MAX_TILT = 10;
   private static final double STALENESS_THRESHOLD = 1.0;
+  private static final double AMBIGUITY_THRESHOLD = 0.2;
+  private static final double STD_DEV_SCALAR = 0.035;
+  private static final double POWER = 1.4;
 
   // Field dimensions
   private static final double FIELD_LENGTH = 16.54;
@@ -121,18 +125,32 @@ public class VisionSubsystemV2 extends SubsystemBase {
         || estimate.pose.getY() < 0
         || estimate.pose.getY() > FIELD_WIDTH) return;
 
-    // Standard deviation scaling
-    double stdDev =
-        (estimate.tagCount >= 2)
-            ? 0.05 + (Math.pow(dist, 2) * 0.001)
-            : 0.15 + (Math.pow(dist, 2) * 0.03);
+    // -- Standard deviation scaling -- //
 
-    // add the vision measurement
+    // Calculate the harmonic sum of all tags detected by this limelight
+    double harmonicSum = HarmonicSum(estimate.rawFiducials);
+    // if limelight isn't certain about ANY tags
+    if (harmonicSum == 0) return;
+    // calculate std dev
+    double stdDevXY = STD_DEV_SCALAR * Math.pow(dist, POWER) / Math.sqrt(harmonicSum);
+
+    // add the vision measurement to robot pose
     driveBase.addVisionMeasurement(
         estimate.pose,
         estimate.timestampSeconds,
-        VecBuilder.fill(stdDev, stdDev, 999999) // Trust gyro for rotation
+        VecBuilder.fill(stdDevXY, stdDevXY, 999999) // Trust gyro for rotation
         );
+  }
+
+  private double HarmonicSum(RawFiducial[] detectedTags) {
+    // Don't do anything if there are no tags
+    if (detectedTags == null) return 0;
+    double sum = 0;
+    for (RawFiducial tag : detectedTags) {
+      if (tag.ambiguity > AMBIGUITY_THRESHOLD) continue;
+      sum += 1 / Math.pow(tag.distToCamera, 2);
+    }
+    return sum;
   }
 
   public void updateLimeLightStatus() {
