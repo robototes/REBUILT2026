@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 
+/*SOURCE: https://github.com/githubAnish/robot-2026-rewrite/blob/main/src/main/java/org/frogforce503/lib/rebuilt/BumpPhysicsSim.java */
 public class BumpPhysicsSim {
   private final double GRAVITY = 9.81;
   private final double BUMP_KICK_SCALAR =
