@@ -4,7 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -15,250 +15,166 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableBoolean;
 import java.util.HashMap;
+import java.util.Map;
 
 public class VisionSubsystemV2 extends SubsystemBase {
-  // Required subsystem(s)
   private final CommandSwerveDrivetrain driveBase;
 
-  // -- LIMELIGHT ENABLED AND STATUS HASHMAP AND ARRAYS -- //
-  // Set once at startup — never touched by staleness logic
-  public static final HashMap<String, Boolean> LL_enabled = new HashMap<>();
-  // Updated every cycle by staleness check
-  public static final HashMap<String, Boolean> LL_online = new HashMap<>();
-  // Limelight names (derived from map keys)
-  private final String[] names = {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C};
+  // -- CONFIGURATION MAPS -- //
+  private final Map<String, NtTunableBoolean> LL_enabled = new HashMap<>();
+  private final Map<String, BooleanPublisher> LL_status_pubs = new HashMap<>();
+  private final Map<String, Boolean> LL_online = new HashMap<>();
 
-  // Static initializer for is-enabled checks
-  static {
-    if (RobotType.isAlpha()) {
-      // Alpha bot cameras
-      LL_enabled.put(Hardware.LIMELIGHT_A, false);
-      LL_enabled.put(Hardware.LIMELIGHT_B, false);
-      LL_enabled.put(Hardware.LIMELIGHT_C, true);
-    } else {
-      // Comp bot cameras
-      LL_enabled.put(Hardware.LIMELIGHT_A, true);
-      LL_enabled.put(Hardware.LIMELIGHT_B, true);
-      LL_enabled.put(Hardware.LIMELIGHT_C, false);
-    }
-  }
+  private final String[] names = {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C};
 
   // Hardware objects
   private final Pigeon2 gyro;
 
-  // Pigeon 2 gyro data
-  private final StatusSignal<Angle> gyro_yaw;
-  private final StatusSignal<Angle> gyro_pitch;
-  private final StatusSignal<Angle> gyro_roll;
-  private final StatusSignal<AngularVelocity> gyro_AngularVelocity_X;
-  private final StatusSignal<AngularVelocity> gyro_AngularVelocity_Y;
-  private final StatusSignal<AngularVelocity> gyro_AngularVelocity_Z;
+  // status signals
+  private final StatusSignal<Angle> gyro_yaw, gyro_pitch, gyro_roll;
+  private final StatusSignal<AngularVelocity> gyro_vx, gyro_vy, gyro_vz;
 
-  // Magic numbers
-  private final double MAX_ANGULAR_VELOCITY = 720; // Degrees/s
-  private final double MAX_DISTANCE_METERS = 8.5;
-  private final double MAX_TILT = 10;
-  private final double IMU_ASSIST_ALPHA = 3;
-  private final double SCALAR_RANK_1 = 0.001;
-  private final double SCALAR_RANK_2 = 0.03;
-  private final double DEVIATION_BASE_1 = 0.05;
-  private final double DEVIATION_BASE_2 = 0.15;
-  private final double STALENESS_THRESHOLD = 1;
+  // Constants
+  private static final double MAX_ANGULAR_VELOCITY = 720;
+  private static final double MAX_DISTANCE_METERS = 8.5;
+  private static final double MAX_TILT = 10;
+  private static final double STALENESS_THRESHOLD = 1.0;
 
   // Field dimensions
-  private final double FIELD_LENGTH = 16; // Meters
-  private final double FIELD_WIDTH = 8; // Meters
-  private final double ZERO_THRESHOLD = 0;
+  private static final double FIELD_LENGTH = 16.54;
+  private static final double FIELD_WIDTH = 8.02;
 
-  // limelight settings
-  private final int THROTTLE_ON = 150;
-  private final int THROTTLE_OFF = 0;
-  private final int APRILTAG_PIPELINE = 0;
-
-  // Cached Pigeon 2 values
-  private double yaw;
-  private double pitch;
-  private double roll;
-  private double vy;
-  private double vx;
-  private double vz;
-
-  /** Constructor for VisionUpdate. This class extends SubsystemBase and will run in Robot.java */
   public VisionSubsystemV2(CommandSwerveDrivetrain drivetrain) {
-    // Set drivebase object
     this.driveBase = drivetrain;
-
-    // Grab third party IMU
     this.gyro = driveBase.getPigeon2();
 
-    // Fill the array with status signals providing data for the class
-    gyro_yaw = gyro.getYaw(); // Deg
-    gyro_pitch = gyro.getPitch(); // Deg
-    gyro_roll = gyro.getRoll(); // Deg
-    gyro_AngularVelocity_X = gyro.getAngularVelocityXWorld(); // Deg/s
-    gyro_AngularVelocity_Y = gyro.getAngularVelocityYWorld(); // Deg/s
-    gyro_AngularVelocity_Z = gyro.getAngularVelocityZWorld(); // Deg/s
+    var inst = NetworkTableInstance.getDefault();
 
-    // Set IMU mode for all enabled cameras
     for (String name : names) {
-      if (checkStatus(name)) {
-        LimelightHelpers.SetIMUMode(name, 4);
-        LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
+      // Determine default based on bot type
+      boolean defaultEnabled = false;
+      if (RobotType.isAlpha()) {
+        if (name.equals(Hardware.LIMELIGHT_C)) defaultEnabled = true;
+      } else {
+        if (name.equals(Hardware.LIMELIGHT_A) || name.equals(Hardware.LIMELIGHT_B))
+          defaultEnabled = true;
       }
+
+      // Create the tunable first, THEN put it in the map
+      LL_enabled.put(
+          name, new NtTunableBoolean("SmartDashboard/Vision/Enabled_" + name, defaultEnabled));
+      LL_status_pubs.put(
+          name, inst.getBooleanTopic("SmartDashboard/Vision/Status_" + name).publish());
+      LL_online.put(name, false);
     }
+
+    // Setup Gyro Signals
+    gyro_yaw = gyro.getYaw();
+    gyro_pitch = gyro.getPitch();
+    gyro_roll = gyro.getRoll();
+    gyro_vx = gyro.getAngularVelocityXWorld();
+    gyro_vy = gyro.getAngularVelocityYWorld();
+    gyro_vz = gyro.getAngularVelocityZWorld();
   }
 
   public void update() {
-    // Check if any cameras are disabled, broken or malfunctioning
     updateLimeLightStatus();
-    // refresh data
-    BaseStatusSignal.refreshAll(
-        gyro_yaw,
-        gyro_pitch,
-        gyro_roll,
-        gyro_AngularVelocity_X,
-        gyro_AngularVelocity_Y,
-        gyro_AngularVelocity_Z);
 
-    // Grab values
-    yaw = gyro_yaw.getValueAsDouble();
-    pitch = gyro_pitch.getValueAsDouble();
-    roll = gyro_roll.getValueAsDouble();
-    vy = gyro_AngularVelocity_Y.getValueAsDouble();
-    vx = gyro_AngularVelocity_X.getValueAsDouble();
-    vz = gyro_AngularVelocity_Z.getValueAsDouble();
+    // refresh all signals
+    BaseStatusSignal.refreshAll(gyro_yaw, gyro_pitch, gyro_roll, gyro_vx, gyro_vy, gyro_vz);
 
-    // process vision for all enabled cameras
+    double yaw = gyro_yaw.getValueAsDouble();
+    double pitch = gyro_pitch.getValueAsDouble();
+    double roll = gyro_roll.getValueAsDouble();
+    double vx = gyro_vx.getValueAsDouble();
+    double vy = gyro_vy.getValueAsDouble();
+    double vz = gyro_vz.getValueAsDouble();
+
     for (String name : names) {
-      if (isEnabled(name) && checkStatus(name)) {
-        // Apply gyro data to the robot pose for this specific camera
+      if (isEnabled(name) && isOnline(name)) {
+        // orientation to be updated immediately before retrieval
         LimelightHelpers.SetRobotOrientation(name, yaw, vz, pitch, vy, roll, vx);
 
-        // Get MegaTag2 estimate and process
-        LimelightHelpers.PoseEstimate estimate =
-            LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
-
-        processVision(estimate, vz);
+        PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
+        processVision(estimate, vz, roll, pitch);
       }
     }
   }
 
-  private void processVision(PoseEstimate estimate, double angularVelocity) {
-    // Basic safety checks
+  private void processVision(PoseEstimate estimate, double angVel, double roll, double pitch) {
+    // if no tags
     if (estimate == null || estimate.tagCount == 0) return;
-    // Don't accept if robot is spinning too fast
-    if (Math.abs(angularVelocity) > MAX_ANGULAR_VELOCITY) return;
+    // if spinning too fast
+    if (Math.abs(angVel) > MAX_ANGULAR_VELOCITY) return;
+    // if tilted
+    if (Math.abs(roll) > MAX_TILT || Math.abs(pitch) > MAX_TILT) return;
 
-    // Trust scaling: If tags are far away (> 4 meters), trust them less.
-    // (x, y, theta) standard deviations. 999999 means "ignore camera rotation".
-    double distance = estimate.avgTagDist;
-    double xyStdDev = 0;
+    double dist = estimate.avgTagDist;
+    // if too far
+    if (dist >= MAX_DISTANCE_METERS) return;
 
-    // If too far, do nothing
-    if (distance >= MAX_DISTANCE_METERS) {
-      return;
-    }
-    // If tag out of bounds, it's wrong
-    double estimatePoseX = estimate.pose.getX();
-    double estimatePoseY = estimate.pose.getY();
-    if (estimatePoseX < ZERO_THRESHOLD
-        || estimatePoseX > FIELD_LENGTH
-        || estimatePoseY < ZERO_THRESHOLD
-        || estimatePoseY > FIELD_WIDTH) {
-      return;
-    }
+    // if the pose is outside bounds
+    if (estimate.pose.getX() < 0
+        || estimate.pose.getX() > FIELD_LENGTH
+        || estimate.pose.getY() < 0
+        || estimate.pose.getY() > FIELD_WIDTH) return;
 
-    // If the camera thinks the robot is tilting more than MAX_TILT, ignore it.
-    if (Math.abs(roll) > MAX_TILT || Math.abs(pitch) > MAX_TILT) {
-      return;
-    }
+    // Standard deviation scaling
+    double stdDev =
+        (estimate.tagCount >= 2)
+            ? 0.05 + (Math.pow(dist, 2) * 0.001)
+            : 0.15 + (Math.pow(dist, 2) * 0.03);
 
-    // merge the x and y distance
-    if (estimate.tagCount >= 2) {
-      xyStdDev = DEVIATION_BASE_1 + (Math.pow(distance, 2) * SCALAR_RANK_1);
-    } else {
-      xyStdDev = DEVIATION_BASE_2 + (Math.pow(distance, 2) * SCALAR_RANK_2);
-    }
-
-    // rotation should be 999999 because we already trust the pigeon 2. Keep things simple
+    // add the vision measurement
     driveBase.addVisionMeasurement(
-        estimate.pose, estimate.timestampSeconds, VecBuilder.fill(xyStdDev, xyStdDev, 999999));
+        estimate.pose,
+        estimate.timestampSeconds,
+        VecBuilder.fill(stdDev, stdDev, 999999) // Trust gyro for rotation
+        );
   }
 
   public void updateLimeLightStatus() {
     for (String name : names) {
-      if (!isEnabled(name)) continue; // skip intentionally disabled
-
-      NetworkTable table = NetworkTableInstance.getDefault().getTable(name);
-      if (table == null) {
+      if (!isEnabled(name)) {
         changeStatus(name, false);
         continue;
       }
 
+      var table = NetworkTableInstance.getDefault().getTable(name);
       long lastChange = table.getEntry("hb").getLastChange();
-      if (lastChange == 0) {
-        changeStatus(name, false);
-        continue;
-      }
-
       double lastChangeSecs = lastChange / 1_000_000.0;
-      changeStatus(name, Timer.getFPGATimestamp() - lastChangeSecs < STALENESS_THRESHOLD);
+      boolean online = (Timer.getFPGATimestamp() - lastChangeSecs) < STALENESS_THRESHOLD;
+
+      changeStatus(name, online);
     }
-  }
-
-  // ----- HELPER FUNCTIONS ----- //
-  /** Pre-match setup for all enabled Limelights */
-  public void limelightRobotDisabled() {
-    for (String name : names) {
-      if (LL_enabled.getOrDefault(name, false)) {
-        setupLimelightForAprilTags(name, true);
-      }
-    }
-  }
-
-  /** In-match init */
-  public void limelightDisabledExit() {
-    for (String name : names) {
-      if (LL_enabled.getOrDefault(name, false)) {
-        setupLimelightForAprilTags(name, false);
-      }
-    }
-  }
-
-  private void disableLimelight(String name) {
-    LL_enabled.put(name, false);
-  }
-
-  private void enableLimeLight(String name) {
-    LL_enabled.put(name, true);
-  }
-
-  public boolean checkStatus(String name) {
-    return LL_online.getOrDefault(name, false);
   }
 
   private void changeStatus(String name, boolean status) {
     LL_online.put(name, status);
+    if (LL_status_pubs.containsKey(name)) {
+      LL_status_pubs.get(name).set(status);
+    }
   }
 
   public boolean isEnabled(String name) {
-    return LL_enabled.getOrDefault(name, false);
+    NtTunableBoolean tunable = LL_enabled.get(name);
+    return tunable != null && tunable.get();
   }
 
-  /** Configures a specific Limelight for either disabled (low heat) or enabled (active) mode. */
+  public boolean isOnline(String name) {
+    return LL_online.getOrDefault(name, false);
+  }
+
   public void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
-      // seed internal limelight imu for mt2
+      LimelightHelpers.SetThrottle(limelightName, 150);
       LimelightHelpers.SetIMUMode(limelightName, 1);
-      LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
     } else {
-      // get rid of throttle to get rid of throttle "glazing"
-      LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
-      // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(limelightName, 4);
+      LimelightHelpers.SetThrottle(limelightName, 0);
+      LimelightHelpers.SetIMUMode(limelightName, 4); // MT2 External IMU Mode
     }
+    LimelightHelpers.setPipelineIndex(limelightName, 0);
   }
 }
