@@ -21,7 +21,7 @@ public class BumpPhysicsSim {
   private double currentZ = 0.0;
   private double velocityZ = 0.0;
 
-  public Pose3d update(Pose2d robot2dPose, ChassisSpeeds fieldVelocity, double dt) {
+  public Pose3d updateSim(Pose2d robot2dPose, ChassisSpeeds fieldVelocity, double dt) {
     Rotation2d yaw = robot2dPose.getRotation();
 
     // 1. Sample 4 corners AND the center point
@@ -87,7 +87,7 @@ public class BumpPhysicsSim {
   }
 
   private TerrainState getTerrainState(Translation2d pos) {
-    if (!FieldConstants.Bump.contains(pos)) {
+    if (!FieldSimConstants.Bump.contains(pos)) {
       return new TerrainState(0, 0, 0);
     }
 
@@ -98,13 +98,13 @@ public class BumpPhysicsSim {
     double distFromInit;
     double slopeDir;
 
-    if (pos.getX() < FieldConstants.fieldLength / 2.0) {
-      distFromInit = pos.getX() - FieldConstants.Lines.blueInitLineX;
+    if (pos.getX() < FieldSimConstants.fieldLength / 2.0) {
+      distFromInit = pos.getX() - FieldSimConstants.Lines.blueInitLineX;
       slopeDir = 1.0;
 
     } else {
-      double redInitLineX = FieldConstants.fieldLength - FieldConstants.Lines.blueInitLineX;
-      distFromInit = redInitLineX - pos.getX();
+
+      distFromInit = FieldSimConstants.Lines.redInitLineX - pos.getX();
       slopeDir = -1.0;
     }
 

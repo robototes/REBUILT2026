@@ -30,11 +30,11 @@ public class SimAllianceUtils {
   }
 
   public static double applyX(double x) {
-    return shouldFlip() ? FieldConstants.fieldLength - x : x;
+    return shouldFlip() ? FieldSimConstants.fieldLength - x : x;
   }
 
   public static double applyY(double y) {
-    return shouldFlip() ? FieldConstants.fieldWidth - y : y;
+    return shouldFlip() ? FieldSimConstants.fieldWidth - y : y;
   }
 
   public static Translation2d apply(Translation2d translation) {

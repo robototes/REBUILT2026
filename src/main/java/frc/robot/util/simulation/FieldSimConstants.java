@@ -10,7 +10,7 @@ import frc.robot.util.AllianceUtils;
  * Contains various field dimensions and useful reference points. All units are in meters and poses
  * have a blue alliance origin.
  */
-public class FieldConstants {
+public class FieldSimConstants {
   public static final AprilTagFieldLayout aprilTagFieldLayout = AllianceUtils.FIELD_LAYOUT;
 
   public static final double fieldLength = aprilTagFieldLayout.getFieldLength();
@@ -19,6 +19,7 @@ public class FieldConstants {
   public static class Lines {
     public static final double blueInitLineX =
         Units.inchesToMeters(156.8); // Alliance Wall To Init Line
+    public static final double redInitLineX = fieldLength - blueInitLineX;
   }
 
   public static class Bump {

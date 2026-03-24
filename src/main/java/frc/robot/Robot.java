@@ -279,12 +279,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    robotSim.updateFuelSim();
-    terrainPose =
-        RobotSim.bumpSim.update(
-            subsystems.drivebaseSubsystem.getState().Pose,
-            subsystems.drivebaseSubsystem.getState().Speeds,
-            0.02);
+    robotSim.updateSimulation();
   }
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {

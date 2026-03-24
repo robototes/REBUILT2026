@@ -4,14 +4,13 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import frc.robot.Robot;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
 
 public class RobotSim {
 
   FuelSim fuelSim;
-  public static BumpPhysicsSim bumpSim;
+  public BumpPhysicsSim bumpSim;
   public static final double UPDATE_S = 0.02; // 20 ms update rate
   public static final double SIM_ROBOT_WIDTH_M = 0.8;
   public static final double SIM_ROBOT_LENGTH_M = 0.8;
@@ -19,6 +18,7 @@ public class RobotSim {
   static DoublePublisher scorePublisher;
 
   static DoublePublisher fuelHeld;
+  static Pose3d terrainPose;
   static StructPublisher<Pose3d> bumpPose;
 
   public static int score = 0;
@@ -53,7 +53,7 @@ public class RobotSim {
             .publish();
 
     bumpSim = new BumpPhysicsSim();
-
+    terrainPose = bumpSim.updateSim(drive.getState().Pose, drive.getState().Speeds, UPDATE_S);
     fuelSim.start();
   }
 
@@ -73,10 +73,10 @@ public class RobotSim {
     fuelsHeld = 8;
   }
 
-  public void updateFuelSim() {
+  public void updateSimulation() {
     fuelSim.updateSim();
 
-    bumpPose.accept(Robot.terrainPose);
+    bumpPose.accept(terrainPose);
     scorePublisher.accept(score);
     fuelHeld.accept(fuelsHeld);
   }
