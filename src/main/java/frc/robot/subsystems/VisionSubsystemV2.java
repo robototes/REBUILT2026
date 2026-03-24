@@ -205,11 +205,14 @@ public class VisionSubsystemV2 extends SubsystemBase {
     avgAmbiguity /= estimate.rawFiducials.length;
     Pose2d odomPose = driveBase.getState().Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
+    if (!odomOffField) {
+      return; // return early
+    }
     boolean visionTrusted =
         avgAmbiguity < RESET_MAX_AMBIGUITY
             && tagCount >= RESET_MIN_TAGS
             && isPoseOnField(estimate.pose);
-    if (odomOffField && visionTrusted) {
+    if (visionTrusted) {
       driveBase.resetPose(estimate.pose);
     }
   }
