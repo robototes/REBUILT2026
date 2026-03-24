@@ -163,7 +163,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
     return sum;
   }
 
-  public void updateLimeLightStatus() {
+  private void updateLimeLightStatus() {
     for (String name : names) {
       if (!isEnabled(name)) {
         changeStatus(name, false);
@@ -212,7 +212,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
     }
   }
 
-  public void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
+  private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isOnline(limelightName) && isEnabled(limelightName)) return;
 
     if (isEnteringDisabled) {
