@@ -45,14 +45,14 @@ public class VisionSubsystem extends SubsystemBase {
         VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Math.PI / 60);
 
     // Empirical lateral error coefficients  σ_xy = A_XY · r^P_XY
-    private static final double A_XY_MT2 = 0.035;
-    private static final double A_XY_MT1 = 0.090;
+    private static final double A_XY_MT2 = 0.07;
+    private static final double A_XY_MT1 = 0.09;
     private static final double P_XY = 1.4;
 
     // Ambiguity gating
     private static final double MAX_AMBIGUITY = 0.4;
 
-    // Range gates (single-tag)
+    // Range gates
     private static final double MAX_DISTANCE_MT1 = 2.0;
     private static final double MAX_DISTANCE_MT2 = 5.0;
 
@@ -208,6 +208,7 @@ public class VisionSubsystem extends SubsystemBase {
             estimate.pose3d.getRotation().getY(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || (lastFieldPose != null && lastFieldPose.equals(visionPose2d))) {
+      SmartDashboard.putString("/vision/rejectReason", "impossible-rotation or height");
       publishDiagnostics(estimate, visionPose2d);
       return;
     }
@@ -219,6 +220,7 @@ public class VisionSubsystem extends SubsystemBase {
                 > VisionConstants.MAX_XY_VELO_ALPHA
             || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
+      SmartDashboard.putString("/vision/rejectReason", "alpha-max-speed");
       publishDiagnostics(estimate, visionPose2d);
       return;
     }
@@ -254,6 +256,7 @@ public class VisionSubsystem extends SubsystemBase {
               avgTagDist, estimate.tagCount, avgAmbiguity, rawFiducials, cameraName);
     }
 
+    // stdDevs 0,0 = std dev x, stdDevs 1,0 = std dev y, stdDevs 2,0 = std dev r
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
       publishDiagnostics(estimate, visionPose2d);
       return;
@@ -355,6 +358,7 @@ public class VisionSubsystem extends SubsystemBase {
             * Math.pow(avgTagDist, VisionConstants.P_XY)
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
+    // stdDevs 0,0 = std dev x, stdDevs 1,0 = std dev y, stdDevs 2,0 = std dev r
     double theta = VisionConstants.EST_STD_DEVS_MT1.get(2, 0) * ambiguityInflation;
     switch (cameraName) {
       case LIMELIGHT_A -> {
