@@ -213,7 +213,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   }
 
   public void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
-    if (!LL_enabled.containsKey(limelightName)) return;
+    if (isOnline(limelightName) && isEnabled(limelightName)) return;
 
     if (isEnteringDisabled) {
       LimelightHelpers.SetThrottle(limelightName, THROTTLED);
