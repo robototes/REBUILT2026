@@ -52,7 +52,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double P_XY = 1.4;
 
     // Ambiguity gating
-    private static final double MAX_AMBIGUITY = 0.30;
+    private static final double MAX_AMBIGUITY = 0.4;
 
     // Range gates (single-tag)
     private static final double MAX_DISTANCE_MT1 = 2.0;
@@ -67,8 +67,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double HEIGHT_TOLERANCE = 0.15;
     private static final double ROTATION_TOLERANCE = 12.0;
 
-    private static final double FIELD_X_MAX =
-        AllianceUtils.FIELD_LAYOUT.getFieldLength(); // 2025 Reefscape, meters
+    private static final double FIELD_X_MAX = AllianceUtils.FIELD_LAYOUT.getFieldLength();
     private static final double FIELD_Y_MAX = AllianceUtils.FIELD_LAYOUT.getFieldWidth();
     private static final double FIELD_MARGIN = 0.50;
     private static final double MAX_VISION_IMPLIED_SPEED = 6.0; // m/s
@@ -296,35 +295,6 @@ public class VisionSubsystem extends SubsystemBase {
         && pose.getY() <= VisionConstants.FIELD_Y_MAX + VisionConstants.FIELD_MARGIN;
   }
 
-  /**
-   * Returns true if the implied speed between this vision pose and the last accepted pose for this
-   * camera is physically plausible.
-   *
-   * <p>Operates entirely on vision poses — deliberately ignores odometry. References older than 1 s
-   * are skipped (robot may have genuinely moved far).
-   */
-  private boolean isVelocityPlausible(Pose2d newPose, double newTimestamp) {
-    if (lastFieldPose == null) return true;
-    double dt = newTimestamp - lastTimestampSeconds;
-    if (dt <= 0 || dt > 1.0) return true;
-    double dist = newPose.getTranslation().getDistance(lastFieldPose.getTranslation());
-    return (dist / dt) < VisionConstants.MAX_VISION_IMPLIED_SPEED;
-  }
-
-  /**
-   * Computes the RMS spread of per-tag independent position estimates.
-   *
-   * <p>Each tag independently implies a robot position: impliedRobotPos = tagFieldPos +
-   * vector(distToCamera, tagFacing + 180°)
-   *
-   * <p>The RMS of errors between each implied position and the reported pose measures how much the
-   * tags agree with each other. A tight cluster means all tags are voting for the same answer. A
-   * loose cluster means at least one tag is wrong.
-   *
-   * <p>Returns 0.0 for single-tag observations (nothing to compare against). Returns SPREAD_REJECT
-   * + 1 if any tag ID is not in the field layout (unknown tag ID is an immediate hard reject
-   * regardless of tag count).
-   */
   private double getMultiTagSpread(
       RawFiducial[] fiducials, Pose2d reportedPose, AprilTagFieldLayout aprilTagFieldLayout) {
     if (aprilTagFieldLayout == null || fiducials == null || fiducials.length < 2) return 0.0;
@@ -339,8 +309,7 @@ public class VisionSubsystem extends SubsystemBase {
       Pose2d tagPose2d = tagPoseOpt.get().toPose2d();
 
       Translation2d tagToRobot =
-          new Translation2d(
-              rf.distToCamera, tagPose2d.getRotation().plus(Rotation2d.fromDegrees(180)));
+          new Translation2d(rf.distToCamera, tagPose2d.getRotation().plus(Rotation2d.k180deg));
       Translation2d impliedRobotPos = tagPose2d.getTranslation().plus(tagToRobot);
 
       double err = impliedRobotPos.getDistance(reportedPose.getTranslation());
@@ -351,14 +320,6 @@ public class VisionSubsystem extends SubsystemBase {
     return Math.sqrt(sumSqErr / count);
   }
 
-  /**
-   * Resets odometry to the vision pose only when odometry has unambiguously diverged (its pose is
-   * outside the field boundary) and vision is simultaneously highly confident.
-   *
-   * <p>This is the only place odometry state is used as a trigger. All other gates are
-   * odometry-independent so that a bad odometry state cannot cause good vision measurements to be
-   * silently discarded.
-   */
   private void maybeResetToVision(Pose2d visionPose, double ambiguity, int tagCount) {
     Pose2d odomPose = drivetrain.getState().Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
@@ -452,10 +413,6 @@ public class VisionSubsystem extends SubsystemBase {
     return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
   }
 
-  // ---------------------------------------------------------------------------
-  // Helper: harmonic information sum  Σᵢ rᵢ^{-2}
-  // ---------------------------------------------------------------------------
-
   private double computeHarmonicSum(RawFiducial[] rawFiducials) {
     if (rawFiducials == null || rawFiducials.length == 0) return 0.0;
     double sum = 0.0;
@@ -476,16 +433,12 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  public enum VisionConfidence {
-    HIGH,
-    LOW,
-    COASTING
-  }
-
-  public VisionConfidence getVisionConfidence() {
-    if (stdDevs == null || stdDevs.get(0, 0) >= Double.MAX_VALUE) return VisionConfidence.COASTING;
-    if (stdDevs.get(0, 0) < 0.15) return VisionConfidence.HIGH;
-    return VisionConfidence.LOW;
+  private boolean isVelocityPlausible(Pose2d newPose, double newTimestamp) {
+    if (lastFieldPose == null) return true;
+    double dt = newTimestamp - lastTimestampSeconds;
+    if (dt <= 0 || dt > 1.0) return true;
+    double dist = newPose.getTranslation().getDistance(lastFieldPose.getTranslation());
+    return (dist / dt) < VisionConstants.MAX_VISION_IMPLIED_SPEED;
   }
 
   public int getNumTargets() {
