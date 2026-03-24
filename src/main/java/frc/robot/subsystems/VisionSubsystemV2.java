@@ -46,6 +46,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double STD_DEV_SCALAR = 0.035;
   private static final double POWER = 1.4;
   private static final double IMU_ASSIST_ALPHA = 0.05;
+  private static final int ENABLED_IMU_MODE = 4;
+  private static final int DISABLED_IMU_MODE = 1;
+  private static final int THROTTLED = 150;
+  private static final int UNTHROTTLED = 0;
 
   // Field dimensions
   private static final double FIELD_LENGTH = 16.54;
@@ -150,7 +154,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
     if (detectedTags == null) return 0;
     double sum = 0;
     for (RawFiducial tag : detectedTags) {
-      if (tag.ambiguity > AMBIGUITY_THRESHOLD) continue;
+      if (tag.distToCamera <= 0 || tag.ambiguity > AMBIGUITY_THRESHOLD) continue;
       sum += 1 / Math.pow(tag.distToCamera, 2);
     }
     return sum;
@@ -190,11 +194,11 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   public void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
-      LimelightHelpers.SetThrottle(limelightName, 150);
-      LimelightHelpers.SetIMUMode(limelightName, 1);
+      LimelightHelpers.SetThrottle(limelightName, THROTTLED);
+      LimelightHelpers.SetIMUMode(limelightName, DISABLED_IMU_MODE);
     } else {
-      LimelightHelpers.SetThrottle(limelightName, 0);
-      LimelightHelpers.SetIMUMode(limelightName, 4); // MT2 External IMU Mode
+      LimelightHelpers.SetThrottle(limelightName, UNTHROTTLED);
+      LimelightHelpers.SetIMUMode(limelightName, ENABLED_IMU_MODE); // MT2 External IMU Mode
     }
     LimelightHelpers.setPipelineIndex(limelightName, 0);
   }
