@@ -175,7 +175,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   private double RMSE(PoseEstimate estimate) {
     RawFiducial[] tags = estimate.rawFiducials;
-    if (tags.length == 0 || tags == null) return 0;
+    if (tags == null || tags.length == 0) return 0;
     double error = 0;
     for (RawFiducial tag : tags) {
       var tagPoseReal = field.getTagPose(tag.id);
