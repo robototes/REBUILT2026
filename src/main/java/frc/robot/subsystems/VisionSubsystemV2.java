@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
@@ -51,6 +52,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double STD_DEV_SCALAR = 0.035;
   private static final double POWER = 1.4;
   private static final double IMU_ASSIST_ALPHA = 0.05;
+  private static final double RESET_MAX_AMBIGUITY = 0.15;
+  private static final int RESET_MIN_TAGS = 2;
+
+  // Limelight settings
   private static final int ENABLED_IMU_MODE = 4;
   private static final int DISABLED_IMU_MODE = 1;
   private static final int THROTTLED = 150;
@@ -154,6 +159,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
     double stdDevXY =
         STD_DEV_SCALAR * Math.pow(dist, POWER) / Math.sqrt(harmonicSum) * Math.max(RMSE, 0.01);
 
+    //
+    robotPoseOutOfBoundsReset(estimate, estimate.tagCount);
     // add the vision measurement to robot pose
     driveBase.addVisionMeasurement(
         estimate.pose,
@@ -161,6 +168,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
         VecBuilder.fill(stdDevXY, stdDevXY, REJECT) // Trust gyro for rotation
         );
   }
+
+  // --- STD-DEVS helpers --- //
 
   private double harmonicSum(RawFiducial[] tags) {
     // Don't do anything if there are no tags
@@ -188,6 +197,30 @@ public class VisionSubsystemV2 extends SubsystemBase {
     return Math.sqrt(error / tags.length);
   }
 
+  private void robotPoseOutOfBoundsReset(PoseEstimate estimate, int tagCount) {
+    double avgAmbiguity = 0;
+    for (RawFiducial tag : estimate.rawFiducials) {
+      avgAmbiguity += tag.ambiguity;
+    }
+    avgAmbiguity /= estimate.rawFiducials.length;
+    Pose2d odomPose = driveBase.getState().Pose;
+    boolean odomOffField = !isPoseOnField(odomPose);
+    boolean visionTrusted =
+        avgAmbiguity < RESET_MAX_AMBIGUITY
+            && tagCount >= RESET_MIN_TAGS
+            && isPoseOnField(estimate.pose);
+    if (odomOffField && visionTrusted) {
+      driveBase.resetPose(estimate.pose);
+    }
+  }
+
+  private boolean isPoseOnField(Pose2d pose) {
+    double x = pose.getX();
+    double y = pose.getY();
+    return x <= FIELD_LENGTH && x >= 0 && y <= FIELD_WIDTH && y >= 0;
+  }
+
+  // ---- Limelight Status helpers ---- //
   private void updateLimeLightStatus() {
     for (String name : names) {
       if (!isEnabled(name)) {
@@ -220,6 +253,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
   public boolean isOnline(String name) {
     return LL_online.getOrDefault(name, false);
   }
+
+  // --- Competition setup --- //
 
   public void limelightRobotDisabled() {
     for (String name : names) {
