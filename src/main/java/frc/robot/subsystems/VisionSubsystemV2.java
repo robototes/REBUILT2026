@@ -131,7 +131,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
     double harmonicSum = HarmonicSum(estimate.rawFiducials);
     // if limelight isn't certain about ANY tags
     if (harmonicSum == 0) return;
-    // calculate std dev
+    // calculate std dev: It's broken into two parts, penalize for distance and reward for certain
+    // tags
     double stdDevXY = STD_DEV_SCALAR * Math.pow(dist, POWER) / Math.sqrt(harmonicSum);
 
     // add the vision measurement to robot pose
