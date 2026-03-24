@@ -47,6 +47,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double STALENESS_THRESHOLD = 1.0; // Seconds
   private static final double AMBIGUITY_THRESHOLD = 0.4;
   private static final double REJECT = 999999;
+  private static final double RMSE_REJECT = 0.5;
   private static final double STD_DEV_SCALAR = 0.035;
   private static final double POWER = 1.4;
   private static final double IMU_ASSIST_ALPHA = 0.05;
@@ -57,8 +58,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   // Field dimensions
   private final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
-  private static final double FIELD_LENGTH = 16.54;
-  private static final double FIELD_WIDTH = 8.02;
+  private final double FIELD_LENGTH = field.getFieldLength();
+  private final double FIELD_WIDTH = field.getFieldWidth();
 
   public VisionSubsystemV2(CommandSwerveDrivetrain drivetrain) {
     this.driveBase = drivetrain;
@@ -141,6 +142,9 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
     // calculate root mean sum error
     double RMSE = RMSE(estimate);
+    // check to see if RMSE is too large
+    if (RMSE > RMSE_REJECT) return;
+
     // Calculate the harmonic sum of all tags detected by this limelight
     double harmonicSum = harmonicSum(estimate.rawFiducials);
     // if limelight isn't certain about ANY tags
@@ -158,11 +162,11 @@ public class VisionSubsystemV2 extends SubsystemBase {
         );
   }
 
-  private double harmonicSum(RawFiducial[] detectedTags) {
+  private double harmonicSum(RawFiducial[] tags) {
     // Don't do anything if there are no tags
-    if (detectedTags == null) return 0;
+    if (tags == null) return 0;
     double sum = 0;
-    for (RawFiducial tag : detectedTags) {
+    for (RawFiducial tag : tags) {
       if (tag.distToCamera <= 0 || tag.ambiguity > AMBIGUITY_THRESHOLD) continue;
       sum += 1 / Math.pow(tag.distToCamera, 2);
     }
@@ -171,17 +175,16 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   private double RMSE(PoseEstimate estimate) {
     RawFiducial[] tags = estimate.rawFiducials;
-    int count = tags.length;
+    if (tags.length == 0 || tags == null) return 0;
     double error = 0;
     for (RawFiducial tag : tags) {
-      var tagPoseOpt = field.getTagPose(tag.id);
-      if (tagPoseOpt.isEmpty()) return Double.MAX_VALUE; // unknown tag = reject whole estimate
+      var tagPoseReal = field.getTagPose(tag.id);
+      if (tagPoseReal.isEmpty()) return Double.MAX_VALUE; // unknown tag = reject whole estimate
       double estimatedDist = tag.distToRobot;
       double actualDist =
-          estimate.pose.getTranslation().getDistance(tagPoseOpt.get().toPose2d().getTranslation());
+          estimate.pose.getTranslation().getDistance(tagPoseReal.get().toPose2d().getTranslation());
       error += Math.pow(actualDist - estimatedDist, 2);
     }
-    if (count == 0) return 0;
     return Math.sqrt(error / tags.length);
   }
 
