@@ -31,6 +31,7 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
+import frc.robot.util.tuning.NtTunableBoolean;
 import java.util.Arrays;
 
 /**
@@ -47,8 +48,8 @@ public class Robot extends TimedRobot {
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
   private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
-  private final boolean VISION_DURING_AUTO = true;
-  private final boolean VISION_BEFORE_AUTO = true;
+  private final NtTunableBoolean VISION_DURING_AUTO;
+  private final NtTunableBoolean VISION_BEFORE_AUTO;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -112,6 +113,11 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    VISION_DURING_AUTO =
+        new NtTunableBoolean("SmartDashboard/COMPETITION_VISION/Vision_during_auto", true);
+    VISION_BEFORE_AUTO =
+        new NtTunableBoolean("SmartDashboard/COMPETITION_VISION/Vision_before_auto", true);
   }
 
   /**
@@ -146,7 +152,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
-    if (subsystems.visionSubsystemV2 != null && VISION_BEFORE_AUTO) {
+    if (subsystems.visionSubsystemV2 != null && VISION_BEFORE_AUTO.get()) {
       subsystems.visionSubsystemV2.update();
     }
   }
@@ -179,7 +185,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    if (subsystems.visionSubsystemV2 != null && VISION_DURING_AUTO) {
+    if (subsystems.visionSubsystemV2 != null && VISION_DURING_AUTO.get()) {
       subsystems.visionSubsystemV2.update();
     }
   }
