@@ -8,10 +8,8 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -308,11 +306,12 @@ public class VisionSubsystem extends SubsystemBase {
       }
       Pose2d tagPose2d = tagPoseOpt.get().toPose2d();
 
-      Translation2d tagToRobot =
-          new Translation2d(rf.distToCamera, tagPose2d.getRotation().plus(Rotation2d.k180deg));
-      Translation2d impliedRobotPos = tagPose2d.getTranslation().plus(tagToRobot);
+      double distancePerPose =
+          reportedPose
+              .getTranslation()
+              .getDistance(tagPose2d.getTranslation()); // what the pose says
 
-      double err = impliedRobotPos.getDistance(reportedPose.getTranslation());
+      double err = distancePerPose - rf.distToRobot;
       sumSqErr += err * err;
       count++;
     }
