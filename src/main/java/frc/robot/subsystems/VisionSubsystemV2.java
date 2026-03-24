@@ -196,6 +196,22 @@ public class VisionSubsystemV2 extends SubsystemBase {
     return LL_online.getOrDefault(name, false);
   }
 
+  public void limelightRobotDisabled() {
+    for (String name : names) {
+      if (isOnline(name) && isEnabled(name)) {
+        setupLimelightForAprilTags(name, true);
+      }
+    }
+  }
+
+  public void limelightDisabledExit() {
+    for (String name : names) {
+      if (isOnline(name) && isEnabled(name)) {
+        setupLimelightForAprilTags(name, false);
+      }
+    }
+  }
+
   public void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
       LimelightHelpers.SetThrottle(limelightName, THROTTLED);

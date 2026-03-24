@@ -154,7 +154,9 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {
     // If comp bot, setup limelight for pre match
-    subsystems.visionSubsystemV2.limelightDisabledExit();
+    if (subsystems.visionSubsystemV2 != null) {
+      subsystems.visionSubsystemV2.limelightDisabledExit();
+    }
 
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.brakeTurret();
