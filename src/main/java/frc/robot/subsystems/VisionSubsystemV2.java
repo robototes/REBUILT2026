@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -12,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 import frc.robot.util.LimelightHelpers.RawFiducial;
@@ -54,6 +56,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final int UNTHROTTLED = 0;
 
   // Field dimensions
+  private final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double FIELD_LENGTH = 16.54;
   private static final double FIELD_WIDTH = 8.02;
 
@@ -136,13 +139,16 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
     // -- Standard deviation scaling -- //
 
+    // calculate root mean sum error
+    double RMSE = RMSE(estimate);
     // Calculate the harmonic sum of all tags detected by this limelight
     double harmonicSum = harmonicSum(estimate.rawFiducials);
     // if limelight isn't certain about ANY tags
     if (harmonicSum == 0) return;
-    // calculate std dev: It's broken into two parts, penalize for distance and reward for certain
-    // tags
-    double stdDevXY = STD_DEV_SCALAR * Math.pow(dist, POWER) / Math.sqrt(harmonicSum);
+    // calculate std dev: It's broken into three parts, penalize for distance, reward for certain
+    // tags, RMSE of tags
+    double stdDevXY =
+        STD_DEV_SCALAR * Math.pow(dist, POWER) / Math.sqrt(harmonicSum) * Math.max(RMSE, 0.01);
 
     // add the vision measurement to robot pose
     driveBase.addVisionMeasurement(
@@ -161,6 +167,22 @@ public class VisionSubsystemV2 extends SubsystemBase {
       sum += 1 / Math.pow(tag.distToCamera, 2);
     }
     return sum;
+  }
+
+  private double RMSE(PoseEstimate estimate) {
+    RawFiducial[] tags = estimate.rawFiducials;
+    int count = tags.length;
+    double error = 0;
+    for (RawFiducial tag : tags) {
+      var tagPoseOpt = field.getTagPose(tag.id);
+      if (tagPoseOpt.isEmpty()) return Double.MAX_VALUE; // unknown tag = reject whole estimate
+      double estimatedDist = tag.distToRobot;
+      double actualDist =
+          estimate.pose.getTranslation().getDistance(tagPoseOpt.get().toPose2d().getTranslation());
+      error += Math.pow(actualDist - estimatedDist, 2);
+    }
+    if (count == 0) return 0;
+    return Math.sqrt(error / tags.length);
   }
 
   private void updateLimeLightStatus() {
