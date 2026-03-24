@@ -41,8 +41,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double MAX_ANGULAR_VELOCITY = 720;
   private static final double MAX_DISTANCE_METERS = 8.5;
   private static final double MAX_TILT = 10;
+
   private static final double STALENESS_THRESHOLD = 1.0;
   private static final double AMBIGUITY_THRESHOLD = 0.2;
+  private static final double REJECT = 999999;
   private static final double STD_DEV_SCALAR = 0.035;
   private static final double POWER = 1.4;
   private static final double IMU_ASSIST_ALPHA = 0.05;
@@ -89,6 +91,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
     gyro_vz = gyro.getAngularVelocityZWorld();
   }
 
+  // This is specificaly called periodically in robot.java
   public void update() {
     updateLimeLightStatus();
 
@@ -134,7 +137,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // -- Standard deviation scaling -- //
 
     // Calculate the harmonic sum of all tags detected by this limelight
-    double harmonicSum = HarmonicSum(estimate.rawFiducials);
+    double harmonicSum = harmonicSum(estimate.rawFiducials);
     // if limelight isn't certain about ANY tags
     if (harmonicSum == 0) return;
     // calculate std dev: It's broken into two parts, penalize for distance and reward for certain
@@ -145,11 +148,11 @@ public class VisionSubsystemV2 extends SubsystemBase {
     driveBase.addVisionMeasurement(
         estimate.pose,
         estimate.timestampSeconds,
-        VecBuilder.fill(stdDevXY, stdDevXY, 999999) // Trust gyro for rotation
+        VecBuilder.fill(stdDevXY, stdDevXY, REJECT) // Trust gyro for rotation
         );
   }
 
-  private double HarmonicSum(RawFiducial[] detectedTags) {
+  private double harmonicSum(RawFiducial[] detectedTags) {
     // Don't do anything if there are no tags
     if (detectedTags == null) return 0;
     double sum = 0;
@@ -169,6 +172,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
       var table = NetworkTableInstance.getDefault().getTable(name);
       long lastChange = table.getEntry("hb").getLastChange();
+      // Microseconds to seconds
       double lastChangeSecs = lastChange / 1_000_000.0;
       boolean online = (Timer.getFPGATimestamp() - lastChangeSecs) < STALENESS_THRESHOLD;
 
