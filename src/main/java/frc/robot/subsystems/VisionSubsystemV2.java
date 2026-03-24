@@ -45,6 +45,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double AMBIGUITY_THRESHOLD = 0.2;
   private static final double STD_DEV_SCALAR = 0.035;
   private static final double POWER = 1.4;
+  private static final double IMU_ASSIST_ALPHA = 0.05;
 
   // Field dimensions
   private static final double FIELD_LENGTH = 16.54;
@@ -72,6 +73,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
       LL_status_pubs.put(
           name, inst.getBooleanTopic("SmartDashboard/Vision/Status_" + name).publish());
       LL_online.put(name, false);
+      LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
     }
 
     // Setup Gyro Signals
