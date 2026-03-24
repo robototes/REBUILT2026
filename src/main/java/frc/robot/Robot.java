@@ -7,6 +7,7 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -42,6 +43,7 @@ public class Robot extends TimedRobot {
 
   private final Controls controls;
   public final Subsystems subsystems;
+  public static Pose3d terrainPose;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int VIEWFINDER_PIPELINE = 1;
@@ -278,6 +280,11 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     robotSim.updateFuelSim();
+    terrainPose =
+        RobotSim.bumpSim.update(
+            subsystems.drivebaseSubsystem.getState().Pose,
+            subsystems.drivebaseSubsystem.getState().Speeds,
+            0.02);
   }
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {

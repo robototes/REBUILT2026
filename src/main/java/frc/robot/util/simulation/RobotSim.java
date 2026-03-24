@@ -1,13 +1,17 @@
 package frc.robot.util.simulation;
 
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
+import frc.robot.Robot;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
 
 public class RobotSim {
 
   FuelSim fuelSim;
+  public static BumpPhysicsSim bumpSim;
   public static final double UPDATE_S = 0.02; // 20 ms update rate
   public static final double SIM_ROBOT_WIDTH_M = 0.8;
   public static final double SIM_ROBOT_LENGTH_M = 0.8;
@@ -15,6 +19,7 @@ public class RobotSim {
   static DoublePublisher scorePublisher;
 
   static DoublePublisher fuelHeld;
+  static StructPublisher<Pose3d> bumpPose;
 
   public static int score = 0;
   public static final int CAPACITY = 60; // Presumed max holding limit for hopper
@@ -40,6 +45,15 @@ public class RobotSim {
             .getTable("Fuel Simulation")
             .getDoubleTopic("Hopper Fuel")
             .publish();
+
+    bumpPose =
+        NetworkTableInstance.getDefault()
+            .getTable("Fuel Simulation")
+            .getStructTopic("Bump Pose", Pose3d.struct)
+            .publish();
+
+    bumpSim = new BumpPhysicsSim();
+
     fuelSim.start();
   }
 
@@ -61,6 +75,8 @@ public class RobotSim {
 
   public void updateFuelSim() {
     fuelSim.updateSim();
+
+    bumpPose.accept(Robot.terrainPose);
     scorePublisher.accept(score);
     fuelHeld.accept(fuelsHeld);
   }
