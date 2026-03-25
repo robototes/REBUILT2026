@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
@@ -30,7 +31,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final Map<String, NtTunableBoolean> LL_enabled = new HashMap<>();
   private final Map<String, BooleanPublisher> LL_status_pubs = new HashMap<>();
   private final Map<String, Boolean> LL_online = new HashMap<>();
-
+  private final Map<String, NtTunableBoolean> FILTER_ENABLED = new HashMap<>();
   private final String[] names = {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C};
 
   // Hardware objects
@@ -72,6 +73,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
     var inst = NetworkTableInstance.getDefault();
 
+    // Setup limelight statuses
     for (String name : names) {
       // Determine default based on bot type
       boolean defaultEnabled = false;
@@ -90,6 +92,12 @@ public class VisionSubsystemV2 extends SubsystemBase {
       LL_online.put(name, false);
       LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
     }
+    // Setup filter enabled map
+    FILTER_ENABLED.put(
+        "RMSE Filter", new NtTunableBoolean("SmartDashBoard/Vision/Filters/RMSE enabled", true));
+    FILTER_ENABLED.put(
+        "Harmonic sum Filter",
+        new NtTunableBoolean("SmartDashBoard/Vision/Filters/Harmonic enabled", true));
 
     // Setup Gyro Signals
     gyro_yaw = gyro.getYaw();
@@ -146,20 +154,24 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // -- Standard deviation scaling -- //
 
     // calculate root mean sum error
-    double RMSE = RMSE(estimate);
-    // check to see if RMSE is too large
-    if (RMSE > RMSE_REJECT) return;
-
-    // Calculate the harmonic sum of all tags detected by this limelight
-    double harmonicSum = harmonicSum(estimate.rawFiducials);
-    // if limelight isn't certain about ANY tags
-    if (harmonicSum == 0) return;
+    double stdDevXY = STD_DEV_SCALAR * Math.pow(dist, POWER);
+    double RMSE = 1;
+    double harmonicSum = 1;
+    if (FILTER_ENABLED.get("RMSE Filter").get()) {
+      RMSE = Math.max(RMSE(estimate), 0.01);
+      // check to see if RMSE is too large
+      if (RMSE > RMSE_REJECT) return;
+    }
+    if (FILTER_ENABLED.get("Harmonic sum Filter").get()) {
+      // Calculate the harmonic sum of all tags detected by this limelight
+      harmonicSum = harmonicSum(estimate.rawFiducials);
+      // if limelight isn't certain about ANY tags
+      if (harmonicSum == 0) return;
+    }
     // calculate std dev: It's broken into three parts, penalize for distance, reward for certain
     // tags, RMSE of tags
-    double stdDevXY =
-        STD_DEV_SCALAR * Math.pow(dist, POWER) / Math.sqrt(harmonicSum) * Math.max(RMSE, 0.01);
+    stdDevXY = Math.max(stdDevXY / Math.sqrt(harmonicSum) * Math.max(RMSE, 0.01), 0.01);
 
-    //
     robotPoseOutOfBoundsReset(estimate, estimate.tagCount);
     // add the vision measurement to robot pose
     driveBase.addVisionMeasurement(
@@ -188,11 +200,15 @@ public class VisionSubsystemV2 extends SubsystemBase {
     double error = 0;
     for (RawFiducial tag : tags) {
       var tagPoseReal = field.getTagPose(tag.id);
-      if (tagPoseReal.isEmpty()) return Double.MAX_VALUE; // unknown tag = reject whole estimate
+      if (tagPoseReal.isEmpty()) return Double.MAX_VALUE;
+      double actualDist3d =
+          tagPoseReal
+              .get()
+              .getTranslation()
+              .getDistance(new Translation3d(estimate.pose.getX(), estimate.pose.getY(), 0.0));
+
       double estimatedDist = tag.distToRobot;
-      double actualDist =
-          estimate.pose.getTranslation().getDistance(tagPoseReal.get().toPose2d().getTranslation());
-      error += Math.pow(actualDist - estimatedDist, 2);
+      error += Math.pow(actualDist3d - estimatedDist, 2);
     }
     return Math.sqrt(error / tags.length);
   }
