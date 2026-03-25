@@ -48,19 +48,22 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   private static final double STALENESS_THRESHOLD = 1.0; // Seconds
   private static final double AMBIGUITY_THRESHOLD = 0.4;
-  private static final double REJECT = 999999;
-  private static final double RMSE_REJECT = 0.5;
+  private static final double ROTATION_STD_DEV_REJECT = 999999;
+  private static final double RMSE_REJECT_THRESHOLD = 0.5;
   private static final double STD_DEV_SCALAR = 0.035;
-  private static final double POWER = 1.4;
+  private static final double DISTANCE_POWER_FACTOR = 1.4;
   private static final double IMU_ASSIST_ALPHA = 0.05;
-  private static final double RESET_MAX_AMBIGUITY = 0.15;
+  private static final double RESET_MAX_AMBIGUITY_THRESHOLD = 0.15;
   private static final int RESET_MIN_TAGS = 2;
+  private static final double MIN_RMSE = 0.01;
+  private static final double MIN_STD_DEV = 0.01;
 
   // Limelight settings
+  private static final int APRIL_TAG_COMP_PIPELINE = 0;
   private static final int ENABLED_IMU_MODE = 4;
   private static final int DISABLED_IMU_MODE = 1;
-  private static final int THROTTLED = 150;
-  private static final int UNTHROTTLED = 0;
+  private static final int THROTTLE_VALUE_ON = 150;
+  private static final int THROTTLE_VALUE_OFF = 0;
 
   // Field dimensions
   private final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -154,13 +157,13 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // -- Standard deviation scaling -- //
 
     // calculate root mean sum error
-    double stdDevXY = STD_DEV_SCALAR * Math.pow(dist, POWER);
+    double stdDevXY = STD_DEV_SCALAR * Math.pow(dist, DISTANCE_POWER_FACTOR);
     double RMSE = 1;
     double harmonicSum = 1;
     if (FILTER_ENABLED.get("RMSE Filter").get()) {
       RMSE = Math.max(RMSE(estimate), 0.01);
       // check to see if RMSE is too large
-      if (RMSE > RMSE_REJECT) return;
+      if (RMSE > RMSE_REJECT_THRESHOLD) return;
     }
     if (FILTER_ENABLED.get("Harmonic sum Filter").get()) {
       // Calculate the harmonic sum of all tags detected by this limelight
@@ -170,14 +173,14 @@ public class VisionSubsystemV2 extends SubsystemBase {
     }
     // calculate std dev: It's broken into three parts, penalize for distance, reward for certain
     // tags, RMSE of tags
-    stdDevXY = Math.max(stdDevXY / Math.sqrt(harmonicSum) * Math.max(RMSE, 0.01), 0.01);
+    stdDevXY = Math.max(stdDevXY / Math.sqrt(harmonicSum) * Math.max(RMSE, MIN_RMSE), MIN_STD_DEV);
 
     robotPoseOutOfBoundsReset(estimate, estimate.tagCount);
     // add the vision measurement to robot pose
     driveBase.addVisionMeasurement(
         estimate.pose,
         estimate.timestampSeconds,
-        VecBuilder.fill(stdDevXY, stdDevXY, REJECT) // Trust gyro for rotation
+        VecBuilder.fill(stdDevXY, stdDevXY, ROTATION_STD_DEV_REJECT) // Trust gyro for rotation
         );
   }
 
@@ -225,7 +228,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
       return; // return early
     }
     boolean visionTrusted =
-        avgAmbiguity < RESET_MAX_AMBIGUITY
+        avgAmbiguity < RESET_MAX_AMBIGUITY_THRESHOLD
             && tagCount >= RESET_MIN_TAGS
             && isPoseOnField(estimate.pose);
     if (visionTrusted) {
@@ -293,12 +296,12 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
-      LimelightHelpers.SetThrottle(limelightName, THROTTLED);
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_VALUE_ON);
       LimelightHelpers.SetIMUMode(limelightName, DISABLED_IMU_MODE);
     } else {
-      LimelightHelpers.SetThrottle(limelightName, UNTHROTTLED);
+      LimelightHelpers.SetThrottle(limelightName, THROTTLE_VALUE_OFF);
       LimelightHelpers.SetIMUMode(limelightName, ENABLED_IMU_MODE); // MT2 External IMU Mode
     }
-    LimelightHelpers.setPipelineIndex(limelightName, 0);
+    LimelightHelpers.setPipelineIndex(limelightName, APRIL_TAG_COMP_PIPELINE);
   }
 }
