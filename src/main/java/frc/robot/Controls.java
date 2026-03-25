@@ -462,6 +462,7 @@ public class Controls {
     s.ledSubsystem.setDefaultCommand(
         Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
             .withName("LED Default Command"));
+    s.ledSubsystem.setTargetingDependencies(s.drivebaseSubsystem, s.turretSubsystem);
 
     Trigger shiftWarning =
         new Trigger(
