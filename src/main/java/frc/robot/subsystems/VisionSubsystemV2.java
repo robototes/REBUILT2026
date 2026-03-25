@@ -97,10 +97,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
     }
     // Setup filter enabled map
     FILTER_ENABLED.put(
-        "RMSE Filter", new NtTunableBoolean("SmartDashBoard/Vision/Filters/RMSE enabled", true));
+        "RMSE Filter", new NtTunableBoolean("SmartDashboard/Vision/Filters/RMSE enabled", true));
     FILTER_ENABLED.put(
         "Harmonic sum Filter",
-        new NtTunableBoolean("SmartDashBoard/Vision/Filters/Harmonic enabled", true));
+        new NtTunableBoolean("SmartDashboard/Vision/Filters/Harmonic enabled", true));
 
     // Setup Gyro Signals
     gyro_yaw = gyro.getYaw();
@@ -221,7 +221,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
     for (RawFiducial tag : estimate.rawFiducials) {
       avgAmbiguity += tag.ambiguity;
     }
-    avgAmbiguity /= estimate.rawFiducials.length;
+    avgAmbiguity =
+        estimate.rawFiducials.length > 0
+            ? avgAmbiguity / estimate.rawFiducials.length
+            : Double.MAX_VALUE;
     Pose2d odomPose = driveBase.getState().Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
     if (!odomOffField) {
