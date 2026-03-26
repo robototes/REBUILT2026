@@ -30,6 +30,7 @@ import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableDouble;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -39,14 +40,12 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
   private Matrix<N3, N1> stdDevs = null;
+  private static NtTuneableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
+  private static NtTuneableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
+  private static NtTuneableDouble P_XY = new NtTunableDouble("/vision/P_XY", 1.4);
 
   private static class VisionConstants {
     private static final double STD_DEVS_MT1_THETA = Math.PI / 60;
-
-    // Empirical lateral error coefficients  σ_xy = A_XY · r^P_XY
-    private static final double A_XY_MT2 = 0.07;
-    private static final double A_R_MT1 = 0.09;
-    private static final double P_XY = 1.4;
 
     // Ambiguity gating
     private static final double MAX_AMBIGUITY = 0.4;
@@ -349,8 +348,8 @@ public class VisionSubsystem extends SubsystemBase {
     if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
     double xy =
-        VisionConstants.A_R_MT1
-            * Math.pow(avgTagDist, VisionConstants.P_XY)
+        A_XY_MT1.get()
+            * Math.pow(avgTagDist, P_XY.get())
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
 
@@ -391,8 +390,8 @@ public class VisionSubsystem extends SubsystemBase {
     if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
     double xy =
-        VisionConstants.A_XY_MT2
-            * Math.pow(avgTagDist, VisionConstants.P_XY)
+        A_XY_MT2.get()
+            * Math.pow(avgTagDist, P_XY.get())
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
 
