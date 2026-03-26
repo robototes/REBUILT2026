@@ -41,12 +41,11 @@ public class VisionSubsystem extends SubsystemBase {
   private Matrix<N3, N1> stdDevs = null;
 
   private static class VisionConstants {
-    private static final Matrix<N3, N1> EST_STD_DEVS_MT1 =
-        VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Math.PI / 60);
+    private static final double STD_DEVS_MT1_THETA = Math.PI / 60;
 
     // Empirical lateral error coefficients  σ_xy = A_XY · r^P_XY
     private static final double A_XY_MT2 = 0.07;
-    private static final double A_XY_MT1 = 0.09;
+    private static final double A_R_MT1 = 0.09;
     private static final double P_XY = 1.4;
 
     // Ambiguity gating
@@ -67,7 +66,6 @@ public class VisionSubsystem extends SubsystemBase {
 
     private static final double FIELD_X_MAX = AllianceUtils.FIELD_LAYOUT.getFieldLength();
     private static final double FIELD_Y_MAX = AllianceUtils.FIELD_LAYOUT.getFieldWidth();
-    private static final double FIELD_MARGIN = 0.50;
     private static final double MAX_VISION_IMPLIED_SPEED = 6.0; // m/s
     private static final double SPREAD_REJECT = 0.50; // meters RMS
     private static final double SPREAD_INFLATE_START = 0.10; // meters RMS
@@ -237,7 +235,7 @@ public class VisionSubsystem extends SubsystemBase {
       return;
     }
 
-    double spread = getMultiTagSpread(rawFiducials, visionPose2d, AllianceUtils.FIELD_LAYOUT);
+    double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
       SmartDashboard.putString("/vision/rejectReason", "inter-tag-inconsistent");
       SmartDashboard.putNumber("/vision/tagSpread", spread);
@@ -256,21 +254,16 @@ public class VisionSubsystem extends SubsystemBase {
               avgTagDist, estimate.tagCount, avgAmbiguity, rawFiducials, cameraName);
     }
 
-    // stdDevs 0,0 = std dev x, stdDevs 1,0 = std dev y, stdDevs 2,0 = std dev r
-    if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
-      publishDiagnostics(estimate, visionPose2d);
-      return;
-    }
-
     if (spread > VisionConstants.SPREAD_INFLATE_START) {
       double spreadInflation = Math.pow(spread / VisionConstants.SPREAD_INFLATE_START, 2.0);
       stdDevs = stdDevs.times(spreadInflation);
     }
 
-    maybeResetToVision(visionPose2d, avgAmbiguity, estimate.tagCount);
-
-    drivetrain.addVisionMeasurement(
-        visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+    boolean visionReset = maybeResetToVision(visionPose2d, avgAmbiguity, estimate.tagCount);
+    if (!visionReset) {
+      drivetrain.addVisionMeasurement(
+          visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+    }
     robotField.setRobotPose(drivetrain.getState().Pose);
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
@@ -290,14 +283,14 @@ public class VisionSubsystem extends SubsystemBase {
    * ground truth — does not touch odometry.
    */
   private boolean isPoseOnField(Pose2d pose) {
-    return pose.getX() >= -VisionConstants.FIELD_MARGIN
-        && pose.getX() <= VisionConstants.FIELD_X_MAX + VisionConstants.FIELD_MARGIN
-        && pose.getY() >= -VisionConstants.FIELD_MARGIN
-        && pose.getY() <= VisionConstants.FIELD_Y_MAX + VisionConstants.FIELD_MARGIN;
+    return pose.getX() >= 0
+        && pose.getX() <= VisionConstants.FIELD_X_MAX
+        && pose.getY() >= 0
+        && pose.getY() <= VisionConstants.FIELD_Y_MAX;
   }
 
   private double getMultiTagSpread(
-      RawFiducial[] fiducials, Pose2d reportedPose, AprilTagFieldLayout aprilTagFieldLayout) {
+      RawFiducial[] fiducials, Pose3d reportedPose, AprilTagFieldLayout aprilTagFieldLayout) {
     if (aprilTagFieldLayout == null || fiducials == null || fiducials.length < 2) return 0.0;
 
     double sumSqErr = 0;
@@ -307,12 +300,12 @@ public class VisionSubsystem extends SubsystemBase {
       if (tagPoseOpt.isEmpty()) {
         return VisionConstants.SPREAD_REJECT + 1.0;
       }
-      Pose2d tagPose2d = tagPoseOpt.get().toPose2d();
+      Pose3d tagPose3d = tagPoseOpt.get();
 
       double distancePerPose =
           reportedPose
               .getTranslation()
-              .getDistance(tagPose2d.getTranslation()); // what the pose says
+              .getDistance(tagPose3d.getTranslation()); // what the pose says
 
       double err = distancePerPose - rf.distToRobot;
       sumSqErr += err * err;
@@ -322,7 +315,7 @@ public class VisionSubsystem extends SubsystemBase {
     return Math.sqrt(sumSqErr / count);
   }
 
-  private void maybeResetToVision(Pose2d visionPose, double ambiguity, int tagCount) {
+  private boolean maybeResetToVision(Pose2d visionPose, double ambiguity, int tagCount) {
     Pose2d odomPose = drivetrain.getState().Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
     boolean visionTrusted =
@@ -330,9 +323,11 @@ public class VisionSubsystem extends SubsystemBase {
             && tagCount >= VisionConstants.RESET_MIN_TAGS
             && isPoseOnField(visionPose);
     if (odomOffField && visionTrusted) {
-      drivetrain.resetPose(visionPose);
+      drivetrain.resetTranslation(visionPose.getTranslation());
       SmartDashboard.putString("/vision/rejectReason", "odometry-reset");
+      return true;
     }
+    return false;
   }
 
   private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(
@@ -354,24 +349,24 @@ public class VisionSubsystem extends SubsystemBase {
     if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
     double xy =
-        VisionConstants.A_XY_MT1
+        VisionConstants.A_R_MT1
             * Math.pow(avgTagDist, VisionConstants.P_XY)
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
-    // stdDevs 0,0 = std dev x, stdDevs 1,0 = std dev y, stdDevs 2,0 = std dev r
-    double theta = VisionConstants.EST_STD_DEVS_MT1.get(2, 0) * ambiguityInflation;
+
+    double theta = VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
     switch (cameraName) {
       case LIMELIGHT_A -> {
         SmartDashboard.putNumber("/vision/limelight-a Mt1 STD xy", xy);
-        SmartDashboard.putNumber("/vision/limelight-a Mt1 STD xy", theta);
+        SmartDashboard.putNumber("/vision/limelight-a Mt1 STD theta", theta);
       }
       case LIMELIGHT_B -> {
         SmartDashboard.putNumber("/vision/limelight-b Mt1 STD xy", xy);
-        SmartDashboard.putNumber("/vision/limelight-b Mt1 STD xy", theta);
+        SmartDashboard.putNumber("/vision/limelight-b Mt1 STD theta", theta);
       }
       default -> {
         SmartDashboard.putNumber("/vision/limelight-c Mt1 STD xy", xy);
-        SmartDashboard.putNumber("/vision/limelight-c Mt1 STD xy", theta);
+        SmartDashboard.putNumber("/vision/limelight-c Mt1 STD theta", theta);
       }
     }
     return VecBuilder.fill(xy, xy, theta);
