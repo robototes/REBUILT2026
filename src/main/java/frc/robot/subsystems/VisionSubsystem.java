@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -182,7 +183,6 @@ public class VisionSubsystem extends SubsystemBase {
     if (estimate == null || estimate.tagCount <= 0) return;
 
     if (getDisableVision()) return;
-    camera.setLastTimestampSeconds(estimate.timestampSeconds);
 
     rawFieldPoseEntry.set(estimate.pose3d);
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
