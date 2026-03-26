@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -25,6 +26,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
@@ -85,7 +87,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
   private BooleanSubscriber disableVision;
-
+  private IntakePivot intakePivot;
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
@@ -124,9 +126,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   private VisionPoseTracking visionPoseTracking;
 
-  public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
+  public VisionSubsystem(CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot) {
     this.drivetrain = drivetrain;
-
+    this.intakePivot = intakePivot;
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
@@ -141,14 +143,13 @@ public class VisionSubsystem extends SubsystemBase {
     limelightaOnline = isLimeLightOnline(LIMELIGHT_A);
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
-    if (!RobotType.isAlpha()) {
-      processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
-      processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
-      updateCameraView(visionPoseTracking);
-    }
-    if (RobotType.isAlpha()) {
-      processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC);
-    }
+    processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
+    processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
+    // uncomment if when using intake pose
+    // if (intakePivot.isAtTarget(2, IntakePivot.DEPLOYED_POS)) {
+    processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC);
+    // }
+    updateCameraView(visionPoseTracking);
   }
 
   private void processCamera(
@@ -267,11 +268,10 @@ public class VisionSubsystem extends SubsystemBase {
     robotField.setRobotPose(drivetrain.getState().Pose);
     if (estimate.isMegaTag2) {
       camera.setlastPoseMT2(visionPose2d);
-      camera.setLastTimestampSeconds(estimate.timestampSeconds);
     } else {
       camera.setlastPoseMT1(visionPose2d);
-      camera.setLastTimestampSeconds(estimate.timestampSeconds);
     }
+    camera.setLastTimestampSeconds(estimate.timestampSeconds);
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
       fieldPose3dEntry.set(estimate.pose3d);
@@ -361,20 +361,8 @@ public class VisionSubsystem extends SubsystemBase {
             * ambiguityInflation;
 
     double theta = VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
-    switch (cameraName) {
-      case LIMELIGHT_A -> {
-        SmartDashboard.putNumber("/vision/limelight-a Mt1 STD xy", xy);
-        SmartDashboard.putNumber("/vision/limelight-a Mt1 STD theta", theta);
-      }
-      case LIMELIGHT_B -> {
-        SmartDashboard.putNumber("/vision/limelight-b Mt1 STD xy", xy);
-        SmartDashboard.putNumber("/vision/limelight-b Mt1 STD theta", theta);
-      }
-      default -> {
-        SmartDashboard.putNumber("/vision/limelight-c Mt1 STD xy", xy);
-        SmartDashboard.putNumber("/vision/limelight-c Mt1 STD theta", theta);
-      }
-    }
+    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
+    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
     return VecBuilder.fill(xy, xy, theta);
   }
 
@@ -402,17 +390,7 @@ public class VisionSubsystem extends SubsystemBase {
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
 
-    switch (cameraName) {
-      case LIMELIGHT_A -> {
-        SmartDashboard.putNumber("/vision/limelight-a Mt2 STD xy", xy);
-      }
-      case LIMELIGHT_B -> {
-        SmartDashboard.putNumber("/vision/limelight-b Mt2 STD xy", xy);
-      }
-      default -> {
-        SmartDashboard.putNumber("/vision/limelight-c Mt2 STD xy", xy);
-      }
-    }
+    SmartDashboard.putNumber("/vision/" + cameraName + " Mt2 STD xy", xy);
 
     return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
   }
