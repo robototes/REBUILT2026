@@ -105,6 +105,20 @@ test {
 wpi.sim.addGui().defaultEnabled = true
 wpi.sim.addDriverstation()
 
+// Log replay support: pass -PlogreplayFile=path/to/file.wpilog to enable
+// Example: ./gradlew simulateJava -PlogreplayFile=logs/FRC_TBD_aad4a9c614288d68.wpilog
+if (project.hasProperty('logreplayFile')) {
+    wpi.sim.envVar("LOGREPLAY_FILE", project.property('logreplayFile').toString())
+}
+
+// Also apply env var to any JavaExec tasks (fallback for versions where wpi.sim.envVar
+// doesn't propagate to the native launcher)
+tasks.withType(JavaExec).configureEach {
+    if (project.hasProperty('logreplayFile')) {
+        environment 'LOGREPLAY_FILE', project.property('logreplayFile').toString()
+    }
+}
+
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
 // in order to make them all available at runtime. Also adding the manifest so WPILib
 // knows where to look for our Robot Class.
@@ -125,6 +139,16 @@ wpi.java.configureTestTasks(test)
 // Configure string concat to always inline compile
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
+}
+
+// Log diagnostic task: ./gradlew logDiagnostic -PlogreplayFile=path/to/file.wpilog
+tasks.register('logDiagnostic', JavaExec) {
+    dependsOn 'compileJava'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'frc.robot.util.simulation.LogDiagnostic'
+    if (project.hasProperty('logreplayFile')) {
+        args project.property('logreplayFile').toString()
+    }
 }
 
 // Spotless

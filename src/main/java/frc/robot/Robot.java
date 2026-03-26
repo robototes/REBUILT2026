@@ -30,6 +30,7 @@ import frc.robot.util.BuildInfo;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.simulation.LogReplayManager;
 import frc.robot.util.simulation.RobotSim;
 
 /**
@@ -50,6 +51,7 @@ public class Robot extends TimedRobot {
   private final double MAX_TIME_RECORD = 165;
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
+  private final LogReplayManager logReplayManager;
   private final Mechanism2d mechanismRobot;
   private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
 
@@ -88,8 +90,10 @@ public class Robot extends TimedRobot {
     AutoLogic.init(subsystems);
     if (Robot.isSimulation()) {
       robotSim = new RobotSim(subsystems.drivebaseSubsystem);
+      logReplayManager = LogReplayManager.createIfEnabled();
     } else {
       robotSim = null;
+      logReplayManager = null;
     }
     CommandScheduler.getInstance()
         .onCommandInitialize(
@@ -290,6 +294,9 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationInit() {
     subsystems.hood.zero();
+    if (logReplayManager != null) {
+      logReplayManager.start();
+    }
   }
 
   /** This function is called periodically whilst in simulation. */
