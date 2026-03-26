@@ -251,11 +251,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
         changeStatus(name, false);
         continue;
       }
-
-      double currentBeat = LimelightHelpers.getHeartbeat(name);
-
-      // Microseconds to seconds
-      lastBeat = currentBeat / 1_000_000.0;
+      double currentBeat = LimelightHelpers.getHeartbeat(name) / 1_000_000.0;
       boolean online = (currentBeat - lastBeat) < STALENESS_THRESHOLD;
       lastBeat = currentBeat;
       changeStatus(name, online);
