@@ -40,9 +40,9 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
   private Matrix<N3, N1> stdDevs = null;
-  private static NtTuneableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
-  private static NtTuneableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
-  private static NtTuneableDouble P_XY = new NtTunableDouble("/vision/P_XY", 1.4);
+  private static NtTunableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
+  private static NtTunableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
+  private static NtTunableDouble P_XY = new NtTunableDouble("/vision/P_XY", 1.4);
 
   private static class VisionConstants {
     private static final double STD_DEVS_MT1_THETA = Math.PI / 60;
