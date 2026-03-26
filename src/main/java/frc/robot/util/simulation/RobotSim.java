@@ -6,7 +6,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
-import java.util.function.Supplier;
 
 public class RobotSim {
 
@@ -19,14 +18,15 @@ public class RobotSim {
   static DoublePublisher scorePublisher;
 
   static DoublePublisher fuelHeld;
-  static Supplier<Pose3d> terrainPose;
+  static Pose3d terrainPose;
   static StructPublisher<Pose3d> bumpPose;
-
+  private CommandSwerveDrivetrain drive;
   public static int score = 0;
   public static final int CAPACITY = 60; // Presumed max holding limit for hopper
   public static int fuelsHeld = 8; // Defaults to 8 for preload
 
   public RobotSim(CommandSwerveDrivetrain drive) {
+    this.drive = drive;
     fuelSim = FuelSim.getInstance();
     fuelSim.spawnStartingFuel();
     fuelSim.registerRobot(
@@ -54,7 +54,7 @@ public class RobotSim {
             .publish();
 
     bumpSim = new BumpPhysicsSim();
-    terrainPose = () -> bumpSim.updateSim(drive.getState().Pose, drive.getState().Speeds, UPDATE_S);
+
     fuelSim.start();
   }
 
@@ -76,8 +76,8 @@ public class RobotSim {
 
   public void updateSimulation() {
     fuelSim.updateSim();
-
-    bumpPose.accept(terrainPose.get());
+    terrainPose = bumpSim.updateSim(drive.getState().Pose, drive.getState().Speeds, UPDATE_S);
+    bumpPose.accept(terrainPose);
     scorePublisher.accept(score);
     fuelHeld.accept(fuelsHeld);
   }
