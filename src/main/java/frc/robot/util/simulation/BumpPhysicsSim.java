@@ -7,12 +7,15 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import frc.robot.util.tuning.NtTunableDouble;
 
 /*SOURCE: https://github.com/githubAnish/robot-2026-rewrite/blob/main/src/main/java/org/frogforce503/lib/rebuilt/BumpPhysicsSim.java */
 public class BumpPhysicsSim {
   private final double GRAVITY = 9.81;
-  private final double BUMP_KICK_SCALAR =
-      0.2; // Tune this (1.0 = Perfect rigid bounce (lots of air), 0.0 = Magnetically glued to the
+  private final double BUMP_KICK_SCALAR_DEFAULT = 0.2;
+  private final NtTunableDouble BUMP_KICK_SCALAR =
+      new NtTunableDouble("Fuel Simulation/BumpEffect", BUMP_KICK_SCALAR_DEFAULT);
+  // Tune this (1.0 = Perfect rigid bounce (lots of air), 0.0 = Magnetically glued to the
   // ramp)
 
   private final double halfLength = RobotSim.SIM_ROBOT_LENGTH_M / 2.0;
@@ -67,7 +70,7 @@ public class BumpPhysicsSim {
             + (fieldVelocity.vyMetersPerSecond * center.slopeY());
 
     // Apply the dampener to simulate tire squish and energy loss
-    neededVelocityZ *= BUMP_KICK_SCALAR;
+    neededVelocityZ *= BUMP_KICK_SCALAR.get();
 
     // 5. Ballistic Physics (Flight Logic)
     velocityZ -= GRAVITY * dt;

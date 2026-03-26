@@ -6,6 +6,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
+import java.util.function.Supplier;
 
 public class RobotSim {
 
@@ -18,7 +19,7 @@ public class RobotSim {
   static DoublePublisher scorePublisher;
 
   static DoublePublisher fuelHeld;
-  static Pose3d terrainPose;
+  static Supplier<Pose3d> terrainPose;
   static StructPublisher<Pose3d> bumpPose;
 
   public static int score = 0;
@@ -53,7 +54,7 @@ public class RobotSim {
             .publish();
 
     bumpSim = new BumpPhysicsSim();
-    terrainPose = bumpSim.updateSim(drive.getState().Pose, drive.getState().Speeds, UPDATE_S);
+    terrainPose = () -> bumpSim.updateSim(drive.getState().Pose, drive.getState().Speeds, UPDATE_S);
     fuelSim.start();
   }
 
@@ -76,7 +77,7 @@ public class RobotSim {
   public void updateSimulation() {
     fuelSim.updateSim();
 
-    bumpPose.accept(terrainPose);
+    bumpPose.accept(terrainPose.get());
     scorePublisher.accept(score);
     fuelHeld.accept(fuelsHeld);
   }
