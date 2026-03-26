@@ -219,8 +219,17 @@ public class VisionSubsystem extends SubsystemBase {
       publishDiagnostics(estimate, visionPose2d);
       return;
     }
-
-    if (!isVelocityPlausible(visionPose2d, estimate.timestampSeconds, camera)) {
+    Pose2d lastvisionPose2d;
+    if (estimate.isMegaTag2) {
+      lastvisionPose2d = camera.getlastPoseMT2();
+    } else {
+      lastvisionPose2d = camera.getlastPoseMT1();
+    }
+    if (!isVelocityPlausible(
+        visionPose2d,
+        estimate.timestampSeconds,
+        lastvisionPose2d,
+        camera.getLastTimestampSeconds())) {
       SmartDashboard.putString("/vision/rejectReason", "velocity-implausible");
       publishDiagnostics(estimate, visionPose2d);
       return;
@@ -256,10 +265,18 @@ public class VisionSubsystem extends SubsystemBase {
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
 
     robotField.setRobotPose(drivetrain.getState().Pose);
+    if (estimate.isMegaTag2) {
+      camera.setlastPoseMT2(visionPose2d);
+      camera.setLastTimestampSeconds(estimate.timestampSeconds);
+    } else {
+      camera.setlastPoseMT1(visionPose2d);
+      camera.setLastTimestampSeconds(estimate.timestampSeconds);
+    }
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
       fieldPose3dEntry.set(estimate.pose3d);
       lastFieldPose = visionPose2d;
+
       rawVisionFieldObject.setPose(lastFieldPose);
       lastTimestampSeconds = estimate.timestampSeconds;
     }
@@ -420,11 +437,12 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  private boolean isVelocityPlausible(Pose2d newPose, double newTimestamp, LLCamera camera) {
-    if (lastFieldPose == null) return true;
-    double dt = newTimestamp - camera.getLastTimestampSeconds();
+  private boolean isVelocityPlausible(
+      Pose2d newPose, double newTimestamp, Pose2d lastPose2d, double lastTimestampSeconds) {
+    if (lastPose2d == null) return true;
+    double dt = newTimestamp - lastTimestampSeconds;
     if (dt <= 0 || dt > 1.0) return true;
-    double dist = newPose.getTranslation().getDistance(lastFieldPose.getTranslation());
+    double dist = newPose.getTranslation().getDistance(lastPose2d.getTranslation());
     return (dist / dt) < VisionConstants.MAX_VISION_IMPLIED_SPEED;
   }
 
