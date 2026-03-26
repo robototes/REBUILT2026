@@ -29,7 +29,6 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
-import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -113,7 +112,6 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureIntakeBindings();
-    configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
     configureLedBindings();
@@ -219,16 +217,6 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
-  }
-
-  private void configureAutoAlignBindings() {
-    if (s.detectionSubsystem == null) {
-      DataLogManager.log("Game piece detection is disabled");
-      return;
-    }
-    connected(visionTestController)
-        .and(visionTestController.rightBumper())
-        .whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLauncherBindings() {
