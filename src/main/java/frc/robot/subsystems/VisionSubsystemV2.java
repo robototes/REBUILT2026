@@ -11,7 +11,6 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -27,6 +26,9 @@ import java.util.Map;
 
 public class VisionSubsystemV2 extends SubsystemBase {
   private final CommandSwerveDrivetrain driveBase;
+
+  // HB cache
+  private double lastBeat;
 
   // -- CONFIGURATION MAPS -- //
   private final Map<String, NtTunableBoolean> LL_enabled = new HashMap<>();
@@ -250,11 +252,11 @@ public class VisionSubsystemV2 extends SubsystemBase {
         continue;
       }
 
-      var table = NetworkTableInstance.getDefault().getTable(name);
-      long lastChange = table.getEntry("hb").getLastChange();
+      double currentBeat = LimelightHelpers.getHeartbeat(name);
+
       // Microseconds to seconds
-      double lastChangeSecs = lastChange / 1_000_000.0;
-      boolean online = (Timer.getFPGATimestamp() - lastChangeSecs) < STALENESS_THRESHOLD;
+      lastBeat = currentBeat / 1_000_000.0;
+      boolean online = (currentBeat - lastBeat) < STALENESS_THRESHOLD;
 
       changeStatus(name, online);
     }
