@@ -131,6 +131,11 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
 
+    // Publish log replay data into NT before anything reads from it
+    if (logReplayManager != null) {
+      logReplayManager.updateReplay();
+    }
+
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -295,7 +300,7 @@ public class Robot extends TimedRobot {
   public void simulationInit() {
     subsystems.hood.zero();
     if (logReplayManager != null) {
-      logReplayManager.start();
+      logReplayManager.initReplay();
     }
   }
 
