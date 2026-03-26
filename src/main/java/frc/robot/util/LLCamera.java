@@ -10,6 +10,7 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class LLCamera {
 
   private final String name;
+  private double lastTimestampSeconds = 0;
 
   public LLCamera(String name) {
     this.name = name;
@@ -73,6 +74,14 @@ public class LLCamera {
 
   public String getName() {
     return name;
+  }
+
+  public void setLastTimestampSeconds(double timestampSeconds) {
+    lastTimestampSeconds = timestampSeconds;
+  }
+
+  public double getLastTimestampSeconds() {
+    return lastTimestampSeconds;
   }
 
   public BetterPoseEstimate getPoseEstimateMegatag2() {

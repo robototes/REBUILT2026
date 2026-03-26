@@ -70,6 +70,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double SPREAD_INFLATE_START = 0.10; // meters RMS
     private static final double RESET_MAX_AMBIGUITY = 0.15;
     private static final int RESET_MIN_TAGS = 2;
+    private static final double FIELD_MARGIN = 0.5;
   }
 
   private static final Transform3d COMP_BOT_LEFT_CAMERA =
@@ -165,19 +166,9 @@ public class VisionSubsystem extends SubsystemBase {
             swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
 
     processLimelight(
-        mt1Estimate,
-        rawFieldPose3dEntry,
-        avgAmbiguity,
-        visionPoseTracking,
-        rawFiducials,
-        camera.getName());
+        mt1Estimate, rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking, rawFiducials, camera);
     processLimelight(
-        mt2Estimate,
-        rawFieldPose3dEntry,
-        avgAmbiguity,
-        visionPoseTracking,
-        rawFiducials,
-        camera.getName());
+        mt2Estimate, rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking, rawFiducials, camera);
   }
 
   private void processLimelight(
@@ -186,11 +177,12 @@ public class VisionSubsystem extends SubsystemBase {
       double avgAmbiguity,
       VisionPoseTracking visionPoseTracking,
       RawFiducial[] rawFiducials,
-      String cameraName) {
+      LLCamera camera) {
 
     if (estimate == null || estimate.tagCount <= 0) return;
 
     if (getDisableVision()) return;
+    camera.setLastTimestampSeconds(estimate.timestampSeconds);
 
     rawFieldPoseEntry.set(estimate.pose3d);
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
@@ -228,7 +220,7 @@ public class VisionSubsystem extends SubsystemBase {
       return;
     }
 
-    if (!isVelocityPlausible(visionPose2d, estimate.timestampSeconds)) {
+    if (!isVelocityPlausible(visionPose2d, estimate.timestampSeconds, camera)) {
       SmartDashboard.putString("/vision/rejectReason", "velocity-implausible");
       publishDiagnostics(estimate, visionPose2d);
       return;
@@ -246,11 +238,11 @@ public class VisionSubsystem extends SubsystemBase {
     if (estimate.isMegaTag2) {
       stdDevs =
           getEstimationStdDevsLimelightMT2(
-              avgTagDist, estimate.tagCount, avgAmbiguity, rawFiducials, cameraName);
+              avgTagDist, estimate.tagCount, avgAmbiguity, rawFiducials, camera.getName());
     } else {
       stdDevs =
           getEstimationStdDevsLimelightMT1(
-              avgTagDist, estimate.tagCount, avgAmbiguity, rawFiducials, cameraName);
+              avgTagDist, estimate.tagCount, avgAmbiguity, rawFiducials, camera.getName());
     }
 
     if (spread > VisionConstants.SPREAD_INFLATE_START) {
@@ -258,11 +250,11 @@ public class VisionSubsystem extends SubsystemBase {
       stdDevs = stdDevs.times(spreadInflation);
     }
 
-    boolean visionReset = maybeResetToVision(visionPose2d, avgAmbiguity, estimate.tagCount);
-    if (!visionReset) {
-      drivetrain.addVisionMeasurement(
-          visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
-    }
+    maybeResetToVision(visionPose2d, avgAmbiguity, estimate.tagCount);
+
+    drivetrain.addVisionMeasurement(
+        visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+
     robotField.setRobotPose(drivetrain.getState().Pose);
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
@@ -282,9 +274,9 @@ public class VisionSubsystem extends SubsystemBase {
    * ground truth — does not touch odometry.
    */
   private boolean isPoseOnField(Pose2d pose) {
-    return pose.getX() >= 0
+    return pose.getX() >= -VisionConstants.FIELD_MARGIN
         && pose.getX() <= VisionConstants.FIELD_X_MAX
-        && pose.getY() >= 0
+        && pose.getY() >= -VisionConstants.FIELD_MARGIN
         && pose.getY() <= VisionConstants.FIELD_Y_MAX;
   }
 
@@ -314,7 +306,7 @@ public class VisionSubsystem extends SubsystemBase {
     return Math.sqrt(sumSqErr / count);
   }
 
-  private boolean maybeResetToVision(Pose2d visionPose, double ambiguity, int tagCount) {
+  private void maybeResetToVision(Pose2d visionPose, double ambiguity, int tagCount) {
     Pose2d odomPose = drivetrain.getState().Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
     boolean visionTrusted =
@@ -324,9 +316,7 @@ public class VisionSubsystem extends SubsystemBase {
     if (odomOffField && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
       SmartDashboard.putString("/vision/rejectReason", "odometry-reset");
-      return true;
     }
-    return false;
   }
 
   private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(
@@ -414,7 +404,7 @@ public class VisionSubsystem extends SubsystemBase {
     if (rawFiducials == null || rawFiducials.length == 0) return 0.0;
     double sum = 0.0;
     for (RawFiducial rf : rawFiducials) {
-      double dist = rf.distToCamera;
+      double dist = rf.distToRobot;
       if (dist > 0.01) sum += 1.0 / (dist * dist);
     }
     return sum;
@@ -430,9 +420,9 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  private boolean isVelocityPlausible(Pose2d newPose, double newTimestamp) {
+  private boolean isVelocityPlausible(Pose2d newPose, double newTimestamp, LLCamera camera) {
     if (lastFieldPose == null) return true;
-    double dt = newTimestamp - lastTimestampSeconds;
+    double dt = newTimestamp - camera.getLastTimestampSeconds();
     if (dt <= 0 || dt > 1.0) return true;
     double dist = newPose.getTranslation().getDistance(lastFieldPose.getTranslation());
     return (dist / dt) < VisionConstants.MAX_VISION_IMPLIED_SPEED;

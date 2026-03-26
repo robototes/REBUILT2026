@@ -149,14 +149,17 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
       if (subsystems.visionSubsystem.limelightaOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_A, true);
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_B, true);
       }
     }
     if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
       // && subsystems.visionSubsystem.limelightcOnline) {
       setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
+      LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_C, true);
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.fuelPose3d = null;
@@ -272,8 +275,12 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop mode is exited. */
   @Override
   public void teleopExit() {
-    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
-    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+    if (!RobotType.isAlpha()) {
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+    } else {
+      LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_C, MAX_TIME_RECORD);
+    }
   }
 
   @Override
