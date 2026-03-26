@@ -55,7 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
+            "pathName": "RT-Intake-Short"
           }
         },
         {
@@ -73,7 +73,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "RT-Back"
           }
         },
         {
@@ -92,6 +92,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WEEK 1",
+  "folder": null,
   "choreoAuto": false
 }
