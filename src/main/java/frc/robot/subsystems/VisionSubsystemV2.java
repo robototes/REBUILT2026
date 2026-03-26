@@ -257,7 +257,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
       // Microseconds to seconds
       lastBeat = currentBeat / 1_000_000.0;
       boolean online = (currentBeat - lastBeat) < STALENESS_THRESHOLD;
-
+      lastBeat = currentBeat;
       changeStatus(name, online);
     }
   }
