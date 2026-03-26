@@ -21,6 +21,7 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,12 +80,11 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // Setup limelight statuses
     for (String name : names) {
       // Determine default based on bot type
-      boolean defaultEnabled = false;
+      boolean defaultEnabled;
       if (RobotType.isAlpha()) {
-        if (name.equals(Hardware.LIMELIGHT_C)) defaultEnabled = true;
+        defaultEnabled = name.equals(Hardware.LIMELIGHT_C);
       } else {
-        if (name.equals(Hardware.LIMELIGHT_A) || name.equals(Hardware.LIMELIGHT_B))
-          defaultEnabled = true;
+        defaultEnabled = name.equals(Hardware.LIMELIGHT_A) || name.equals(Hardware.LIMELIGHT_B);
       }
 
       // Create the tunable first, THEN put it in the map
@@ -188,13 +188,13 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   private double harmonicSum(RawFiducial[] tags) {
     // Don't do anything if there are no tags
-    if (tags == null) return 0;
-    double sum = 0;
-    for (RawFiducial tag : tags) {
-      if (tag.distToCamera <= 0 || tag.ambiguity > AMBIGUITY_THRESHOLD) continue;
-      sum += 1 / Math.pow(tag.distToCamera, 2);
+    if (tags == null) {
+      return 0;
     }
-    return sum;
+    return Arrays.stream(tags)
+        .filter(tag -> tag.distToCamera > 0 && tag.ambiguity <= AMBIGUITY_THRESHOLD)
+        .mapToDouble(tag -> 1 / Math.pow(tag.distToCamera, 2))
+        .sum();
   }
 
   private double RMSE(PoseEstimate estimate) {
@@ -217,14 +217,11 @@ public class VisionSubsystemV2 extends SubsystemBase {
   }
 
   private void robotPoseOutOfBoundsReset(PoseEstimate estimate, int tagCount) {
-    double avgAmbiguity = 0;
-    for (RawFiducial tag : estimate.rawFiducials) {
-      avgAmbiguity += tag.ambiguity;
-    }
-    avgAmbiguity =
-        estimate.rawFiducials.length > 0
-            ? avgAmbiguity / estimate.rawFiducials.length
-            : Double.MAX_VALUE;
+    double avgAmbiguity =
+        Arrays.stream(estimate.rawFiducials)
+            .mapToDouble(tag -> tag.ambiguity)
+            .average()
+            .orElse(Double.MAX_VALUE);
     Pose2d odomPose = driveBase.getState().Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
     if (!odomOffField) {
