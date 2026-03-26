@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -66,7 +67,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     private static final double FIELD_X_MAX = AllianceUtils.FIELD_LAYOUT.getFieldLength();
     private static final double FIELD_Y_MAX = AllianceUtils.FIELD_LAYOUT.getFieldWidth();
-    private static final double MAX_VISION_IMPLIED_SPEED = 6.0; // m/s
+    private static final double MAX_VISION_IMPLIED_SPEED = 7.0; // m/s
     private static final double SPREAD_REJECT = 0.50; // meters RMS
     private static final double SPREAD_INFLATE_START = 0.10; // meters RMS
     private static final double RESET_MAX_AMBIGUITY = 0.15;
