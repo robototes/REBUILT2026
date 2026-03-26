@@ -33,7 +33,7 @@ public class Flywheels extends SubsystemBase {
   private FlywheelsSim flywheelSim;
 
   private final MotionMagicVelocityVoltage motionMagicRequest =
-      new MotionMagicVelocityVoltage(0).withEnableFOC(false);
+      new MotionMagicVelocityVoltage(0).withEnableFOC(true);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
 
