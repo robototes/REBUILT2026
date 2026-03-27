@@ -38,9 +38,11 @@ public class LauncherSubsystem extends SubsystemBase {
               Translation2d targetPose = GetTargetFromPose.getTargetLocation(drive);
 
               hoodGoal =
-                  LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
+                  LauncherConstants.getHoodAngleFromPose2d(
+                      targetPose, drive.getReplayableState().Pose);
               flywheelsGoal =
-                  LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
+                  LauncherConstants.getFlywheelSpeedFromPose2d(
+                      targetPose, drive.getReplayableState().Pose);
 
               hoodGoalPub.set(hoodGoal);
               flywheelGoalPub.set(flywheelsGoal);

@@ -64,14 +64,14 @@ public class WheelRadiusCharacterization {
                 Commands.runOnce(
                     () -> {
                       state.positions = drive.getWheelRotations();
-                      state.lastAngle = drive.getState().Pose.getRotation();
+                      state.lastAngle = drive.getReplayableState().Pose.getRotation();
                       state.gyroDelta = 0.0;
                     }),
 
                 // Update gyro delta
                 Commands.run(
                         () -> {
-                          var rotation = drive.getState().Pose.getRotation();
+                          var rotation = drive.getReplayableState().Pose.getRotation();
                           state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
                           state.lastAngle = rotation;
                         })
@@ -88,7 +88,8 @@ public class WheelRadiusCharacterization {
                           wheelDelta = CommandSwerveDrivetrain.tau(wheelDelta);
                           if (Math.abs(wheelDelta) < 1E-5) {
                             DataLogManager.log(
-                                "Wheel Radius Characterization aborted: No significant movement detected.");
+                                "Wheel Radius Characterization aborted: No significant movement"
+                                    + " detected.");
                             return;
                           }
 

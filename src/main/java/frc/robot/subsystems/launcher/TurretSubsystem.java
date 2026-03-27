@@ -178,7 +178,7 @@ public class TurretSubsystem extends SubsystemBase {
           degrees -= 90.0;
 
           // Subtract robot angle
-          degrees -= driveTrain.getState().Pose.getRotation().getDegrees();
+          degrees -= driveTrain.getReplayableState().Pose.getRotation().getDegrees();
 
           // Shift so 0° = backward
           degrees += 180.0;

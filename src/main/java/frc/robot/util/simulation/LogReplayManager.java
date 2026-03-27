@@ -82,6 +82,12 @@ public class LogReplayManager implements Closeable {
   private boolean initialized = false;
 
   /**
+   * Optional replay drive state estimator. Set via {@link #setReplayDriveState} before calling
+   * {@link #initReplay()}.
+   */
+  private ReplaySwerveDriveState replayDriveState = null;
+
+  /**
    * Construct a LogReplayManager from a .wpilog file path.
    *
    * @param wpilogPath path to the .wpilog file
@@ -231,9 +237,63 @@ public class LogReplayManager implements Closeable {
     return initialized && nextIndex >= entries.size();
   }
 
+  // ---- DriveState deserialization ----
+
+  /** Feed a DriveState log entry into the replay pose estimator. */
+  private void feedDriveState(String entryName, ReplayEntry entry) {
+    double timestampSeconds = entry.timestampMicros / 1_000_000.0;
+    switch (entryName) {
+      case "ModulePositions":
+        if (entry.type.startsWith("struct:")) {
+          var positions = ReplaySwerveDriveState.deserializeModulePositions(entry.record);
+          // We need a heading to update odometry. Use the last known heading.
+          // The Pose entry usually arrives in the same batch, so the heading is current.
+          replayDriveState.updateOdometry(
+              positions,
+              replayDriveState.toSwerveDriveState().Pose.getRotation(),
+              timestampSeconds);
+        }
+        break;
+      case "Pose":
+        if (entry.type.startsWith("struct:")) {
+          var pose = ReplaySwerveDriveState.deserializePose2d(entry.record);
+          replayDriveState.updatePose(pose, timestampSeconds);
+        }
+        break;
+      case "Speeds":
+        if (entry.type.startsWith("struct:")) {
+          var speeds = ReplaySwerveDriveState.deserializeChassisSpeeds(entry.record);
+          replayDriveState.updateSpeeds(speeds);
+        }
+        break;
+      case "ModuleStates":
+        if (entry.type.startsWith("struct:")) {
+          var states = ReplaySwerveDriveState.deserializeModuleStates(entry.record);
+          replayDriveState.updateModuleStates(states);
+        }
+        break;
+      case "ModuleTargets":
+        if (entry.type.startsWith("struct:")) {
+          var targets = ReplaySwerveDriveState.deserializeModuleStates(entry.record);
+          replayDriveState.updateModuleTargets(targets);
+        }
+        break;
+      case "OdometryFrequency":
+        if (entry.type.equals("double")) {
+          double freq = entry.record.getDouble();
+          if (freq > 0) {
+            replayDriveState.updateOdometryPeriod(1.0 / freq);
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   // ---- NT publishing helpers ----
 
-  /** Publish a single log entry into NetworkTables. */
+  /** Publish a single log entry into NetworkTables, and feed DriveState entries to the replay. */
   private void publishEntry(ReplayEntry entry) {
     String ntPath = toNTPath(entry.ntKey);
     int lastSlash = ntPath.lastIndexOf('/');
@@ -242,6 +302,15 @@ public class LogReplayManager implements Closeable {
     }
     String tablePath = ntPath.substring(0, lastSlash);
     String entryName = ntPath.substring(lastSlash + 1);
+
+    // Feed DriveState struct entries into the replay pose estimator
+    if (replayDriveState != null && tablePath.equals("DriveState")) {
+      try {
+        feedDriveState(entryName, entry);
+      } catch (Exception e) {
+        // Silently skip deserialization errors
+      }
+    }
 
     NetworkTable table = NetworkTableInstance.getDefault().getTable(tablePath);
 
@@ -306,6 +375,16 @@ public class LogReplayManager implements Closeable {
   }
 
   // ---- Static helpers ----
+
+  /** Set the replay drive state estimator to feed DriveState data into. */
+  public void setReplayDriveState(ReplaySwerveDriveState driveState) {
+    this.replayDriveState = driveState;
+  }
+
+  /** Get the replay drive state estimator. */
+  public ReplaySwerveDriveState getReplayDriveState() {
+    return replayDriveState;
+  }
 
   /** Get the total number of replayable entries found in the log. */
   public int getEntryCount() {

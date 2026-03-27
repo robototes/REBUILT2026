@@ -27,8 +27,8 @@ public class RobotSim {
         SIM_ROBOT_WIDTH_M,
         SIM_ROBOT_LENGTH_M,
         SIM_ROBOT_BUMPER_HEIGHT,
-        () -> drive.getState().Pose,
-        () -> drive.getState().Speeds);
+        () -> drive.getReplayableState().Pose,
+        () -> drive.getReplayableState().Speeds);
     fuelSim.registerIntake(0.1, 0.2, 0.1, 0.746, () -> true);
     scorePublisher =
         NetworkTableInstance.getDefault()

@@ -18,17 +18,18 @@ public class GetTargetFromPose {
 
   public static Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
     if (AllianceUtils.isBlue()) {
-      if (drivetrain.getState().Pose.getX() <= allianceLineX + robotOffset) {
+      if (drivetrain.getReplayableState().Pose.getX() <= allianceLineX + robotOffset) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+      } else if (drivetrain.getReplayableState().Pose.getY() >= (fieldWidth / 2)) {
         return pointLeftFieldTop;
       } else {
         return pointLeftFieldBottom;
       }
     } else if (AllianceUtils.isRed()) {
-      if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
+      if (drivetrain.getReplayableState().Pose.getX()
+          >= (fieldLength - allianceLineX - robotOffset)) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+      } else if (drivetrain.getReplayableState().Pose.getY() >= (fieldWidth / 2)) {
         return pointRightFieldTop;
       } else {
         return pointRightFieldBottom;

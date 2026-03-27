@@ -37,7 +37,7 @@ public class DetectionSubsystem {
     Transform2d targetTransform = new Transform2d(new Pose2d(), fuelPose3d.toPose2d());
 
     // Convert to field-relative
-    return drivetrain.getState().Pose.transformBy(targetTransform);
+    return drivetrain.getReplayableState().Pose.transformBy(targetTransform);
   }
 
   public boolean isViewFinder() {

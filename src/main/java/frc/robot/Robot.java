@@ -241,12 +241,12 @@ public class Robot extends TimedRobot {
       if (subsystems.visionSubsystem.limelightaOnline) {
         supplyRobotYawToLimelight(
             Hardware.LIMELIGHT_A,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
         supplyRobotYawToLimelight(
             Hardware.LIMELIGHT_B,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
       }
     }
   }
@@ -268,12 +268,12 @@ public class Robot extends TimedRobot {
       if (subsystems.visionSubsystem.limelightaOnline) {
         supplyRobotYawToLimelight(
             Hardware.LIMELIGHT_A,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
         supplyRobotYawToLimelight(
             Hardware.LIMELIGHT_B,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
       }
     }
   }
@@ -299,7 +299,23 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationInit() {
     subsystems.hood.zero();
-    if (logReplayManager != null) {
+    if (logReplayManager != null && subsystems.drivebaseSubsystem != null) {
+      // Create the replay pose estimator using module locations from tuner constants.
+      // These must match the module positions defined in CompTunerConstants.
+      var kinematics =
+          new edu.wpi.first.math.kinematics.SwerveDriveKinematics(
+              new edu.wpi.first.math.geometry.Translation2d(
+                  Units.inchesToMeters(9.375), Units.inchesToMeters(12.375)),
+              new edu.wpi.first.math.geometry.Translation2d(
+                  Units.inchesToMeters(9.375), Units.inchesToMeters(-12.375)),
+              new edu.wpi.first.math.geometry.Translation2d(
+                  Units.inchesToMeters(-9.375), Units.inchesToMeters(12.375)),
+              new edu.wpi.first.math.geometry.Translation2d(
+                  Units.inchesToMeters(-9.375), Units.inchesToMeters(-12.375)));
+      frc.robot.util.simulation.ReplaySwerveDriveState replayDriveState =
+          new frc.robot.util.simulation.ReplaySwerveDriveState(kinematics);
+      logReplayManager.setReplayDriveState(replayDriveState);
+      subsystems.drivebaseSubsystem.setReplayState(replayDriveState);
       logReplayManager.initReplay();
     }
   }

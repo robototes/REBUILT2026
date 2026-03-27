@@ -12,6 +12,7 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
@@ -25,6 +26,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.simulation.ReplaySwerveDriveState;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -102,6 +105,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   /* The SysId routine to test */
   private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+
+  /** When non-null, the drivetrain is in log replay mode and returns state from this estimator. */
+  private ReplaySwerveDriveState replayState = null;
 
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -245,9 +251,62 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     m_simNotifier.startPeriodic(kSimLoopPeriod);
   }
 
+  // ---- Log replay mode ----
+
+  /**
+   * Enable log replay mode. When set, getReplayableState/addVisionMeasurement/samplePoseAt use the
+   * replay estimator.
+   */
+  public void setReplayState(ReplaySwerveDriveState replayState) {
+    this.replayState = replayState;
+  }
+
+  /** Check if the drivetrain is in replay mode. */
+  public boolean isReplayMode() {
+    return replayState != null;
+  }
+
+  /**
+   * Returns the current drive state. In replay mode, returns state from the replay estimator. In
+   * normal mode, delegates to the CTRE {@code getState()}.
+   */
+  public SwerveDriveState getReplayableState() {
+    if (replayState != null) {
+      return replayState.toSwerveDriveState();
+    }
+    return super.getState();
+  }
+
+  @Override
+  public void addVisionMeasurement(
+      Pose2d visionRobotPoseMeters, double timestampSeconds, Matrix<N3, N1> stdDevs) {
+    if (replayState != null) {
+      replayState.addVisionMeasurement(visionRobotPoseMeters, timestampSeconds, stdDevs);
+      return;
+    }
+    super.addVisionMeasurement(visionRobotPoseMeters, timestampSeconds, stdDevs);
+  }
+
+  @Override
+  public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
+    if (replayState != null) {
+      replayState.addVisionMeasurement(visionRobotPoseMeters, timestampSeconds);
+      return;
+    }
+    super.addVisionMeasurement(visionRobotPoseMeters, timestampSeconds);
+  }
+
+  @Override
+  public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
+    if (replayState != null) {
+      return replayState.samplePoseAt(timestampSeconds);
+    }
+    return super.samplePoseAt(timestampSeconds);
+  }
+
   // returns the speeds for logging purposes
   public ChassisSpeeds returnSpeeds() {
-    return getState().Speeds;
+    return getReplayableState().Speeds;
   }
 
   // method for on-demand coasting control
@@ -269,7 +328,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   public boolean isStationary() {
-    var speeds = getState().Speeds;
+    var speeds = getReplayableState().Speeds;
     return MathUtil.isNear(0, speeds.vxMetersPerSecond, 0.01)
         && MathUtil.isNear(0, speeds.vyMetersPerSecond, 0.01)
         && MathUtil.isNear(0, speeds.omegaRadiansPerSecond, Units.degreesToRadians(2));
@@ -279,7 +338,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     double wheelCircumference = tau(CompTunerConstants.kWheelRadius.abs(Meter));
     double[] values = new double[4];
     for (int i = 0; i < values.length; i++) {
-      values[i] = getState().ModulePositions[i].distanceMeters / wheelCircumference;
+      values[i] = getReplayableState().ModulePositions[i].distanceMeters / wheelCircumference;
     }
     return values;
   }

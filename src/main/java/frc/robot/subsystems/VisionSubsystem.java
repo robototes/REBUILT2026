@@ -154,7 +154,7 @@ public class VisionSubsystem extends SubsystemBase {
       RawFiducial[] rawFiducials = camera.getRawFiducials();
       if (rawFiducials != null) {
         double avgAmbiguity = getAvgAmbiguity(rawFiducials);
-        SwerveDriveState swerveDriveState = drivetrain.getState();
+        SwerveDriveState swerveDriveState = drivetrain.getReplayableState();
         BetterPoseEstimate mt1Estimate = camera.getBetterPoseEstimate();
         BetterPoseEstimate mt2Estimate = camera.getPoseEstimateMegatag2();
         visionPoseTracking =
@@ -179,7 +179,7 @@ public class VisionSubsystem extends SubsystemBase {
         return;
       }
       // needs to be here to refrence one drive state i think
-      SwerveDriveState swerveDriveState = drivetrain.getState();
+      SwerveDriveState swerveDriveState = drivetrain.getReplayableState();
       boolean poseBad = false;
       rawFieldPoseEntry.set(estimate.pose3d);
       double avgTagDist = estimate.avgTagDist;
@@ -221,7 +221,7 @@ public class VisionSubsystem extends SubsystemBase {
             Utils.fpgaToCurrentTime(estimate.timestampSeconds),
             stdDevs);
         // needs to get new pose here
-        robotField.setRobotPose(drivetrain.getState().Pose);
+        robotField.setRobotPose(drivetrain.getReplayableState().Pose);
       }
       if (estimate.timestampSeconds >= lastTimestampSeconds) {
         if (!poseBad) {

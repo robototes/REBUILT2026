@@ -87,8 +87,8 @@ public class LaunchCalculator {
    */
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
-    SwerveDriveState driveState = drivetrain.getState();
-    Pose2d currentPose = drivetrain.getState().Pose;
+    SwerveDriveState driveState = drivetrain.getReplayableState();
+    Pose2d currentPose = drivetrain.getReplayableState().Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
     // If the robot has moved within a certain threshold
     boolean hasNotMovedSignificantly =
@@ -136,10 +136,10 @@ public class LaunchCalculator {
       CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
-    Pose2d estimatedPose = driveTrain.getState().Pose;
+    Pose2d estimatedPose = driveTrain.getReplayableState().Pose;
 
     // Predicted robot pose after calculations have finished
-    ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
+    ChassisSpeeds chassisSpeeds = driveTrain.getReplayableState().Speeds;
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(

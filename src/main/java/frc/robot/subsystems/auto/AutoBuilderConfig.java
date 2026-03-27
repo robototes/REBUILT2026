@@ -19,14 +19,14 @@ public class AutoBuilderConfig {
     try {
       AutoBuilder.configure(
           () -> {
-            return drivebase.getState().Pose;
+            return drivebase.getReplayableState().Pose;
           }, // Robot pose supplier
           (pose) -> {
             drivebase.resetPose(pose);
           }, // Method to reset odometry (will be called if your auto has a starting
           // pose)
           () -> {
-            return drivebase.getState().Speeds;
+            return drivebase.getReplayableState().Speeds;
           },
           // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
           (speeds, feedforwards) ->

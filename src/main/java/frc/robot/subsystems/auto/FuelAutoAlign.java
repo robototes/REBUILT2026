@@ -76,7 +76,7 @@ public class FuelAutoAlign {
         pidY.setSetpoint(targetPose.getY());
         pidRotate.setSetpoint(targetPose.getRotation().getRadians());
       }
-      Pose2d currentPose = drive.getState().Pose;
+      Pose2d currentPose = drive.getReplayableState().Pose;
       // Calculate the power for X direction and clamp it between -2 and 2
       double powerX = pidX.calculate(currentPose.getX());
       double powerY = pidY.calculate(currentPose.getY());
@@ -97,7 +97,7 @@ public class FuelAutoAlign {
       if (targetPose == null) {
         return false;
       }
-      Pose2d currentPose = drive.getState().Pose;
+      Pose2d currentPose = drive.getReplayableState().Pose;
       Transform2d robotToTarget = targetPose.minus(currentPose);
       if (robotToTarget.getTranslation().getNorm() < FINISHED_TOLERANCE_METERS
           && Math.abs(robotToTarget.getRotation().getDegrees()) < 1) {
