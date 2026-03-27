@@ -15,6 +15,7 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -28,6 +29,7 @@ public class IntakePivot extends SubsystemBase {
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private static final double AUTO_ZERO_VOLTAGE = 8;
+  private final Timer timer = new Timer();
 
   // Positions
   private double targetPos;
@@ -58,8 +60,8 @@ public class IntakePivot extends SubsystemBase {
   private static final double GEAR_RATIO = 35;
 
   // Soft Limits
-  private static final double PIVOT_MIN = -0.45; // rotations
-  private static final double PIVOT_MAX = 0.0;
+  public static final double PIVOT_MIN = -0.45; // rotations
+  public static final double PIVOT_MAX = 0.0;
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
@@ -126,6 +128,18 @@ public class IntakePivot extends SubsystemBase {
     pivotMotor.setControl(request.withPosition(pos));
   }
 
+  public void restartTimer() {
+    timer.restart();
+  }
+
+  public void oscillatePivot() {
+    double offset =
+        (1 + Math.cos(2 * Math.PI * timer.get() + Math.PI)) * (PIVOT_MAX - PIVOT_MIN) / 2;
+    double pos = PIVOT_MIN + offset;
+    targetPos = pos;
+    setPivotPosition(pos);
+  }
+
   public Command zeroPivot() {
     return runOnce(
             () -> {
@@ -181,19 +195,6 @@ public class IntakePivot extends SubsystemBase {
         .withTimeout(3)
         .withName("Automatic Zero Pivot");
   }
-
-  private boolean isSlowMode = false;
-
-  public void setMotionMagicSlow(boolean slow) {
-    if (slow == isSlowMode) return;
-    isSlowMode = slow;
-
-    var config = new MotionMagicConfigs();
-    config.MotionMagicCruiseVelocity = slow ? 10 : CRUISE_VELOCITY;
-    config.MotionMagicAcceleration = slow ? 15 : ACCELERATION;
-    config.MotionMagicJerk = JERK;
-    pivotMotor.getConfigurator().apply(config);
-}
 
   @Override
   // update simulation

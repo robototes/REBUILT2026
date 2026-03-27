@@ -239,7 +239,7 @@ public class Controls {
                         Commands.parallel(
                                 s.indexerSubsystem.runIndexer(),
                                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.waitSeconds(1)
+                                Commands.runOnce(()-> s.intakePivot.restartTimer())
                                     .andThen(
                                         Commands.runOnce(
                                             () ->

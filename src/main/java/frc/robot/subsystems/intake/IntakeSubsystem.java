@@ -21,26 +21,22 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void runRollers() {
-    intakePivot.setMotionMagicSlow(false);
     intakeRollers.runRollers(intakeRollers.TARGET_RPS);
     intakePivot.setPivotPosition(intakePivot.getPivotTargetPosition());
   }
 
   public void deployPivot() {
-    intakePivot.setMotionMagicSlow(false);
     intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
     intakeRollers.stopMotor();
   }
 
   public void retractPivot() {
-    intakePivot.setMotionMagicSlow(false);
     intakePivot.setPivotPosition(IntakePivot.RETRACTED_POS);
     intakeRollers.stopMotor();
   }
 
   public void intakeWhileLaunch() {
-    intakePivot.setMotionMagicSlow(true);
-    intakePivot.setPivotPosition(IntakePivot.LAUNCH_POS);
+    intakePivot.oscillatePivot();
     intakeRollers.runRollers(intakeRollers.AGITATE_RPS);
   }
 
