@@ -55,7 +55,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Outpost"
+            "pathName": "RT-CLOSE-RIGHT"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-Close-right-presweep"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RT-CLOSE-HUB-SWEEP"
           }
         },
         {
@@ -74,6 +92,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WEEK 1",
+  "folder": "WIP",
   "choreoAuto": false
 }
