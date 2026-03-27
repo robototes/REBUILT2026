@@ -25,7 +25,7 @@ public class IntakePivot extends SubsystemBase {
   private final TalonFX pivotMotor;
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
-  private static final double AUTO_ZERO_VOLTAGE = 0.5;
+  private static final double AUTO_ZERO_VOLTAGE = 8;
 
   // Positions
   private double targetPos;
