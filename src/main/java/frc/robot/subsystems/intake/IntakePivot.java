@@ -166,7 +166,7 @@ public class IntakePivot extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroPivot();
     }
-    return voltageControl(() -> Volts.of(-AUTO_ZERO_VOLTAGE))
+    return voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
         .until(() -> pivotMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .withTimeout(3)
         .andThen(zeroPivot())
