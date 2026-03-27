@@ -168,14 +168,14 @@ public class IntakePivot extends SubsystemBase {
       return zeroPivot();
     }
     return Commands.sequence(
-            Commands.race(
-                voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)),
-                Commands.waitSeconds(0.25)
-                    .andThen(
-                        Commands.waitUntil(
-                            () ->
-                                pivotMotor.getStatorCurrent().getValueAsDouble()
-                                    >= (STATOR_CURRENT_LIMIT - 1)))),
+            voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
+                .withDeadline(
+                    Commands.waitSeconds(0.25)
+                        .andThen(
+                            Commands.waitUntil(
+                                () ->
+                                    pivotMotor.getStatorCurrent().getValueAsDouble()
+                                        >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroPivot())
         .withTimeout(3)
         .withName("Automatic Zero Pivot");
