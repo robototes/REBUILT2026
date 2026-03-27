@@ -138,6 +138,8 @@ public class LaunchCalculator {
     // Grab current pose
     Pose2d estimatedPose = driveTrain.getState().Pose;
 
+    System.out.println(driveTrain.getState().OdometryPeriod);
+
     // Predicted robot pose after calculations have finished
     ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
     estimatedPose =
