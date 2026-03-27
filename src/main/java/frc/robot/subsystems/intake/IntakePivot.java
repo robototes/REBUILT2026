@@ -15,6 +15,7 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
@@ -166,10 +167,17 @@ public class IntakePivot extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroPivot();
     }
-    return voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
-        .until(() -> pivotMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
+    return Commands.sequence(
+            Commands.race(
+                voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)),
+                Commands.waitSeconds(0.25)
+                    .andThen(
+                        Commands.waitUntil(
+                            () ->
+                                pivotMotor.getStatorCurrent().getValueAsDouble()
+                                    >= (STATOR_CURRENT_LIMIT - 1)))),
+            zeroPivot())
         .withTimeout(3)
-        .andThen(zeroPivot())
         .withName("Automatic Zero Pivot");
   }
 

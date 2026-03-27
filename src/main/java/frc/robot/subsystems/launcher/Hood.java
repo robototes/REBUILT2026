@@ -18,6 +18,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
@@ -194,10 +195,17 @@ public class Hood extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroHoodCommand();
     }
-    return voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
-        .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
+    return Commands.sequence(
+            Commands.race(
+                voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)),
+                Commands.waitSeconds(0.25)
+                    .andThen(
+                        Commands.waitUntil(
+                            () ->
+                                hood.getStatorCurrent().getValueAsDouble()
+                                    >= (STATOR_CURRENT_LIMIT - 1)))),
+            zeroHoodCommand())
         .withTimeout(3)
-        .andThen(zeroHoodCommand())
         .withName("Automatic Zero Hood");
   }
 
