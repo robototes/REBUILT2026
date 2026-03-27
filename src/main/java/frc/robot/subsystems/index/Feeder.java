@@ -26,6 +26,8 @@ public class Feeder extends SubsystemBase {
       new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+  private final NtTunableDouble VELOCITY =
+      new NtTunableDouble("SmartDashboard/FeederSubsystem/Velocity", 0);
   private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final TalonFX feedMotor;
@@ -91,5 +93,10 @@ public class Feeder extends SubsystemBase {
   public void simulationPeriodic() {
     motorSim.setInput(feedMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod);
+  }
+
+  @Override
+  public void periodic() {
+    VELOCITY.set(feedMotor.getVelocity().getValueAsDouble());
   }
 }
