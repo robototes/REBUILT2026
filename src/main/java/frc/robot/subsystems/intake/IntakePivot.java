@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -31,7 +32,7 @@ public class IntakePivot extends SubsystemBase {
   // Positions
   private double targetPos;
   public static final double DEPLOYED_POS = -0.425;
-  public static final double LAUNCH_POS = -0.21;
+  public static final double LAUNCH_POS = -0.18;
   public static final double RETRACTED_POS = 0.0;
   public static final double EXTAKE_POS = -0.30;
 
@@ -180,6 +181,19 @@ public class IntakePivot extends SubsystemBase {
         .withTimeout(3)
         .withName("Automatic Zero Pivot");
   }
+
+  private boolean isSlowMode = false;
+
+  public void setMotionMagicSlow(boolean slow) {
+    if (slow == isSlowMode) return;
+    isSlowMode = slow;
+
+    var config = new MotionMagicConfigs();
+    config.MotionMagicCruiseVelocity = slow ? 10 : CRUISE_VELOCITY;
+    config.MotionMagicAcceleration = slow ? 15 : ACCELERATION;
+    config.MotionMagicJerk = JERK;
+    pivotMotor.getConfigurator().apply(config);
+}
 
   @Override
   // update simulation
