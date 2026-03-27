@@ -241,6 +241,8 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
+                // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
+                // driverController.getLeftX(), ()-> driverController.getLeftY()),
                 s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())

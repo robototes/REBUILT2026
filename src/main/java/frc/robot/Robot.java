@@ -45,6 +45,7 @@ public class Robot extends TimedRobot {
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final double MAX_TIME_RECORD = 165;
+  private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
   private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
@@ -179,6 +180,18 @@ public class Robot extends TimedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+      if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+        if (subsystems.visionSubsystem.limelightaOnline) {
+          setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+          supplyRobotYawToLimelight(
+              Hardware.LIMELIGHT_A, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+        }
+        if (subsystems.visionSubsystem.limelightbOnline) {
+          setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+          supplyRobotYawToLimelight(
+              Hardware.LIMELIGHT_B, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+        }
+      }
     }
   }
 
@@ -192,6 +205,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    CommandScheduler.getInstance().cancelAll();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -200,24 +214,18 @@ public class Robot extends TimedRobot {
     HubShiftUtil.initialize();
   }
 
-  /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
     if (subsystems.visionSubsystemV2 != null) {
       subsystems.visionSubsystemV2.update();
-    }
+    }s
   }
 
   /** This function is called once when teleop mode is exited. */
   @Override
   public void teleopExit() {
-    String[] limeLightSet =
-        !RobotType.isAlpha()
-            ? new String[] {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B}
-            : new String[] {Hardware.LIMELIGHT_C};
-
-    Arrays.stream(limeLightSet)
-        .forEach(name -> LimelightHelpers.triggerRewindCapture(name, MAX_TIME_RECORD));
+    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
   }
 
   @Override

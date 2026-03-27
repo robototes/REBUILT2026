@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
@@ -32,10 +31,9 @@ public class Flywheels extends SubsystemBase {
 
   private FlywheelsSim flywheelSim;
 
-  private final MotionMagicVelocityVoltage motionMagicRequest =
-      new MotionMagicVelocityVoltage(0).withEnableFOC(false);
+  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
   private final Follower follow =
-      new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed);
+      new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
   public NtTunableDouble targetVelocity;
   private long lastPositionUpdateTime = 0;
@@ -43,7 +41,7 @@ public class Flywheels extends SubsystemBase {
   public final double FLYWHEEL_TOLERANCE =
       15; // RPS // increased on drive practice 3/18 from 5 -> 10 //Increased to 15 by TD 3/18
   public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/SmartDashBoard/Tunables/Flywheels", false);
+      new NtTunableBoolean("/SmartDashboard/Tunables/Flywheels", false);
 
   // Constructor
   public Flywheels() {
@@ -79,10 +77,7 @@ public class Flywheels extends SubsystemBase {
 
     // create coast mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    config.MotorOutput.Inverted =
-        (RobotType.isAlpha())
-            ? InvertedValue.Clockwise_Positive
-            : InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // create PID gains
     config.Slot0.kP = 1;
@@ -103,8 +98,8 @@ public class Flywheels extends SubsystemBase {
     return runEnd(
             () -> {
               motionMagicRequest.Velocity = rps;
-              FlywheelOne.setControl(motionMagicRequest);
-              FlywheelTwo.setControl(follow);
+              FlywheelTwo.setControl(motionMagicRequest);
+              FlywheelOne.setControl(follow);
             },
             () -> {
               FlywheelOne.stopMotor();
@@ -117,8 +112,8 @@ public class Flywheels extends SubsystemBase {
     return runEnd(
             () -> {
               motionMagicRequest.Velocity = rps.getAsDouble();
-              FlywheelOne.setControl(motionMagicRequest);
-              FlywheelTwo.setControl(follow);
+              FlywheelTwo.setControl(motionMagicRequest);
+              FlywheelOne.setControl(follow);
             },
             () -> {
               FlywheelOne.stopMotor();
@@ -129,8 +124,8 @@ public class Flywheels extends SubsystemBase {
 
   public void setVelocityRPS(double rps) {
     motionMagicRequest.Velocity = rps;
-    FlywheelOne.setControl(motionMagicRequest);
-    FlywheelTwo.setControl(follow);
+    FlywheelTwo.setControl(motionMagicRequest);
+    FlywheelOne.setControl(follow);
   }
 
   public Command stopCommand() {
