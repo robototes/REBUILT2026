@@ -31,8 +31,7 @@ public class Flywheels extends SubsystemBase {
 
   private FlywheelsSim flywheelSim;
 
-  private final MotionMagicVelocityVoltage motionMagicRequest =
-      new MotionMagicVelocityVoltage(0);
+  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
