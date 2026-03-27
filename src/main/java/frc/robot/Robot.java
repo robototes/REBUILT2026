@@ -203,6 +203,7 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystemV2 != null) {
       subsystems.visionSubsystemV2.update();
     }
+    CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
   }
 
   /** This function is called once when teleop mode is exited. */
