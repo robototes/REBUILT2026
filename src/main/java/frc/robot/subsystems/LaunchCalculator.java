@@ -41,7 +41,7 @@ public class LaunchCalculator {
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
-  private static final double PHASE_DELAY = 0.2;
+  private static final double PHASE_DELAY = 0.04;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
@@ -137,8 +137,6 @@ public class LaunchCalculator {
 
     // Grab current pose
     Pose2d estimatedPose = driveTrain.getState().Pose;
-
-    System.out.println(driveTrain.getState().OdometryPeriod);
 
     // Predicted robot pose after calculations have finished
     ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
