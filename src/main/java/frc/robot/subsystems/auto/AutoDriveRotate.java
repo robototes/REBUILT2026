@@ -14,7 +14,6 @@ import frc.robot.Subsystems;
 import frc.robot.subsystems.LaunchCalculator;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.TurretSubsystem;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;
 
@@ -25,6 +24,7 @@ public class AutoDriveRotate {
   }
 
   // Tunable:
+  private static final Translation2d TURRET_TRANSFORM;
   private static final double SPEED_LIMIT = 2 * Math.PI; // Radians / second
   private static final double TOLERANCE = Math.toRadians(3);
   private static final double VELOCITY_TOLERANCE = Math.toRadians(5);
@@ -32,12 +32,15 @@ public class AutoDriveRotate {
   private static final double kI = 0.0;
   private static final double kD = 0.0;
 
+  static {
+    TURRET_TRANSFORM = LauncherConstants.turretTransform().getTranslation();
+  }
+
   private static class AutoRotateCommand extends Command {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
     private final LaunchCalculator calcInst;
     protected final CommandSwerveDrivetrain drive;
     protected final TurretSubsystem turretSub;
-    protected Translation2d targetTranslation;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
     private final DoublePublisher anglePub;
@@ -59,12 +62,6 @@ public class AutoDriveRotate {
       addRequirements(drive);
     }
 
-    // TODO: Add auto rotate for launching game pieces to corners + climb alignment
-    @Override
-    public void initialize() {
-      targetTranslation = AllianceUtils.getHubTranslation2d();
-    }
-
     @Override
     public void execute() {
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
@@ -83,7 +80,7 @@ public class AutoDriveRotate {
               .withVelocityX(xSupplier.getAsDouble())
               .withVelocityY(ySupplier.getAsDouble())
               .withRotationalRate(rotationOutput)
-              .withCenterOfRotation(LauncherConstants.turretTransform().getTranslation());
+              .withCenterOfRotation(TURRET_TRANSFORM);
       // Set the drive control with the created request
       drive.setControl(request);
     }
