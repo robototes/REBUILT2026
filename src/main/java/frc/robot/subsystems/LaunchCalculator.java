@@ -41,7 +41,7 @@ public class LaunchCalculator {
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
-  private static final double PHASE_DELAY = 0.02;
+  private static final double PHASE_DELAY = 0.2;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
@@ -154,10 +154,8 @@ public class LaunchCalculator {
     double totalOmega = chassisSpeeds.omegaRadiansPerSecond + turretSubsystem.getOmega();
     ChassisSpeeds turretRobotRelativeSpeeds =
         new ChassisSpeeds(
-            chassisSpeeds.vxMetersPerSecond
-                - chassisSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
-            chassisSpeeds.vyMetersPerSecond
-                + chassisSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
+            chassisSpeeds.vxMetersPerSecond - totalOmega * turretTransform.getY(),
+            chassisSpeeds.vyMetersPerSecond + totalOmega * turretTransform.getX(),
             totalOmega);
     // Let chassisspeeds built in methods handle the conversion from robot relative to field
     // relative
