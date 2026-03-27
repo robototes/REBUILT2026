@@ -29,10 +29,8 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.NtTunableBoolean;
-import java.util.Arrays;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -178,20 +176,6 @@ public class Robot extends TimedRobot {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
       }
-
-      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-        if (subsystems.visionSubsystem.limelightaOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
-          supplyRobotYawToLimelight(
-              Hardware.LIMELIGHT_A, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
-        }
-        if (subsystems.visionSubsystem.limelightbOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
-          supplyRobotYawToLimelight(
-              Hardware.LIMELIGHT_B, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
-        }
-      }
     }
   }
 
@@ -218,7 +202,7 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     if (subsystems.visionSubsystemV2 != null) {
       subsystems.visionSubsystemV2.update();
-    }s
+    }
   }
 
   /** This function is called once when teleop mode is exited. */
