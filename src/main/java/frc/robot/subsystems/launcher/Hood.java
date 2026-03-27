@@ -193,14 +193,14 @@ public class Hood extends SubsystemBase {
 
   public Command autoZeroCommand() {
     if (Robot.isSimulation()) {
-      return zeroHoodCommand();
+        return zeroHoodCommand();
     }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
+    return voltageControl(() -> Volts.of(-AUTO_ZERO_VOLTAGE))
         .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
-        .andThen(zeroHoodCommand())
         .withTimeout(3)
-        .withName("Automatic Zero hood");
-  }
+        .andThen(zeroHoodCommand())
+        .withName("Automatic Zero Hood");
+}
 
   @Override
   public void simulationPeriodic() {
