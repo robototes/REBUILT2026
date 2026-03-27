@@ -262,16 +262,16 @@ public class Controls {
                                   ? IntakeMode.INTAKE
                                   : IntakeMode.DEPLOYED;
                         })));
-    if (DriverStation.isEnabled()) {
-      driverController
-        .start()
-        .onTrue(
-            Commands.parallel(
-                    s.hood.autoZeroCommand(),
-                    s.intakePivot.autoZeroCommand(),
-                    s.turretSubsystem.zeroTurret(),
-                    s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
-    } else {
+    // if (DriverStation.isEnabled()) {
+    //   driverController
+    //     .start()
+    //     .onTrue(
+    //         Commands.parallel(
+    //                 s.hood.autoZeroCommand(),
+    //                 s.intakePivot.autoZeroCommand(),
+    //                 s.turretSubsystem.zeroTurret(),
+    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
+    // } else {
       driverController
           .start()
           .onTrue(
@@ -281,7 +281,7 @@ public class Controls {
                       s.turretSubsystem.zeroTurret(),
                       s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                   .ignoringDisable(true));
-    }
+    //}
 
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
