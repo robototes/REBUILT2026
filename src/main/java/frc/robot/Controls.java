@@ -19,7 +19,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -262,27 +261,22 @@ public class Controls {
                                   ? IntakeMode.INTAKE
                                   : IntakeMode.DEPLOYED;
                         })));
-    // if (DriverStation.isEnabled()) {
-    //   driverController
-    //     .start()
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 s.hood.autoZeroCommand(),
-    //                 s.intakePivot.autoZeroCommand(),
-    //                 s.turretSubsystem.zeroTurret(),
-    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
-    // } else {
-      driverController
-          .start()
-          .onTrue(
-              Commands.parallel(
-                      s.launcherSubsystem.zeroSubsystemCommand(),
-                      s.intakePivot.zeroPivot(),
-                      s.turretSubsystem.zeroTurret(),
-                      s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
-                  .ignoringDisable(true));
-    //}
-
+    driverController
+        .start()
+        .onTrue(
+            Commands.either(
+                    Commands.parallel(
+                        s.hood.autoZeroCommand(),
+                        s.intakePivot.autoZeroCommand(),
+                        s.turretSubsystem.zeroTurret(),
+                        s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)),
+                    Commands.parallel(
+                        s.launcherSubsystem.zeroSubsystemCommand(),
+                        s.intakePivot.zeroPivot(),
+                        s.turretSubsystem.zeroTurret(),
+                        s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)),
+                    () -> DriverStation.isEnabled())
+                .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)

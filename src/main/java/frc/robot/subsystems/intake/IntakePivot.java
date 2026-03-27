@@ -164,14 +164,14 @@ public class IntakePivot extends SubsystemBase {
 
   public Command autoZeroCommand() {
     if (Robot.isSimulation()) {
-        return zeroPivot();
+      return zeroPivot();
     }
     return voltageControl(() -> Volts.of(-AUTO_ZERO_VOLTAGE))
         .until(() -> pivotMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
         .withTimeout(3)
         .andThen(zeroPivot())
         .withName("Automatic Zero Pivot");
-}
+  }
 
   @Override
   // update simulation
