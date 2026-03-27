@@ -55,7 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Outpost"
+            "pathName": "RT-Climb"
           }
         },
         {
@@ -74,6 +74,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WEEK 1",
+  "folder": "WIP",
   "choreoAuto": false
 }
