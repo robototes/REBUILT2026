@@ -180,7 +180,10 @@ public class Controls {
       return;
     }
 
-    driverController.y().whileTrue(WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
+    driverController
+        .y()
+        .whileTrue(
+            WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
 
@@ -284,7 +287,6 @@ public class Controls {
                     s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
-
 
     // driverController
     //     .start()
