@@ -24,11 +24,8 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
-<<<<<<< HEAD
-=======
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
->>>>>>> 6c66dec5c582218dc7f0f006f9db3f55fa53b8c0
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
