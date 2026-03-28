@@ -3,25 +3,41 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.726,
+        "x": 7.6,
         "y": 1.0
       },
       "prevControl": null,
       "nextControl": {
-        "x": 7.726552456297782,
-        "y": 1.4006758755613373
+        "x": 8.026618962432917,
+        "y": 1.252343470483005
       },
       "isLocked": false,
-      "linkedName": "RightNeutral"
+      "linkedName": null
     },
     {
       "anchor": {
-        "x": 7.726044113970033,
-        "y": 3.56958
+        "x": 7.815688729867672,
+        "y": 2.46924865832176
       },
       "prevControl": {
-        "x": 7.7254157961007826,
-        "y": 3.819579210432064
+        "x": 7.748797846416302,
+        "y": 2.218407845379125
+      },
+      "nextControl": {
+        "x": 7.880590339885561,
+        "y": 2.712629695888844
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.77,
+        "y": 3.5
+      },
+      "prevControl": {
+        "x": 7.994168157416869,
+        "y": 3.199391771023013
       },
       "nextControl": null,
       "isLocked": false,
@@ -32,11 +48,11 @@
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.0,
-      "maxWaypointRelativePos": 1.0,
+      "minWaypointRelativePos": 0.18328840970350407,
+      "maxWaypointRelativePos": 2.0,
       "constraints": {
-        "maxVelocity": 2.0,
-        "maxAcceleration": 1.5,
+        "maxVelocity": 1.5,
+        "maxAcceleration": 1.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
         "nominalVoltage": 12.0,
@@ -47,15 +63,15 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 2.5,
-    "maxAcceleration": 2.0,
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0.0,
+    "velocity": 1.0,
     "rotation": -90.0
   },
   "reversed": false,
