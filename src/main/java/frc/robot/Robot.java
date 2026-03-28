@@ -249,13 +249,10 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-<<<<<<< HEAD
+
     HubShiftUtil instance = new HubShiftUtil();
-    instance.initialize();
-=======
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
->>>>>>> 6c66dec5c582218dc7f0f006f9db3f55fa53b8c0
   }
 
   @Override
