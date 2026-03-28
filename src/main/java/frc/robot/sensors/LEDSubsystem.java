@@ -117,7 +117,7 @@ public class LEDSubsystem extends SubsystemBase {
     primaryColor = color;
     setHardwareColor(color);
 
-    currentPatternPub.set("SOLID");
+    currentPatternPub.set(currentPattern.name());
     currentColorPub.set(color.toHexString());
     alternatingColorsPub.set("A:None | B:None");
   }
@@ -132,8 +132,8 @@ public class LEDSubsystem extends SubsystemBase {
     showingPrimary = true;
     lastToggleTime = Timer.getFPGATimestamp();
 
-    currentPatternPub.set("ALTERNATING");
-    currentColorPub.set(a.toHexString());
+    currentPatternPub.set(currentPattern.name());
+    currentColorPub.set("NONE");
     alternatingColorsPub.set("A:" + a.toHexString() + " | B:" + b.toHexString());
 
     setHardwareColor(a);
@@ -143,7 +143,7 @@ public class LEDSubsystem extends SubsystemBase {
     currentPattern = LEDPattern.RAINBOW;
 
     // Update publishers
-    currentPatternPub.set("RAINBOW");
+    currentPatternPub.set(currentPattern.name());
     currentColorPub.set("NONE");
     alternatingColorsPub.set("A:None | B:None");
 
