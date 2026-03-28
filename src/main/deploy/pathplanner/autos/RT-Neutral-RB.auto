@@ -49,12 +49,6 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "Neutral-Bump-RB"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [
