@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
+            "pathName": "RT-Intake2"
           }
         },
         {
@@ -25,13 +25,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-Intake"
+            "pathName": "NeutralRight-Intake2"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeRight"
+            "pathName": "BackFromIntakeRight2"
           }
         },
         {

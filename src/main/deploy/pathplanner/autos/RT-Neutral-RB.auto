@@ -5,33 +5,47 @@
     "data": {
       "commands": [
         {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RT-Intake2"
+                }
+              },
+              {
+                "type": "parallel",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 1.0
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "intake"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 0.25
+            "pathName": "NeutralRight-Intake2"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "BackFromIntakeRight"
+            "pathName": "BackFromIntakeRight2"
           }
         },
         {
@@ -41,9 +55,22 @@
           }
         },
         {
-          "type": "named",
+          "type": "deadline",
           "data": {
-            "name": "launch"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "BUMP-RT"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "launch"
+                }
+              }
+            ]
           }
         },
         {
