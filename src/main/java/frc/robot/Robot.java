@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -30,7 +31,6 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
-import java.util.Arrays;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -48,8 +48,10 @@ public class Robot extends TimedRobot {
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
   private final double MAX_TIME_RECORD = 165;
+  private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
+  private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -69,6 +71,9 @@ public class Robot extends TimedRobot {
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
     BuildInfo.logBuildInfo();
+
+    // Set brownout Voltage
+    RobotController.setBrownoutVoltage(BROWNOUT_VOLTAGE);
 
     // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
@@ -127,16 +132,7 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
-      if (RobotType.isAlpha() && subsystems.visionSubsystem.limelightcOnline) {
-        supplyRobotYawToLimelight(Hardware.LIMELIGHT_C);
-      } else {
-        if (subsystems.visionSubsystem.limelightaOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A);
-        }
-        if (subsystems.visionSubsystem.limelightbOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B);
-        }
-      }
+      subsystems.visionSubsystem.update();
     }
     if (subsystems.detectionSubsystem != null) {
       subsystems.detectionSubsystem.update();
@@ -149,6 +145,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    CommandScheduler.getInstance().cancelAll();
     if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
       if (subsystems.visionSubsystem.limelightaOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
@@ -213,15 +210,41 @@ public class Robot extends TimedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+      if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+        if (subsystems.visionSubsystem.limelightaOnline) {
+          setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+          supplyRobotYawToLimelight(
+              Hardware.LIMELIGHT_A, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+        }
+        if (subsystems.visionSubsystem.limelightbOnline) {
+          setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+          supplyRobotYawToLimelight(
+              Hardware.LIMELIGHT_B, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+        }
+      }
     }
   }
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        supplyRobotYawToLimelight(
+            Hardware.LIMELIGHT_A,
+            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        supplyRobotYawToLimelight(
+            Hardware.LIMELIGHT_B,
+            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+      }
+    }
+  }
 
   @Override
   public void teleopInit() {
+    CommandScheduler.getInstance().cancelAll();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -230,32 +253,32 @@ public class Robot extends TimedRobot {
     HubShiftUtil instance = new HubShiftUtil();
     instance.initialize();
 =======
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
 >>>>>>> 6c66dec5c582218dc7f0f006f9db3f55fa53b8c0
   }
 
-  /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
+    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        supplyRobotYawToLimelight(
+            Hardware.LIMELIGHT_A,
+            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        supplyRobotYawToLimelight(
+            Hardware.LIMELIGHT_B,
+            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
+      }
     }
   }
 
   /** This function is called once when teleop mode is exited. */
   @Override
   public void teleopExit() {
-    String[] limeLightSet =
-        !RobotType.isAlpha()
-            ? new String[] {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B}
-            : new String[] {Hardware.LIMELIGHT_C};
-
-    Arrays.stream(limeLightSet)
-        .forEach(name -> LimelightHelpers.triggerRewindCapture(name, MAX_TIME_RECORD));
+    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
   }
 
   @Override
@@ -282,6 +305,7 @@ public class Robot extends TimedRobot {
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
+      LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
       // Throttle to reduce heat
       LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
       // seed internal limelight imu for mt2
@@ -296,14 +320,7 @@ public class Robot extends TimedRobot {
     }
   }
 
-  private void supplyRobotYawToLimelight(String limelightName) {
-    LimelightHelpers.SetRobotOrientation(
-        limelightName,
-        subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees(),
-        0,
-        0,
-        0,
-        0,
-        0);
+  private void supplyRobotYawToLimelight(String limelightName, double heading) {
+    LimelightHelpers.SetRobotOrientation(limelightName, heading, 0, 0, 0, 0, 0);
   }
 }
