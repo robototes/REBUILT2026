@@ -132,8 +132,8 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public void oscillatePivot() {
-    double amplitude = 0.05;
-    double frequency = 0.5;
+    double amplitude = 0.05; // how much it moves up
+    double frequency = 0.5; // how fast it moves up
     double offset = amplitude * (1 + Math.cos(2 * Math.PI * frequency * timer.get() + Math.PI)) / 2;
     double pos = DEPLOYED_POS + offset;
     targetPos = pos;
