@@ -285,7 +285,7 @@ public class Controls {
 
     // When the back button is pressed, use the fallback
     driverController
-        .back()
+        .y()
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommandV2(),
