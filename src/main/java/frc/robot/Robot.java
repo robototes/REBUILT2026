@@ -203,7 +203,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    // subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -244,6 +244,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     CommandScheduler.getInstance().cancelAll();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
