@@ -5,9 +5,35 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "RT-Intake2-Bump"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RT-Intake2-Bump"
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 1.0
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "intake"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           }
         },
         {
@@ -26,6 +52,31 @@
           "type": "path",
           "data": {
             "pathName": "Neutral-Bump-RB"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "BUMP-RT"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "launch"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stow"
           }
         }
       ]
