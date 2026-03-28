@@ -55,6 +55,7 @@ public class Flywheels extends SubsystemBase {
   // Cache
   private double cachedLastBallLaunch = 0;
   private boolean hasReachedTerminalVelocity = false;
+  private boolean hasShotOnce = false;
 
   // Constructor
   public Flywheels() {
@@ -169,8 +170,11 @@ public class Flywheels extends SubsystemBase {
   }
 
   public double lastBallLaunch() {
-
-    if (targetVelocity.get() - flywheelOneRPS.getValueAsDouble() > HAS_SHOT_BALL_RPS) {
+    if (MathUtil.applyDeadband(
+            targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), HAS_SHOT_BALL_RPS)==0) {
+              if (!hasShotOnce) {
+                hasShotOnce = true;
+              }
       cachedLastBallLaunch = Timer.getFPGATimestamp();
       return cachedLastBallLaunch;
     }
@@ -183,11 +187,11 @@ public class Flywheels extends SubsystemBase {
         == 0.0) {
       hasReachedTerminalVelocity = true;
     }
-    if (!hasReachedTerminalVelocity) {
+    double lastTime = lastBallLaunch();
+    if (!hasReachedTerminalVelocity || !hasShotOnce) {
       return false;
     }
 
-    double lastTime = lastBallLaunch();
     double currentTime = Timer.getFPGATimestamp();
     if (currentTime - lastTime >= HAS_SHOT_MAX_TIME) {
       resetCachedValues();
@@ -198,6 +202,7 @@ public class Flywheels extends SubsystemBase {
 
   public void resetCachedValues() {
     hasReachedTerminalVelocity = false;
+    hasShotOnce = false;
     cachedLastBallLaunch = 0;
   }
 
