@@ -239,7 +239,7 @@ public class Controls {
                         Commands.parallel(
                                 s.indexerSubsystem.runIndexer(),
                                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.runOnce(()-> s.intakePivot.restartTimer())
+                                Commands.runOnce(() -> s.intakePivot.restartTimer())
                                     .andThen(
                                         Commands.runOnce(
                                             () ->
@@ -329,11 +329,13 @@ public class Controls {
         .onFalse(
             Commands.runOnce(
                 () -> {
-                  intakeMode =
-                      driverController.rightTrigger().getAsBoolean()
-                          ? IntakeMode.LAUNCH
-                          : IntakeMode.DEPLOYED;
-                  ledsMode = LEDMode.DEFAULT;
+                  if (driverController.rightTrigger().getAsBoolean()) {
+                    intakeMode = IntakeMode.LAUNCH;
+                    s.intakePivot.restartTimer();
+                  } else {
+                    intakeMode = IntakeMode.DEPLOYED;
+                    ledsMode = LEDMode.DEFAULT;
+                  }
                 }));
     driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
