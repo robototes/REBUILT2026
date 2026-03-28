@@ -29,7 +29,6 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
-import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
@@ -243,10 +242,8 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                AutoDriveRotate.autoRotate(
-                    s.drivebaseSubsystem,
-                    () -> driverController.getLeftX(),
-                    () -> driverController.getLeftY()),
+                // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
+                // driverController.getLeftX(), ()-> driverController.getLeftY()),
                 s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())

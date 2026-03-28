@@ -31,8 +31,7 @@ public class Flywheels extends SubsystemBase {
 
   private FlywheelsSim flywheelSim;
 
-  private final MotionMagicVelocityVoltage motionMagicRequest =
-      new MotionMagicVelocityVoltage(0).withEnableFOC(false);
+  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
@@ -42,7 +41,7 @@ public class Flywheels extends SubsystemBase {
   public final double FLYWHEEL_TOLERANCE =
       15; // RPS // increased on drive practice 3/18 from 5 -> 10 //Increased to 15 by TD 3/18
   public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/SmartDashBoard/Tunables/Flywheels", false);
+      new NtTunableBoolean("/SmartDashboard/Tunables/Flywheels", false);
 
   // Constructor
   public Flywheels() {
