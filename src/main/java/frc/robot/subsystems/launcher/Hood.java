@@ -198,7 +198,7 @@ public class Hood extends SubsystemBase {
     return Commands.sequence(
             voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
                 .withDeadline(
-                    Commands.waitSeconds(5)
+                    Commands.waitSeconds(0.5)
                         .andThen(
                             Commands.waitUntil(
                                 () ->

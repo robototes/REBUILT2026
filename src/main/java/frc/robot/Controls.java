@@ -264,18 +264,17 @@ public class Controls {
     driverController
         .start()
         .onTrue(
-            Commands.either(
-                    Commands.parallel(
+            Commands.parallel(
+                    Commands.either(
                         s.hood.autoZeroCommand(),
-                        s.intakePivot.autoZeroCommand(),
-                        s.turretSubsystem.zeroTurret(),
-                        s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)),
-                    Commands.parallel(
                         s.launcherSubsystem.zeroSubsystemCommand(),
+                        () -> DriverStation.isEnabled()),
+                    Commands.either(
+                        s.intakePivot.autoZeroCommand(),
                         s.intakePivot.zeroPivot(),
-                        s.turretSubsystem.zeroTurret(),
-                        s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)),
-                    () -> DriverStation.isEnabled())
+                        () -> DriverStation.isEnabled()),
+                    s.turretSubsystem.zeroTurret(),
+                    s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
