@@ -32,7 +32,6 @@ public class ClockAndHubStatus {
 
   boolean redInactiveFirst = false;
 
-
   public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
     if (isHubActive(0)) {
       return AllianceUtils.getHubTranslation2d();
@@ -79,7 +78,6 @@ public class ClockAndHubStatus {
       return false;
     }
 
-
     // We're teleop enabled, compute.
     double matchTime = DriverStation.getMatchTime() + lookAheadTime;
     String gameData = DriverStation.getGameSpecificMessage();
@@ -87,7 +85,7 @@ public class ClockAndHubStatus {
       return false;
     }
 
-      // Return FMS value
+    // Return FMS value
     String message = DriverStation.getGameSpecificMessage();
     if (message.length() > 0) {
       char character = message.charAt(0);
@@ -97,7 +95,6 @@ public class ClockAndHubStatus {
         return redInactiveFirst = false;
       }
     }
-
 
     switch (gameData.charAt(0)) {
       case 'R' -> redInactiveFirst = true;
@@ -137,7 +134,7 @@ public class ClockAndHubStatus {
   }
 
   public boolean isGameDataValid() {
-    if (DriverStation.isTeleopEnabled()){
+    if (DriverStation.isTeleopEnabled()) {
       String gameData = DriverStation.getGameSpecificMessage();
       if (gameData.isEmpty()) {
         return false;
@@ -150,19 +147,19 @@ public class ClockAndHubStatus {
         default:
           {
             return false;
-        }
+          }
+      }
     }
+    return false;
   }
-  return false;
-}
 
- @Setter private static Supplier<Optional<Boolean>> allianceWinOverride = () -> Optional.empty();
+  @Setter private static Supplier<Optional<Boolean>> allianceWinOverride = () -> Optional.empty();
 
- public static Optional<Boolean> getAllianceWinOverride() {
+  public static Optional<Boolean> getAllianceWinOverride() {
     return allianceWinOverride.get();
   }
 
-public static Alliance getFirstActiveAlliance() {
+  public static Alliance getFirstActiveAlliance() {
     var alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
 
     // Return override value
@@ -187,5 +184,4 @@ public static Alliance getFirstActiveAlliance() {
     // Return default value
     return alliance == Alliance.Blue ? Alliance.Red : Alliance.Blue;
   }
-
 }
