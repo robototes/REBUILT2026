@@ -59,7 +59,7 @@ public class Hood extends SubsystemBase {
       new NtTunableBoolean("/SmartDashboard/Tunables/Hood", false);
 
   // Mechanism tuning required !! TODO: TUNE
-  private static final double AUTO_ZERO_VOLTAGE = -0.5;
+  private static final double AUTO_ZERO_VOLTAGE = -3;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -195,11 +195,18 @@ public class Hood extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroHoodCommand();
     }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
-        .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
-        .andThen(zeroHoodCommand())
+    return Commands.sequence(
+            voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
+                .withDeadline(
+                    Commands.waitSeconds(0.5)
+                        .andThen(
+                            Commands.waitUntil(
+                                () ->
+                                    hood.getStatorCurrent().getValueAsDouble()
+                                        >= (STATOR_CURRENT_LIMIT - 1)))),
+            zeroHoodCommand())
         .withTimeout(3)
-        .withName("Automatic Zero hood");
+        .withName("Automatic Zero Hood");
   }
 
   @Override
