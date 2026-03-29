@@ -9,7 +9,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -50,12 +49,8 @@ public class Flywheels extends SubsystemBase {
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
 
-  private final double HAS_SHOT_BALL_RPS = 8; // Rps
-
   // Cache
-  private double cachedLastBallLaunch = 0;
-  private boolean hasReachedTerminalVelocity = false;
-  private boolean hasShotOnce = false;
+  private double timeEnteredTargetZone = 0;
 
   // Constructor
   public Flywheels() {
@@ -169,48 +164,33 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
   }
 
-  public double lastBallLaunch() {
-    if (MathUtil.applyDeadband(
-            targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), HAS_SHOT_BALL_RPS)
-        == 0) {
-      if (!hasShotOnce) {
-        hasShotOnce = true;
-      }
-      cachedLastBallLaunch = Timer.getFPGATimestamp();
-      return cachedLastBallLaunch;
-    } else if (hasShotOnce
-        && MathUtil.applyDeadband(
-                targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), FLYWHEEL_TOLERANCE)
-            == 0.0) {
-      cachedLastBallLaunch = Timer.getFPGATimestamp();
-      return cachedLastBallLaunch;
-    }
-    return cachedLastBallLaunch;
-  }
+  public boolean stoppedShooting(double durationSeconds) {
+    boolean atTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
 
-  public boolean stoppedShooting(double HAS_SHOT_MAX_TIME) {
-    if (MathUtil.applyDeadband(
-            targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), FLYWHEEL_TOLERANCE)
-        == 0.0) {
-      hasReachedTerminalVelocity = true;
+    if (atTarget) {
+      if (timeEnteredTargetZone < 0) {
+        // First time at target, record the timestamp.
+        timeEnteredTargetZone = Timer.getFPGATimestamp();
+      }
+    } else {
+      // Not at target, reset the timer.
+      timeEnteredTargetZone = -1;
     }
-    double lastTime = lastBallLaunch();
-    if (!hasReachedTerminalVelocity || !hasShotOnce) {
+
+    if (timeEnteredTargetZone < 0) {
       return false;
     }
 
-    double currentTime = Timer.getFPGATimestamp();
-    if (currentTime - lastTime >= HAS_SHOT_MAX_TIME) {
-      resetCachedValues();
-      return true;
+    // Check if the time at target has exceeded the duration.
+    boolean hasStopped = (Timer.getFPGATimestamp() - timeEnteredTargetZone) >= durationSeconds;
+    if (hasStopped) {
+      resetCachedValues(); // Reset for the next shooting sequence
     }
-    return false;
+    return hasStopped;
   }
 
   public void resetCachedValues() {
-    hasReachedTerminalVelocity = false;
-    hasShotOnce = false;
-    cachedLastBallLaunch = 0;
+    timeEnteredTargetZone = -1;
   }
 
   @Override
