@@ -5,21 +5,35 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "RT-Intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 0.25
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RT-Intake"
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 1.0
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "intake"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           }
         },
         {
@@ -31,13 +45,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeRight"
+            "pathName": "Rotate-BackFromIntakeRight"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "Rotate-Back-RightTrench"
           }
         },
         {
@@ -55,7 +69,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
+            "pathName": "RT-Intake-Short"
           }
         },
         {
@@ -73,7 +87,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "Rotate-RT-Back"
           }
         },
         {
@@ -92,6 +106,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WEEK 1",
+  "folder": null,
   "choreoAuto": false
 }

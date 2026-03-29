@@ -5,41 +5,53 @@
     "data": {
       "commands": [
         {
-          "type": "deadline",
+          "type": "parallel",
           "data": {
             "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-Intake"
+                }
+              },
               {
                 "type": "sequential",
                 "data": {
                   "commands": [
                     {
-                      "type": "path",
+                      "type": "wait",
                       "data": {
-                        "pathName": "LT-DepotL"
+                        "waitTime": 1.0
                       }
                     },
                     {
-                      "type": "path",
+                      "type": "named",
                       "data": {
-                        "pathName": "DepotL-DepotF"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "DepotF-DepotR"
+                        "name": "intake"
                       }
                     }
                   ]
                 }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
-                }
               }
             ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralLeft-Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BackFromIntakeLeft"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Back-LeftTrench"
           }
         },
         {

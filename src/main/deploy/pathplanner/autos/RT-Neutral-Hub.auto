@@ -92,6 +92,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "WIP",
+  "folder": null,
   "choreoAuto": false
 }
