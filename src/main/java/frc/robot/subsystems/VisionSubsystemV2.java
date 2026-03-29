@@ -340,6 +340,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   @Override
   public void periodic() {
-    sim.update();
+    if (sim != null) {
+      sim.update();
+    }
   }
 }
