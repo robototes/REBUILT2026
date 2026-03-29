@@ -171,15 +171,17 @@ public class Flywheels extends SubsystemBase {
 
   public double lastBallLaunch() {
     if (MathUtil.applyDeadband(
-            targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), HAS_SHOT_BALL_RPS)==0) {
+            targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), HAS_SHOT_BALL_RPS)
+        == 0) {
       if (!hasShotOnce) {
         hasShotOnce = true;
       }
       cachedLastBallLaunch = Timer.getFPGATimestamp();
       return cachedLastBallLaunch;
-    } else if (hasShotOnce && MathUtil.applyDeadband(
-            targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), FLYWHEEL_TOLERANCE)
-        == 0.0) {
+    } else if (hasShotOnce
+        && MathUtil.applyDeadband(
+                targetVelocity.get() - flywheelOneRPS.getValueAsDouble(), FLYWHEEL_TOLERANCE)
+            == 0.0) {
       cachedLastBallLaunch = Timer.getFPGATimestamp();
       return cachedLastBallLaunch;
     }

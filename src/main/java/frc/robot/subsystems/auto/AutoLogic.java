@@ -216,8 +216,8 @@ public class AutoLogic {
             s.launcherSubsystem.launcherAimCommandV2(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-   //     .until(()-> s.flywheels.stoppedShooting(2));
-   .withTimeout(6.5);
+        //     .until(()-> s.flywheels.stoppedShooting(2));
+        .withTimeout(6.5);
   }
 
   public static Command autoStowCommand() {
