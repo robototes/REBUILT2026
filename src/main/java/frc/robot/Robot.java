@@ -194,6 +194,7 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
@@ -203,7 +204,6 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystemV2 != null) {
       subsystems.visionSubsystemV2.update();
     }
-    CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
   }
 
   /** This function is called once when teleop mode is exited. */

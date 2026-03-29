@@ -33,7 +33,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final CommandSwerveDrivetrain driveBase;
 
   // HB cache
-  private double lastBeat;
+  private final Map<String, Double> lastBeats = new HashMap<>();
 
   // -- CONFIGURATION MAPS -- //
   private final Map<String, NtTunableBoolean> LL_enabled = new HashMap<>();
@@ -105,6 +105,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
           name, inst.getBooleanTopic("SmartDashboard/Vision/Status_" + name).publish());
       LL_online.put(name, false);
       LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
+
+      lastBeats.put(name, LimelightHelpers.getHeartbeat(name));
     }
     // Setup filter enabled map
     FILTER_ENABLED.put(
@@ -287,8 +289,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
         continue;
       }
       double currentBeat = LimelightHelpers.getHeartbeat(name) / 1_000_000.0;
-      boolean online = (currentBeat - lastBeat) < STALENESS_THRESHOLD;
-      lastBeat = currentBeat;
+      boolean online = (currentBeat - lastBeats.getOrDefault(name, 0.0)) < STALENESS_THRESHOLD;
+      lastBeats.put(name, currentBeat);
       changeStatus(name, online);
     }
   }
@@ -340,7 +342,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   @Override
   public void periodic() {
-    if (sim != null) {
+    if (Robot.isSimulation()) {
       sim.update();
     }
   }
