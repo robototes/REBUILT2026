@@ -34,8 +34,6 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.RobotSim;
-import frc.robot.visutils.LimelightOdometry;
-import java.util.Optional;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -58,7 +56,6 @@ public class Robot extends TimedRobot {
   private final Mechanism2d mechanismRobot;
   public final SimWrapper m_simWrapper;
   private ShowVisionOnField m_showVisionOnField;
-  public final LimelightOdometry m_limelightOdometry;
   private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
 
   /**
@@ -99,15 +96,9 @@ public class Robot extends TimedRobot {
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation() && m_simWrapper != null) {
       m_showVisionOnField = new ShowVisionOnField(null, m_simWrapper.getSimDebugField());
-    }
-
-    // For now, we do vision odemetry only in simulation.  Eventually, this will
-    // be replaced by our real Vision Subsystem.
-    if (Robot.isSimulation()) {
-      m_limelightOdometry =
-          new LimelightOdometry(subsystems.drivebaseSubsystem::addVisionMeasurement);
-    } else {
-      m_limelightOdometry = null;
+      if (subsystems.visionSubsystem != null) {
+        subsystems.visionSubsystem.setShowVisionOnField(m_showVisionOnField);
+      }
     }
 
     controls = new Controls(subsystems, m_simWrapper);
@@ -162,18 +153,6 @@ public class Robot extends TimedRobot {
       // NetworkTables with the limelight data, in-case any code in this loop
       // needs that info and doesnt want it delayed 20ms.
       m_simWrapper.robotPeriodic();
-    }
-
-    // For now, we do vision odemetry only in simulation.  Eventually, this will
-    // be replaced by our real Vision Subsystem.
-    if (Robot.isSimulation()) {
-      m_limelightOdometry.periodic();
-    }
-
-    if (Robot.isSimulation() && m_showVisionOnField != null) {
-      Optional<Pose2d> showVisPose = m_limelightOdometry.getLatestVisPose();
-      m_showVisionOnField.showPointInTimeVisionEstimate(
-          ShowVisionOnField.FieldType.SIMULATION_FIELD, showVisPose);
     }
 
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled

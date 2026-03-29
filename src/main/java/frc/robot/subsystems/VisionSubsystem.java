@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
@@ -67,13 +68,13 @@ public class VisionSubsystem extends SubsystemBase {
 
   // hub pose blue X: 4.625m, Y: 4.035m
   // hub pose red X: 11.915m, Y: 4.035m
-  private static final Transform3d COMP_BOT_LEFT_CAMERA =
+  public static final Transform3d COMP_BOT_LEFT_CAMERA =
       new Transform3d(
           0.114,
           0.368,
           0.235,
           new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
-  private static final Transform3d COMP_BOT_FRONT_CAMERA =
+  public static final Transform3d COMP_BOT_FRONT_CAMERA =
       new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
 
   private final Field2d robotField;
@@ -119,6 +120,7 @@ public class VisionSubsystem extends SubsystemBase {
       SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
+  private ShowVisionOnField m_showVisionOnField;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
@@ -215,6 +217,11 @@ public class VisionSubsystem extends SubsystemBase {
         } else {
           stdDevs =
               getEstimationStdDevsLimelightMT1(true, avgTagDist, estimate.tagCount, avgAmbiguity);
+        }
+        if (m_showVisionOnField != null) {
+          m_showVisionOnField.showPointInTimeVisionEstimate(
+              ShowVisionOnField.FieldType.REAL_FIELD,
+              java.util.Optional.of(estimate.pose3d.toPose2d()));
         }
         drivetrain.addVisionMeasurement(
             estimate.pose3d.toPose2d(),
@@ -392,5 +399,9 @@ public class VisionSubsystem extends SubsystemBase {
       }
     }
     return 0;
+  }
+
+  public void setShowVisionOnField(ShowVisionOnField m_showVisionOnField) {
+    this.m_showVisionOnField = m_showVisionOnField;
   }
 }
