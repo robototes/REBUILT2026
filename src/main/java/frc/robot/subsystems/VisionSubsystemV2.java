@@ -6,19 +6,24 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.Robot;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.simulation.VisionSim;
 import frc.robot.util.tuning.NtTunableBoolean;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,6 +40,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final Map<String, BooleanPublisher> LL_status_pubs = new HashMap<>();
   private final Map<String, Boolean> LL_online = new HashMap<>();
   private final Map<String, NtTunableBoolean> FILTER_ENABLED = new HashMap<>();
+  private final HashMap<String, Transform3d> transforms = new HashMap<>();
   private final String[] names = {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C};
 
   // Hardware objects
@@ -72,6 +78,9 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private final double FIELD_LENGTH = field.getFieldLength();
   private final double FIELD_WIDTH = field.getFieldWidth();
+
+  // Vision simulation
+  private final VisionSim sim;
 
   public VisionSubsystemV2(CommandSwerveDrivetrain drivetrain) {
     this.driveBase = drivetrain;
@@ -111,6 +120,32 @@ public class VisionSubsystemV2 extends SubsystemBase {
     gyro_vx = gyro.getAngularVelocityXWorld();
     gyro_vy = gyro.getAngularVelocityYWorld();
     gyro_vz = gyro.getAngularVelocityZWorld();
+
+    // Add transforms
+    Transform3d COMP_BOT_LEFT_CAMERA =
+        new Transform3d(
+            0.114,
+            0.368,
+            0.235,
+            new Rotation3d(0.0, Units.degreesToRadians(10), Units.degreesToRadians(90)));
+    Transform3d COMP_BOT_FRONT_CAMERA =
+        new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0.0, Units.degreesToRadians(1), 0.0));
+    // ADd transforms
+    for (String name : names) {
+      if (name.equals(Hardware.LIMELIGHT_C)) {
+        continue;
+      } else if (name.equals(Hardware.LIMELIGHT_A)) {
+        transforms.put(name, COMP_BOT_FRONT_CAMERA);
+      } else if (name.equals(Hardware.LIMELIGHT_B)) {
+        transforms.put(name, COMP_BOT_LEFT_CAMERA);
+      }
+    }
+
+    if (Robot.isSimulation()) {
+      sim = new VisionSim(names, transforms, drivetrain);
+    } else {
+      sim = null;
+    }
   }
 
   // This is specificaly called periodically in robot.java
@@ -301,5 +336,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
       LimelightHelpers.SetIMUMode(limelightName, ENABLED_IMU_MODE); // MT2 External IMU Mode
     }
     LimelightHelpers.setPipelineIndex(limelightName, APRIL_TAG_COMP_PIPELINE);
+  }
+
+  @Override
+  public void periodic() {
+    sim.update();
   }
 }
