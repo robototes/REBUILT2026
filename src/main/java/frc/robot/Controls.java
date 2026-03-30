@@ -245,7 +245,9 @@ public class Controls {
         .or(GetTargetFromPose.autoShoot(s.drivebaseSubsystem))
         .whileTrue(
             Commands.parallel(
-                s.launcherSubsystem.launcherAimCommandV2(s.drivebaseSubsystem),
+                // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
+                // driverController.getLeftX(), ()-> driverController.getLeftY()),
+                s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(

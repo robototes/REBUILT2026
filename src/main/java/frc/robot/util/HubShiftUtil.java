@@ -4,10 +4,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.util.tuning.LauncherConstants;
-<<<<<<< HEAD
-
-=======
->>>>>>> 6c66dec5c582218dc7f0f006f9db3f55fa53b8c0
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.Setter;
@@ -149,7 +145,7 @@ public class HubShiftUtil {
     return getShiftInfo(getSchedule(), shiftStartTimes, shiftEndTimes);
   }
 
-    public static ShiftInfo getShiftedShiftInfo() {
+  public static ShiftInfo getShiftedShiftInfo() {
     boolean[] shiftSchedule = getSchedule();
     double[] shiftedShiftStartTimes = shiftStartTimes.clone();
     double[] shiftedShiftEndTimes = shiftEndTimes.clone();
