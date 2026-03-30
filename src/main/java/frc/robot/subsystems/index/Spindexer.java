@@ -35,12 +35,11 @@ public class Spindexer extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   // Oscillate settings
-  private final double PHASE_SHIFT = 0;
-  private final double AMPLITUDE = 0.5;
-  private final double VERTICAL_SHIFT = 0.5;
-  private final double FREQUENCY = Math.PI * 2;
-
-  private final double MAX_RPS_OFFSET = 1.5;
+  private static final double PHASE_SHIFT = 0;
+  private static final double AMPLITUDE = 0.5;
+  private static final double VERTICAL_SHIFT = 0.5;
+  private static final double FREQUENCY = Math.PI * 2;
+  private static final double MAX_RPS_OFFSET = 1.5;
 
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
@@ -85,24 +84,18 @@ public class Spindexer extends SubsystemBase {
   }
 
   public void runVelocity() {
-    if (TUNABLE_ENABLE.get()) {
-      spindexerMotor.setControl(
-          TARGET_VELOCITY
-              .withVelocity(TARGET_RPS.get() - MAX_RPS_OFFSET * oscillate(Timer.getFPGATimestamp()))
-              .withAcceleration(TARGET_ACCEL.get()));
-    } else {
-      spindexerMotor.setControl(
-          TARGET_VELOCITY
-              .withVelocity(D_TARGET_RPS - MAX_RPS_OFFSET * oscillate(Timer.getFPGATimestamp()))
-              .withAcceleration(D_TARGET_ACCEL));
-    }
+    double baseRps = TUNABLE_ENABLE.get() ? TARGET_RPS.get() : D_TARGET_RPS;
+    double accel = TUNABLE_ENABLE.get() ? TARGET_ACCEL.get() : D_TARGET_ACCEL;
+    double velocity = baseRps - MAX_RPS_OFFSET * oscillate(Timer.getFPGATimestamp());
+
+    spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(velocity).withAcceleration(accel));
   }
 
   public void stopMotor() {
     spindexerMotor.stopMotor();
   }
 
-  public double oscillate(double time) {
+  private static double oscillate(double time) {
     return AMPLITUDE * Math.cos(FREQUENCY * time - PHASE_SHIFT) + VERTICAL_SHIFT;
   }
 
