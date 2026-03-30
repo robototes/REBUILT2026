@@ -11,6 +11,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
@@ -32,6 +33,12 @@ public class Spindexer extends SubsystemBase {
   private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final FlywheelSim motorSim;
+
+  // Oscillate settings
+  private final double PHASE_SHIFT = 0;
+  private final double AMPLITUDE = 0.5;
+  private final double VERTICAL_SHIFT = 0.5;
+  private final double FREQUENCY = Math.PI * 2;
 
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
@@ -78,15 +85,21 @@ public class Spindexer extends SubsystemBase {
   public void runVelocity() {
     if (TUNABLE_ENABLE.get()) {
       spindexerMotor.setControl(
-          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
+          TARGET_VELOCITY.withVelocity(5).withAcceleration(TARGET_ACCEL.get()));
     } else {
       spindexerMotor.setControl(
-          TARGET_VELOCITY.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
+          TARGET_VELOCITY
+              .withVelocity(oscillate(Timer.getFPGATimestamp()))
+              .withAcceleration(D_TARGET_ACCEL));
     }
   }
 
   public void stopMotor() {
     spindexerMotor.stopMotor();
+  }
+
+  public double oscillate(double time) {
+    return AMPLITUDE * Math.cos(FREQUENCY * time - PHASE_SHIFT) + VERTICAL_SHIFT;
   }
 
   @Override
