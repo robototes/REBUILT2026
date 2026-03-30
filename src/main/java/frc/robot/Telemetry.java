@@ -115,10 +115,10 @@ public class Telemetry {
 
   public void telemeterize(SwerveDriveState state) {
     // This number represents the number of times it will run per second
-    double currentFrequency = 1 / state.OdometryPeriod;
+    double currentFrequency = state.OdometryPeriod > 0 ? 1.0 / state.OdometryPeriod : 0;
     // Because current frequency is presumed to be constantly changing, the divider must also change
     // with it.
-    double CURRENT_FREQ_DIVIDER = currentFrequency / TELEMETERIZE_NT_FREQUENCY;
+    double currentFreqDivider = currentFrequency / TELEMETERIZE_NT_FREQUENCY;
 
     /* Also write to log file */
     m_poseArray[0] = state.Pose.getX();
@@ -136,7 +136,7 @@ public class Telemetry {
     SignalLogger.writeDoubleArray("DriveState/ModuleTargets", m_moduleTargetsArray);
     SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
 
-    if (++cacheLoopcount >= CURRENT_FREQ_DIVIDER) {
+    if (++cacheLoopcount >= currentFreqDivider) {
       var turret = LauncherConstants.launcherFromRobot(state.Pose);
       var robotToHubMeters = AllianceUtils.getHubTranslation2d().minus(turret).getNorm();
 
