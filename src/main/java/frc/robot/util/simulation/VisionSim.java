@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.util.HashMap;
@@ -35,6 +36,9 @@ public class VisionSim {
 
     // Add simulated camera object for each cam
     for (String name : names) {
+      if (name.equals(Hardware.LIMELIGHT_C)) {
+        continue;
+      }
       // Add limelight camera resolutions
       // Camera properties
       SimCameraProperties cameraProperties = new SimCameraProperties();

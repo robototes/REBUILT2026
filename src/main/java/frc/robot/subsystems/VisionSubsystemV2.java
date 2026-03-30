@@ -135,7 +135,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // ADd transforms
     for (String name : names) {
       if (name.equals(Hardware.LIMELIGHT_C)) {
-        transforms.put(name, new Transform3d());
+        continue;
       } else if (name.equals(Hardware.LIMELIGHT_A)) {
         transforms.put(name, COMP_BOT_BACK_CAMERA);
       } else if (name.equals(Hardware.LIMELIGHT_B)) {
