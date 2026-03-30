@@ -109,13 +109,15 @@ public class Telemetry {
   /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
 
   // How many loop runs did telemetrize run for?
-  private double cacheLoopcount = 0;
+  private int cacheLoopcount = 0;
 
-  private final double TELEMETERIZE_FREQUENCY = 250; // hertz
   private final double TELEMETERIZE_NT_FREQUENCY = 50; // hertz
-  private final double FREQ_DIVIDER = TELEMETERIZE_FREQUENCY / TELEMETERIZE_NT_FREQUENCY;
 
   public void telemeterize(SwerveDriveState state) {
+    // This number represents the number of times it will run per second
+    double currentFrequency = 1 / state.OdometryPeriod;
+    double CURRENT_FREQ_DIVIDER = currentFrequency / TELEMETERIZE_NT_FREQUENCY;
+
     /* Also write to log file */
     m_poseArray[0] = state.Pose.getX();
     m_poseArray[1] = state.Pose.getY();
@@ -132,7 +134,7 @@ public class Telemetry {
     SignalLogger.writeDoubleArray("DriveState/ModuleTargets", m_moduleTargetsArray);
     SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
 
-    if (++cacheLoopcount >= FREQ_DIVIDER) {
+    if (++cacheLoopcount >= CURRENT_FREQ_DIVIDER) {
       var turret = LauncherConstants.launcherFromRobot(state.Pose);
       var robotToHubMeters = AllianceUtils.getHubTranslation2d().minus(turret).getNorm();
 
@@ -159,6 +161,5 @@ public class Telemetry {
       fieldPub.set(m_poseArray);
       cacheLoopcount = 0;
     }
-    // DataLogManager.getLog().flush();
   }
 }
