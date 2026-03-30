@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "RT-Intake"
+                  "pathName": "Counter-RT-Intake"
                 }
               },
               {
@@ -39,37 +39,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-Intake"
+            "pathName": "Counter-NeutralRight-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeRight"
+            "pathName": "CounterBackFromRightIntake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "RT-Outpost"
+            "pathName": "Counter-Back-RightTrench"
           }
         },
         {
@@ -88,6 +70,6 @@
     }
   },
   "resetOdom": true,
-  "folder": "COMP",
+  "folder": "WIP",
   "choreoAuto": false
 }

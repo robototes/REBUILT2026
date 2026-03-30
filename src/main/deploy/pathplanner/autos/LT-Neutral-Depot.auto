@@ -113,6 +113,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "COMP",
   "choreoAuto": false
 }
