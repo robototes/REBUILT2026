@@ -52,6 +52,7 @@ public class Robot extends TimedRobot {
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
   private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
+  private final double DATA_LOG_FLUSH_PERIOD = 60; // hertz
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -64,7 +65,7 @@ public class Robot extends TimedRobot {
 
     // logging
     if (RobotBase.isReal()) {
-      DataLogManager.start();
+      DataLogManager.start("", "", 1.0 / DATA_LOG_FLUSH_PERIOD);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
