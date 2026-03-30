@@ -116,6 +116,8 @@ public class Telemetry {
   public void telemeterize(SwerveDriveState state) {
     // This number represents the number of times it will run per second
     double currentFrequency = 1 / state.OdometryPeriod;
+    // Because current frequency is presumed to be constantly changing, the divider must also change
+    // with it.
     double CURRENT_FREQ_DIVIDER = currentFrequency / TELEMETERIZE_NT_FREQUENCY;
 
     /* Also write to log file */
