@@ -50,7 +50,7 @@ public class VisionSim {
     }
 
     simulatedField2d = sim.getDebugField();
-    SmartDashboard.putData("Simulated field", simulatedField2d);
+    SmartDashboard.putData("VISION: Simulated field", simulatedField2d);
   }
 
   public void update() {
