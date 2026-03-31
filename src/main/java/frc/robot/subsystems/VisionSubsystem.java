@@ -78,9 +78,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   private static final Transform3d COMP_BOT_LEFT_CAMERA =
       new Transform3d(
-          0.114,
-          0.368,
-          0.235,
+          -0.076,
+          0.311,
+          0.284,
           new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
   private static final Transform3d COMP_BOT_FRONT_CAMERA =
       new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
