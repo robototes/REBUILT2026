@@ -1,0 +1,65 @@
+{
+    "name": "2026 Corner Turret",
+    "isFTC": false,
+    "disableSimplification": false,
+    "rotations": [
+        {
+            "axis": "x",
+            "degrees": 90
+        },
+        {
+            "axis": "z",
+            "degrees": -90
+        }
+    ],
+    "position": [
+        0,
+        0,
+        0
+    ],
+    "cameras": [
+        {
+            "name": "LeftCamera",
+            "rotations": [
+                {
+                    "axis": "z",
+                    "degrees": 90
+                },
+                {
+                    "axis": "x",
+                    "degrees": 8
+                }
+            ],
+            "position": [
+                0.114,
+                0.368,
+                0.235
+            ],
+            "resolution": [
+                1280,
+                960
+            ],
+            "fov": 82
+        },
+        {
+            "name": "FrontCamera",
+            "rotations": [
+                {
+                    "axis": "y",
+                    "degrees": -15
+                }
+            ],
+            "position": [
+                0.267,
+                -0.051,
+                0.451
+            ],
+            "resolution": [
+                1280,
+                960
+            ],
+            "fov": 82
+        }
+    ],
+    "components": []
+}
