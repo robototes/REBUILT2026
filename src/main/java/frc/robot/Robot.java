@@ -7,6 +7,7 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -19,7 +20,9 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
@@ -80,7 +83,7 @@ public class Robot extends TimedRobot {
     controls = new Controls(subsystems);
 
     if (DRIVEBASE_ENABLED) {
-      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
+      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, subsystems::resetRobotPose, false);
     }
     AutoLogic.init(subsystems);
     if (Robot.isSimulation()) {
@@ -124,6 +127,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
 
+    if (Robot.isSimulation() && subsystems.simLimelightProducer != null) {
+      subsystems.simLimelightProducer.periodic();
+    }
+
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -134,6 +141,9 @@ public class Robot extends TimedRobot {
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
+    if (subsystems.dashboardManager != null) {
+      subsystems.dashboardManager.update();
+    }
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -187,12 +197,14 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     // subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
-    if (AutoLogic.getSelectedAuto() != null) {
+    Command selectedAuto = AutoLogic.getSelectedAuto();
+    if (selectedAuto != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
       }
 
-      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+      CommandScheduler.getInstance()
+          .schedule(selectedAuto.andThen(Commands.runOnce(subsystems::resetAllAutoSimFaults)));
       double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
@@ -215,6 +227,11 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     supplyYawToAllLimelights();
+  }
+
+  @Override
+  public void autonomousExit() {
+    subsystems.resetAllAutoSimFaults();
   }
 
   @Override
@@ -258,6 +275,13 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
+    if (subsystems.groundTruthSim != null) {
+      subsystems.groundTruthSim.simulationPeriodic();
+    }
+    if (subsystems.simLimelightProducer != null && subsystems.groundTruthSim != null) {
+      Pose2d groundTruthPose = subsystems.groundTruthSim.getGroundTruthPose();
+      subsystems.simLimelightProducer.simulationPeriodic(groundTruthPose);
+    }
     robotSim.updateFuelSim();
   }
 

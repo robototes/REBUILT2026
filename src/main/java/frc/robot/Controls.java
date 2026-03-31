@@ -216,7 +216,7 @@ public class Controls {
         .rightBumper()
         .onTrue(
             s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+                () -> s.resetRobotPose(AllianceUtils.isRed() ? redHub : blueHub)));
   }
 
   private void configureLauncherBindings() {
@@ -389,7 +389,7 @@ public class Controls {
                       () -> {
                         Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
                         if (referenceVisionPose != null) {
-                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
+                          s.resetRobotPose(referenceVisionPose);
                         }
                       })
                   .withName("Now Drive Pose is Vision Pose"));
@@ -436,7 +436,7 @@ public class Controls {
         .and(turretTestController.rightBumper())
         .onTrue(
             s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+                () -> s.resetRobotPose(AllianceUtils.isRed() ? redHub : blueHub)));
     driverController
         .rightStick()
         .whileTrue(

@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import static robotutils.simlimelightproducer.VisionSimConstants.Vision.kSimCameras;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -18,6 +20,7 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -32,6 +35,7 @@ import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
+import robotutils.pub.interfaces.CameraInfo;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -74,14 +78,16 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double FIELD_MARGIN = 0.5;
   }
 
-  private static final Transform3d COMP_BOT_LEFT_CAMERA =
+    private static final Transform3d COMP_BOT_LEFT_CAMERA_REAL =
       new Transform3d(
           0.114,
           0.368,
           0.235,
           new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
-  private static final Transform3d COMP_BOT_FRONT_CAMERA =
+    private static final Transform3d COMP_BOT_LEFT_CAMERA = getCompBotLeftCameraTransform();
+  private static final Transform3d COMP_BOT_FRONT_CAMERA_REAL =
       new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
+  private static final Transform3d COMP_BOT_FRONT_CAMERA = getCompBotFrontCameraTransform();
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
@@ -124,6 +130,28 @@ public class VisionSubsystem extends SubsystemBase {
       SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
+
+  private static Transform3d getCompBotFrontCameraTransform() {
+    if (RobotBase.isSimulation()) {
+      for (CameraInfo cameraInfo : kSimCameras) {
+        if (Hardware.LIMELIGHT_A.equals(cameraInfo.cameraName)) {
+          return cameraInfo.robotToCam;
+        }
+      }
+    }
+    return COMP_BOT_FRONT_CAMERA_REAL;
+  }
+
+  private static Transform3d getCompBotLeftCameraTransform() {
+    if (RobotBase.isSimulation()) {
+      for (CameraInfo cameraInfo : kSimCameras) {
+        if (Hardware.LIMELIGHT_B.equals(cameraInfo.cameraName)) {
+          return cameraInfo.robotToCam;
+        }
+      }
+    }
+    return COMP_BOT_LEFT_CAMERA_REAL;
+  }
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot) {
     this.drivetrain = drivetrain;
