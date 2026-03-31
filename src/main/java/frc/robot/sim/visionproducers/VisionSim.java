@@ -24,7 +24,7 @@
 
 package frc.robot.sim.visionproducers;
 
-import static frc.robot.sim.visionproducers.VisionSimConstants.Vision.*;
+import static frc.robot.sim.visionproducers.VisionSimConstants.*;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -34,6 +34,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Robot;
+import frc.robot.sim.visionproducers.VisionSimConstants.VisionConfig;
 import java.util.List;
 import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
@@ -47,6 +48,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 /** Vision simulation using PhotonVision. */
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class VisionSim implements VisionSimInterface {
+  private final VisionConfig m_config;
   private final PhotonCamera m_camera;
   private final PhotonPoseEstimator m_photonEstimator;
 
@@ -60,8 +62,12 @@ public class VisionSim implements VisionSimInterface {
   // Limelight NetworkTables publisher
   private final LimelightTablePublisher m_limelightPublisher;
 
-  /** Constructor. */
-  public VisionSim() {
+  /**
+   * Constructor.
+   *
+   * @param visionConfig the per-camera configuration specifying names and camera transform
+   */
+  public VisionSim(VisionConfig visionConfig) {
 
     // This is good sample code for PhotonVision usage in-general, but we spin this up ONLY for
     // simulation.  You'll need a separate implementation for real robot vision processing.
@@ -69,14 +75,15 @@ public class VisionSim implements VisionSimInterface {
       throw new IllegalStateException("VisionSim should only be instantiated in simulation");
     }
 
-    m_camera = new PhotonCamera(kCameraName);
-    m_photonEstimator = new PhotonPoseEstimator(kTagLayout, kRobotToCam);
-    m_limelightPublisher = new LimelightTablePublisher("limelight");
+    m_config = visionConfig;
+    m_camera = new PhotonCamera(visionConfig.cameraName());
+    m_photonEstimator = new PhotonPoseEstimator(kTagLayout, visionConfig.robotToCam());
+    m_limelightPublisher = new LimelightTablePublisher(visionConfig.limelightName());
 
     // ----- Simulation
     if (Robot.isSimulation()) {
       // Create the vision system simulation which handles cameras and targets on the field.
-      m_visionSystemSim = new VisionSystemSim("main");
+      m_visionSystemSim = new VisionSystemSim(visionConfig.visionSimName());
       // Add all the AprilTags inside the tag layout as visible targets to simulated field.
       m_visionSystemSim.addAprilTags(kTagLayout);
       // Create simulated camera properties. These can be set to mimic your actual camera.
@@ -94,7 +101,7 @@ public class VisionSim implements VisionSimInterface {
       m_cameraSim.setMinTargetAreaPixels(kMinTargetAreaPixels);
       m_cameraSim.setMaxSightRange(kMaxSightRangeMeters);
       // Add the simulated camera to view the targets on this simulated field.
-      m_visionSystemSim.addCamera(m_cameraSim, kRobotToCam);
+      m_visionSystemSim.addCamera(m_cameraSim, m_config.robotToCam());
 
       m_cameraSim.enableDrawWireframe(true);
     }
@@ -116,12 +123,13 @@ public class VisionSim implements VisionSimInterface {
       updateEstimationStdDevs(visionEst, result.getTargets());
 
       // Publish to Limelight NetworkTables for LimelightOdometry to consume
-      LimelightData data = PhotonToLimelightConverter.convertPipelineResult(result, kRobotToCam);
+      LimelightData data =
+          PhotonToLimelightConverter.convertPipelineResult(result, m_config.robotToCam());
       double totalLatencyMs = data.pipelineLatencyMs + data.captureLatencyMs;
       PhotonToLimelightConverter.convertBotpose(
           visionEst.map(est -> est.estimatedPose).orElse(null),
           result.getTargets(),
-          kRobotToCam,
+          m_config.robotToCam(),
           totalLatencyMs,
           data);
       m_limelightPublisher.publish(data);

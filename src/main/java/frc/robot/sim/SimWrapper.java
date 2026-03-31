@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Robot;
 import frc.robot.sim.visionproducers.VisionSimFactory;
 import frc.robot.sim.visionproducers.VisionSimInterface;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -24,7 +25,7 @@ import java.util.function.Consumer;
 public class SimWrapper {
   private final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> m_drivetrain;
   private final GroundTruthSimInterface m_groundTruthSim;
-  private final VisionSimInterface m_visionSim;
+  private final List<VisionSimInterface> m_visionSims;
   private final ShowVisionOnField m_showVisionOnField;
 
   /**
@@ -53,13 +54,13 @@ public class SimWrapper {
     m_groundTruthSim = GroundTruthSimFactory.create(drivetrain, poseResetConsumer);
 
     // Create vision simulation
-    m_visionSim = VisionSimFactory.create();
-    if (m_visionSim == null) {
+    m_visionSims = VisionSimFactory.create();
+    if (m_visionSims.isEmpty()) {
       throw new IllegalStateException("VisionSimInterface creation failed");
     }
 
-    // Create field visualization helper
-    Field2d debugField = m_visionSim.getSimDebugField();
+    // Create field visualization helper (use the first camera's debug field)
+    Field2d debugField = m_visionSims.get(0).getSimDebugField();
     m_showVisionOnField = new ShowVisionOnField(null, debugField);
   }
 
@@ -68,7 +69,7 @@ public class SimWrapper {
    * updates pose estimator).
    */
   public void robotPeriodic() {
-    m_visionSim.periodic();
+    m_visionSims.forEach(VisionSimInterface::periodic);
   }
 
   /**
@@ -84,7 +85,7 @@ public class SimWrapper {
     // Update vision simulation with ground truth pose (not odometry)
     // This ensures cameras see AprilTags based on actual robot position
     Pose2d groundTruthPose = m_groundTruthSim.getGroundTruthPose();
-    m_visionSim.simulationPeriodic(groundTruthPose);
+    m_visionSims.forEach(v -> v.simulationPeriodic(groundTruthPose));
 
     // Debug field visualization
     m_showVisionOnField.showEstimatedPoseAndWheels(
@@ -101,7 +102,7 @@ public class SimWrapper {
    */
   public void resetSimPose(Pose2d pose) {
     m_groundTruthSim.resetGroundTruthPoseForSim(pose);
-    m_visionSim.resetSimPose(pose);
+    m_visionSims.forEach(v -> v.resetSimPose(pose));
   }
 
   /**
@@ -134,6 +135,6 @@ public class SimWrapper {
    * @return The VisionSystemSim's debug field, or null if not in simulation
    */
   public Field2d getSimDebugField() {
-    return m_visionSim.getSimDebugField();
+    return m_visionSims.get(0).getSimDebugField();
   }
 }

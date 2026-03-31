@@ -1,19 +1,23 @@
 package frc.robot.sim.visionproducers;
 
 import frc.robot.Robot;
+import java.util.List;
 
-/** Factory for creating VisionSimInterface instances. Returns null when not in simulation mode. */
+/** Factory for creating VisionSimInterface instances. Returns empty list when not in simulation. */
 public class VisionSimFactory {
 
   /**
-   * Creates a VisionSimInterface instance if running in simulation mode.
+   * Creates VisionSimInterface instances for all configured cameras if running in simulation mode.
    *
-   * @return A VisionSimInterface instance, or null if not in simulation
+   * @return A list of VisionSimInterface instances, or an empty list if not in simulation
    */
-  public static VisionSimInterface create() {
+  public static List<VisionSimInterface> create() {
     if (Robot.isSimulation()) {
-      return new VisionSim();
+      return List.of(
+          new VisionSim(VisionSimConstants.kVisionA),
+          new VisionSim(VisionSimConstants.kVisionB),
+          new VisionSim(VisionSimConstants.kVisionC));
     }
-    return null;
+    return List.of();
   }
 }
