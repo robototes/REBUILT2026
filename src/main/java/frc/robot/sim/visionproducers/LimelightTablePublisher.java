@@ -19,6 +19,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
  */
 public class LimelightTablePublisher {
   private final NetworkTable table;
+  private double heartbeat = 0;
 
   public LimelightTablePublisher(String limelightName) {
     String tableName =
@@ -35,6 +36,10 @@ public class LimelightTablePublisher {
     table.getEntry("tync").setDouble(data.tync);
     table.getEntry("ta").setDouble(data.ta);
     table.getEntry("tid").setDouble(data.tid);
+
+    // Heartbeat (increases once per frame, resets at 2 billion)
+    heartbeat = (heartbeat >= 2_000_000_000) ? 0 : heartbeat + 1;
+    table.getEntry("hb").setDouble(heartbeat);
 
     // Latency
     table.getEntry("tl").setDouble(data.pipelineLatencyMs);
