@@ -29,7 +29,6 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.DrivebaseSim;
 import frc.robot.util.simulation.RobotSim;
 
@@ -44,15 +43,13 @@ public class Robot extends TimedRobot {
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
-  private final int VIEWFINDER_PIPELINE = 1;
-  private final int GAMEPIECE_PIPELINE = 2;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
   private final double MAX_TIME_RECORD = 165;
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
-  private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
+  private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DrivebaseSim driveBaseSim;
 
@@ -141,9 +138,6 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
-    if (subsystems.detectionSubsystem != null) {
-      subsystems.detectionSubsystem.update();
-    }
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
@@ -154,23 +148,19 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     CommandScheduler.getInstance().cancelAll();
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+    if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_A, true);
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_B, true);
       }
-    }
-    if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
-      // && subsystems.visionSubsystem.limelightcOnline) {
-      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
-    }
-    if (subsystems.detectionSubsystem != null) {
-      subsystems.detectionSubsystem.fuelPose3d = null;
-      // Throttle to reduce heat
-      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_C, true);
+      }
     }
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.coastTurret();
@@ -181,23 +171,16 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledExit() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+    if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
       }
-    }
-    if (subsystems.visionSubsystem != null
-        && RobotType.isAlpha()
-        && subsystems.visionSubsystem.limelightcOnline) {
-      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
-    }
-    if (subsystems.detectionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
-      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
+      }
     }
 
     if (subsystems.turretSubsystem != null) {
@@ -218,16 +201,19 @@ public class Robot extends TimedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
+      if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
           setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
-          supplyRobotYawToLimelight(
-              Hardware.LIMELIGHT_A, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
           setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
-          supplyRobotYawToLimelight(
-              Hardware.LIMELIGHT_B, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
+        }
+        if (subsystems.visionSubsystem.limelightcOnline) {
+          setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
         }
       }
     }
@@ -236,18 +222,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_A,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
-      }
-      if (subsystems.visionSubsystem.limelightbOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_B,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
-      }
-    }
+    supplyYawToAllLimelights();
   }
 
   @Override
@@ -263,25 +238,13 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_A,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
-      }
-      if (subsystems.visionSubsystem.limelightbOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_B,
-            subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees());
-      }
-    }
+    supplyYawToAllLimelights();
   }
 
   /** This function is called once when teleop mode is exited. */
   @Override
   public void teleopExit() {
-    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
-    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+    limelightsRecord();
   }
 
   @Override
@@ -320,6 +283,35 @@ public class Robot extends TimedRobot {
       LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
       // Limelight Use internal IMU + external IMU
       LimelightHelpers.SetIMUMode(limelightName, 4);
+    }
+  }
+
+  private void supplyYawToAllLimelights() {
+    if (subsystems.visionSubsystem != null) {
+      double heading = subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees();
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, heading);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, heading);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, heading);
+      }
+    }
+  }
+
+  public void limelightsRecord() {
+    if (subsystems.visionSubsystem != null) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_C, MAX_TIME_RECORD);
+      }
     }
   }
 
