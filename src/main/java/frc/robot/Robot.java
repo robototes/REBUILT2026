@@ -48,7 +48,7 @@ public class Robot extends TimedRobot {
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
-  private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
+  private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
 
   /**
    * This function is run when the robot is first started up and should be used for any

@@ -239,7 +239,7 @@ public class Controls {
                         Commands.parallel(
                                 s.indexerSubsystem.runIndexer(),
                                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.waitSeconds(1)
+                                Commands.runOnce(() -> s.intakePivot.restartTimer())
                                     .andThen(
                                         Commands.runOnce(
                                             () ->
@@ -265,20 +265,17 @@ public class Controls {
         .start()
         .onTrue(
             Commands.parallel(
-                    s.launcherSubsystem.zeroSubsystemCommand(),
-                    s.intakePivot.zeroPivot(),
+                    Commands.either(
+                        s.hood.autoZeroCommand(),
+                        s.launcherSubsystem.zeroSubsystemCommand(),
+                        () -> DriverStation.isEnabled()),
+                    Commands.either(
+                        s.intakePivot.autoZeroCommand(),
+                        s.intakePivot.zeroPivot(),
+                        () -> DriverStation.isEnabled()),
                     s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
-
-    // driverController
-    //     .start()
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 s.hood.autoZeroCommand(),
-    //                 s.intakePivot.autoZeroCommand(),
-    //                 s.turretSubsystem.autoZeroCommand(),
-    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
@@ -331,11 +328,13 @@ public class Controls {
         .onFalse(
             Commands.runOnce(
                 () -> {
-                  intakeMode =
-                      driverController.rightTrigger().getAsBoolean()
-                          ? IntakeMode.LAUNCH
-                          : IntakeMode.DEPLOYED;
-                  ledsMode = LEDMode.DEFAULT;
+                  if (driverController.rightTrigger().getAsBoolean()) {
+                    intakeMode = IntakeMode.LAUNCH;
+                    s.intakePivot.restartTimer();
+                  } else {
+                    intakeMode = IntakeMode.DEPLOYED;
+                    ledsMode = LEDMode.DEFAULT;
+                  }
                 }));
     driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
