@@ -310,6 +310,8 @@ public class Controls {
                     case RETRACTED -> s.intakeSubsystem.retractPivot();
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
+                      // case LAUNCH ->
+                      // s.intakeSubsystem.intakeWhileLaunch(s.indexerSubsystem.getFilteredCurrent());
                     case INTAKE -> s.intakeSubsystem.smartIntake();
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }

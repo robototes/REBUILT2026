@@ -9,6 +9,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -61,6 +62,12 @@ public class IntakePivot extends SubsystemBase {
   // Soft Limits
   public static final double PIVOT_MIN = -0.45; // rotations
   public static final double PIVOT_MAX = 0.0;
+
+  // Oscillation parameters
+  public static final double OSCILLATE_MIN = 1.0; // seconds
+  public static final double OSCILLATE_MAX = 5.0; // seconds
+  public static final double OSCILLATE_SCALAR =
+      50 / OSCILLATE_MAX; // max spindexer stator divided by max time
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
@@ -133,7 +140,16 @@ public class IntakePivot extends SubsystemBase {
 
   public void oscillatePivot() {
     double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 3) + Math.PI)) / 2;
-    double pos = DEPLOYED_POS + offset;
+    double pos = DEPLOYED_POS + offset * (RETRACTED_POS - DEPLOYED_POS);
+    targetPos = pos;
+    setPivotPosition(pos);
+  }
+
+  public void oscillatePivot(double spindexerCurrent) {
+    double period =
+        MathUtil.clamp(spindexerCurrent / OSCILLATE_SCALAR, OSCILLATE_MIN, OSCILLATE_MAX);
+    double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / period) + Math.PI)) / 2;
+    double pos = DEPLOYED_POS + offset * (RETRACTED_POS - DEPLOYED_POS);
     targetPos = pos;
     setPivotPosition(pos);
   }
