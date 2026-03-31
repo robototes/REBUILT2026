@@ -165,8 +165,11 @@ public class PhotonToLimelightConverter {
     if (robotPose == null || targets.isEmpty()) {
       data.botposeWpiBlue = new double[0];
       data.botposeWpiRed = new double[0];
+      data.botpose3dWpiBlue = null;
       return;
     }
+
+    data.botpose3dWpiBlue = robotPose;
 
     int tagCount = targets.size();
     int arrayLength = 11 + (7 * tagCount);

@@ -11,20 +11,25 @@
 
 package frc.robot.sim.visionproducers;
 
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 
 /**
  * Publishes LimelightData to NetworkTables. This is the only class with NetworkTables dependency.
  */
 public class LimelightTablePublisher {
   private final NetworkTable table;
+  private final StructPublisher<Pose3d> botpose3dPublisher;
   private double heartbeat = 0;
 
   public LimelightTablePublisher(String limelightName) {
     String tableName =
         (limelightName == null || limelightName.isEmpty()) ? "limelight" : limelightName;
     this.table = NetworkTableInstance.getDefault().getTable(tableName);
+    this.botpose3dPublisher =
+        this.table.getStructTopic("botpose_wpiblue3DPose", Pose3d.struct).publish();
   }
 
   public void publish(LimelightData data) {
@@ -61,5 +66,11 @@ public class LimelightTablePublisher {
     // Also publish as MegaTag2 format (same data for simulation purposes)
     table.getEntry("botpose_orb_wpiblue").setDoubleArray(data.botposeWpiBlue);
     table.getEntry("botpose_orb_wpired").setDoubleArray(data.botposeWpiRed);
+
+    // Note an actual limelight doesn't publish 3D pose as a Pose3d object, but we can add this for
+    // convenience in simulation
+    if (data.botpose3dWpiBlue != null) {
+      botpose3dPublisher.set(data.botpose3dWpiBlue);
+    }
   }
 }

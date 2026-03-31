@@ -11,6 +11,8 @@
 
 package frc.robot.sim.visionproducers;
 
+import edu.wpi.first.math.geometry.Pose3d;
+
 /**
  * Pure data container representing Limelight NetworkTables data format. No WPILib/NetworkTables
  * dependencies - fully unit testable.
@@ -45,4 +47,6 @@ public class LimelightData {
   // avgArea, [rawFiducials...]
   public double[] botposeWpiBlue = new double[0];
   public double[] botposeWpiRed = new double[0];
+
+  public Pose3d botpose3dWpiBlue;
 }
