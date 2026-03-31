@@ -30,6 +30,7 @@ import frc.robot.util.BuildInfo;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.simulation.DrivebaseSim;
 import frc.robot.util.simulation.RobotSim;
 
 /**
@@ -52,7 +53,8 @@ public class Robot extends TimedRobot {
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
   private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
-  private final double DATA_LOG_FLUSH_FREQUENCY = 10; // hertz
+  private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
+  private final DrivebaseSim driveBaseSim;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -65,7 +67,7 @@ public class Robot extends TimedRobot {
 
     // logging
     if (RobotBase.isReal()) {
-      DataLogManager.start("", "", 1.0 / DATA_LOG_FLUSH_FREQUENCY);
+      DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
@@ -116,6 +118,10 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    Telemetry logger = new Telemetry();
+    subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+    driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
   }
 
   /**
@@ -141,6 +147,7 @@ public class Robot extends TimedRobot {
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
+    driveBaseSim.update();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

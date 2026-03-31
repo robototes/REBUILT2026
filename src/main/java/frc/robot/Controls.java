@@ -103,8 +103,6 @@ public class Controls {
           .withRotationalDeadband(0.0001)
           .withDriveRequestType(DriveRequestType.Velocity);
 
-  private final Telemetry logger = new Telemetry(MaxSpeed);
-
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
@@ -209,9 +207,6 @@ public class Controls {
                 .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
                 .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
                 .withName("Reset gyro"));
-
-    // logging the telemetry
-    s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
 
     // reset pose incase vision is bugging
     driverController
