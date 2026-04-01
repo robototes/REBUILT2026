@@ -4,6 +4,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Robot;
 import frc.robot.sim.visionproducers.VisionSimFactory;
@@ -27,6 +29,7 @@ public class SimWrapper {
   private final GroundTruthSimInterface m_groundTruthSim;
   private final List<VisionSimInterface> m_visionSims;
   private final ShowVisionOnField m_showVisionOnField;
+  private final StructPublisher<Pose2d> m_groundTruthPosePublisher;
 
   /**
    * Creates a new SimWrapper.
@@ -62,6 +65,13 @@ public class SimWrapper {
     // Create field visualization helper (use the first camera's debug field)
     Field2d debugField = m_visionSims.get(0).getSimDebugField();
     m_showVisionOnField = new ShowVisionOnField(null, debugField);
+
+    // Publish ground truth pose to DriveState table for AdvantageScope visualization
+    m_groundTruthPosePublisher =
+        NetworkTableInstance.getDefault()
+            .getTable("DriveState")
+            .getStructTopic("GroundTruthPose", Pose2d.struct)
+            .publish();
   }
 
   /**
@@ -86,6 +96,7 @@ public class SimWrapper {
     // This ensures cameras see AprilTags based on actual robot position
     Pose2d groundTruthPose = m_groundTruthSim.getGroundTruthPose();
     m_visionSims.forEach(v -> v.simulationPeriodic(groundTruthPose));
+    m_groundTruthPosePublisher.set(groundTruthPose);
 
     // Debug field visualization
     m_showVisionOnField.showEstimatedPoseAndWheels(
@@ -103,16 +114,6 @@ public class SimWrapper {
   public void resetSimPose(Pose2d pose) {
     m_groundTruthSim.resetGroundTruthPoseForSim(pose);
     m_visionSims.forEach(v -> v.resetSimPose(pose));
-  }
-
-  /**
-   * Transforms joystick inputs based on the operator's forward direction. Static method that can be
-   * called without a SimWrapper instance.
-   */
-  public static JoystickInputsRecord transformJoystickOrientation(
-      double degreesFieldForward, double driveX, double driveY, double rotateX) {
-    return SimJoystickOrientation.simTransformJoystickOrientation(
-        degreesFieldForward, driveX, driveY, rotateX);
   }
 
   /** Proxy call to ground truth sim to inject odometry drift. */
