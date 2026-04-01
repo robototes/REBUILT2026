@@ -2,7 +2,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import frc.robot.util.simulation.DrivebaseSim;
+import frc.robot.util.simulation.NotSimRelatedClass;
 
 public class Telemetry {
   /** Construct a telemetry object */
@@ -10,8 +10,8 @@ public class Telemetry {
     SignalLogger.start();
   }
 
-  public DrivebaseSim DrivebaseSim(double MaxSpeed) {
-    return new DrivebaseSim(this, MaxSpeed);
+  public NotSimRelatedClass DrivebaseSim(double MaxSpeed) {
+    return new NotSimRelatedClass(this, MaxSpeed);
   }
 
   /* What to publish over networktables for telemetry */

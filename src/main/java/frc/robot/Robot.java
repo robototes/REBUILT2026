@@ -29,7 +29,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.simulation.DrivebaseSim;
+import frc.robot.util.simulation.NotSimRelatedClass;
 import frc.robot.util.simulation.RobotSim;
 
 /**
@@ -51,7 +51,7 @@ public class Robot extends TimedRobot {
   private final Mechanism2d mechanismRobot;
   private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
-  private final DrivebaseSim driveBaseSim;
+  private final NotSimRelatedClass driveBaseSim;
   private final Telemetry logger;
 
   /**

@@ -22,7 +22,7 @@ import frc.robot.Telemetry;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.tuning.LauncherConstants;
 
-public class DrivebaseSim {
+public class NotSimRelatedClass {
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
   private final Telemetry telem;
   private final double MaxSpeed;
@@ -91,7 +91,7 @@ public class DrivebaseSim {
             .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
       };
 
-  public DrivebaseSim(Telemetry telemetry, double MaxSpeed) {
+  public NotSimRelatedClass(Telemetry telemetry, double MaxSpeed) {
     this.MaxSpeed = MaxSpeed;
     this.telem = telemetry;
     /* Telemeterize the module states to a Mechanism2d */
