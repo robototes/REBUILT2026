@@ -227,43 +227,25 @@ public class Controls {
       return;
     }
 
-    // double TURRET_FALLBACK_OFFSET = -90;
     driverController
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
+                s.turretSubsystem.setTurretPosition(0),
+                s.launcherSubsystem.launcherAimCommandV2(),
+                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                LEDandIntakeRoutine()))
+        .onFalse(LEDandIntakeExitRoutine());
+    driverController
+        .y()
+        .whileTrue(
+            Commands.parallel(
                 AutoDriveRotate.autoRotate(
                     s, () -> driverController.getLeftX(), () -> driverController.getLeftY()),
-                // s.turretSubsystem.setTurretPosition(0),
-                // s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                    .andThen(
-                        Commands.parallel(
-                                s.indexerSubsystem.runIndexer(),
-                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.runOnce(() -> s.intakePivot.restartTimer())
-                                    .andThen(
-                                        Commands.runOnce(
-                                            () ->
-                                                intakeMode =
-                                                    driverController.leftTrigger().getAsBoolean()
-                                                        ? IntakeMode.INTAKE
-                                                        : IntakeMode.LAUNCH)))
-                            .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
-                    .repeatedly()))
-        .onFalse(
-            s.launcherSubsystem
-                .rawStowCommand()
-                .alongWith(
-                    Commands.runOnce(
-                        () -> {
-                          ledsMode = LEDMode.DEFAULT;
-                          intakeMode =
-                              driverController.leftTrigger().getAsBoolean()
-                                  ? IntakeMode.INTAKE
-                                  : IntakeMode.DEPLOYED;
-                        })));
+                LEDandIntakeRoutine()))
+        .onFalse(LEDandIntakeExitRoutine());
+
     driverController
         .start()
         .onTrue(
@@ -296,6 +278,38 @@ public class Controls {
     connected(launcherTuningController)
         .and(launcherTuningController.y())
         .onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private Command LEDandIntakeRoutine() {
+    return Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+        .andThen(
+            Commands.parallel(
+                    s.indexerSubsystem.runIndexer(),
+                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                    Commands.runOnce(() -> s.intakePivot.restartTimer())
+                        .andThen(
+                            Commands.runOnce(
+                                () ->
+                                    intakeMode =
+                                        driverController.leftTrigger().getAsBoolean()
+                                            ? IntakeMode.INTAKE
+                                            : IntakeMode.LAUNCH)))
+                .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
+        .repeatedly();
+  }
+
+  private Command LEDandIntakeExitRoutine() {
+    return s.launcherSubsystem
+        .rawStowCommand()
+        .alongWith(
+            Commands.runOnce(
+                () -> {
+                  ledsMode = LEDMode.DEFAULT;
+                  intakeMode =
+                      driverController.leftTrigger().getAsBoolean()
+                          ? IntakeMode.INTAKE
+                          : IntakeMode.DEPLOYED;
+                }));
   }
 
   private void configureIntakeBindings() {
