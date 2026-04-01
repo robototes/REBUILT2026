@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -63,9 +64,8 @@ public class IntakeRollers extends SubsystemBase {
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
     talonFXConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-    // motor limits idk if i need to add anymore
-    talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
-    talonFXConfigs.CurrentLimits.SupplyCurrentLimit = 30;
+    talonFXConfigs.CurrentLimits.StatorCurrentLimit = 80;
+    talonFXConfigs.CurrentLimits.SupplyCurrentLimit = 40;
     talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
