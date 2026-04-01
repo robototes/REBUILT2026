@@ -29,7 +29,6 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
-import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -113,7 +112,6 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureIntakeBindings();
-    configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
     configureLedBindings();
@@ -221,16 +219,6 @@ public class Controls {
                 () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
   }
 
-  private void configureAutoAlignBindings() {
-    if (s.detectionSubsystem == null) {
-      DataLogManager.log("Game piece detection is disabled");
-      return;
-    }
-    connected(visionTestController)
-        .and(visionTestController.rightBumper())
-        .whileTrue(FuelAutoAlign.autoAlign(this, s));
-  }
-
   private void configureLauncherBindings() {
     if (s.flywheels == null || s.hood == null || s.ledSubsystem == null) {
       // Stop running this method
@@ -251,7 +239,7 @@ public class Controls {
                         Commands.parallel(
                                 s.indexerSubsystem.runIndexer(),
                                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.waitSeconds(1)
+                                Commands.runOnce(() -> s.intakePivot.restartTimer())
                                     .andThen(
                                         Commands.runOnce(
                                             () ->
@@ -277,20 +265,17 @@ public class Controls {
         .start()
         .onTrue(
             Commands.parallel(
-                    s.launcherSubsystem.zeroSubsystemCommand(),
-                    s.intakePivot.zeroPivot(),
+                    Commands.either(
+                        s.hood.autoZeroCommand(),
+                        s.launcherSubsystem.zeroSubsystemCommand(),
+                        () -> DriverStation.isEnabled()),
+                    Commands.either(
+                        s.intakePivot.autoZeroCommand(),
+                        s.intakePivot.zeroPivot(),
+                        () -> DriverStation.isEnabled()),
                     s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
-
-    // driverController
-    //     .start()
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 s.hood.autoZeroCommand(),
-    //                 s.intakePivot.autoZeroCommand(),
-    //                 s.turretSubsystem.autoZeroCommand(),
-    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
@@ -343,11 +328,13 @@ public class Controls {
         .onFalse(
             Commands.runOnce(
                 () -> {
-                  intakeMode =
-                      driverController.rightTrigger().getAsBoolean()
-                          ? IntakeMode.LAUNCH
-                          : IntakeMode.DEPLOYED;
-                  ledsMode = LEDMode.DEFAULT;
+                  if (driverController.rightTrigger().getAsBoolean()) {
+                    intakeMode = IntakeMode.LAUNCH;
+                    s.intakePivot.restartTimer();
+                  } else {
+                    intakeMode = IntakeMode.DEPLOYED;
+                    ledsMode = LEDMode.DEFAULT;
+                  }
                 }));
     driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
