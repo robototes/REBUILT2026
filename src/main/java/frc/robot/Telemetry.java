@@ -15,7 +15,7 @@ public class Telemetry {
   }
 
   /* What to publish over networktables for telemetry */
-  private static SwerveDriveState cachedDriveState;
+  private SwerveDriveState cachedDriveState;
 
   private final double[] m_poseArray = new double[3];
   private final double[] m_moduleStatesArray = new double[8];
