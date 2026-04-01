@@ -73,7 +73,7 @@ public class AutoDriveRotate {
                       .targetTurret()
                       .getRadians()
                   + Math.PI;
-      double rotationOutput = pidRotate.calculate(targetSupplier.getAsDouble());
+      double rotationOutput = pidRotate.calculate(-targetSupplier.getAsDouble());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(targetSupplier.getAsDouble());
       SwerveRequest request =
