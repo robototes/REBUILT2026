@@ -24,6 +24,8 @@ import frc.robot.util.tuning.LauncherConstants;
 
 public class DrivebaseSim {
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  private final Telemetry telem;
+  private final double MaxSpeed;
 
   /* Robot swerve drive state */
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
@@ -89,21 +91,22 @@ public class DrivebaseSim {
             .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
       };
 
-  public DrivebaseSim(double MaxSpeed) {
-    SwerveDriveState state = Telemetry.returnDriveState();
+  public DrivebaseSim(Telemetry telemetry, double MaxSpeed) {
+    this.MaxSpeed = MaxSpeed;
+    this.telem = telemetry;
     /* Telemeterize the module states to a Mechanism2d */
     for (int i = 0; i < 4; ++i) {
-      m_moduleSpeeds[i].setAngle(state.ModuleStates[i].angle);
-      m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
-      m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
-
       SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
+    }
+    double[] poseArr = telem.returnPoseArray();
+    if (poseArr != null) {
+      fieldPub.set(poseArr);
     }
   }
 
   // should be updated periodically in robot.periodic()
   public void update() {
-    SwerveDriveState state = Telemetry.returnDriveState();
+    SwerveDriveState state = telem.returnDriveState();
     // null check
     if (state == null) {
       return;
@@ -112,6 +115,11 @@ public class DrivebaseSim {
     var turret = LauncherConstants.launcherFromRobot(state.Pose);
     var robotToHubMeters = AllianceUtils.getHubTranslation2d().minus(turret).getNorm();
 
+    for (int i = 0; i < 4; ++i) {
+      m_moduleSpeeds[i].setAngle(state.ModuleStates[i].angle);
+      m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
+      m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
+    }
     /* Telemeterize the swerve drive state */
     drivePose.set(state.Pose);
     turretTranslation.set(turret);
@@ -124,10 +132,5 @@ public class DrivebaseSim {
     driveOdometryFrequency.set(state.OdometryPeriod == 0 ? 0 : 1.0 / state.OdometryPeriod);
     /* Telemeterize the pose to a Field2d */
     fieldTypePub.set("Field2d");
-
-    double[] poseArr = Telemetry.returnPoseArray();
-    if (poseArr != null) {
-      fieldPub.set(poseArr);
-    }
   }
 }

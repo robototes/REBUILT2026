@@ -52,6 +52,7 @@ public class Robot extends TimedRobot {
   private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DrivebaseSim driveBaseSim;
+  private final Telemetry logger;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -116,7 +117,7 @@ public class Robot extends TimedRobot {
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
-    Telemetry logger = new Telemetry();
+    logger = new Telemetry();
     subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
     driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
   }

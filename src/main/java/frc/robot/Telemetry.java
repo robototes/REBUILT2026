@@ -11,15 +11,15 @@ public class Telemetry {
   }
 
   public DrivebaseSim DrivebaseSim(double MaxSpeed) {
-    return new DrivebaseSim(MaxSpeed);
+    return new DrivebaseSim(this, MaxSpeed);
   }
 
   /* What to publish over networktables for telemetry */
   private static SwerveDriveState cachedDriveState;
 
-  private static final double[] m_poseArray = new double[3];
-  private static final double[] m_moduleStatesArray = new double[8];
-  private static final double[] m_moduleTargetsArray = new double[8];
+  private final double[] m_poseArray = new double[3];
+  private final double[] m_moduleStatesArray = new double[8];
+  private final double[] m_moduleTargetsArray = new double[8];
 
   /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
   public void telemeterize(SwerveDriveState state) {
@@ -42,11 +42,11 @@ public class Telemetry {
     SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
   }
 
-  public static SwerveDriveState returnDriveState() {
+  public SwerveDriveState returnDriveState() {
     return cachedDriveState;
   }
 
-  public static double[] returnPoseArray() {
+  public double[] returnPoseArray() {
     return m_poseArray;
   }
 }
