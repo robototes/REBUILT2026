@@ -226,12 +226,14 @@ public class Controls {
       return;
     }
 
+    // double TURRET_FALLBACK_OFFSET = -90;
     driverController
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
                 // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
                 // driverController.getLeftX(), ()-> driverController.getLeftY()),
+                // s.TurretSubsytem.setTurretPosition(TURRET_FALLBACK_OFFSET),
                 s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
