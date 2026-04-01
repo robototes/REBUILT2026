@@ -29,6 +29,7 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
+import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -231,10 +232,10 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
-                // driverController.getLeftX(), ()-> driverController.getLeftY()),
-                // s.TurretSubsytem.setTurretPosition(TURRET_FALLBACK_OFFSET),
-                s.launcherSubsystem.launcherAimCommandV2(),
+                AutoDriveRotate.autoRotate(
+                    s, () -> driverController.getLeftX(), () -> driverController.getLeftY()),
+                // s.turretSubsystem.setTurretPosition(0),
+                // s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
@@ -403,7 +404,7 @@ public class Controls {
       return;
     }
 
-    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
+    // s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));

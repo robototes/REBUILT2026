@@ -67,13 +67,11 @@ public class AutoDriveRotate {
     @Override
     public void execute() {
       if (s.turretSubsystem == null) return;
-      DoubleSupplier targetSupplier =
-          () ->
-              inst.getParameters(s.drivebaseSubsystem, s.turretSubsystem)
-                      .targetTurret()
-                      .getRadians()
-                  + s.drivebaseSubsystem.getState().Pose.getRotation().getRadians()
-                  + Math.PI;
+      DoubleSupplier targetSupplier = () ->
+                  inst.getParameters(s.drivebaseSubsystem, s.turretSubsystem)
+                          .targetTurret()
+                          .getRadians()
+                      + Math.PI;
       double rotationOutput = pidRotate.calculate(targetSupplier.getAsDouble());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(targetSupplier.getAsDouble());
