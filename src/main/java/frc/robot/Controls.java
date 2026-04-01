@@ -29,7 +29,6 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
-import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -53,7 +52,6 @@ public class Controls {
   private static final int LAUNCHER_TUNING_CONTROLLER_PORT = 2;
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
   private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
-  private static final int VISION_TEST_CONTROLLER_PORT = 5;
 
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -69,9 +67,6 @@ public class Controls {
 
   private final CommandXboxController turretTestController =
       new CommandXboxController(TURRET_TEST_CONTROLLER_PORT);
-
-  private final CommandXboxController visionTestController =
-      new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
   AprilTagFieldLayout aprilTagFieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
@@ -113,7 +108,6 @@ public class Controls {
     configureLauncherBindings();
     configureIndexingBindings();
     configureIntakeBindings();
-    configureAutoAlignBindings();
     configureTurretBindings();
     configureLedBindings();
   }
@@ -218,16 +212,6 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
-  }
-
-  private void configureAutoAlignBindings() {
-    if (s.detectionSubsystem == null) {
-      DataLogManager.log("Game piece detection is disabled");
-      return;
-    }
-    connected(visionTestController)
-        .and(visionTestController.rightBumper())
-        .whileTrue(FuelAutoAlign.autoAlign(this, s));
   }
 
   private void configureLauncherBindings() {
