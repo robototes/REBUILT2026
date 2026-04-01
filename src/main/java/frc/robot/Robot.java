@@ -51,8 +51,7 @@ public class Robot extends TimedRobot {
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
-  public final SimWrapper m_simWrapper;
-  private ShowVisionOnField m_showVisionOnField;
+  private final SimWrapper m_simWrapper;
   private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
 
   /**
@@ -92,9 +91,10 @@ public class Robot extends TimedRobot {
 
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation() && m_simWrapper != null) {
-      m_showVisionOnField = new ShowVisionOnField(null, m_simWrapper.getSimDebugField());
+      ShowVisionOnField showVisionOnField =
+          new ShowVisionOnField(null, m_simWrapper.getSimDebugField());
       if (subsystems.visionSubsystem != null) {
-        subsystems.visionSubsystem.setShowVisionOnField(m_showVisionOnField);
+        subsystems.visionSubsystem.setShowVisionOnField(showVisionOnField);
       }
     }
 

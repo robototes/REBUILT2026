@@ -206,7 +206,7 @@ public class Controls {
                             rightX);
                     leftX = -newJoystickInputs.driveX();
                     leftY = -newJoystickInputs.driveY();
-                    rightX = newJoystickInputs.rotatetX();
+                    rightX = newJoystickInputs.rotateX();
                   }
 
                   return drive.withVelocityX(leftX).withVelocityY(leftY).withRotationalRate(rightX);

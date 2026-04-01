@@ -152,7 +152,11 @@ public class GroundTruthSim implements GroundTruthSimInterface {
 
     Pose2d pose = shouldFlipPose ? FlippingUtil.flipFieldPose(blueAlliancePose) : blueAlliancePose;
 
-    // Trigger robot pose reset
+    // Explicitly reset ground truth pose so this method is self-contained,
+    // regardless of what the consumer callback does.
+    resetGroundTruthPoseForSim(pose);
+
+    // Trigger robot pose reset (drivetrain + vision sim)
     m_poseResetConsumer.accept(pose);
   }
 

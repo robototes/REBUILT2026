@@ -244,12 +244,11 @@ public class PhotonToLimelightConverter {
 
     data.botposeWpiBlue = botpose;
 
-    // For WPI Red, mirror the pose (field is 16.54m x 8.21m for 2024 field)
-    // Red origin is at opposite corner, so x' = fieldLength - x, y' = fieldWidth - y,
-    // yaw' = yaw + 180
+    // For WPI Red, mirror the X axis across the field centerline and rotate yaw 180°.
+    // WPI Red and Blue share the same Y axis direction.
+    double fieldLength = VisionSimConstants.kTagLayout.getFieldLength();
     double[] botposeRed = botpose.clone();
-    botposeRed[0] = 16.54 - robotPose.getX();
-    botposeRed[1] = 8.21 - robotPose.getY();
+    botposeRed[0] = fieldLength - robotPose.getX();
     double yawDeg = Units.radiansToDegrees(robotPose.getRotation().getZ());
     botposeRed[5] = ((yawDeg + 180) % 360) - 180; // Normalize to [-180, 180]
     data.botposeWpiRed = botposeRed;
