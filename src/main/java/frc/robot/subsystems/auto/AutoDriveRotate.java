@@ -22,7 +22,7 @@ public class AutoDriveRotate {
   }
 
   // Tunable:
-  private static final double SPEED_LIMIT = 2 * Math.PI; // Radians / second
+  private static final double SPEED_LIMIT = 4 * Math.PI; // Radians / second
   private static final double TOLERANCE = Math.toRadians(3);
   private static final double VELOCITY_TOLERANCE = Math.toRadians(5);
   private static final double kP = 8.0;
