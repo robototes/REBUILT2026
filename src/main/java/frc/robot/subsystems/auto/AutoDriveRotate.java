@@ -66,12 +66,17 @@ public class AutoDriveRotate {
 
     @Override
     public void execute() {
-      double targetRotate =
-          inst.getParameters(s.drivebaseSubsystem, s.turretSubsystem).targetTurret().getDegrees()
-              + s.drivebaseSubsystem.getState().Pose.getRotation().getDegrees();
-      double rotationOutput = pidRotate.calculate(targetRotate);
+      if (s.turretSubsystem == null) return;
+      DoubleSupplier targetSupplier =
+          () ->
+              inst.getParameters(s.drivebaseSubsystem, s.turretSubsystem)
+                      .targetTurret()
+                      .getRadians()
+                  + s.drivebaseSubsystem.getState().Pose.getRotation().getRadians()
+                  + Math.PI;
+      double rotationOutput = pidRotate.calculate(targetSupplier.getAsDouble());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
-      anglePub.set(targetRotate);
+      anglePub.set(targetSupplier.getAsDouble());
       SwerveRequest request =
           driveRequest
               .withVelocityX(xSupplier.getAsDouble())
