@@ -236,7 +236,7 @@ public class LaunchCalculator {
     double targetHood = getHoodAngle(turretPose, trueDistance);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
-        targetAngleFieldRelative;
+        targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
     return new LaunchingParameters(
         targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity, turretPose);
