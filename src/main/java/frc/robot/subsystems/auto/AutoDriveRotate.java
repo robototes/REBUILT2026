@@ -30,7 +30,7 @@ public class AutoDriveRotate {
   private static final double kD = 0.0;
 
   // Launch Calculator Instance
-  private static final LaunchCalculator inst = LaunchCalculator.getInstance();
+  private static final LaunchCalculator launchCalc = LaunchCalculator.getInstance();
   private static final Translation2d turretTranslation =
       LauncherConstants.turretTransform().getTranslation();
 
@@ -69,7 +69,8 @@ public class AutoDriveRotate {
       if (s.turretSubsystem == null) return;
       DoubleSupplier targetSupplier =
           () ->
-              inst.getParameters(s.drivebaseSubsystem, s.turretSubsystem)
+              launchCalc
+                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem)
                       .targetTurret()
                       .getRadians()
                   + Math.PI;
