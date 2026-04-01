@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "RT-Intake"
+                  "pathName": "Rotate-RT-Intake"
                 }
               },
               {
@@ -39,7 +39,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralRight-Intake"
+            "pathName": "Rotate-NeutralRight-Intake"
           }
         },
         {
