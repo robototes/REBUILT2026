@@ -61,7 +61,7 @@ public class Spindexer extends SubsystemBase {
       motorSim = null;
     }
 
-    // Instantiage log variables
+    // Instiate log variables
     DataLog log = DataLogManager.getLog();
     statorCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/statorCurrent");
     supplyCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/supplyCurrent");
