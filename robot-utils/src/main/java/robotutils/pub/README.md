@@ -149,8 +149,93 @@ If these names do not match the published Field2d object names, the custom style
 - `SimLimelightProducer.getSimDebugField()` is simulation-only in practice; guard its use.
 - `FaultyDriveManager` assumes non-null dependencies from simulation wiring.
 
+## 8) Copy sim Pathplanner autos to show sample vision problems
+
+copy pathplanner autos and paths sim* files.
+
+## 9) Add simgui.json styling for robot poses
+
+```json
+      "/SmartDashboard/VisionSystemSim-main/Sim Field": {
+        "EstimatedRobotModules": {
+          "image": "/Users/ido/robotics/Robototes/REBUILT2026/swerve_module.png",
+          "length": 0.25,
+          "width": 0.25
+        },
+        "Robot": {
+          "arrowColor": [
+            1.0,
+            1.0,
+            1.0,
+            255.0
+          ],
+          "arrowWeight": 1.0,
+          "color": [
+            1.0,
+            1.0,
+            1.0,
+            255.0
+          ],
+          "weight": 1.0
+        },
+        "apriltag": {
+          "image": "/Users/ido/robotics/Robototes/REBUILT2026/tag-green.png"
+        },
+        "bottom": 1914,
+        "cameras": {
+          "arrows": false,
+          "selectable": false,
+          "style": "Hidden"
+        },
+        "height": 8.069275856018066,
+        "left": 245,
+        "right": 3942,
+        "top": 118,
+        "visibleTargetPoses": {
+          "image": "/Users/ido/robotics/Robototes/REBUILT2026/tag-blue.png"
+        },
+        "width": 16.54119300842285,
+        "window": {
+          "visible": true
+        }
+      }
+```
+
+## 10) Add joystick button to reset pose to start of auto, and add drift
+
+```json
+    if (RobotBase.isSimulation()) {
+      // povRight - Offsets physical robot from robot estimate pose
+      driverController
+          .povRight()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      // Random translation up to 0.5 m in a random direction, random rotation sign
+                      double angle = Math.random() * 2 * Math.PI;
+                      double xFrontBack = 0.5 * Math.cos(angle);
+                      double yLeftRight = 0.5 * Math.sin(angle);
+                      double dtheta = 15.0 * (Math.random() > 0.5 ? 1 : -1);
+                      s.groundTruthSim.injectDriftToGroundTruth(xFrontBack, yLeftRight, dtheta);
+                    }
+                  }));
+
+      // povLeft - Resets the robot pose to auto start location
+      driverController
+          .povLeft()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      s.groundTruthSim.cycleResetPosition(blueHub);
+                    }
+                  }));
+    }
+```
+
 ## Next steps
 
-1. Show how to copy simgui.json styles for robot-pose, and how to get robot wheel icons to show-up correctly
-2. Show how to add all the sim* fault Pathplanner paths, and add them as sim-only in autologic
-3. Pov-left should cycle auto start pose, and pov-right should offset groundtruth bot
+4. Show vision poses
+4.5. Copy the new vision color styles for the vision pose in simgui.json into this README
+5. Fix joystick for sim

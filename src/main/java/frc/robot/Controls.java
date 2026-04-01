@@ -19,6 +19,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -338,6 +339,36 @@ public class Controls {
                 }));
     driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+
+    if (RobotBase.isSimulation()) {
+      // povRight - Offsets physical robot from robot estimate pose
+      driverController
+          .povRight()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      // Random translation up to 0.5 m in a random direction, random rotation sign
+                      double angle = Math.random() * 2 * Math.PI;
+                      double xFrontBack = 0.5 * Math.cos(angle);
+                      double yLeftRight = 0.5 * Math.sin(angle);
+                      double dtheta = 15.0 * (Math.random() > 0.5 ? 1 : -1);
+                      s.groundTruthSim.injectDriftToGroundTruth(xFrontBack, yLeftRight, dtheta);
+                    }
+                  }));
+
+      // povLeft - Resets the robot pose to auto start location
+      driverController
+          .povLeft()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      s.groundTruthSim.cycleResetPosition(blueHub);
+                    }
+                  }));
+    }
+
     driverController
         .leftBumper()
         .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE))
