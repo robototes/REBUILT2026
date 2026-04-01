@@ -67,7 +67,8 @@ public class AutoDriveRotate {
     @Override
     public void execute() {
       double targetRotate =
-          inst.getParameters(s.drivebaseSubsystem, s.turretSubsystem).targetTurret().getDegrees();
+          inst.getParameters(s.drivebaseSubsystem, s.turretSubsystem).targetTurret().getDegrees()
+              + s.drivebaseSubsystem.getState().Pose.getRotation().getDegrees();
       double rotationOutput = pidRotate.calculate(targetRotate);
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(targetRotate);
