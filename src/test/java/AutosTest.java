@@ -18,7 +18,7 @@ class AutosTest {
   @BeforeEach
   void setup() {
 
-    AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), pose -> {}, true);
+    AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), true);
   }
 
   @Test

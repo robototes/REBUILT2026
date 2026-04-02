@@ -4,20 +4,17 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.ConfigShift;
 import frc.robot.util.robotType.RobotType;
 import java.io.IOException;
-import java.util.function.Consumer;
 import org.json.simple.parser.ParseException;
 
 public class AutoBuilderConfig {
 
-  public static void buildAuto(
-      CommandSwerveDrivetrain drivebase, Consumer<Pose2d> resetPoseConsumer, boolean unitTest) {
+  public static void buildAuto(CommandSwerveDrivetrain drivebase, boolean unitTest) {
 
     try {
       AutoBuilder.configure(
@@ -25,7 +22,7 @@ public class AutoBuilderConfig {
             return drivebase.getState().Pose;
           }, // Robot pose supplier
           (pose) -> {
-            resetPoseConsumer.accept(pose);
+            drivebase.resetPose(pose);
           }, // Method to reset odometry (will be called if your auto has a starting
           // pose)
           () -> {
