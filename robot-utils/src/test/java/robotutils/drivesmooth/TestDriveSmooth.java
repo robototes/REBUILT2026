@@ -22,6 +22,8 @@ class TestDriveSmooth {
     private static final double ROUNDING_EPSILON = 1e-6;
     private static final double DT = 0.02;
     private static final int SETTLE_CYCLES = 200;
+    private static final double TELEOP_SPEED = 4.0;
+    private static final double MAX_ANGULAR = 3.0;
 
     @BeforeAll
     static void initHal() {
@@ -50,6 +52,18 @@ class TestDriveSmooth {
             smooth.processTranslationY(y);
             smooth.processRotation(rot);
         }
+    }
+
+    private record DriveRecord(double driveX, double driveY, double rotatetX) {}
+
+    private static DriveRecord settledRecord(double x, double y, double rot) {
+        DriveSmoothInterface smooth = createSmooth();
+        runCycles(smooth, SETTLE_CYCLES, x, y, rot);
+        SimHooks.stepTiming(DT);
+        return new DriveRecord(
+            smooth.processTranslationX(x) * TELEOP_SPEED,
+            smooth.processTranslationY(y) * TELEOP_SPEED,
+            smooth.processRotation(rot) * MAX_ANGULAR);
     }
 
     @Test
@@ -102,5 +116,83 @@ class TestDriveSmooth {
         assertTrue(first < 0.5,
             "slew limiter should prevent instant jump to max, got "
                 + first);
+    }
+
+    @Test
+    void joystickForward_positiveDriveX_zeroDriveY() {
+        DriveRecord rec = settledRecord(0.8, 0.0, 0.0);
+
+        assertTrue(rec.driveX() > 0.0,
+            "forward stick should produce positive driveX, got " + rec.driveX());
+        assertEquals(0.0, rec.driveY(), ROUNDING_EPSILON,
+            "forward stick should produce zero driveY");
+    }
+
+    @Test
+    void joystickBackward_negativeDriveX_zeroDriveY() {
+        DriveRecord rec = settledRecord(-0.8, 0.0, 0.0);
+
+        assertTrue(rec.driveX() < 0.0,
+            "backward stick should produce negative driveX, got " + rec.driveX());
+        assertEquals(0.0, rec.driveY(), ROUNDING_EPSILON,
+            "backward stick should produce zero driveY");
+    }
+
+    @Test
+    void joystickLeft_zeroDriveX_positiveDriveY() {
+        DriveRecord rec = settledRecord(0.0, 0.8, 0.0);
+
+        assertEquals(0.0, rec.driveX(), ROUNDING_EPSILON,
+            "left stick should produce zero driveX");
+        assertTrue(rec.driveY() > 0.0,
+            "left stick should produce positive driveY, got " + rec.driveY());
+    }
+
+    @Test
+    void joystickRight_zeroDriveX_negativeDriveY() {
+        DriveRecord rec = settledRecord(0.0, -0.8, 0.0);
+
+        assertEquals(0.0, rec.driveX(), ROUNDING_EPSILON,
+            "right stick should produce zero driveX");
+        assertTrue(rec.driveY() < 0.0,
+            "right stick should produce negative driveY, got " + rec.driveY());
+    }
+
+    @Test
+    void negativeInput_producesNegativeOutput() {
+        DriveRecord rec = settledRecord(-1.0, -1.0, -1.0);
+
+        assertTrue(rec.driveX() < -TELEOP_SPEED * 0.9,
+            "negative X expected, got " + rec.driveX());
+        assertTrue(rec.driveY() < -TELEOP_SPEED * 0.9,
+            "negative Y expected, got " + rec.driveY());
+        assertTrue(rec.rotatetX() < -MAX_ANGULAR * 0.9,
+            "negative rotate expected, got " + rec.rotatetX());
+    }
+
+    @Test
+    void translationScaledByTeleopSpeed_rotationByAngularRate() {
+        DriveRecord rec = settledRecord(0.5, 0.0, 0.5);
+
+        double expectedRatio = TELEOP_SPEED / MAX_ANGULAR;
+        double actualRatio = rec.driveX() / rec.rotatetX();
+        assertEquals(expectedRatio, actualRatio, 0.15,
+            "translation/rotation ratio should reflect speed constants");
+    }
+
+    @Test
+    void finePositioning_halvesOutput() {
+        DriveSmoothInterface smooth = createSmooth();
+
+        runCycles(smooth, SETTLE_CYCLES, 0.8, 0.0, 0.0);
+
+        SimHooks.stepTiming(DT);
+        double baseX = smooth.processTranslationX(0.8) * TELEOP_SPEED;
+
+        SimHooks.stepTiming(DT);
+        double fineX = smooth.processTranslationX(0.8) * TELEOP_SPEED * 0.5;
+
+        assertEquals(0.5, fineX / baseX, 0.02,
+            "fine X should be ~half of normal");
     }
 }

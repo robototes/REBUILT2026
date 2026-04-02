@@ -7,7 +7,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.RobotBase;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import robotutils.dashboard.DashboardManager;
@@ -88,36 +87,24 @@ public class RobotUtilsFactory {
     /**
      * Creates a joystick input processor.
      *
-     * @param driveSmooth smoothing pipeline (deadband, curve, slew)
      * @param rawxSupplier supplier for forward/back axis
      * @param rawySupplier supplier for strafe axis
      * @param rawRotateSupplier supplier for rotation axis
-     * @param finePositioningEnabledSupplier returns {@code true} when fine-positioning is enabled
-     * @param teleoperatedSpeed maximum linear velocity in m/s
-     * @param maxAngularRate maximum angular velocity in rad/s
      * @param isSimulation {@code true} when running in simulation
      * @param operatorForwardDegreesSupplier supplier for operator forward direction in degrees
      * @return configured joystick input processor
      */
     public JoystickInputInterface createJoystickInput(
-        DriveSmoothInterface driveSmooth,
         DoubleSupplier rawxSupplier,
         DoubleSupplier rawySupplier,
         DoubleSupplier rawRotateSupplier,
-        BooleanSupplier finePositioningEnabledSupplier,
-        double teleoperatedSpeed,
-        double maxAngularRate,
         boolean isSimulation,
         DoubleSupplier operatorForwardDegreesSupplier) {
 
         return new JoystickInput(
-            driveSmooth,
             rawxSupplier,
             rawySupplier,
             rawRotateSupplier,
-            finePositioningEnabledSupplier,
-            teleoperatedSpeed,
-            maxAngularRate,
             isSimulation,
             operatorForwardDegreesSupplier);
     }

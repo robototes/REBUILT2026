@@ -1,4 +1,4 @@
-package robotutils.pub.staticutils;
+package robotutils.pub.utils;
 
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;

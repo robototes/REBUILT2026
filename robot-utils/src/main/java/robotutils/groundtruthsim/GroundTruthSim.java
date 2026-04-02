@@ -35,8 +35,8 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import robotutils.pub.interfaces.GroundTruthSimInterface;
-import robotutils.pub.staticutils.AllianceCalc;
 import robotutils.pub.interfaces.dashboard.DashboardProviderInterface;
+import robotutils.pub.utils.AllianceCalc;
 
 
 /**
