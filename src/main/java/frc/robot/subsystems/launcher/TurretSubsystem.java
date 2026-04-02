@@ -16,10 +16,12 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
@@ -31,6 +33,7 @@ import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
+  private final DigitalInput limitSwitch;
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
@@ -91,9 +94,12 @@ public class TurretSubsystem extends SubsystemBase {
         new TalonFX(
             Hardware.TURRET_MOTOR_ID,
             RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+    limitSwitch = new DigitalInput(Hardware.HALL_EFFECT_SENSOR_ID);
     zeroPublisher.set(false);
     turretConfig();
     turretRotation.set(new Pose2d[2]);
+
+    new Trigger(() -> atLimitSwitch()).onTrue(Commands.runOnce(() -> turretMotor.setPosition(0)));
   }
 
   public void turretConfig() {
@@ -291,15 +297,19 @@ public class TurretSubsystem extends SubsystemBase {
         .withName("Voltage Control");
   }
 
+  // We cant use a limit switch for zeroing
   public Command autoZeroCommand() {
     if (Robot.isSimulation()) {
       return zeroTurret();
     }
     return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
-        .until(
-            () -> turretMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
+        .until(() -> atLimitSwitch())
         .andThen(zeroTurret())
         .withTimeout(3)
         .withName("Automatic Zero turret");
+  }
+
+  public boolean atLimitSwitch() {
+    return !limitSwitch.get();
   }
 }
