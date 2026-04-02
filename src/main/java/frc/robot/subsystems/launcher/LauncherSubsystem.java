@@ -6,8 +6,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
-import frc.robot.subsystems.LaunchCalculator;
-import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
+import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected double flywheelsGoal;
