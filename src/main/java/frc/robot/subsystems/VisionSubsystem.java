@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.util.AllianceUtils;
@@ -76,13 +78,13 @@ public class VisionSubsystem extends SubsystemBase {
     private static final int RESET_MIN_TAGS = 2;
   }
 
-  private static final Transform3d COMP_BOT_LEFT_CAMERA =
+  public static final Transform3d COMP_BOT_LEFT_CAMERA =
       new Transform3d(
           -0.076,
           0.311,
           0.274,
           new Rotation3d(0, Units.degreesToRadians(-8), Units.degreesToRadians(90)));
-  private static final Transform3d COMP_BOT_FRONT_CAMERA =
+  public static final Transform3d COMP_BOT_FRONT_CAMERA =
       new Transform3d(0.267, -0.111, 0.471, new Rotation3d(0, Units.degreesToRadians(-15), 0));
 
   private final Field2d robotField;
@@ -126,6 +128,7 @@ public class VisionSubsystem extends SubsystemBase {
       SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
+  private ShowVisionOnField m_showVisionOnField;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot) {
     this.drivetrain = drivetrain;
@@ -267,6 +270,14 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     maybeResetToVision(visionPose2d, avgAmbiguity, estimate.tagCount, camera.getName());
+
+    if (m_showVisionOnField != null) {
+      m_showVisionOnField.showPointInTimeVisionEstimate(
+          ShowVisionOnField.FieldType.SIMULATION_FIELD,
+          camera.getName(),
+          estimate.isMegaTag2,
+          java.util.Optional.of(estimate.pose3d.toPose2d()));
+    }
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
@@ -497,5 +508,9 @@ public class VisionSubsystem extends SubsystemBase {
     return historicPose
         .map(pose2d -> getDistanceToTargetViaPoseEstimation(pose2d, visionPose2d))
         .orElse(0.0);
+  }
+
+  public void setShowVisionOnField(ShowVisionOnField m_showVisionOnField) {
+    this.m_showVisionOnField = m_showVisionOnField;
   }
 }
