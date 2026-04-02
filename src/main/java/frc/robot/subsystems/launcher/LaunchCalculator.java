@@ -235,7 +235,7 @@ public class LaunchCalculator {
         virtualTarget.minus(turretPose.getTranslation()).getAngle();
 
     // FINAL NUMS
-    double targetHood = getHoodAngle(turretPose, trueDistance, chassisSpeeds);
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
@@ -267,16 +267,17 @@ public class LaunchCalculator {
    * @return returns a double representing the hood angle (should be tuned in launcher constants).
    *     Returned value does not have an apparant unit.
    */
-  public double getHoodAngle(Pose2d turretPose, double trueDist, ChassisSpeeds speeds) {
+  public double getHoodAngle(Pose2d robotPose, double trueDist, ChassisSpeeds speeds) {
     for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
       double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
-      Pose2d sampledPose =
-          turretPose.exp(
+      Pose2d sampledRobotPose =
+          robotPose.exp(
               new Twist2d(
                   speeds.vxMetersPerSecond * t,
                   speeds.vyMetersPerSecond * t,
                   speeds.omegaRadiansPerSecond * t));
-      if (isCloseToTrench(sampledPose)) {
+      Pose2d sampledTurretPose = sampledRobotPose.transformBy(turretTransform);
+      if (isCloseToTrench(sampledTurretPose)) {
         return 0;
       }
     }

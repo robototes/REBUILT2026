@@ -139,7 +139,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public void oscillatePivot() {
-    double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 2) + Math.PI));
+    double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 2) + Math.PI)) / 2;
     double pos = LAUNCH_POS_OUT + offset * (LAUNCH_POS_IN - LAUNCH_POS_OUT);
     targetPos = pos;
     setPivotPosition(pos);

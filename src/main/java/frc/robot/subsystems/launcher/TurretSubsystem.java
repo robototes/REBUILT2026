@@ -38,11 +38,10 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
   private static final double NOMINAL_BATTERY_VOLTAGE = 12;
 
-  /**
-   * The tolerance for the turret to be considered "at target" in degrees. To find a good value,
-   * open Phoenix Tuner X, plot the closed loop error, and this value should be the maximum error.
-   */
-  public static final double TURRET_DEGREE_TOLERANCE = 8; // Degrees
+  public static final double TURRET_DEGREE_TOLERANCE =
+      20; // The Tolerance is this high because I turret posistion is always updating so it is not
+  // always exactly where it should be, I am mainly using this to stop shooting when the
+  // turret hits its wraparound point
 
   // Positions
   private double targetPos;
@@ -200,9 +199,9 @@ public class TurretSubsystem extends SubsystemBase {
     return turretMotor.getPosition().getValueAsDouble();
   }
 
-  public boolean atTarget(double degreeTolerance) {
+  public boolean atTarget() {
     return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
-        < Units.degreesToRotations(degreeTolerance);
+        < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
   /**
