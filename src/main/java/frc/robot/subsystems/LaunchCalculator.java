@@ -55,6 +55,7 @@ public class LaunchCalculator {
   private static final double TURRET_TO_TRENCH_TOLERANCE_X = Units.inchesToMeters(12);
   private static final double TURRET_TO_TRENCH_TOLERANCE_Y = Units.inchesToMeters(24.97);
   private static final double TRENCH_LOOKAHEAD = 0.5; // seconds
+  private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
@@ -270,14 +271,18 @@ public class LaunchCalculator {
    *     Returned value does not have an apparant unit.
    */
   public double getHoodAngle(Pose2d turretPose, double trueDist, ChassisSpeeds speeds) {
-      Pose2d lookaheadPose = turretPose.exp(
+      for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
+          double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
+          Pose2d sampledPose = turretPose.exp(
               new Twist2d(
-                  speeds.vxMetersPerSecond * TRENCH_LOOKAHEAD,
-                  speeds.vyMetersPerSecond * TRENCH_LOOKAHEAD,
-                  speeds.omegaRadiansPerSecond * TRENCH_LOOKAHEAD));
-      return (isCloseToTrench(lookaheadPose) || isCloseToTrench(turretPose))
-          ? 0
-          : LauncherConstants.getHoodAngleFromDistance(trueDist);
+                  speeds.vxMetersPerSecond * t,
+                  speeds.vyMetersPerSecond * t,
+                  speeds.omegaRadiansPerSecond * t));
+          if (isCloseToTrench(sampledPose)) {
+              return 0;
+          }
+      }
+      return LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
   /**
