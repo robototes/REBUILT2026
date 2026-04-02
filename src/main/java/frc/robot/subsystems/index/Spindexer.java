@@ -35,7 +35,6 @@ public class Spindexer extends SubsystemBase {
   private final FlywheelSim motorSim;
 
   // Oscillate settings
-  private static final double PHASE_SHIFT = 0;
   private static final double AMPLITUDE = 0.5;
   private static final double VERTICAL_SHIFT = 0.5;
   private static final double FREQUENCY = Math.PI * 2;
@@ -96,7 +95,7 @@ public class Spindexer extends SubsystemBase {
   }
 
   private static double oscillate(double time) {
-    return AMPLITUDE * Math.cos(FREQUENCY * time - PHASE_SHIFT) + VERTICAL_SHIFT;
+    return AMPLITUDE * Math.cos(FREQUENCY * time) + VERTICAL_SHIFT;
   }
 
   @Override
