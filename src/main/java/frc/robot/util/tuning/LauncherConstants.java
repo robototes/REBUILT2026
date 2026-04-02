@@ -56,13 +56,13 @@ public class LauncherConstants {
   };
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1.31, 1.836, 65, 0.87),
-    new LauncherDistanceDataPoint(2.52, 3.672, 72, 1.1),
-    new LauncherDistanceDataPoint(3.32, 4.896, 75, 1.13),
-    new LauncherDistanceDataPoint(3.87, 6.12, 79, 1.1),
-    new LauncherDistanceDataPoint(4.27, 6.732, 82, 1),
-    new LauncherDistanceDataPoint(6.4, 8.568, 100, 1.34),
-    new LauncherDistanceDataPoint(10, 8.568, 100, 1.34)
+    new LauncherDistanceDataPoint(1.31, 1.836, 65/2, 0.87),
+    new LauncherDistanceDataPoint(2.52, 3.672, 72/2, 1.1),
+    new LauncherDistanceDataPoint(3.32, 4.896, 75/2, 1.13),
+    new LauncherDistanceDataPoint(3.87, 6.12, 79/2, 1.1),
+    new LauncherDistanceDataPoint(4.27, 6.732, 82/2, 1),
+    new LauncherDistanceDataPoint(6.4, 8.568, 100/2, 1.34),
+    new LauncherDistanceDataPoint(10, 8.568, 80, 1.34)
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
