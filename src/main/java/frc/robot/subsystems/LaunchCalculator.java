@@ -50,7 +50,8 @@ public class LaunchCalculator {
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
-  private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
+  private static final double TURRET_TO_TRENCH_TOLERANCE_X = Units.inchesToMeters(12);
+  private static final double TURRET_TO_TRENCH_TOLERANCE_Y = Units.inchesToMeters(24.97);
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
@@ -279,7 +280,9 @@ public class LaunchCalculator {
    * @return True if close, false if not close
    */
   public static boolean isCloseToTrench(Pose2d pose) {
-    double nearestTagX = pose.nearest(trenchTags).getX();
-    return Math.abs(nearestTagX - pose.getX()) < TURRET_TO_TRENCH_TOLERANCE;
+    Pose2d nearestTag = pose.nearest(trenchTags);
+    double dx = Math.abs(pose.getX() - nearestTag.getX());
+    double dy = Math.abs(pose.getY() - nearestTag.getY());
+    return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
   }
 }

@@ -232,7 +232,7 @@ public class Controls {
             Commands.parallel(
                 // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
                 // driverController.getLeftX(), ()-> driverController.getLeftY()),
-                s.launcherSubsystem.launcherAimCommandV2(),
+                s.launcherSubsystem.launcherAimCommand(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                     .andThen(
