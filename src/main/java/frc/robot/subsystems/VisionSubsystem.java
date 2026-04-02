@@ -36,7 +36,7 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
 import robotutils.pub.interfaces.CameraInfo;
-import robotutils.pub.interfaces.ShowTempPose;
+import robotutils.pub.utils.ShowTempPose;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
