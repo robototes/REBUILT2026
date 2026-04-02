@@ -91,6 +91,7 @@ public class LEDSubsystem extends SubsystemBase {
     alternatingColorsPub = nt.getStringTopic("/color/alternatingColors").publish();
     alternatingColorsPub.set("A:None | B:None");
   }
+
   private void publishState() {
     currentPatternPub.set(currentPattern.name());
     currentModePub.set(currentMode != null ? currentMode.name() : "NONE");
@@ -107,6 +108,7 @@ public class LEDSubsystem extends SubsystemBase {
       alternatingColorsPub.set("A:None | B:None");
     }
   }
+
   public void setHardwareColor(RGBWColor color, double brightness) {
     RGBWColor scaled = color.scaleBrightness(brightness);
 
