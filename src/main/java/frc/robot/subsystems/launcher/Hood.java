@@ -58,7 +58,6 @@ public class Hood extends SubsystemBase {
   public final NtTunableBoolean TUNER_CONTROLLED =
       new NtTunableBoolean("/SmartDashboard/Tunables/Hood", false);
 
-  // Mechanism tuning required !! TODO: TUNE
   private static final double AUTO_ZERO_VOLTAGE = -3;
 
   public Hood() {
