@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -80,10 +81,10 @@ public class VisionSubsystem extends SubsystemBase {
       new Transform3d(
           -0.076,
           0.311,
-          0.284,
-          new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
+          0.274,
+          new Rotation3d(0, Units.degreesToRadians(-8), Units.degreesToRadians(90)));
   private static final Transform3d COMP_BOT_FRONT_CAMERA =
-      new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
+      new Transform3d(0.267, -0.111, 0.471, new Rotation3d(0, Units.degreesToRadians(-15), 0));
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
