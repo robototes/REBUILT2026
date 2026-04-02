@@ -4,7 +4,6 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 
 /**
  * Interface for vision simulation systems. Provides methods for processing vision data, subscribing
@@ -42,11 +41,4 @@ public interface VisionSimInterface {
    * @param pose The pose to reset to
    */
   void resetSimPose(Pose2d pose);
-
-  /**
-   * Get the Field2d for visualizing the robot and objects on the field.
-   *
-   * @return The debug Field2d, or null if not in simulation
-   */
-  Field2d getSimDebugField();
 }

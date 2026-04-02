@@ -264,7 +264,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (m_showVisionOnField != null) {
       m_showVisionOnField.showPointInTimeVisionEstimate(
-          ShowVisionOnField.FieldType.REAL_FIELD,
+          ShowVisionOnField.FieldType.SIMULATION_FIELD,
           camera.getName(),
           estimate.isMegaTag2,
           java.util.Optional.of(estimate.pose3d.toPose2d()));

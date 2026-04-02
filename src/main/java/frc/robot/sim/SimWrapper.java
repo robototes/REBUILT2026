@@ -12,6 +12,7 @@ import frc.robot.sim.visionproducers.VisionSimFactory;
 import frc.robot.sim.visionproducers.VisionSimInterface;
 import java.util.List;
 import java.util.function.Consumer;
+import org.photonvision.simulation.VisionSystemSim;
 
 /**
  * Unified simulation wrapper combining ground truth physics, vision simulation, and joystick
@@ -28,6 +29,8 @@ public class SimWrapper {
   private final SwerveDrivetrain<TalonFX, TalonFX, CANcoder> m_drivetrain;
   private final GroundTruthSimInterface m_groundTruthSim;
   private final List<VisionSimInterface> m_visionSims;
+  private final VisionSystemSim m_sharedVisionSystemSim;
+  private final Field2d m_simDebugField;
   private final ShowVisionOnField m_showVisionOnField;
   private final StructPublisher<Pose2d> m_groundTruthPosePublisher;
 
@@ -56,15 +59,17 @@ public class SimWrapper {
     // Create ground truth simulation
     m_groundTruthSim = GroundTruthSimFactory.create(drivetrain, poseResetConsumer);
 
-    // Create vision simulation
-    m_visionSims = VisionSimFactory.create();
+    // Create vision simulation (all cameras share a single VisionSystemSim and Field2d)
+    var visionSimResult = VisionSimFactory.create();
+    m_visionSims = visionSimResult.visionSims();
+    m_sharedVisionSystemSim = visionSimResult.sharedSim();
+    m_simDebugField = visionSimResult.debugField();
     if (m_visionSims.isEmpty()) {
       throw new IllegalStateException("VisionSimInterface creation failed");
     }
 
-    // Create field visualization helper (use the first camera's debug field)
-    Field2d debugField = m_visionSims.get(0).getSimDebugField();
-    m_showVisionOnField = new ShowVisionOnField(null, debugField);
+    // Create field visualization helper using the shared debug field
+    m_showVisionOnField = new ShowVisionOnField(null, m_simDebugField);
 
     // Publish ground truth pose to DriveState table for AdvantageScope visualization
     m_groundTruthPosePublisher =
@@ -95,7 +100,7 @@ public class SimWrapper {
     // Update vision simulation with ground truth pose (not odometry)
     // This ensures cameras see AprilTags based on actual robot position
     Pose2d groundTruthPose = m_groundTruthSim.getGroundTruthPose();
-    m_visionSims.forEach(v -> v.simulationPeriodic(groundTruthPose));
+    m_sharedVisionSystemSim.update(groundTruthPose);
     m_groundTruthPosePublisher.set(groundTruthPose);
 
     // Debug field visualization
@@ -113,7 +118,7 @@ public class SimWrapper {
    */
   public void resetSimPose(Pose2d pose) {
     m_groundTruthSim.resetGroundTruthPoseForSim(pose);
-    m_visionSims.forEach(v -> v.resetSimPose(pose));
+    m_sharedVisionSystemSim.resetRobotPose(pose);
   }
 
   /** Proxy call to ground truth sim to inject odometry drift. */
@@ -131,11 +136,11 @@ public class SimWrapper {
   }
 
   /**
-   * Get the simulation debug Field2d for visualization.
+   * Get the shared simulation debug Field2d for visualization.
    *
-   * @return The VisionSystemSim's debug field, or null if not in simulation
+   * @return The shared VisionSystemSim's debug field
    */
   public Field2d getSimDebugField() {
-    return m_visionSims.get(0).getSimDebugField();
+    return m_simDebugField;
   }
 }

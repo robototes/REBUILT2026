@@ -32,7 +32,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Robot;
 import frc.robot.sim.visionproducers.VisionSimConstants.VisionConfig;
 import java.util.List;
@@ -57,7 +56,7 @@ public class VisionSim implements VisionSimInterface {
 
   // Simulation
   private PhotonCameraSim m_cameraSim;
-  private VisionSystemSim m_visionSystemSim;
+  private final VisionSystemSim m_visionSystemSim;
 
   // Limelight NetworkTables publisher
   private final LimelightTablePublisher m_limelightPublisher;
@@ -66,8 +65,9 @@ public class VisionSim implements VisionSimInterface {
    * Constructor.
    *
    * @param visionConfig the per-camera configuration specifying names and camera transform
+   * @param sharedVisionSystemSim the shared VisionSystemSim that all cameras contribute to
    */
-  public VisionSim(VisionConfig visionConfig) {
+  public VisionSim(VisionConfig visionConfig, VisionSystemSim sharedVisionSystemSim) {
 
     // This is good sample code for PhotonVision usage in-general, but we spin this up ONLY for
     // simulation.  You'll need a separate implementation for real robot vision processing.
@@ -79,32 +79,27 @@ public class VisionSim implements VisionSimInterface {
     m_camera = new PhotonCamera(visionConfig.cameraName());
     m_photonEstimator = new PhotonPoseEstimator(kTagLayout, visionConfig.robotToCam());
     m_limelightPublisher = new LimelightTablePublisher(visionConfig.limelightName());
+    m_visionSystemSim = sharedVisionSystemSim;
 
     // ----- Simulation
-    if (Robot.isSimulation()) {
-      // Create the vision system simulation which handles cameras and targets on the field.
-      m_visionSystemSim = new VisionSystemSim(visionConfig.visionSimName());
-      // Add all the AprilTags inside the tag layout as visible targets to simulated field.
-      m_visionSystemSim.addAprilTags(kTagLayout);
-      // Create simulated camera properties. These can be set to mimic your actual camera.
-      var cameraProp = new SimCameraProperties();
-      cameraProp.setCalibration(
-          kCameraResWidth, kCameraResHeight, Rotation2d.fromDegrees(kCameraFOVDegrees));
-      cameraProp.setCalibError(kCalibErrorAvg, kCalibErrorStdDev);
-      cameraProp.setFPS(kCameraFPS);
-      cameraProp.setAvgLatencyMs(kAvgLatencyMs);
-      cameraProp.setLatencyStdDevMs(kLatencyStdDevMs);
-      // Create a PhotonCameraSim which will update the linked PhotonCamera's values
-      // with visible targets.
-      m_cameraSim = new PhotonCameraSim(m_camera, cameraProp);
-      // Set realistic detection range limits
-      m_cameraSim.setMinTargetAreaPixels(kMinTargetAreaPixels);
-      m_cameraSim.setMaxSightRange(kMaxSightRangeMeters);
-      // Add the simulated camera to view the targets on this simulated field.
-      m_visionSystemSim.addCamera(m_cameraSim, m_config.robotToCam());
+    // Create simulated camera properties. These can be set to mimic your actual camera.
+    var cameraProp = new SimCameraProperties();
+    cameraProp.setCalibration(
+        kCameraResWidth, kCameraResHeight, Rotation2d.fromDegrees(kCameraFOVDegrees));
+    cameraProp.setCalibError(kCalibErrorAvg, kCalibErrorStdDev);
+    cameraProp.setFPS(kCameraFPS);
+    cameraProp.setAvgLatencyMs(kAvgLatencyMs);
+    cameraProp.setLatencyStdDevMs(kLatencyStdDevMs);
+    // Create a PhotonCameraSim which will update the linked PhotonCamera's values
+    // with visible targets.
+    m_cameraSim = new PhotonCameraSim(m_camera, cameraProp);
+    // Set realistic detection range limits
+    m_cameraSim.setMinTargetAreaPixels(kMinTargetAreaPixels);
+    m_cameraSim.setMaxSightRange(kMaxSightRangeMeters);
+    // Add the simulated camera to view the targets on this simulated field.
+    m_visionSystemSim.addCamera(m_cameraSim, m_config.robotToCam());
 
-      m_cameraSim.enableDrawWireframe(true);
-    }
+    m_cameraSim.enableDrawWireframe(true);
   }
 
   @Override
@@ -197,23 +192,12 @@ public class VisionSim implements VisionSimInterface {
 
   @Override
   public void simulationPeriodic(Pose2d robotSimPose) {
-    m_visionSystemSim.update(robotSimPose);
+    // The shared VisionSystemSim is updated externally (once per cycle),
+    // so individual VisionSim instances do not call update here.
   }
 
-  /** Reset pose history of the robot in the vision system simulation. */
   @Override
   public void resetSimPose(Pose2d pose) {
-    if (Robot.isSimulation()) {
-      m_visionSystemSim.resetRobotPose(pose);
-    }
-  }
-
-  /** A Field2d for visualizing our robot and objects on the field. */
-  @Override
-  public Field2d getSimDebugField() {
-    if (!Robot.isSimulation()) {
-      throw new IllegalStateException("getSimDebugField should only be called in simulation");
-    }
-    return m_visionSystemSim.getDebugField();
+    // The shared VisionSystemSim is reset externally.
   }
 }
