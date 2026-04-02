@@ -239,14 +239,16 @@ public class Controls {
                         Commands.parallel(
                                 s.indexerSubsystem.runIndexer(),
                                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.runOnce(() -> s.intakePivot.restartTimer())
+                                Commands.waitSeconds(1)
                                     .andThen(
                                         Commands.runOnce(
-                                            () ->
-                                                intakeMode =
-                                                    driverController.leftTrigger().getAsBoolean()
-                                                        ? IntakeMode.INTAKE
-                                                        : IntakeMode.LAUNCH)))
+                                            () -> {
+                                              s.intakePivot.restartTimer();
+                                              intakeMode =
+                                                  driverController.leftTrigger().getAsBoolean()
+                                                      ? IntakeMode.INTAKE
+                                                      : IntakeMode.LAUNCH;
+                                            })))
                             .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
                     .repeatedly()))
         .onFalse(
@@ -310,8 +312,6 @@ public class Controls {
                     case RETRACTED -> s.intakeSubsystem.retractPivot();
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
-                      // case LAUNCH ->
-                      // s.intakeSubsystem.intakeWhileLaunch(s.indexerSubsystem.getFilteredCurrent());
                     case INTAKE -> s.intakeSubsystem.smartIntake();
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }

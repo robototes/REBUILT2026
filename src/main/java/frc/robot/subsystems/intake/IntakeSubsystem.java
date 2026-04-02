@@ -36,13 +36,7 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void intakeWhileLaunch() {
-    // intakePivot.setPivotPosition(IntakePivot.LAUNCH_POS);
     intakePivot.oscillatePivot();
-    intakeRollers.runRollers(intakeRollers.AGITATE_RPS);
-  }
-
-  public void intakeWhileLaunch(double filteredCurrent) {
-    intakePivot.oscillatePivot(filteredCurrent);
     intakeRollers.runRollers(intakeRollers.AGITATE_RPS);
   }
 

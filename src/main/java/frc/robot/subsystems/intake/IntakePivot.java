@@ -9,7 +9,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -142,15 +141,6 @@ public class IntakePivot extends SubsystemBase {
   public void oscillatePivot() {
     double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 2) + Math.PI));
     double pos = LAUNCH_POS_OUT + offset * (LAUNCH_POS_IN - LAUNCH_POS_OUT);
-    targetPos = pos;
-    setPivotPosition(pos);
-  }
-
-  public void oscillatePivot(double spindexerCurrent) {
-    double period =
-        MathUtil.clamp(spindexerCurrent / OSCILLATE_SCALAR, OSCILLATE_MIN, OSCILLATE_MAX);
-    double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / period) + Math.PI));
-    double pos = DEPLOYED_POS + offset * (RETRACTED_POS - DEPLOYED_POS);
     targetPos = pos;
     setPivotPosition(pos);
   }
