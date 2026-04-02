@@ -11,6 +11,7 @@
 
 package frc.robot.sim.visionproducers;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
@@ -244,13 +245,15 @@ public class PhotonToLimelightConverter {
 
     data.botposeWpiBlue = botpose;
 
-    // For WPI Red, mirror the X axis across the field centerline and rotate yaw 180°.
-    // WPI Red and Blue share the same Y axis direction.
+    // For WPI Red, the coordinate system is a 180° rotation of Blue around the field center.
+    // Both X and Y are mirrored, and yaw is rotated by 180°.
     double fieldLength = VisionSimConstants.kTagLayout.getFieldLength();
+    double fieldWidth = VisionSimConstants.kTagLayout.getFieldWidth();
     double[] botposeRed = botpose.clone();
     botposeRed[0] = fieldLength - robotPose.getX();
+    botposeRed[1] = fieldWidth - robotPose.getY();
     double yawDeg = Units.radiansToDegrees(robotPose.getRotation().getZ());
-    botposeRed[5] = ((yawDeg + 180) % 360) - 180; // Normalize to [-180, 180]
+    botposeRed[5] = MathUtil.inputModulus(yawDeg - 180, -180, 180);
     data.botposeWpiRed = botposeRed;
   }
 
