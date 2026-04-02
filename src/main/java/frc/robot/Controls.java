@@ -265,7 +265,8 @@ public class Controls {
                               driverController.leftTrigger().getAsBoolean()
                                   ? IntakeMode.INTAKE
                                   : IntakeMode.DEPLOYED;
-                        })));
+                        }))
+                .withName("Launching Finished"));
     driverController
         .start()
         .onTrue(
@@ -334,15 +335,16 @@ public class Controls {
                 .withName("Intaking"))
         .onFalse(
             Commands.runOnce(
-                () -> {
-                  if (driverController.rightTrigger().getAsBoolean()) {
-                    intakeMode = IntakeMode.LAUNCH;
-                    s.intakePivot.restartTimer();
-                  } else {
-                    intakeMode = IntakeMode.DEPLOYED;
-                    ledsMode = LEDMode.DEFAULT;
-                  }
-                }));
+                    () -> {
+                      if (driverController.rightTrigger().getAsBoolean()) {
+                        intakeMode = IntakeMode.LAUNCH;
+                        s.intakePivot.restartTimer();
+                      } else {
+                        intakeMode = IntakeMode.DEPLOYED;
+                        ledsMode = LEDMode.DEFAULT;
+                      }
+                    })
+                .withName("Intaking Finished"));
     driverController
         .povUp()
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
@@ -353,7 +355,8 @@ public class Controls {
     driverController
         .leftBumper()
         .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE).withName("Extaking"))
-        .onFalse(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
+        .onFalse(
+            Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Extaking Finished"));
 
     connected(intakeTestController)
         .and(intakeTestController.a())
