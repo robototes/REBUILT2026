@@ -2,13 +2,6 @@ package robotutils.simlimelightproducer;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
-import java.util.List;
-import robotutils.pub.interfaces.CameraInfo;
-import robotutils.pub.interfaces.CameraInfoList;
 
 /** Constants for vision simulation. */
 public class VisionSimConstants {
@@ -35,26 +28,5 @@ public class VisionSimConstants {
         public static final double kLatencyStdDevMs = 15;
         public static final double kMinTargetAreaPixels = 10.0;
         public static final double kMaxSightRangeMeters = 3.0;
-
-        // Camera transforms for simulated Limelights.
-        public static final CameraInfoList kSimCameras =
-            new CameraInfoList(
-                List.of(
-                    new CameraInfo(
-                        "limelight-a",
-                        new Transform3d(
-                            new Translation3d(
-                                0.267,
-                                -0.051,
-                                0.451),
-                            new Rotation3d(0, Units.degreesToRadians(-15), 0))), // $TODO - Main camera transform has camera pointed down
-                    new CameraInfo(
-                        "limelight-b",
-                        new Transform3d(
-                            new Translation3d(
-                                0.114,
-                                0.368,
-                                0.235),
-                            new Rotation3d(0, Units.degreesToRadians(-8), Units.degreesToRadians(90)))))); // $TODO - Main camera transform has camera pointed down
     }
 }

@@ -1,6 +1,6 @@
 package frc.robot.subsystems;
 
-import static robotutils.simlimelightproducer.VisionSimConstants.Vision.kSimCameras;
+import static frc.robot.subsystems.VisionSimCameraConstants.kSimCameras;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;

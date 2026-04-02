@@ -13,7 +13,7 @@ import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
-import static robotutils.simlimelightproducer.VisionSimConstants.Vision.kSimCameras;
+import static frc.robot.subsystems.VisionSimCameraConstants.kSimCameras;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.RobotBase;

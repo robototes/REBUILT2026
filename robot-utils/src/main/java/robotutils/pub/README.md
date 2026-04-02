@@ -74,7 +74,7 @@ groundTruthSim.resetGroundTruthPoseForSim(drivebaseSubsystem.getState().Pose);
 drivebaseSubsystem.setHighFreqSimCallback(groundTruthSim::updateGroundTruthPose);
 ```
 
-5. `simLimelightProducer = createSimLimelightProducer(kSimCameras)`
+5. `simLimelightProducer = createSimLimelightProducer(VisionSimCameraConstants.kSimCameras)`
 6. If simulation and both are non-null:
 
 ```java
