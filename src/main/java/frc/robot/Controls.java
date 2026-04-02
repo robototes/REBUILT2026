@@ -242,30 +242,14 @@ public class Controls {
                                     s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
-                                        .andThen(
-                                            Commands.runOnce(
-                                                () -> {
-                                                  s.intakePivot.restartTimer();
-                                                  intakeMode =
-                                                      driverController.leftTrigger().getAsBoolean()
-                                                          ? IntakeMode.INTAKE
-                                                          : IntakeMode.LAUNCH;
-                                                })))
+                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
                         .repeatedly())
                 .withName("Launching Command"))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
-                .alongWith(
-                    Commands.runOnce(
-                        () -> {
-                          ledsMode = LEDMode.DEFAULT;
-                          intakeMode =
-                              driverController.leftTrigger().getAsBoolean()
-                                  ? IntakeMode.INTAKE
-                                  : IntakeMode.DEPLOYED;
-                        }))
+                .alongWith(Commands.runOnce(() -> updateIntakeMode()))
                 .withName("Launching Finished"));
     driverController
         .start()
@@ -302,6 +286,18 @@ public class Controls {
         .onTrue(s.flywheels.setVelocityCommand(60));
   }
 
+  private void updateIntakeMode() {
+    if (driverController.leftTrigger().getAsBoolean()) {
+      intakeMode = IntakeMode.INTAKE;
+    } else if (driverController.rightTrigger().getAsBoolean()) {
+      intakeMode = IntakeMode.LAUNCH;
+      s.intakePivot.restartTimer();
+    } else {
+      intakeMode = IntakeMode.DEPLOYED;
+      ledsMode = LEDMode.DEFAULT;
+    }
+  }
+
   private void configureIntakeBindings() {
     if (s.intakeRollers == null || s.intakePivot == null || s.ledSubsystem == null) {
       DataLogManager.log(
@@ -333,18 +329,7 @@ public class Controls {
                       ledsMode = LEDMode.INTAKE;
                     })
                 .withName("Intaking"))
-        .onFalse(
-            Commands.runOnce(
-                    () -> {
-                      if (driverController.rightTrigger().getAsBoolean()) {
-                        intakeMode = IntakeMode.LAUNCH;
-                        s.intakePivot.restartTimer();
-                      } else {
-                        intakeMode = IntakeMode.DEPLOYED;
-                        ledsMode = LEDMode.DEFAULT;
-                      }
-                    })
-                .withName("Intaking Finished"));
+        .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));
     driverController
         .povUp()
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
