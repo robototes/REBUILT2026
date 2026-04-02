@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -271,7 +272,7 @@ public class VisionSubsystem extends SubsystemBase {
                 > VisionConstants.MAX_XY_VELO_ALPHA
             || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
-      publishDiagnostics(estimate, visionPose2d, camera.getName(), "alpha-max-speed");
+      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed");
       return;
     }
 
@@ -285,12 +286,12 @@ public class VisionSubsystem extends SubsystemBase {
             estimate.pose3d.getRotation().getY(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || (lastFieldPose != null && lastFieldPose.equals(visionPose2d))) {
-      publishDiagnostics(estimate, visionPose2d, camera.getName(), "impossible-rotation or height");
+      publishDiagnostics(estimate, visionPose2d, camera, "impossible-rotation or height");
       return;
     }
 
     if (!isPoseOnField(visionPose2d)) {
-      publishDiagnostics(estimate, visionPose2d, camera.getName(), "off-field");
+      publishDiagnostics(estimate, visionPose2d, camera, "off-field");
       return;
     }
 
@@ -301,14 +302,14 @@ public class VisionSubsystem extends SubsystemBase {
         lastVisionPose,
         camera.getLastTimestampSeconds(),
         underDefense)) {
-      publishDiagnostics(estimate, visionPose2d, camera.getName(), "velocity-implausible");
+      publishDiagnostics(estimate, visionPose2d, camera, "velocity-implausible");
       return;
     }
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
       SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
-      publishDiagnostics(estimate, visionPose2d, camera.getName(), "inter-tag-inconsistent");
+      publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
       return;
     }
 
@@ -324,7 +325,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
-      publishDiagnostics(estimate, visionPose2d, camera.getName(), "ambiguity-or-range");
+      publishDiagnostics(estimate, visionPose2d, camera, "ambiguity-or-range");
       return;
     }
 
@@ -366,7 +367,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
-    publishDiagnostics(estimate, visionPose2d, camera.getName(), "none");
+    publishDiagnostics(estimate, visionPose2d, camera, "none");
   }
 
   private boolean isUnderDefense(VisionPoseTracking visionPoseTracking) {
@@ -566,17 +567,19 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void publishDiagnostics(
-      BetterPoseEstimate estimate, Pose2d visionPose2d, String cameraName, String rejectionReason) {
+      BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      SmartDashboard.putString("/vision/" + cameraName + "_rejectReason", rejectionReason);
+      SmartDashboard.putString("/vision/" + camera.getName() + "_rejectReason", rejectionReason);
       SmartDashboard.putNumber(
-          "/vision/" + cameraName + "_visionError",
+          "/vision/" + camera.getName() + "_visionError",
           getVisionPoseError(visionPose2d, estimate.timestampSeconds));
       SmartDashboard.putNumber(
-          "/vision/" + cameraName + "_Last timestamp", getLastTimestampSeconds());
-      SmartDashboard.putNumber("/vision/" + cameraName + "_Num targets", getNumTargets());
+          "/vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
       SmartDashboard.putNumber(
-          "/vision/" + cameraName + "_time since last reading", getTimeSinceLastReading());
+          "/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
+      SmartDashboard.putNumber(
+          "/vision/" + camera.getName() + "_time since last reading",
+          Timer.getFPGATimestamp() - camera.getLastTimestampSeconds());
     }
   }
 
