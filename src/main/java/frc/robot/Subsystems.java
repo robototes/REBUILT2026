@@ -41,6 +41,7 @@ import java.util.Optional;
 import robotutils.pub.RobotUtilsFactory;
 import robotutils.pub.interfaces.FaultyDriveManagerInterface;
 import robotutils.pub.interfaces.GroundTruthSimInterface;
+import robotutils.pub.interfaces.ShowTempPose;
 import robotutils.pub.interfaces.SimLimelightProducerInterface;
 import robotutils.pub.interfaces.dashboard.DashboardConstants;
 import robotutils.pub.interfaces.dashboard.DashboardManagerInterface;
@@ -210,7 +211,14 @@ public class Subsystems {
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED && INTAKE_ARM_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem, intakePivot);
+      ShowTempPose simVisionTempPose =
+          RobotBase.isSimulation() && simLimelightProducer != null
+              ? new ShowTempPose(
+                  simLimelightProducer.getSimDebugField(),
+                  DashboardConstants.kPointInTimeVisionPose,
+                  0.2)
+              : null;
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem, intakePivot, simVisionTempPose);
       SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;

@@ -71,6 +71,23 @@
           ],
           "weight": 1.0
         },
+        "VisionEstimation": {
+          "arrowColor": [
+            0.0,
+            0.6000000238418579,
+            1.0,
+            255.0
+          ],
+          "arrowWeight": 2.0,
+          "color": [
+            0.0,
+            0.6000000238418579,
+            1.0,
+            255.0
+          ],
+          "selectable": false,
+          "weight": 2.0
+        },
         "apriltag": {
           "image": "/Users/ido/robotics/Robototes/REBUILT2026/tag-green.png"
         },

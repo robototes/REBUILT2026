@@ -36,6 +36,7 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
 import robotutils.pub.interfaces.CameraInfo;
+import robotutils.pub.interfaces.ShowTempPose;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -78,19 +79,20 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double FIELD_MARGIN = 0.5;
   }
 
-    private static final Transform3d COMP_BOT_LEFT_CAMERA_REAL =
+  private static final Transform3d COMP_BOT_LEFT_CAMERA_REAL =
       new Transform3d(
           0.114,
           0.368,
           0.235,
           new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
-    private static final Transform3d COMP_BOT_LEFT_CAMERA = getCompBotLeftCameraTransform();
+  private static final Transform3d COMP_BOT_LEFT_CAMERA = getCompBotLeftCameraTransform();
   private static final Transform3d COMP_BOT_FRONT_CAMERA_REAL =
       new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
   private static final Transform3d COMP_BOT_FRONT_CAMERA = getCompBotFrontCameraTransform();
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
+  private final ShowTempPose simVisionTempPose;
   private BooleanSubscriber disableVision;
   private IntakePivot intakePivot;
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
@@ -153,12 +155,14 @@ public class VisionSubsystem extends SubsystemBase {
     return COMP_BOT_LEFT_CAMERA_REAL;
   }
 
-  public VisionSubsystem(CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot) {
+  public VisionSubsystem(
+      CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot, ShowTempPose simVisionTempPose) {
     this.drivetrain = drivetrain;
     this.intakePivot = intakePivot;
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
+    this.simVisionTempPose = simVisionTempPose;
     SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
     SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
     SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
@@ -167,6 +171,9 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public void update() {
+    if (simVisionTempPose != null) {
+      simVisionTempPose.resetCycle();
+    }
     limelightaOnline = isLimeLightOnline(LIMELIGHT_A);
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
@@ -177,6 +184,9 @@ public class VisionSubsystem extends SubsystemBase {
     processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC);
     // }
     updateCameraView(visionPoseTracking);
+    if (simVisionTempPose != null) {
+      simVisionTempPose.updatePose();
+    }
   }
 
   private void processCamera(
@@ -290,6 +300,9 @@ public class VisionSubsystem extends SubsystemBase {
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+    if (simVisionTempPose != null) {
+      simVisionTempPose.recordInjectedVisionPose(visionPose2d, estimate.timestampSeconds);
+    }
 
     robotField.setRobotPose(drivetrain.getState().Pose);
     if (estimate.isMegaTag2) {
