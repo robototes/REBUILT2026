@@ -36,6 +36,8 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import robotutils.joystickinput.JoystickInput;
+import robotutils.pub.interfaces.JoystickInputInterface;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -96,6 +98,14 @@ public class Controls {
 
   private final double driveInputScale = 1;
 
+  private final JoystickInputInterface simJoystickInput =
+      new JoystickInput(
+          () -> -driverController.getLeftY(),
+          () -> -driverController.getLeftX(),
+          () -> -driverController.getRightX(),
+          RobotBase.isSimulation(),
+          () -> AllianceUtils.isRed() ? 180.0 : 0.0);
+
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
@@ -150,25 +160,49 @@ public class Controls {
 
   // takes the X value from the joystick, and applies a deadband and input scaling
   private double getDriveX() {
+    double x;
+
+    if (RobotBase.isSimulation()) {
+      x = simJoystickInput.getJoystickInputs().driveX();
+    } else {
+      x = -driverController.getLeftY();
+    }
+
     // Joystick +Y is back
     // Robot +X is forward
-    double input = MathUtil.applyDeadband(-driverController.getLeftY(), 0.1);
+    double input = MathUtil.applyDeadband(x, 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
   private double getDriveY() {
+    double y;
+
+    if (RobotBase.isSimulation()) {
+      y = simJoystickInput.getJoystickInputs().driveY();
+    } else {
+      y = -driverController.getLeftX();
+    }
+
     // Joystick +X is right
     // Robot +Y is left
-    double input = MathUtil.applyDeadband(-driverController.getLeftX(), 0.1);
+    double input = MathUtil.applyDeadband(y, 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
   private double getDriveRotate() {
+    double rotate;
+
+    if (RobotBase.isSimulation()) {
+      rotate = simJoystickInput.getJoystickInputs().rotatetX();
+    } else {
+      rotate = -driverController.getRightX();
+    }
+
     // Joystick +X is right
     // Robot +angle is CCW (left)
-    double input = MathUtil.applyDeadband(-driverController.getRightX(), 0.1);
+    double input = MathUtil.applyDeadband(rotate, 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
