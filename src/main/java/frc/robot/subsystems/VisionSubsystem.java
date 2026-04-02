@@ -75,8 +75,6 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double FIELD_MARGIN = 0.5;
   }
 
-  // hub pose blue X: 4.625m, Y: 4.035m
-  // hub pose red X: 11.915m, Y: 4.035m
   public static final Transform3d COMP_BOT_LEFT_CAMERA =
       new Transform3d(
           0.114,
@@ -267,6 +265,8 @@ public class VisionSubsystem extends SubsystemBase {
     if (m_showVisionOnField != null) {
       m_showVisionOnField.showPointInTimeVisionEstimate(
           ShowVisionOnField.FieldType.REAL_FIELD,
+          camera.getName(),
+          estimate.isMegaTag2,
           java.util.Optional.of(estimate.pose3d.toPose2d()));
     }
 

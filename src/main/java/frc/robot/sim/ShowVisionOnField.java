@@ -69,18 +69,23 @@ public class ShowVisionOnField {
   }
 
   /**
-   * Shows or hides the point-in-time vision estimate on the field.
+   * Shows or hides the point-in-time vision estimate on the field. Each camera + pose type
+   * combination gets its own Field2d object for independent visualization.
    *
    * @param fieldType The field to display on (REAL_FIELD or SIMULATION_FIELD)
+   * @param cameraName The limelight camera name (e.g. "limelight-a")
+   * @param isMegaTag2 Whether this estimate is from MegaTag2 (true) or MegaTag1 (false)
    * @param visionPose The vision pose if present, or empty to hide the estimate
    */
-  public void showPointInTimeVisionEstimate(FieldType fieldType, Optional<Pose2d> visionPose) {
+  public void showPointInTimeVisionEstimate(
+      FieldType fieldType, String cameraName, boolean isMegaTag2, Optional<Pose2d> visionPose) {
     Optional<Field2d> field = (fieldType == FieldType.REAL_FIELD) ? m_realField : m_simulationField;
+    String objectName = "Vision_" + cameraName + (isMegaTag2 ? "_MT2" : "_MT1");
     field.ifPresent(
         f -> {
           visionPose.ifPresentOrElse(
-              pose -> f.getObject("VisionEstimation").setPose(pose),
-              () -> f.getObject("VisionEstimation").setPoses());
+              pose -> f.getObject(objectName).setPose(pose),
+              () -> f.getObject(objectName).setPoses());
         });
   }
 
