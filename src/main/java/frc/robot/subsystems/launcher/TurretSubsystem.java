@@ -38,10 +38,10 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
   private static final double NOMINAL_BATTERY_VOLTAGE = 12;
 
-  public static final double TURRET_DEGREE_TOLERANCE =
-      20; // The Tolerance is this high because I turret posistion is always updating so it is not
+  // The Tolerance is this high because I turret position is always updating so it is not
   // always exactly where it should be, I am mainly using this to stop shooting when the
   // turret hits its wraparound point
+  public static final double TURRET_DEGREE_TOLERANCE = 20;
 
   // Positions
   private double targetPos;
