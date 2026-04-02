@@ -49,6 +49,30 @@
           "visible": true
         }
       },
+      "/SmartDashboard/Selected auto": {
+        "bottom": 1914,
+        "height": 8.069275856018066,
+        "left": 245,
+        "right": 3942,
+        "top": 118,
+        "width": 16.54119300842285,
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/Start pose": {
+        "bottom": 1914,
+        "height": 8.069275856018066,
+        "left": 245,
+        "right": 3942,
+        "top": 118,
+        "width": 16.54119300842285
+      },
+      "/SmartDashboard/Starting Position": {
+        "window": {
+          "visible": true
+        }
+      },
       "/SmartDashboard/VisionSystemSim-main/Sim Field": {
         "EstimatedRobotModules": {
           "image": "/Users/ido/robotics/Robototes/REBUILT2026/swerve_module.png",
@@ -132,5 +156,8 @@
   },
   "NetworkTables Info": {
     "visible": true
+  },
+  "NetworkTables View": {
+    "visible": false
   }
 }
