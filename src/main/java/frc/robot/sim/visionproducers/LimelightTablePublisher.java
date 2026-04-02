@@ -29,7 +29,7 @@ public class LimelightTablePublisher {
         (limelightName == null || limelightName.isEmpty()) ? "limelight" : limelightName;
     this.table = NetworkTableInstance.getDefault().getTable(tableName);
     this.botpose3dPublisher =
-        this.table.getStructTopic("botpose_wpiblue3DPose", Pose3d.struct).publish();
+        this.table.getStructTopic("botpose_wpiblue_pose3d", Pose3d.struct).publish();
   }
 
   public void publish(LimelightData data) {

@@ -77,12 +77,12 @@ public class VisionSubsystem extends SubsystemBase {
 
   public static final Transform3d COMP_BOT_LEFT_CAMERA =
       new Transform3d(
-          0.114,
+          -0.114,
           0.368,
-          0.235,
-          new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
+          0.274,
+          new Rotation3d(0, Units.degreesToRadians(-8), Units.degreesToRadians(90)));
   public static final Transform3d COMP_BOT_FRONT_CAMERA =
-      new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
+      new Transform3d(0.267, -0.111, 0.471, new Rotation3d(0, Units.degreesToRadians(-15), 0));
 
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
