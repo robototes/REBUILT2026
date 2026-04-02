@@ -258,7 +258,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    robotSim.updateFuelSim();
+    robotSim.updateSimulation();
   }
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
