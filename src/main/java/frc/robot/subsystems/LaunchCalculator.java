@@ -1,11 +1,6 @@
 package frc.robot.subsystems;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -20,6 +15,9 @@ import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -271,18 +269,19 @@ public class LaunchCalculator {
    *     Returned value does not have an apparant unit.
    */
   public double getHoodAngle(Pose2d turretPose, double trueDist, ChassisSpeeds speeds) {
-      for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
-          double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
-          Pose2d sampledPose = turretPose.exp(
+    for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
+      double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
+      Pose2d sampledPose =
+          turretPose.exp(
               new Twist2d(
                   speeds.vxMetersPerSecond * t,
                   speeds.vyMetersPerSecond * t,
                   speeds.omegaRadiansPerSecond * t));
-          if (isCloseToTrench(sampledPose)) {
-              return 0;
-          }
+      if (isCloseToTrench(sampledPose)) {
+        return 0;
       }
-      return LauncherConstants.getHoodAngleFromDistance(trueDist);
+    }
+    return LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
   /**
