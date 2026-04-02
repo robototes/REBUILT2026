@@ -37,6 +37,7 @@ public class LauncherSubsystem extends SubsystemBase {
               this.launchParameters = para;
               hoodGoal = para.targetHood();
               flywheelsGoal = para.targetFlywheels();
+              System.out.println(hoodGoal);
 
               s.hood.setHoodPosition(hoodGoal);
               s.flywheels.setVelocityRPS(flywheelsGoal);

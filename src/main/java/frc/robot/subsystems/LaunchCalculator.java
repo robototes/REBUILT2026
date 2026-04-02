@@ -1,6 +1,11 @@
 package frc.robot.subsystems;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -15,9 +20,6 @@ import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -52,6 +54,7 @@ public class LaunchCalculator {
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE_X = Units.inchesToMeters(12);
   private static final double TURRET_TO_TRENCH_TOLERANCE_Y = Units.inchesToMeters(24.97);
+  private static final double TRENCH_LOOKAHEAD = 0.5; // seconds
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
@@ -234,7 +237,7 @@ public class LaunchCalculator {
         virtualTarget.minus(turretPose.getTranslation()).getAngle();
 
     // FINAL NUMS
-    double targetHood = getHoodAngle(turretPose, trueDistance);
+    double targetHood = getHoodAngle(turretPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
@@ -266,10 +269,15 @@ public class LaunchCalculator {
    * @return returns a double representing the hood angle (should be tuned in launcher constants).
    *     Returned value does not have an apparant unit.
    */
-  public double getHoodAngle(Pose2d lookaheadPose, double trueDist) {
-    return isCloseToTrench(lookaheadPose)
-        ? 0
-        : LauncherConstants.getHoodAngleFromDistance(trueDist);
+  public double getHoodAngle(Pose2d turretPose, double trueDist, ChassisSpeeds speeds) {
+      Pose2d lookaheadPose = turretPose.exp(
+              new Twist2d(
+                  speeds.vxMetersPerSecond * TRENCH_LOOKAHEAD,
+                  speeds.vyMetersPerSecond * TRENCH_LOOKAHEAD,
+                  speeds.omegaRadiansPerSecond * TRENCH_LOOKAHEAD));
+      return (isCloseToTrench(lookaheadPose) || isCloseToTrench(turretPose))
+          ? 0
+          : LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
   /**
