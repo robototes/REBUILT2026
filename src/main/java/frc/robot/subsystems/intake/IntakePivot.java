@@ -34,7 +34,8 @@ public class IntakePivot extends SubsystemBase {
   // Positions
   private double targetPos;
   public static final double DEPLOYED_POS = -0.425;
-  public static final double LAUNCH_POS = -0.18;
+  public static final double LAUNCH_POS_IN = -0.18;
+  public static final double LAUNCH_POS_OUT = -0.3;
   public static final double RETRACTED_POS = 0.0;
   public static final double EXTAKE_POS = -0.30;
 
@@ -140,7 +141,7 @@ public class IntakePivot extends SubsystemBase {
 
   public void oscillatePivot() {
     double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 2) + Math.PI));
-    double pos = DEPLOYED_POS + offset * (RETRACTED_POS - DEPLOYED_POS);
+    double pos = LAUNCH_POS_OUT + offset * (LAUNCH_POS_IN - LAUNCH_POS_OUT);
     targetPos = pos;
     setPivotPosition(pos);
   }

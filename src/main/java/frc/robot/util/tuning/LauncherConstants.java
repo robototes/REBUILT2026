@@ -25,6 +25,7 @@ public class LauncherConstants {
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
+  private static double flywheelOffset = 0.65;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -56,12 +57,12 @@ public class LauncherConstants {
   };
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1.31, 1.836, 65/2, 0.87),
-    new LauncherDistanceDataPoint(2.52, 3.672, 72/2, 1.1),
-    new LauncherDistanceDataPoint(3.32, 4.896, 75/2, 1.13),
-    new LauncherDistanceDataPoint(3.87, 6.12, 79/2, 1.1),
-    new LauncherDistanceDataPoint(4.27, 6.732, 82/2, 1),
-    new LauncherDistanceDataPoint(6.4, 8.568, 100/2, 1.34),
+    new LauncherDistanceDataPoint(1.31, 1.836, 65 * flywheelOffset, 0.87),
+    new LauncherDistanceDataPoint(2.52, 3.672, 72 * flywheelOffset, 1.1),
+    new LauncherDistanceDataPoint(3.32, 4.896, 75 * flywheelOffset, 1.13),
+    new LauncherDistanceDataPoint(3.87, 6.12, 79 * flywheelOffset, 1.1),
+    new LauncherDistanceDataPoint(4.27, 6.732, 82 * flywheelOffset, 1),
+    new LauncherDistanceDataPoint(6.4, 8.568, 100 * flywheelOffset, 1.34),
     new LauncherDistanceDataPoint(10, 8.568, 80, 1.34)
   };
 
