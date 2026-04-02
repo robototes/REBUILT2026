@@ -283,14 +283,13 @@ public class Controls {
         .onTrue(
             Commands.parallel(
                     Commands.either(
-                        s.hood.autoZeroCommand(),
-                        s.launcherSubsystem.zeroSubsystemCommand(),
+                        Commands.parallel(
+                            s.hood.autoZeroCommand(), s.intakePivot.autoZeroCommand()),
+                        Commands.parallel(
+                            s.launcherSubsystem.zeroSubsystemCommand(),
+                            s.intakePivot.zeroPivot(),
+                            s.turretSubsystem.zeroTurret()),
                         () -> DriverStation.isEnabled()),
-                    Commands.either(
-                        s.intakePivot.autoZeroCommand(),
-                        s.intakePivot.zeroPivot(),
-                        () -> DriverStation.isEnabled()),
-                    s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true));
 
