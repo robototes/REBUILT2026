@@ -231,7 +231,6 @@ public class Controls {
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                s.turretSubsystem.setTurretPosition(0),
                 s.launcherSubsystem.launcherAimCommandV2(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 LEDandIntakeRoutine()))
@@ -241,8 +240,10 @@ public class Controls {
         .whileTrue(
             Commands.parallel(
                 AutoDriveRotate.autoRotate(
-                    s, () -> driverController.getLeftX(), () -> driverController.getLeftY()),
+                        s, () -> driverController.getLeftX(), () -> driverController.getLeftY())
+                    .onlyWhile(() -> s.launcherSubsystem.isAtTargetFallback()),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                s.turretSubsystem.setTurretPosition(0),
                 LEDandIntakeRoutine()))
         .onFalse(LEDandIntakeExitRoutine());
 

@@ -45,6 +45,8 @@ public class TurretSubsystem extends SubsystemBase {
    */
   public static final double TURRET_DEGREE_TOLERANCE = 8; // Degrees
 
+  public static final double TURRET_DEGREE_TOLERANCE_FALLBACK = 20;
+
   // Positions
   private double targetPos;
   public static final double FRONT_POSITION = 0;
