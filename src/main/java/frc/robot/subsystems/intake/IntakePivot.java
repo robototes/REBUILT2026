@@ -63,12 +63,6 @@ public class IntakePivot extends SubsystemBase {
   public static final double PIVOT_MIN = -0.45; // rotations
   public static final double PIVOT_MAX = 0.0;
 
-  // Oscillation parameters
-  public static final double OSCILLATE_MIN = 0.5; // seconds
-  public static final double OSCILLATE_MAX = 2.0; // seconds
-  public static final double OSCILLATE_SCALAR =
-      50 / OSCILLATE_MAX; // max spindexer stator divided by max time
-
   // Simulator and NetworkTables
   private PivotSim pivotSim;
   private DoublePublisher currentPosPub;

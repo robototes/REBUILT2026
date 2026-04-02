@@ -89,10 +89,6 @@ public class Spindexer extends SubsystemBase {
     spindexerMotor.stopMotor();
   }
 
-  public double getStatorCurrent() {
-    return spindexerMotor.getStatorCurrent().getValueAsDouble();
-  }
-
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
