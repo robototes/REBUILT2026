@@ -2,7 +2,6 @@ package frc.robot.util.simulation;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -18,9 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import frc.robot.DriveStateSignalLogger;
-import frc.robot.util.AllianceUtils;
-import frc.robot.util.tuning.LauncherConstants;
+import frc.robot.util.DriveStateSignalLogger;
 
 public class DriveStateNtLogger {
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -31,10 +28,7 @@ public class DriveStateNtLogger {
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
   private final StructPublisher<Pose2d> drivePose =
       driveStateTable.getStructTopic("Pose", Pose2d.struct).publish();
-  private final StructPublisher<Translation2d> turretTranslation =
-      driveStateTable.getStructTopic("Turret Pose", Translation2d.struct).publish();
-  private final DoublePublisher turretToHubDistance =
-      driveStateTable.getDoubleTopic("Turret to hub distance").publish();
+
   private final StructPublisher<ChassisSpeeds> driveSpeeds =
       driveStateTable.getStructTopic("Speeds", ChassisSpeeds.struct).publish();
   private final StructArrayPublisher<SwerveModuleState> driveModuleStates =
@@ -112,9 +106,6 @@ public class DriveStateNtLogger {
       return;
     }
 
-    var turret = LauncherConstants.launcherFromRobot(state.Pose);
-    var robotToHubMeters = AllianceUtils.getHubTranslation2d().minus(turret).getNorm();
-
     for (int i = 0; i < 4; ++i) {
       m_moduleSpeeds[i].setAngle(state.ModuleStates[i].angle);
       m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
@@ -122,8 +113,6 @@ public class DriveStateNtLogger {
     }
     /* Telemeterize the swerve drive state */
     drivePose.set(state.Pose);
-    turretTranslation.set(turret);
-    turretToHubDistance.set(robotToHubMeters);
     driveSpeeds.set(state.Speeds);
     driveModuleStates.set(state.ModuleStates);
     driveModuleTargets.set(state.ModuleTargets);

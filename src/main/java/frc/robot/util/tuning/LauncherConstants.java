@@ -6,22 +6,23 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
   private static final Translation2d LAUNCHER_OFFSET =
       RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
 
-  private static final StructArrayPublisher<Pose2d> turretToTarget =
-      NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretToTarget", Pose2d.struct)
-          .publish();
-  private static final StructArrayPublisher<Pose2d> turretRotationalVelocity =
-      NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
-          .publish();
+  private static final NetworkTable table =
+      NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
+  private static final StructPublisher<Translation2d> turretTranslation =
+      table.getStructTopic("Turret Pose", Translation2d.struct).publish();
+  private static final DoublePublisher turretToHubDistance =
+      table.getDoubleTopic("Turret to hub distance").publish();
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
@@ -102,7 +103,10 @@ public class LauncherConstants {
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
     Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
-    return robot.plus(fieldRelativeLauncherOffset).getTranslation();
+    Translation2d result = robot.plus(fieldRelativeLauncherOffset).getTranslation();
+    turretTranslation.set(result);
+    turretToHubDistance.set(AllianceUtils.getHubTranslation2d().minus(result).getNorm());
+    return result;
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {

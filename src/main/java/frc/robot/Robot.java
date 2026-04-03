@@ -27,10 +27,12 @@ import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
+import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.DriveStateNtLogger;
 import frc.robot.util.simulation.RobotSim;
+import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -143,6 +145,7 @@ public class Robot extends TimedRobot {
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
+    LauncherConstants.launcherFromRobot(subsystems.drivebaseSubsystem.getState().Pose);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.util;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -15,7 +15,7 @@ public class DriveStateSignalLogger {
   }
 
   /* What to publish over networktables for telemetry */
-  private SwerveDriveState cachedDriveState;
+  private volatile SwerveDriveState cachedDriveState;
 
   private final double[] m_poseArray = new double[3];
   private final double[] m_moduleStatesArray = new double[8];
