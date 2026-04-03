@@ -51,7 +51,9 @@ public class LauncherSubsystem extends SubsystemBase {
     return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
         && s.hood.atTargetPosition()
         && s.turretSubsystem.atTarget()
-        && !LaunchCalculator.isCloseToTrench(launchParameters.turretPose());
+        && !LaunchCalculator.getInstance()
+            .isApproachingTrench(
+                s.drivebaseSubsystem.getState().Pose, s.drivebaseSubsystem.getState().Speeds);
   }
 
   public boolean isHoodAtTarget() {

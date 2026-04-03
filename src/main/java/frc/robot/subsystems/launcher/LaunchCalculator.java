@@ -270,6 +270,11 @@ public class LaunchCalculator {
    *     Returned value does not have an apparant unit.
    */
   public double getHoodAngle(Pose2d robotPose, double trueDist, ChassisSpeeds speeds) {
+    if (isApproachingTrench(robotPose, speeds)) return 0;
+    return LauncherConstants.getHoodAngleFromDistance(trueDist);
+  }
+
+  public boolean isApproachingTrench(Pose2d robotPose, ChassisSpeeds speeds) {
     for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
       double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
       Pose2d sampledRobotPose =
@@ -278,22 +283,15 @@ public class LaunchCalculator {
                   speeds.vxMetersPerSecond * t,
                   speeds.vyMetersPerSecond * t,
                   speeds.omegaRadiansPerSecond * t));
+      // Transform by turret transform because we are checking to see if the turret is close to the
+      // trench not the center of the robot
       Pose2d sampledTurretPose = sampledRobotPose.transformBy(turretTransform);
-      if (isCloseToTrench(sampledTurretPose)) {
-        return 0;
-      }
+      if (isCloseToTrench(sampledTurretPose)) return true;
     }
-    return LauncherConstants.getHoodAngleFromDistance(trueDist);
+    return false;
   }
 
-  /**
-   * Checks to see if a point's x value (in an x,y field) on the robot is close to the trench or
-   * not.
-   *
-   * @param pose the point (pose2d) on the robot you would like to check
-   * @return True if close, false if not close
-   */
-  public static boolean isCloseToTrench(Pose2d pose) {
+  public boolean isCloseToTrench(Pose2d pose) {
     Pose2d nearestTag = pose.nearest(trenchTags);
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
