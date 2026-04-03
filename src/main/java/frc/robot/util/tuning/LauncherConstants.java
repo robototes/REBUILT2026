@@ -58,9 +58,9 @@ public class LauncherConstants {
 
   // TODO: Tune comp data points for launcher V3
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1.5, 2, 40, 0.87), // TODO: JAMES TOF
-    new LauncherDistanceDataPoint(2, 3, 40.5, 1),
-    new LauncherDistanceDataPoint(2.505, 3.9, 41, 1.1),
+    new LauncherDistanceDataPoint(1.5, 2, 40, 1.23),
+    new LauncherDistanceDataPoint(2, 3, 40.5, 0.9),
+    new LauncherDistanceDataPoint(2.505, 3.9, 41, 1.067),
     new LauncherDistanceDataPoint(3, 5, 43, 1.3),
     new LauncherDistanceDataPoint(3.87, 6.12, 79 * flywheelOffset, 1.1),
     new LauncherDistanceDataPoint(4.27, 6.732, 82 * flywheelOffset, 1),
