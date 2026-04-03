@@ -61,12 +61,6 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "LT-Intake-Short"
@@ -100,12 +94,6 @@
           "type": "named",
           "data": {
             "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
           }
         }
       ]

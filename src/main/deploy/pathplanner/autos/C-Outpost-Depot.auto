@@ -49,12 +49,6 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
-        },
-        {
           "type": "deadline",
           "data": {
             "commands": [
@@ -77,12 +71,6 @@
           "type": "named",
           "data": {
             "name": "launch"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
           }
         }
       ]
