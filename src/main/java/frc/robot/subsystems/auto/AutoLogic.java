@@ -169,6 +169,22 @@ public class AutoLogic {
     return availableAutos.getSelected() != null;
   }
 
+  public static Pose2d getSelectedAutoStartingPose() {
+    String selectedAutoName = getSelectedAutoName();
+    AutoPath selectedPath = namesToAuto.get(selectedAutoName);
+
+    if (selectedPath != null && selectedPath.getStartPose2d() != null) {
+      return selectedPath.getStartPose2d();
+    }
+
+    if (defaultPath.getDisplayName().equals(selectedAutoName)
+        && defaultPath.getStartPose2d() != null) {
+      return defaultPath.getStartPose2d();
+    }
+
+    return Pose2d.kZero;
+  }
+
   public static Command getSelectedAuto() {
     double delay = autoDelayEntry.getDouble(0.0);
 

@@ -30,6 +30,7 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
+import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -398,7 +399,8 @@ public class Controls {
               Commands.runOnce(
                   () -> {
                     if (s.groundTruthSim != null) {
-                      s.groundTruthSim.cycleResetPosition(blueHub);
+                      s.groundTruthSim.cycleResetPosition(
+                          AutoLogic.getSelectedAutoStartingPose());
                     }
                   }));
     }
