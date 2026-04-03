@@ -104,11 +104,14 @@ public class LauncherConstants {
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
+    return LAUNCHER_OFFSET.getTranslation();
+  }
+
+  public static void UpdateNT(Pose2d robot) {
     Pose2d result = robot.transformBy(LAUNCHER_OFFSET);
     turretPose.set(result);
     turretToHubDistance.set(
         AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm());
-    return LAUNCHER_OFFSET.getTranslation();
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
