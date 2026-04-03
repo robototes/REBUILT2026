@@ -29,6 +29,7 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
+import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -45,6 +46,7 @@ import frc.robot.util.robotType.RobotTypesEnum;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
+  private final SimWrapper m_simWrapper;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
@@ -103,9 +105,10 @@ public class Controls {
           .withDriveRequestType(DriveRequestType.Velocity);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls(Subsystems subsystems) {
+  public Controls(Subsystems subsystems, SimWrapper simWrapper) {
     // Configure the trigger bindings
     s = subsystems;
+    m_simWrapper = simWrapper;
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
@@ -205,6 +208,20 @@ public class Controls {
                 .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
                 .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
                 .withName("Reset gyro"));
+
+    // $VISIONSIM - Bumper buttons
+    if (Robot.isSimulation()) {
+      // In simulation, inject drift with POV-right to test vision correction
+      driverController
+          .povRight()
+          .onTrue(s.drivebaseSubsystem.runOnce(() -> m_simWrapper.injectDrift(0.5, 15.0)));
+
+      // POV-left resets robot to the starting pose of the selected auto
+      driverController
+          .povLeft()
+          .onTrue(
+              s.drivebaseSubsystem.runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero)));
+    }
 
     // reset pose incase vision is bugging
     driverController
