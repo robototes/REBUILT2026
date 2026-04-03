@@ -18,13 +18,13 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import frc.robot.Telemetry;
+import frc.robot.DriveStateSignalLogger;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.tuning.LauncherConstants;
 
-public class NotSimRelatedClass {
+public class DriveStateNtLogger {
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
-  private final Telemetry telem;
+  private final DriveStateSignalLogger telem;
   private final double MaxSpeed;
 
   /* Robot swerve drive state */
@@ -91,7 +91,7 @@ public class NotSimRelatedClass {
             .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
       };
 
-  public NotSimRelatedClass(Telemetry telemetry, double MaxSpeed) {
+  public DriveStateNtLogger(DriveStateSignalLogger telemetry, double MaxSpeed) {
     this.MaxSpeed = MaxSpeed;
     this.telem = telemetry;
     /* Telemeterize the module states to a Mechanism2d */
