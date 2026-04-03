@@ -81,13 +81,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeRightFar"
+            "pathName": "NeutralRight-Rotate"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Rotate-RT-Back"
+            "pathName": "NeutralRight-Back"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-Back-Trench"
           }
         },
         {

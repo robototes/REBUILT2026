@@ -69,25 +69,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LT-Intake"
+            "pathName": "LT-Intake-Short"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "NeutralLeft-IntakeFar"
+            "pathName": "Mid-Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeLeftFar"
+            "pathName": "Mid-Rotate"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Back-LeftTrench"
+            "pathName": "Mid-Back"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Trench-Back"
           }
         },
         {
