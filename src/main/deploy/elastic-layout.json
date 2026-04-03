@@ -26,7 +26,7 @@
             "x": 0.0,
             "y": 0.0,
             "width": 1152.0,
-            "height": 896.0,
+            "height": 768.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Selected auto",
@@ -47,7 +47,7 @@
             "x": 1152.0,
             "y": 256.0,
             "width": 640.0,
-            "height": 640.0,
+            "height": 512.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Start pose",
@@ -115,6 +115,24 @@
               "topic": "/SmartDashboard/Available Auto Variants",
               "period": 0.06,
               "sort_options": false
+            }
+          },
+          {
+            "title": "Offset to Estimated Pose",
+            "x": 0.0,
+            "y": 768.0,
+            "width": 1152.0,
+            "height": 256.0,
+            "type": "Graph",
+            "properties": {
+              "topic": "/RobotUtils/EstimateToGroundTruth",
+              "period": 0.033,
+              "data_type": "double",
+              "time_displayed": 30.0,
+              "min_value": 0.0,
+              "max_value": 1.0,
+              "color": 4278238420,
+              "line_width": 2.0
             }
           }
         ]
