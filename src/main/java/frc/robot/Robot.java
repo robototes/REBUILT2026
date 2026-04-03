@@ -30,10 +30,10 @@ import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
+import frc.robot.util.DriveStateNtLogger;
 import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.simulation.DriveStateNtLogger;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
 
