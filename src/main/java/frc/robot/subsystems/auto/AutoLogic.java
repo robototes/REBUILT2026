@@ -10,6 +10,8 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -63,7 +65,16 @@ public class AutoLogic {
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
+          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
+          new AutoPath("Sim Nudge Right", "Sim Nudge Right"),
+          new AutoPath("Sim Nudge Rotate", "Sim Nudge Rotate"),
+          new AutoPath("Sim Drive Accross Field Pull Right", "Sim Drive Accross Field Pull Right"),
+          new AutoPath(
+              "Sim Drive Accross Field Rotate Clockwise",
+              "Sim Drive Accross Field Rotate Clockwise"),
+          new AutoPath(
+              "Sim Drive Accross Field Camera Misplaced",
+              "Sim Drive Accross Field Camera Misplaced"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
@@ -158,6 +169,22 @@ public class AutoLogic {
     return availableAutos.getSelected() != null;
   }
 
+  public static Pose2d getSelectedAutoStartingPose() {
+    String selectedAutoName = getSelectedAutoName();
+    AutoPath selectedPath = namesToAuto.get(selectedAutoName);
+
+    if (selectedPath != null && selectedPath.getStartPose2d() != null) {
+      return selectedPath.getStartPose2d();
+    }
+
+    if (defaultPath.getDisplayName().equals(selectedAutoName)
+        && defaultPath.getStartPose2d() != null) {
+      return defaultPath.getStartPose2d();
+    }
+
+    return Pose2d.kZero;
+  }
+
   public static Command getSelectedAuto() {
     double delay = autoDelayEntry.getDouble(0.0);
 
@@ -195,12 +222,53 @@ public class AutoLogic {
       NamedCommands.registerCommand("intake", intakeCommand());
       NamedCommands.registerCommand("stow", autoStowCommand());
       NamedCommands.registerCommand("climb", climbCommand());
+      if (Robot.isSimulation() && s.faultyDriveManager != null) {
+        NamedCommands.registerCommand(
+            "faulty-pull-right",
+            Commands.runOnce(() -> s.faultyDriveManager.enablePullRight(true)));
+        NamedCommands.registerCommand(
+            "nudge-right",
+            Commands.runOnce(
+                () -> {
+                  if (s.groundTruthSim != null) {
+                    s.groundTruthSim.injectDriftToGroundTruth(0, Units.inchesToMeters(12), 0);
+                  }
+                }));
+        NamedCommands.registerCommand(
+            "faulty-rotate-clockwise",
+            Commands.runOnce(() -> s.faultyDriveManager.enableRotateClockwise(true)));
+        NamedCommands.registerCommand(
+            "nudge-rotate",
+            Commands.runOnce(
+                () -> {
+                  if (s.groundTruthSim != null) {
+                    s.groundTruthSim.injectDriftToGroundTruth(0, 0, -45);
+                  }
+                }));
+        NamedCommands.registerCommand(
+            "faulty-camera-misplaced",
+            Commands.runOnce(
+                () ->
+                    s.faultyDriveManager.enableCameraMisplaced(
+                        new Transform3d(0, -1.0, 0, new Rotation3d()))));
+      } else {
+        NamedCommands.registerCommand("faulty-pull-right", empty());
+        NamedCommands.registerCommand("nudge-right", empty());
+        NamedCommands.registerCommand("faulty-rotate-clockwise", empty());
+        NamedCommands.registerCommand("nudge-rotate", empty());
+        NamedCommands.registerCommand("faulty-camera-misplaced", empty());
+      }
 
     } else {
 
       NamedCommands.registerCommand("launch", empty());
       NamedCommands.registerCommand("intake", empty());
       NamedCommands.registerCommand("climb", empty());
+      NamedCommands.registerCommand("faulty-pull-right", empty());
+      NamedCommands.registerCommand("nudge-right", empty());
+      NamedCommands.registerCommand("faulty-rotate-clockwise", empty());
+      NamedCommands.registerCommand("nudge-rotate", empty());
+      NamedCommands.registerCommand("faulty-camera-misplaced", empty());
     }
   }
 

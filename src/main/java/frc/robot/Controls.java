@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -29,12 +30,15 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
+import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import robotutils.joystickinput.JoystickInput;
+import robotutils.pub.interfaces.JoystickInputInterface;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -95,6 +99,14 @@ public class Controls {
 
   private final double driveInputScale = 1;
 
+  private final JoystickInputInterface simJoystickInput =
+      new JoystickInput(
+          () -> -driverController.getLeftY(),
+          () -> -driverController.getLeftX(),
+          () -> -driverController.getRightX(),
+          RobotBase.isSimulation(),
+          () -> AllianceUtils.isRed() ? 180.0 : 0.0);
+
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
@@ -149,25 +161,49 @@ public class Controls {
 
   // takes the X value from the joystick, and applies a deadband and input scaling
   private double getDriveX() {
+    double x;
+
+    if (RobotBase.isSimulation()) {
+      x = simJoystickInput.getJoystickInputs().driveX();
+    } else {
+      x = -driverController.getLeftY();
+    }
+
     // Joystick +Y is back
     // Robot +X is forward
-    double input = MathUtil.applyDeadband(-driverController.getLeftY(), 0.1);
+    double input = MathUtil.applyDeadband(x, 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
   private double getDriveY() {
+    double y;
+
+    if (RobotBase.isSimulation()) {
+      y = simJoystickInput.getJoystickInputs().driveY();
+    } else {
+      y = -driverController.getLeftX();
+    }
+
     // Joystick +X is right
     // Robot +Y is left
-    double input = MathUtil.applyDeadband(-driverController.getLeftX(), 0.1);
+    double input = MathUtil.applyDeadband(y, 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
   private double getDriveRotate() {
+    double rotate;
+
+    if (RobotBase.isSimulation()) {
+      rotate = simJoystickInput.getJoystickInputs().rotatetX();
+    } else {
+      rotate = -driverController.getRightX();
+    }
+
     // Joystick +X is right
     // Robot +angle is CCW (left)
-    double input = MathUtil.applyDeadband(-driverController.getRightX(), 0.1);
+    double input = MathUtil.applyDeadband(rotate, 0.1);
     return input * MaxSpeed * driveInputScale;
   }
 
@@ -216,7 +252,7 @@ public class Controls {
         .rightBumper()
         .onTrue(
             s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+                () -> s.resetRobotPose(AllianceUtils.isRed() ? redHub : blueHub)));
   }
 
   private void configureLauncherBindings() {
@@ -338,6 +374,36 @@ public class Controls {
                 }));
     driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
     driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+
+    if (RobotBase.isSimulation()) {
+      // povRight - Offsets physical robot from robot estimate pose
+      driverController
+          .povRight()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      // Random translation up to 0.5 m in a random direction, random rotation sign
+                      double angle = Math.random() * 2 * Math.PI;
+                      double xFrontBack = 0.5 * Math.cos(angle);
+                      double yLeftRight = 0.5 * Math.sin(angle);
+                      double dtheta = 15.0 * (Math.random() > 0.5 ? 1 : -1);
+                      s.groundTruthSim.injectDriftToGroundTruth(xFrontBack, yLeftRight, dtheta);
+                    }
+                  }));
+
+      // povLeft - Resets the robot pose to auto start location
+      driverController
+          .povLeft()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      s.groundTruthSim.cycleResetPosition(AutoLogic.getSelectedAutoStartingPose());
+                    }
+                  }));
+    }
+
     driverController
         .leftBumper()
         .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE))
@@ -389,7 +455,7 @@ public class Controls {
                       () -> {
                         Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
                         if (referenceVisionPose != null) {
-                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
+                          s.resetRobotPose(referenceVisionPose);
                         }
                       })
                   .withName("Now Drive Pose is Vision Pose"));
@@ -436,7 +502,7 @@ public class Controls {
         .and(turretTestController.rightBumper())
         .onTrue(
             s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+                () -> s.resetRobotPose(AllianceUtils.isRed() ? redHub : blueHub)));
     driverController
         .rightStick()
         .whileTrue(
