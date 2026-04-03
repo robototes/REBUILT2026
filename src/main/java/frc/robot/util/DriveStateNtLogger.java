@@ -5,11 +5,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -25,6 +23,8 @@ public class DriveStateNtLogger {
 
   /* Robot swerve drive state */
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
+
+  // This correctly publishes as a Struct, completely avoiding the race condition
   private final StructPublisher<Pose2d> drivePose =
       driveStateTable.getStructTopic("Pose", Pose2d.struct).publish();
 
@@ -40,11 +40,6 @@ public class DriveStateNtLogger {
       driveStateTable.getDoubleTopic("Timestamp").publish();
   private final DoublePublisher driveOdometryFrequency =
       driveStateTable.getDoubleTopic("OdometryFrequency").publish();
-
-  /* Robot pose for field positioning */
-  private final NetworkTable table = inst.getTable("Pose");
-  private final DoubleArrayPublisher fieldPub = table.getDoubleArrayTopic("robotPose").publish();
-  private final StringPublisher fieldTypePub = table.getStringTopic(".type").publish();
 
   /* Mechanisms to represent the swerve module states */
   private final Mechanism2d[] m_moduleMechanisms =
@@ -91,10 +86,7 @@ public class DriveStateNtLogger {
     for (int i = 0; i < 4; ++i) {
       SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
     }
-    double[] poseArr = telem.returnPoseArray();
-    if (poseArr != null) {
-      fieldPub.set(poseArr);
-    }
+    // Legacy double[] publisher has been removed entirely
   }
 
   // should be updated periodically in robot.periodic()
@@ -110,6 +102,7 @@ public class DriveStateNtLogger {
       m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
       m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
     }
+
     /* Telemeterize the swerve drive state */
     drivePose.set(state.Pose);
     driveSpeeds.set(state.Speeds);
@@ -118,7 +111,5 @@ public class DriveStateNtLogger {
     driveModulePositions.set(state.ModulePositions);
     driveTimestamp.set(state.Timestamp);
     driveOdometryFrequency.set(state.OdometryPeriod == 0 ? 0 : 1.0 / state.OdometryPeriod);
-    /* Telemeterize the pose to a Field2d */
-    fieldTypePub.set("Field2d");
   }
 }

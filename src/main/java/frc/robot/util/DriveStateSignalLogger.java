@@ -24,7 +24,7 @@ public class DriveStateSignalLogger {
   public void telemeterize(SwerveDriveState state) {
     cachedDriveState = state;
 
-    /* Also write to log file */
+    /* Write to log file (Thread-safe because it happens sequentially in the same thread) */
     m_poseArray[0] = state.Pose.getX();
     m_poseArray[1] = state.Pose.getY();
     m_poseArray[2] = state.Pose.getRotation().getDegrees();
@@ -43,9 +43,5 @@ public class DriveStateSignalLogger {
 
   public SwerveDriveState returnDriveState() {
     return cachedDriveState;
-  }
-
-  public double[] returnPoseArray() {
-    return m_poseArray;
   }
 }
