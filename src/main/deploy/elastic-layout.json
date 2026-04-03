@@ -119,7 +119,7 @@
           },
           {
             "title": "Current Estimate Pose to GroundTruth Pose",
-            "x": 0.0,
+            "x": 640.0,
             "y": 768.0,
             "width": 640.0,
             "height": 256.0,
@@ -136,14 +136,14 @@
             }
           },
           {
-            "title": "Vision Pose Error",
-            "x": 640.0,
+            "title": "Vision to Snapshot-time Estimate Error",
+            "x": 0.0,
             "y": 768.0,
             "width": 640.0,
             "height": 256.0,
             "type": "Graph",
             "properties": {
-              "topic": "/RobotUtils/EstimateToGroundTruth",
+              "topic": "/SmartDashboard//vision/visionError",
               "period": 0.033,
               "data_type": "double",
               "time_displayed": 30.0,
