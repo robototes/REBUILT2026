@@ -25,7 +25,7 @@
             "title": "Selected auto",
             "x": 0.0,
             "y": 0.0,
-            "width": 1152.0,
+            "width": 1280.0,
             "height": 768.0,
             "type": "Field",
             "properties": {
@@ -44,7 +44,7 @@
           },
           {
             "title": "Start pose",
-            "x": 1152.0,
+            "x": 1280.0,
             "y": 256.0,
             "width": 640.0,
             "height": 512.0,
@@ -65,7 +65,7 @@
           },
           {
             "title": "Starting Position",
-            "x": 1152.0,
+            "x": 1280.0,
             "y": 128.0,
             "width": 128.0,
             "height": 128.0,
@@ -78,7 +78,7 @@
           },
           {
             "title": "Auto Key",
-            "x": 1152.0,
+            "x": 1280.0,
             "y": 0.0,
             "width": 640.0,
             "height": 128.0,
@@ -92,7 +92,7 @@
           },
           {
             "title": "Est. Time (s)",
-            "x": 1664.0,
+            "x": 1792.0,
             "y": 128.0,
             "width": 128.0,
             "height": 128.0,
@@ -106,7 +106,7 @@
           },
           {
             "title": "Available Auto Variants",
-            "x": 1280.0,
+            "x": 1408.0,
             "y": 128.0,
             "width": 384.0,
             "height": 128.0,
@@ -118,10 +118,28 @@
             }
           },
           {
-            "title": "Offset to Estimated Pose",
+            "title": "Current Estimate Pose to GroundTruth Pose",
             "x": 0.0,
             "y": 768.0,
-            "width": 1152.0,
+            "width": 640.0,
+            "height": 256.0,
+            "type": "Graph",
+            "properties": {
+              "topic": "/RobotUtils/EstimateToGroundTruth",
+              "period": 0.033,
+              "data_type": "double",
+              "time_displayed": 30.0,
+              "min_value": 0.0,
+              "max_value": 1.0,
+              "color": 4278238420,
+              "line_width": 2.0
+            }
+          },
+          {
+            "title": "Vision Pose to Estimate-at-snap-time",
+            "x": 640.0,
+            "y": 768.0,
+            "width": 640.0,
             "height": 256.0,
             "type": "Graph",
             "properties": {
