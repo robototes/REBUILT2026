@@ -399,8 +399,7 @@ public class Controls {
               Commands.runOnce(
                   () -> {
                     if (s.groundTruthSim != null) {
-                      s.groundTruthSim.cycleResetPosition(
-                          AutoLogic.getSelectedAutoStartingPose());
+                      s.groundTruthSim.cycleResetPosition(AutoLogic.getSelectedAutoStartingPose());
                     }
                   }));
     }
