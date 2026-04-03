@@ -156,8 +156,10 @@ public class LaunchCalculator {
     double totalOmega = chassisSpeeds.omegaRadiansPerSecond + turretSubsystem.getOmega();
     ChassisSpeeds turretRobotRelativeSpeeds =
         new ChassisSpeeds(
-            chassisSpeeds.vxMetersPerSecond - totalOmega * turretTransform.getY(),
-            chassisSpeeds.vyMetersPerSecond + totalOmega * turretTransform.getX(),
+            chassisSpeeds.vxMetersPerSecond
+                - chassisSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
+            chassisSpeeds.vyMetersPerSecond
+                + chassisSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
             totalOmega);
     // Let chassisspeeds built in methods handle the conversion from robot relative to field
     // relative
