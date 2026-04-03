@@ -136,7 +136,7 @@
             }
           },
           {
-            "title": "Vision Pose to Estimate-at-snap-time",
+            "title": "Vision Pose Error",
             "x": 640.0,
             "y": 768.0,
             "width": 640.0,
