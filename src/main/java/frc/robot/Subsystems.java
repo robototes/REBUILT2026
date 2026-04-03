@@ -225,17 +225,27 @@ public class Subsystems {
     }
   }
 
-  public void resetRobotPose(Pose2d pose) {
+  private void resetRobotPose(Pose2d pose, boolean resetGroundTruthToo) {
     if (drivebaseSubsystem == null) {
       return;
     }
+
     drivebaseSubsystem.resetPose(pose);
-    if (groundTruthSim != null) {
+
+    if (resetGroundTruthToo && groundTruthSim != null) {
       groundTruthSim.resetGroundTruthPoseForSim(pose);
     }
     if (simLimelightProducer != null) {
       simLimelightProducer.resetSimPose(pose);
     }
+  }
+
+  public void resetRobotPose(Pose2d pose) {
+    resetRobotPose(pose, true);
+  }
+
+  public void resetRobotPoseExceptGroundTruth(Pose2d pose) {
+    resetRobotPose(pose, false);
   }
 
   public void resetAllAutoSimFaults() {
