@@ -171,25 +171,27 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
 
-    SmartDashboard.putNumber("/vision/limelight-a_Last timestamp", getLastTimestampSeconds());
-    SmartDashboard.putNumber("/vision/limelight-b_Last timestamp", getLastTimestampSeconds());
-    SmartDashboard.putNumber("/vision/limelight-c_Last timestamp", getLastTimestampSeconds());
-    SmartDashboard.putNumber("/vision/limelight-a_Num targets", getNumTargets());
-    SmartDashboard.putNumber("/vision/limelight-b_Num targets", getNumTargets());
-    SmartDashboard.putNumber("/vision/limelight-c_Num targets", getNumTargets());
-    SmartDashboard.putNumber(
-        "/vision/limelight-a_time since last reading", getTimeSinceLastReading());
-    SmartDashboard.putNumber(
-        "/vision/limelight-b_time since last reading", getTimeSinceLastReading());
-    SmartDashboard.putNumber(
-        "/vision/limelight-c_time since last reading", getTimeSinceLastReading());
+    SmartDashboard.putNumber("/vision/limelight-a_Last timestamp", 0);
+    SmartDashboard.putNumber("/vision/limelight-b_Last timestamp", 0);
+    SmartDashboard.putNumber("/vision/limelight-c_Last timestamp", 0);
+    SmartDashboard.putNumber("/vision/limelight-a_Num targets", 0);
+    SmartDashboard.putNumber("/vision/limelight-b_Num targets", 0);
+    SmartDashboard.putNumber("/vision/limelight-c_Num targets", 0);
+    SmartDashboard.putNumber("/vision/limelight-a_time since last reading", 0);
+    SmartDashboard.putNumber("/vision/limelight-b_time since last reading", 0);
+    SmartDashboard.putNumber("/vision/limelight-c_time since last reading", 0);
 
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
 
   public void update() {
-    if (getDisableVision()) return;
+    if (getDisableVision()) {
+      SmartDashboard.putString("/vision/limelight-a_rejectReason", "vision-disabled");
+      SmartDashboard.putString("/vision/limelight-b_rejectReason", "vision-disabled");
+      SmartDashboard.putString("/vision/limelight-c_rejectReason", "vision-disabled");
+      return;
+    }
 
     limelightaOnline = isLimeLightOnline(LIMELIGHT_A);
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
