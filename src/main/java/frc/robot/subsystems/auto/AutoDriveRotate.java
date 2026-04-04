@@ -10,7 +10,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Subsystems;
-import frc.robot.subsystems.LaunchCalculator;
+import frc.robot.subsystems.launcher.LaunchCalculator;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;

@@ -201,9 +201,9 @@ public class TurretSubsystem extends SubsystemBase {
     return turretMotor.getPosition().getValueAsDouble();
   }
 
-  public boolean atTarget() {
+  public boolean atTarget(double tolerance) {
     return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
-        < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
+        < Units.degreesToRotations(tolerance);
   }
 
   /**
