@@ -92,6 +92,23 @@ public class LEDSubsystem extends SubsystemBase {
     alternatingColorsPub.set("A:None | B:None");
   }
 
+  private void publishState() {
+    currentPatternPub.set(currentPattern.name());
+    currentModePub.set(currentMode != null ? currentMode.name() : "NONE");
+
+    if (currentPattern == LEDPattern.SOLID) {
+      currentColorPub.set(primaryColor.toHexString());
+      alternatingColorsPub.set("A:None | B:None");
+    } else if (currentPattern == LEDPattern.ALTERNATE) {
+      currentColorPub.set("NONE");
+      alternatingColorsPub.set(
+          "A:" + primaryColor.toHexString() + " | B:" + secondaryColor.toHexString());
+    } else {
+      currentColorPub.set("NONE");
+      alternatingColorsPub.set("A:None | B:None");
+    }
+  }
+
   public void setHardwareColor(RGBWColor color, double brightness) {
     RGBWColor scaled = color.scaleBrightness(brightness);
 
@@ -115,9 +132,10 @@ public class LEDSubsystem extends SubsystemBase {
   private void setSolid(RGBWColor color) {
     currentPattern = LEDPattern.SOLID;
     primaryColor = color;
+
     setHardwareColor(color);
 
-    currentPatternPub.set("SOLID");
+    currentPatternPub.set(currentPattern.name());
     currentColorPub.set(color.toHexString());
     alternatingColorsPub.set("A:None | B:None");
   }
@@ -132,22 +150,24 @@ public class LEDSubsystem extends SubsystemBase {
     showingPrimary = true;
     lastToggleTime = Timer.getFPGATimestamp();
 
-    currentPatternPub.set("ALTERNATING");
-    currentColorPub.set(a.toHexString());
+    currentPatternPub.set(currentPattern.name());
+    currentColorPub.set("NONE");
     alternatingColorsPub.set("A:" + a.toHexString() + " | B:" + b.toHexString());
 
     setHardwareColor(a);
+    publishState();
   }
 
   private void setRainbow() {
     currentPattern = LEDPattern.RAINBOW;
 
     // Update publishers
-    currentPatternPub.set("RAINBOW");
+    currentPatternPub.set(currentPattern.name());
     currentColorPub.set("NONE");
     alternatingColorsPub.set("A:None | B:None");
 
     candle.setControl(rainbowAnimation);
+    publishState();
   }
 
   public void setMode(LEDMode mode) {
@@ -165,7 +185,7 @@ public class LEDSubsystem extends SubsystemBase {
       case RAINBOW -> setRainbow();
     }
 
-    currentModePub.set(mode.toString());
+    publishState();
   }
 
   public Command flashCommand(RGBWColor color, int times, double interval) {

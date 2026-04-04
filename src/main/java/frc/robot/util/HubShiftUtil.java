@@ -56,8 +56,8 @@ public class HubShiftUtil {
     var winOverride = getAllianceWinOverride();
     if (!winOverride.isEmpty()) {
       return winOverride.get()
-          ? (alliance == Alliance.Blue ? Alliance.Red : Alliance.Blue)
-          : (alliance == Alliance.Blue ? Alliance.Blue : Alliance.Red);
+          ? (alliance == Alliance.Red ? Alliance.Blue : Alliance.Red)
+          : alliance;
     }
 
     // Return FMS value
@@ -75,7 +75,7 @@ public class HubShiftUtil {
     return alliance == Alliance.Blue ? Alliance.Red : Alliance.Blue;
   }
 
-  /** Starts the timer at the begining of teleop. */
+  /** Starts the timer at the beginning of teleop. */
   public static void initialize() {
     shiftTimer.restart();
   }
@@ -147,42 +147,23 @@ public class HubShiftUtil {
 
   public static ShiftInfo getShiftedShiftInfo() {
     boolean[] shiftSchedule = getSchedule();
-    // Starting active
-    if (shiftSchedule[1] == true) {
-      double[] shiftedShiftStartTimes = {
-        0.0,
-        10.0,
-        35.0 + endingActiveFudge,
-        60.0 + approachingActiveFudge,
-        85.0 + endingActiveFudge,
-        110.0 + approachingActiveFudge
-      };
-      double[] shiftedShiftEndTimes = {
-        10.0,
-        35.0 + endingActiveFudge,
-        60.0 + approachingActiveFudge,
-        85.0 + endingActiveFudge,
-        110.0 + approachingActiveFudge,
-        140.0
-      };
-      return getShiftInfo(shiftSchedule, shiftedShiftStartTimes, shiftedShiftEndTimes);
+    double[] shiftedShiftStartTimes = shiftStartTimes.clone();
+    double[] shiftedShiftEndTimes = shiftEndTimes.clone();
+
+    // Adjust shift times based on active/inactive transitions to account for ball flight time etc.
+    for (int i = 1; i < shiftSchedule.length; i++) {
+      boolean currentActive = shiftSchedule[i];
+      boolean prevActive = shiftSchedule[i - 1];
+
+      if (currentActive && !prevActive) { // Transition from inactive to active
+        shiftedShiftStartTimes[i] += approachingActiveFudge;
+        shiftedShiftEndTimes[i - 1] += approachingActiveFudge;
+      } else if (!currentActive && prevActive) { // Transition from active to inactive
+        shiftedShiftStartTimes[i] += endingActiveFudge;
+        shiftedShiftEndTimes[i - 1] += endingActiveFudge;
+      }
     }
-    double[] shiftedShiftStartTimes = {
-      0.0,
-      10.0 + endingActiveFudge,
-      35.0 + approachingActiveFudge,
-      60.0 + endingActiveFudge,
-      85.0 + approachingActiveFudge,
-      110.0
-    };
-    double[] shiftedShiftEndTimes = {
-      10.0 + endingActiveFudge,
-      35.0 + approachingActiveFudge,
-      60.0 + endingActiveFudge,
-      85.0 + approachingActiveFudge,
-      110.0,
-      140.0
-    };
+
     return getShiftInfo(shiftSchedule, shiftedShiftStartTimes, shiftedShiftEndTimes);
   }
 }

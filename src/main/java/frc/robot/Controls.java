@@ -33,9 +33,11 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import java.util.Optional;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -247,6 +249,7 @@ public class Controls {
 
     driverController
         .rightTrigger()
+        .or(GetTargetFromPose.autoShoot(s.drivebaseSubsystem))
         .whileTrue(
             Commands.parallel(
                     // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
@@ -285,6 +288,16 @@ public class Controls {
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
+
+    driverController
+        .x()
+        .onTrue(
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false))));
+
+    driverController
+        .b()
+        .onTrue(
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true))));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
