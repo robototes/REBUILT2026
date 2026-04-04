@@ -262,7 +262,7 @@ public class Controls {
                                     Commands.waitSeconds(1)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING)))
+                                .andThen(Commands.runOnce(() -> updateIntakeMode())))
                         .repeatedly())
                 .withName("Launching Command"))
         .onFalse(
@@ -309,6 +309,7 @@ public class Controls {
   private void updateIntakeMode() {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
+      ledsMode = LEDMode.INTAKE;
     } else if (driverController.rightTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
@@ -345,8 +346,7 @@ public class Controls {
         .whileTrue(
             Commands.runOnce(
                     () -> {
-                      intakeMode = IntakeMode.INTAKE;
-                      ledsMode = LEDMode.INTAKE;
+                      updateIntakeMode();
                     })
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));

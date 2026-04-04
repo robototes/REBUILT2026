@@ -102,12 +102,9 @@ public class LaunchCalculator {
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
-        Math.abs(currentSpeeds.vxMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.vyMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.omegaRadiansPerSecond)
-                <= MIN_ROTATION_TOLERANCE;
+        Math.abs(currentSpeeds.vxMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.vyMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_ROTATION_TOLERANCE;
     // Has turretSubsystem.getOmega() not changed much
     boolean hasTurretOmegaChanged = currentTurretOmega - lastTurretOmega <= 0.1;
 

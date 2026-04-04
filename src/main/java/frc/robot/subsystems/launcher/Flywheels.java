@@ -68,10 +68,10 @@ public class Flywheels extends SubsystemBase {
     TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
     TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 60;
+    config.CurrentLimits.SupplyCurrentLimit = 80;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLowerLimit = 0;
-    config.CurrentLimits.StatorCurrentLimit = 80;
+    config.CurrentLimits.StatorCurrentLimit = 100;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create coast mode for motors
@@ -83,7 +83,7 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 8.73 / 74; //5.3/45.2
+    config.Slot0.kV = 8.73 / 74; // 5.3/45.2
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
@@ -92,7 +92,7 @@ public class Flywheels extends SubsystemBase {
     config.Slot1.kI = 0.0;
     config.Slot1.kD = 0.0;
     config.Slot1.kA = 0.0;
-    config.Slot1.kV = 8.73 / 74; //5.3/45.2
+    config.Slot1.kV = 8.73 / 74; // 5.3/45.2
     config.Slot1.kS = 0.0;
     config.Slot1.kG = 0.0;
     config.MotionMagic.MotionMagicAcceleration = 1000; // RPS^2
@@ -104,12 +104,11 @@ public class Flywheels extends SubsystemBase {
   public void switchSlot(boolean isLaunching) {
     if (isLaunching) {
       motionMagicRequest = motionMagicRequest.withSlot(1);
-    
+
     } else {
       motionMagicRequest = motionMagicRequest.withSlot(0);
     }
   }
-
 
   public Command setVelocityCommand(double rps) {
     return runEnd(
