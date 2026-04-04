@@ -31,18 +31,20 @@ public class IntakePivot extends SubsystemBase {
   private final Timer timer = new Timer();
 
   // Positions
+  // -0.17 Vertical Pos.
   private double targetPos;
-  public static final double DEPLOYED_POS = -0.425;
-  public static final double LAUNCH_POS = -0.18;
+  public static final double DEPLOYED_POS = -0.43;
+  public static final double LAUNCH_POS_IN = -0.18;
+  public static final double LAUNCH_POS_OUT = -0.3;
   public static final double RETRACTED_POS = 0.0;
   public static final double EXTAKE_POS = -0.30;
 
   // PID variables
-  private static final double kP = 23;
+  private static final double kP = 40;
   private static final double kI = 0;
-  private static final double kD = 0;
-  private static final double kG = 0.6;
-  private static final double kS = 0.4101;
+  private static final double kD = 1;
+  private static final double kG = 0.4;
+  private static final double kS = 0.2;
   private static final double kV = 0;
   private static final double kA = 0;
 
@@ -52,7 +54,7 @@ public class IntakePivot extends SubsystemBase {
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 100;
-  private static final double ACCELERATION = 50;
+  private static final double ACCELERATION = 400;
   private static final double JERK = 0;
 
   // Gear Ratio
@@ -132,8 +134,8 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public void oscillatePivot() {
-    double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 3) + Math.PI)) / 2;
-    double pos = DEPLOYED_POS + offset;
+    double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 0.5) + Math.PI)) / 2;
+    double pos = LAUNCH_POS_OUT + offset * (LAUNCH_POS_IN - LAUNCH_POS_OUT);
     targetPos = pos;
     setPivotPosition(pos);
   }
