@@ -163,7 +163,7 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
   }
 
-  public boolean stoppedShooting(double durationSeconds) {
+  public boolean hasBeenAtTargetFor(double durationSeconds) {
     boolean atTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
 
     // at target?
@@ -172,16 +172,12 @@ public class Flywheels extends SubsystemBase {
       if (timeEnteredTargetZone < 0) {
         // First time at target, record the timestamp.
         timeEnteredTargetZone = Timer.getFPGATimestamp();
+        return false;
       }
     } else {
       // Not at target, reset the timer to -1
       timeEnteredTargetZone = -1;
     }
-
-    if (timeEnteredTargetZone < 0) {
-      return false;
-    }
-
     // Check if the time at target has exceeded the duration.
     boolean hasStopped = (Timer.getFPGATimestamp() - timeEnteredTargetZone) >= durationSeconds;
     if (hasStopped) {
