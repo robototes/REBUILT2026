@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -59,6 +60,9 @@ public class Robot extends TimedRobot {
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
+
+  // Cached time for robot.periodic()
+  private double LAST_TIME = 0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -154,6 +158,13 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    // Resume logging every X seconds
+    double time = Timer.getFPGATimestamp();
+    if (time - LAST_TIME >= 1) {
+      LAST_TIME = time;
+      DataLogManager.getLog().resume();
+    }
+
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation() && m_simWrapper != null) {
       // NOTE: We run the vision period FIRST in robotPeriodic, since it updates
