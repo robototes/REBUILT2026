@@ -246,6 +246,7 @@ public class Controls {
       return;
     }
 
+    // Shooting triggers
     driverController
         .rightTrigger()
         .whileTrue(
@@ -254,6 +255,7 @@ public class Controls {
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 LEDandIntakeRoutine()))
         .onFalse(LEDandIntakeExitRoutine());
+    // Fall back shoot
     driverController
         .y()
         .whileTrue(
@@ -266,6 +268,7 @@ public class Controls {
                 LEDandIntakeRoutine()))
         .onFalse(LEDandIntakeExitRoutine());
 
+    // Auto zero / zero
     driverController
         .start()
         .onTrue(
