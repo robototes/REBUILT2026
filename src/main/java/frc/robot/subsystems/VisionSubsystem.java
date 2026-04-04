@@ -307,7 +307,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
-      SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
+      SmartDashboard.putNumber("/vision/tagSpread", spread);
       publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
       return;
     }
@@ -577,9 +577,20 @@ public class VisionSubsystem extends SubsystemBase {
       SmartDashboard.putNumber(
           "/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
       SmartDashboard.putNumber(
-          "/vision/" + camera.getName() + "_time since last reading",
-          Timer.getFPGATimestamp() - camera.getLastTimestampSeconds());
+          "/vision/visionError", getVisionPoseError(visionPose2d, estimate.timestampSeconds));
+      SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
+      SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
+      SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
     }
+  }
+
+  private boolean isVelocityPlausible(
+      Pose2d newPose, double newTimestamp, Pose2d lastPose2d, double lastTimestampSeconds) {
+    if (lastPose2d == null) return true;
+    double dt = newTimestamp - lastTimestampSeconds;
+    if (dt <= 0 || dt > 1.0) return true;
+    double dist = newPose.getTranslation().getDistance(lastPose2d.getTranslation());
+    return (dist / dt) < VisionConstants.MAX_VISION_IMPLIED_SPEED;
   }
 
   public int getNumTargets() {
