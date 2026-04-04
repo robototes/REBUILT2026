@@ -274,7 +274,7 @@ public class LaunchCalculator {
     return LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
-  public boolean isApproachingTrench(Pose2d robotPose, ChassisSpeeds speeds) {
+  public static boolean isApproachingTrench(Pose2d robotPose, ChassisSpeeds speeds) {
     for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
       double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
       Pose2d sampledRobotPose =
@@ -291,7 +291,7 @@ public class LaunchCalculator {
     return false;
   }
 
-  public boolean isCloseToTrench(Pose2d pose) {
+  public static boolean isCloseToTrench(Pose2d pose) {
     Pose2d nearestTag = pose.nearest(trenchTags);
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
