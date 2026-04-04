@@ -60,9 +60,12 @@ public class AutoLogic {
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
           new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
           new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
+          new AutoPath("LT-Neutral", "LT-Neutral"),
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
+          new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
+          new AutoPath("RT-Neutral", "RT-Neutral"),
           new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
@@ -193,7 +196,7 @@ public class AutoLogic {
       }
 
       NamedCommands.registerCommand("intake", intakeCommand());
-      NamedCommands.registerCommand("stow", autoStowCommand());
+
       NamedCommands.registerCommand("climb", climbCommand());
 
     } else {
@@ -213,12 +216,9 @@ public class AutoLogic {
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-        .withTimeout(6.5);
-  }
-
-  public static Command autoStowCommand() {
-    return s.launcherSubsystem
-        .rawStowCommand()
+        .until(() -> s.flywheels.hasBeenAtTargetFor(1))
+        .withTimeout(4.5)
+        .andThen(s.launcherSubsystem.rawStowCommand())
         .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isHoodAtTarget()));
   }
 

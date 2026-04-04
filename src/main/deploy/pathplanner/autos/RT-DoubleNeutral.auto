@@ -5,21 +5,35 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "RT-Intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 0.25
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "RT-Intake"
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 1.0
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "intake"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           }
         },
         {
@@ -47,15 +61,9 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
-        },
-        {
           "type": "path",
           "data": {
-            "pathName": "RT-Intake"
+            "pathName": "RT-Intake-Short"
           }
         },
         {
@@ -67,13 +75,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeRightFar"
+            "pathName": "NeutralRight-Rotate"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
+            "pathName": "NeutralRight-Back"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralRight-Back-Trench"
           }
         },
         {
@@ -81,17 +95,11 @@
           "data": {
             "name": "launch"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "WEEK 1",
+  "folder": "COMP",
   "choreoAuto": false
 }
