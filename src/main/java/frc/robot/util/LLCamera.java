@@ -80,7 +80,7 @@ public class LLCamera {
   }
 
   public Pose2d getlastPoseMT1() {
-    if (lastPose2dMT1 == null) return new Pose2d();
+    if (lastPose2dMT1 == null) lastPose2dMT1 = new Pose2d();
     return lastPose2dMT1;
   }
 
@@ -89,7 +89,7 @@ public class LLCamera {
   }
 
   public Pose2d getlastPoseMT2() {
-    if (lastPose2dMT2 == null) return new Pose2d();
+    if (lastPose2dMT2 == null) lastPose2dMT2 = new Pose2d();
     return lastPose2dMT2;
   }
 

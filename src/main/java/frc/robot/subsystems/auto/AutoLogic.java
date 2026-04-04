@@ -213,7 +213,7 @@ public class AutoLogic {
 
   public static Command launcherCommand() {
     return Commands.parallel(
-            s.launcherSubsystem.launcherAimCommandV2(),
+            s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
         .withTimeout(6.5)

@@ -1,17 +1,12 @@
 package frc.robot.subsystems.launcher;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
-import frc.robot.subsystems.LaunchCalculator;
-import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.tuning.LauncherConstants;
+import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected double flywheelsGoal;
@@ -32,27 +27,7 @@ public class LauncherSubsystem extends SubsystemBase {
     flywheelGoalPub.set(0.0);
   }
 
-  public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
-    return Commands.run(
-            () -> {
-              Translation2d targetPose = GetTargetFromPose.getTargetLocation(drive);
-
-              hoodGoal =
-                  LauncherConstants.getHoodAngleFromPose2d(targetPose, drive.getState().Pose);
-              flywheelsGoal =
-                  LauncherConstants.getFlywheelSpeedFromPose2d(targetPose, drive.getState().Pose);
-
-              hoodGoalPub.set(hoodGoal);
-              flywheelGoalPub.set(flywheelsGoal);
-
-              s.hood.setHoodPosition(hoodGoal);
-              s.flywheels.setVelocityRPS(flywheelsGoal);
-            })
-        .withName("Launcher Aim Command");
-  }
-
-  // Will use after week 1
-  public Command launcherAimCommandV2() {
+  public Command launcherAimCommand() {
     return Commands.run(
             () -> {
               LaunchingParameters para =
@@ -65,7 +40,7 @@ public class LauncherSubsystem extends SubsystemBase {
               s.hood.setHoodPosition(hoodGoal);
               s.flywheels.setVelocityRPS(flywheelsGoal);
             })
-        .withName("Launcher Aim Command V2");
+        .withName("Launcher Aim Command");
   }
 
   // TODO: add tolerance range calculation
@@ -75,7 +50,9 @@ public class LauncherSubsystem extends SubsystemBase {
     }
     return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
         && s.hood.atTargetPosition()
-        && !LaunchCalculator.isCloseToTrench(launchParameters.turretPose());
+        && s.turretSubsystem.atTarget()
+        && !LaunchCalculator.isApproachingTrench(
+            s.drivebaseSubsystem.getState().Pose, s.drivebaseSubsystem.getState().Speeds);
   }
 
   public boolean isHoodAtTarget() {
