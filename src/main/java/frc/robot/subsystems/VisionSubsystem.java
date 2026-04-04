@@ -65,14 +65,16 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double HEIGHT_TOLERANCE = 0.15;
     private static final double ROTATION_TOLERANCE = 12.0;
 
-    private static final double FIELD_X_MAX = AllianceUtils.FIELD_LAYOUT.getFieldLength();
-    private static final double FIELD_Y_MAX = AllianceUtils.FIELD_LAYOUT.getFieldWidth();
+    private static final double FIELD_MARGIN = 0.5;
+    private static final double FIELD_X_MAX =
+        AllianceUtils.FIELD_LAYOUT.getFieldLength() + FIELD_MARGIN;
+    private static final double FIELD_Y_MAX =
+        AllianceUtils.FIELD_LAYOUT.getFieldWidth() + FIELD_MARGIN;
     private static final double MAX_VISION_IMPLIED_SPEED = 7.0; // m/s
     private static final double SPREAD_REJECT = 0.50; // meters RMS
     private static final double SPREAD_INFLATE_START = 0.10; // meters RMS
     private static final double RESET_MAX_AMBIGUITY = 0.15;
     private static final int RESET_MIN_TAGS = 2;
-    private static final double FIELD_MARGIN = 0.5;
   }
 
   public static final Transform3d COMP_BOT_LEFT_CAMERA =
@@ -133,39 +135,52 @@ public class VisionSubsystem extends SubsystemBase {
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
-    SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
-    SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
-    SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
+    SmartDashboard.putNumber("/vision/limelight-a_Last timestamp", getLastTimestampSeconds());
+    SmartDashboard.putNumber("/vision/limelight-b_Last timestamp", getLastTimestampSeconds());
+    SmartDashboard.putNumber("/vision/limelight-c_Last timestamp", getLastTimestampSeconds());
+    SmartDashboard.putNumber("/vision/limelight-a_Num targets", getNumTargets());
+    SmartDashboard.putNumber("/vision/limelight-b_Num targets", getNumTargets());
+    SmartDashboard.putNumber("/vision/limelight-c_Num targets", getNumTargets());
+    SmartDashboard.putNumber(
+        "/vision/limelight-a_time since last reading", getTimeSinceLastReading());
+    SmartDashboard.putNumber(
+        "/vision/limelight-b_time since last reading", getTimeSinceLastReading());
+    SmartDashboard.putNumber(
+        "/vision/limelight-c_time since last reading", getTimeSinceLastReading());
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
 
   public void update() {
+    if (getDisableVision()) return;
     limelightaOnline = isLimeLightOnline(LIMELIGHT_A);
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
-    processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA);
-    processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB);
+    SwerveDriveState swerveDriveState = drivetrain.getState();
+    visionPoseTracking =
+        new VisionPoseTracking(
+            swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
+    processCamera(ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking);
+    processCamera(BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking);
     // uncomment if when using intake pose
     // if (intakePivot.isAtTarget(2, IntakePivot.DEPLOYED_POS)) {
-    processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC);
+    processCamera(CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking);
     // }
     updateCameraView(visionPoseTracking);
   }
 
   private void processCamera(
-      LLCamera camera, boolean cameraOnline, StructPublisher<Pose3d> rawFieldPose3dEntry) {
+      LLCamera camera,
+      boolean cameraOnline,
+      StructPublisher<Pose3d> rawFieldPose3dEntry,
+      VisionPoseTracking visionPoseTracking) {
     if (!cameraOnline) return;
     RawFiducial[] rawFiducials = camera.getRawFiducials();
     if (rawFiducials == null) return;
 
     double avgAmbiguity = getAvgAmbiguity(rawFiducials);
-    SwerveDriveState swerveDriveState = drivetrain.getState();
     BetterPoseEstimate mt1Estimate = camera.getBetterPoseEstimate();
     BetterPoseEstimate mt2Estimate = camera.getPoseEstimateMegatag2();
-    visionPoseTracking =
-        new VisionPoseTracking(
-            swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
 
     processLimelight(
         mt1Estimate, rawFieldPose3dEntry, avgAmbiguity, visionPoseTracking, rawFiducials, camera);
@@ -183,11 +198,20 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (estimate == null || estimate.tagCount <= 0) return;
 
-    if (getDisableVision()) return;
-
     rawFieldPoseEntry.set(estimate.pose3d);
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
+    if (RobotType.isAlpha()
+        && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
+                > VisionConstants.MAX_XY_VELO_ALPHA
+            || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+                > VisionConstants.MAX_XY_VELO_ALPHA
+            || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+                > VisionConstants.MAX_TURN_VELO_ALPHA)) {
+      publishDiagnostics(estimate, visionPose2d, camera.getName(), "alpha-max-speed");
+      return;
+    }
 
+    // checks if the estimate is flat or not and if the robot is floating
     if (!MathUtil.isNear(0, estimate.pose3d.getZ(), VisionConstants.HEIGHT_TOLERANCE)
         || !MathUtil.isNear(
             0,
@@ -198,26 +222,12 @@ public class VisionSubsystem extends SubsystemBase {
             estimate.pose3d.getRotation().getY(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || (lastFieldPose != null && lastFieldPose.equals(visionPose2d))) {
-      SmartDashboard.putString("/vision/rejectReason", "impossible-rotation or height");
-      publishDiagnostics(estimate, visionPose2d);
-      return;
-    }
-
-    if (RobotType.isAlpha()
-        && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                > VisionConstants.MAX_TURN_VELO_ALPHA)) {
-      SmartDashboard.putString("/vision/rejectReason", "alpha-max-speed");
-      publishDiagnostics(estimate, visionPose2d);
+      publishDiagnostics(estimate, visionPose2d, camera.getName(), "impossible-rotation or height");
       return;
     }
 
     if (!isPoseOnField(visionPose2d)) {
-      SmartDashboard.putString("/vision/rejectReason", "off-field");
-      publishDiagnostics(estimate, visionPose2d);
+      publishDiagnostics(estimate, visionPose2d, camera.getName(), "off-field");
       return;
     }
     Pose2d lastvisionPose2d;
@@ -231,16 +241,14 @@ public class VisionSubsystem extends SubsystemBase {
         estimate.timestampSeconds,
         lastvisionPose2d,
         camera.getLastTimestampSeconds())) {
-      SmartDashboard.putString("/vision/rejectReason", "velocity-implausible");
-      publishDiagnostics(estimate, visionPose2d);
+      publishDiagnostics(estimate, visionPose2d, camera.getName(), "velocity-implausible");
       return;
     }
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
-      SmartDashboard.putString("/vision/rejectReason", "inter-tag-inconsistent");
-      SmartDashboard.putNumber("/vision/tagSpread", spread);
-      publishDiagnostics(estimate, visionPose2d);
+      SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
+      publishDiagnostics(estimate, visionPose2d, camera.getName(), "inter-tag-inconsistent");
       return;
     }
 
@@ -260,7 +268,7 @@ public class VisionSubsystem extends SubsystemBase {
       stdDevs = stdDevs.times(spreadInflation);
     }
 
-    maybeResetToVision(visionPose2d, avgAmbiguity, estimate.tagCount);
+    maybeResetToVision(visionPose2d, avgAmbiguity, estimate.tagCount, camera.getName());
 
     if (m_showVisionOnField != null) {
       m_showVisionOnField.showPointInTimeVisionEstimate(
@@ -289,9 +297,8 @@ public class VisionSubsystem extends SubsystemBase {
       lastTimestampSeconds = estimate.timestampSeconds;
     }
 
-    SmartDashboard.putString("/vision/rejectReason", "none");
-    SmartDashboard.putNumber("/vision/tagSpread", spread);
-    publishDiagnostics(estimate, visionPose2d);
+    SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
+    publishDiagnostics(estimate, visionPose2d, camera.getName(), "none");
   }
 
   /**
@@ -331,7 +338,8 @@ public class VisionSubsystem extends SubsystemBase {
     return Math.sqrt(sumSqErr / count);
   }
 
-  private void maybeResetToVision(Pose2d visionPose, double ambiguity, int tagCount) {
+  private void maybeResetToVision(
+      Pose2d visionPose, double ambiguity, int tagCount, String cameraName) {
     Pose2d odomPose = drivetrain.getState().Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
     boolean visionTrusted =
@@ -340,7 +348,7 @@ public class VisionSubsystem extends SubsystemBase {
             && isPoseOnField(visionPose);
     if (odomOffField && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
-      SmartDashboard.putString("/vision/rejectReason", "odometry-reset");
+      SmartDashboard.putString("/vision/" + cameraName + "_rejectReason", "odometry-reset");
     }
   }
 
@@ -413,13 +421,18 @@ public class VisionSubsystem extends SubsystemBase {
     return sum;
   }
 
-  private void publishDiagnostics(BetterPoseEstimate estimate, Pose2d visionPose2d) {
+  private void publishDiagnostics(
+      BetterPoseEstimate estimate, Pose2d visionPose2d, String cameraName, String rejectionReason) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
+      SmartDashboard.putString("/vision/" + cameraName + "_rejectReason", rejectionReason);
       SmartDashboard.putNumber(
-          "/vision/visionError", getVisionPoseError(visionPose2d, estimate.timestampSeconds));
-      SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
-      SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
-      SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
+          "/vision/" + cameraName + "_visionError",
+          getVisionPoseError(visionPose2d, estimate.timestampSeconds));
+      SmartDashboard.putNumber(
+          "/vision/" + cameraName + "_Last timestamp", getLastTimestampSeconds());
+      SmartDashboard.putNumber("/vision/" + cameraName + "_Num targets", getNumTargets());
+      SmartDashboard.putNumber(
+          "/vision/" + cameraName + "_time since last reading", getTimeSinceLastReading());
     }
   }
 

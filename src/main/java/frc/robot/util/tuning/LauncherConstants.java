@@ -28,6 +28,7 @@ public class LauncherConstants {
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
+  private static double flywheelOffset = 0.65;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -58,14 +59,16 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
   };
 
+  // TODO: Tune comp data points for launcher V3
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1.31, 1.836, 65, 0.87),
-    new LauncherDistanceDataPoint(2.52, 3.672, 72, 1.1),
-    new LauncherDistanceDataPoint(3.32, 4.896, 75, 1.13),
-    new LauncherDistanceDataPoint(3.87, 6.12, 79, 1.1),
-    new LauncherDistanceDataPoint(4.27, 6.732, 82, 1),
-    new LauncherDistanceDataPoint(6.4, 8.568, 100, 1.34),
-    new LauncherDistanceDataPoint(10, 8.568, 100, 1.34)
+    new LauncherDistanceDataPoint(1.5, 2, 40, 1.23),
+    new LauncherDistanceDataPoint(2, 3, 40.5, 0.9),
+    new LauncherDistanceDataPoint(2.505, 3.9, 41, 1.067),
+    new LauncherDistanceDataPoint(3, 5, 43, 1.3),
+    new LauncherDistanceDataPoint(3.87, 6.12, 79 * flywheelOffset, 1.1),
+    new LauncherDistanceDataPoint(4.27, 6.732, 82 * flywheelOffset, 1),
+    new LauncherDistanceDataPoint(6.4, 8.568, 100 * flywheelOffset, 1.34),
+    new LauncherDistanceDataPoint(10, 9, 80, 1.34)
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
