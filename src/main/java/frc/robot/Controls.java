@@ -234,8 +234,10 @@ public class Controls {
     driverController
         .rightBumper()
         .onTrue(
-            s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+            s.drivebaseSubsystem
+                .runOnce(
+                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
+                .withName("Reset to Hub"));
   }
 
   private void configureLauncherBindings() {
@@ -250,37 +252,26 @@ public class Controls {
         .or(GetTargetFromPose.autoShoot(s.drivebaseSubsystem))
         .whileTrue(
             Commands.parallel(
-                // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
-                // driverController.getLeftX(), ()-> driverController.getLeftY()),
-                s.launcherSubsystem.launcherAimCommandV2(),
-                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                    .andThen(
-                        Commands.parallel(
-                                s.indexerSubsystem.runIndexer(),
-                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.runOnce(() -> s.intakePivot.restartTimer())
-                                    .andThen(
-                                        Commands.runOnce(
-                                            () ->
-                                                intakeMode =
-                                                    driverController.leftTrigger().getAsBoolean()
-                                                        ? IntakeMode.INTAKE
-                                                        : IntakeMode.LAUNCH)))
-                            .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
-                    .repeatedly()))
+                    // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
+                    // driverController.getLeftX(), ()-> driverController.getLeftY()),
+                    s.launcherSubsystem.launcherAimCommand(),
+                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(
+                            Commands.parallel(
+                                    s.indexerSubsystem.runIndexer(),
+                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                    Commands.waitSeconds(1)
+                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
+                                .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
+                                .andThen(Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING)))
+                        .repeatedly())
+                .withName("Launching Command"))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
-                .alongWith(
-                    Commands.runOnce(
-                        () -> {
-                          ledsMode = LEDMode.DEFAULT;
-                          intakeMode =
-                              driverController.leftTrigger().getAsBoolean()
-                                  ? IntakeMode.INTAKE
-                                  : IntakeMode.DEPLOYED;
-                        })));
+                .alongWith(Commands.runOnce(() -> updateIntakeMode()))
+                .withName("Launching Finished"));
     driverController
         .start()
         .onTrue(
@@ -295,7 +286,8 @@ public class Controls {
                         () -> DriverStation.isEnabled()),
                     s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
-                .ignoringDisable(true));
+                .ignoringDisable(true)
+                .withName("Zero Subsystems"));
 
     driverController
         .x()
@@ -325,6 +317,18 @@ public class Controls {
         .onTrue(s.flywheels.setVelocityCommand(60));
   }
 
+  private void updateIntakeMode() {
+    if (driverController.leftTrigger().getAsBoolean()) {
+      intakeMode = IntakeMode.INTAKE;
+    } else if (driverController.rightTrigger().getAsBoolean()) {
+      intakeMode = IntakeMode.LAUNCH;
+      s.intakePivot.restartTimer();
+    } else {
+      intakeMode = IntakeMode.DEPLOYED;
+      ledsMode = LEDMode.DEFAULT;
+    }
+  }
+
   private void configureIntakeBindings() {
     if (s.intakeRollers == null || s.intakePivot == null || s.ledSubsystem == null) {
       DataLogManager.log(
@@ -351,27 +355,24 @@ public class Controls {
         .leftTrigger()
         .whileTrue(
             Commands.runOnce(
-                () -> {
-                  intakeMode = IntakeMode.INTAKE;
-                  ledsMode = LEDMode.INTAKE;
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  if (driverController.rightTrigger().getAsBoolean()) {
-                    intakeMode = IntakeMode.LAUNCH;
-                    s.intakePivot.restartTimer();
-                  } else {
-                    intakeMode = IntakeMode.DEPLOYED;
-                    ledsMode = LEDMode.DEFAULT;
-                  }
-                }));
-    driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
-    driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+                    () -> {
+                      intakeMode = IntakeMode.INTAKE;
+                      ledsMode = LEDMode.INTAKE;
+                    })
+                .withName("Intaking"))
+        .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));
+    driverController
+        .povUp()
+        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
+    driverController
+        .povDown()
+        .onTrue(
+            Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED).withName("Retract Intake"));
     driverController
         .leftBumper()
-        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE))
-        .onFalse(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
+        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE).withName("Extaking"))
+        .onFalse(
+            Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Extaking Finished"));
 
     connected(intakeTestController)
         .and(intakeTestController.a())
