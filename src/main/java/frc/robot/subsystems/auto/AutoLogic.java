@@ -196,7 +196,7 @@ public class AutoLogic {
       }
 
       NamedCommands.registerCommand("intake", intakeCommand());
-      NamedCommands.registerCommand("stow", autoStowCommand());
+
       NamedCommands.registerCommand("climb", climbCommand());
 
     } else {
@@ -218,12 +218,6 @@ public class AutoLogic {
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
         .withTimeout(6.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
-        .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isHoodAtTarget()));
-  }
-
-  public static Command autoStowCommand() {
-    return s.launcherSubsystem
-        .rawStowCommand()
         .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isHoodAtTarget()));
   }
 
