@@ -309,7 +309,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
-      SmartDashboard.putNumber("/vision/tagSpread", spread);
+SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
       publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
       return;
     }
