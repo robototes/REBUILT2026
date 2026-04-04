@@ -31,6 +31,7 @@ public class LaunchCalculator {
   private LaunchingParameters cachedParams;
   private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
+  private double lastTurretOmega = 0;
 
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
@@ -92,6 +93,7 @@ public class LaunchCalculator {
     SwerveDriveState driveState = drivetrain.getState();
     Pose2d currentPose = drivetrain.getState().Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
+    double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
@@ -100,22 +102,27 @@ public class LaunchCalculator {
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
-        Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
+        Math.abs(currentSpeeds.vxMetersPerSecond)
                 <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
+            && Math.abs(currentSpeeds.vyMetersPerSecond)
                 <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond)
                 <= MIN_ROTATION_TOLERANCE;
+    // Has turretSubsystem.getOmega() not changed much
+    boolean hasTurretOmegaChanged = currentTurretOmega - lastTurretOmega <= 0.1;
+
     // Check to see if all conditions are met
     if (hasNotMovedSignificantly
         && hasNotRotatedSigificantly
         && isNotMovingFastEnough
+        && hasTurretOmegaChanged
         && cachedParams != null) {
       return cachedParams;
     }
     // cache the pose and chassis speeds
     lastPose = currentPose;
     lastSpeeds = currentSpeeds;
+    lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
     cachedParams = calculate(drivetrain, turretSubsystem);

@@ -30,7 +30,7 @@ public class Flywheels extends SubsystemBase {
   private final DoublePublisher velocityPub;
 
   private FlywheelsSim flywheelSim;
-  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
+  private MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
@@ -79,19 +79,37 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 1;
+    config.Slot0.kP = 0.0;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 8.73 / 74;
+    config.Slot0.kV = 8.73 / 74; //5.3/45.2
     config.Slot0.kS = 0.0;
     config.Slot0.kG = 0.0;
 
+    // create PID gains slot 1
+    config.Slot1.kP = 1.0;
+    config.Slot1.kI = 0.0;
+    config.Slot1.kD = 0.0;
+    config.Slot1.kA = 0.0;
+    config.Slot1.kV = 8.73 / 74; //5.3/45.2
+    config.Slot1.kS = 0.0;
+    config.Slot1.kG = 0.0;
     config.MotionMagic.MotionMagicAcceleration = 1000; // RPS^2
 
     flConfigurator.apply(config);
     frConfigurator.apply(config);
   }
+
+  public void switchSlot(boolean isLaunching) {
+    if (isLaunching) {
+      motionMagicRequest = motionMagicRequest.withSlot(1);
+    
+    } else {
+      motionMagicRequest = motionMagicRequest.withSlot(0);
+    }
+  }
+
 
   public Command setVelocityCommand(double rps) {
     return runEnd(
