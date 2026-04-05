@@ -115,9 +115,9 @@ public class Feeder extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(statorCurrent, supplyCurrent);
+    StatusSignal.refreshAll(statorCurrent, supplyCurrent, feederRPS);
     // Log on NT at all times
-    SmartDashboard.putNumber("FeederSubsystem/VelocityRPS", feederRPS.refresh().getValueAsDouble());
+    SmartDashboard.putNumber("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());

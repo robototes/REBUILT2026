@@ -119,9 +119,8 @@ public class Spindexer extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(statorCurrent, supplyCurrent);
-    SmartDashboard.putNumber(
-        "SpindexerSubsystem/VelocityRPS", spindexerRPS.refresh().getValueAsDouble());
+    StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
+    SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
