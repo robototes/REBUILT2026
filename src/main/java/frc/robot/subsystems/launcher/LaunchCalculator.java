@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -11,7 +11,6 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
@@ -41,7 +40,7 @@ public class LaunchCalculator {
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
-  private static final double PHASE_DELAY = 0.04;
+  private static final double PHASE_DELAY = 0.03;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
@@ -50,7 +49,10 @@ public class LaunchCalculator {
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
-  private static final double TURRET_TO_TRENCH_TOLERANCE = Units.inchesToMeters(12);
+  private static final double TURRET_TO_TRENCH_TOLERANCE_X = Units.inchesToMeters(12);
+  private static final double TURRET_TO_TRENCH_TOLERANCE_Y = Units.inchesToMeters(24.97);
+  private static final double TRENCH_LOOKAHEAD = 0.5; // seconds
+  private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
 
@@ -154,8 +156,10 @@ public class LaunchCalculator {
     double totalOmega = chassisSpeeds.omegaRadiansPerSecond + turretSubsystem.getOmega();
     ChassisSpeeds turretRobotRelativeSpeeds =
         new ChassisSpeeds(
-            chassisSpeeds.vxMetersPerSecond - totalOmega * turretTransform.getY(),
-            chassisSpeeds.vyMetersPerSecond + totalOmega * turretTransform.getX(),
+            chassisSpeeds.vxMetersPerSecond
+                - chassisSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
+            chassisSpeeds.vyMetersPerSecond
+                + chassisSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
             totalOmega);
     // Let chassisspeeds built in methods handle the conversion from robot relative to field
     // relative
@@ -233,7 +237,7 @@ public class LaunchCalculator {
         virtualTarget.minus(turretPose.getTranslation()).getAngle();
 
     // FINAL NUMS
-    double targetHood = getHoodAngle(turretPose, trueDistance);
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
@@ -265,21 +269,32 @@ public class LaunchCalculator {
    * @return returns a double representing the hood angle (should be tuned in launcher constants).
    *     Returned value does not have an apparant unit.
    */
-  public double getHoodAngle(Pose2d lookaheadPose, double trueDist) {
-    return isCloseToTrench(lookaheadPose)
-        ? 0
-        : LauncherConstants.getHoodAngleFromDistance(trueDist);
+  public double getHoodAngle(Pose2d robotPose, double trueDist, ChassisSpeeds speeds) {
+    if (isApproachingTrench(robotPose, speeds)) return 0;
+    return LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
-  /**
-   * Checks to see if a point's x value (in an x,y field) on the robot is close to the trench or
-   * not.
-   *
-   * @param pose the point (pose2d) on the robot you would like to check
-   * @return True if close, false if not close
-   */
+  public static boolean isApproachingTrench(Pose2d robotPose, ChassisSpeeds speeds) {
+    for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
+      double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
+      Pose2d sampledRobotPose =
+          robotPose.exp(
+              new Twist2d(
+                  speeds.vxMetersPerSecond * t,
+                  speeds.vyMetersPerSecond * t,
+                  speeds.omegaRadiansPerSecond * t));
+      // Transform by turret transform because we are checking to see if the turret is close to the
+      // trench not the center of the robot
+      Pose2d sampledTurretPose = sampledRobotPose.transformBy(turretTransform);
+      if (isCloseToTrench(sampledTurretPose)) return true;
+    }
+    return false;
+  }
+
   public static boolean isCloseToTrench(Pose2d pose) {
-    double nearestTagX = pose.nearest(trenchTags).getX();
-    return Math.abs(nearestTagX - pose.getX()) < TURRET_TO_TRENCH_TOLERANCE;
+    Pose2d nearestTag = pose.nearest(trenchTags);
+    double dx = Math.abs(pose.getX() - nearestTag.getX());
+    double dy = Math.abs(pose.getY() - nearestTag.getY());
+    return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
   }
 }

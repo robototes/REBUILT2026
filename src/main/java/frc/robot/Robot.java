@@ -7,6 +7,7 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -16,20 +17,26 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
+import frc.robot.sim.ShowVisionOnField;
+import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
+import frc.robot.util.DriveStateNtLogger;
+import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
+import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -48,7 +55,14 @@ public class Robot extends TimedRobot {
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
+  private final SimWrapper m_simWrapper;
   private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
+  private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
+  private final DriveStateNtLogger driveBaseSim;
+  private final DriveStateSignalLogger logger;
+
+  // Cached time for robot.periodic()
+  private double LAST_TIME = 0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -61,7 +75,7 @@ public class Robot extends TimedRobot {
 
     // logging
     if (RobotBase.isReal()) {
-      DataLogManager.start();
+      DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
@@ -77,7 +91,24 @@ public class Robot extends TimedRobot {
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
-    controls = new Controls(subsystems);
+
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation()) {
+      m_simWrapper = new SimWrapper(subsystems.drivebaseSubsystem, this::resetRobotPose);
+    } else {
+      m_simWrapper = null;
+    }
+
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation() && m_simWrapper != null) {
+      ShowVisionOnField showVisionOnField =
+          new ShowVisionOnField(null, m_simWrapper.getSimDebugField());
+      if (subsystems.visionSubsystem != null) {
+        subsystems.visionSubsystem.setShowVisionOnField(showVisionOnField);
+      }
+    }
+
+    controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
@@ -112,6 +143,10 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    logger = new DriveStateSignalLogger();
+    subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+    driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
   }
 
   /**
@@ -123,6 +158,20 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    // Resume logging every X seconds
+    double time = Timer.getFPGATimestamp();
+    if (time - LAST_TIME >= 1) {
+      LAST_TIME = time;
+      DataLogManager.getLog().resume();
+    }
+
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation() && m_simWrapper != null) {
+      // NOTE: We run the vision period FIRST in robotPeriodic, since it updates
+      // NetworkTables with the limelight data, in-case any code in this loop
+      // needs that info and doesnt want it delayed 20ms.
+      m_simWrapper.robotPeriodic();
+    }
 
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
@@ -134,6 +183,8 @@ public class Robot extends TimedRobot {
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
+    driveBaseSim.update();
+    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -258,6 +309,11 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
+    // $VISIONSIM - Wrapper for sim features
+    if (m_simWrapper != null) {
+      m_simWrapper.simulationPeriodic();
+    }
+
     robotSim.updateFuelSim();
   }
 
@@ -309,5 +365,17 @@ public class Robot extends TimedRobot {
 
   private void supplyRobotYawToLimelight(String limelightName, double heading) {
     LimelightHelpers.SetRobotOrientation(limelightName, heading, 0, 0, 0, 0, 0);
+  }
+
+  /** Only used in simulation to reset robot pose */
+  private void resetRobotPose(Pose2d pose) {
+    if (Robot.isSimulation()) {
+      System.out.println("Robot pose reset to: " + pose);
+
+      subsystems.drivebaseSubsystem.resetPose(pose);
+
+      // $VISIONSIM - Clean reset
+      m_simWrapper.resetSimPose(pose);
+    }
   }
 }
