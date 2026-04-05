@@ -50,9 +50,19 @@ public class LauncherSubsystem extends SubsystemBase {
     }
     return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
         && s.hood.atTargetPosition()
-        && s.turretSubsystem.atTarget()
+        && s.turretSubsystem.atTarget(TurretSubsystem.TURRET_DEGREE_TOLERANCE)
         && !LaunchCalculator.isApproachingTrench(
             s.drivebaseSubsystem.getState().Pose, s.drivebaseSubsystem.getState().Speeds);
+  }
+
+  public boolean isAtTargetFallback() {
+    if (launchParameters == null) {
+      return false;
+    }
+    return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
+        && s.hood.atTargetPosition()
+        && !LaunchCalculator.isCloseToTrench(launchParameters.turretPose())
+        && s.turretSubsystem.atTarget(TurretSubsystem.TURRET_DEGREE_TOLERANCE_FALLBACK);
   }
 
   public boolean isHoodAtTarget() {

@@ -43,6 +43,8 @@ public class TurretSubsystem extends SubsystemBase {
   // turret hits its wraparound point
   public static final double TURRET_DEGREE_TOLERANCE = 20;
 
+  public static final double TURRET_DEGREE_TOLERANCE_FALLBACK = 20;
+
   // Positions
   private double targetPos;
   public static final double FRONT_POSITION = 0;
@@ -199,9 +201,9 @@ public class TurretSubsystem extends SubsystemBase {
     return turretMotor.getPosition().getValueAsDouble();
   }
 
-  public boolean atTarget() {
+  public boolean atTarget(double tolerance) {
     return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
-        < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
+        < Units.degreesToRotations(tolerance);
   }
 
   /**

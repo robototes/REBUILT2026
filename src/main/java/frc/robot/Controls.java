@@ -30,6 +30,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -240,30 +241,29 @@ public class Controls {
       return;
     }
 
+    // Shooting triggers
     driverController
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                    // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
-                    // driverController.getLeftX(), ()-> driverController.getLeftY()),
-                    s.launcherSubsystem.launcherAimCommand(),
-                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(
-                            Commands.parallel(
-                                    s.indexerSubsystem.runIndexer(),
-                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                    Commands.waitSeconds(1)
-                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
-                                .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING)))
-                        .repeatedly())
-                .withName("Launching Command"))
-        .onFalse(
-            s.launcherSubsystem
-                .rawStowCommand()
-                .alongWith(Commands.runOnce(() -> updateIntakeMode()))
-                .withName("Launching Finished"));
+                s.launcherSubsystem.launcherAimCommand(),
+                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                LEDandIntakeRoutine()))
+        .onFalse(LEDandIntakeExitRoutine());
+    // Fall back shoot
+    driverController
+        .y()
+        .whileTrue(
+            Commands.parallel(
+                AutoDriveRotate.autoRotate(
+                        s, () -> driverController.getLeftX(), () -> driverController.getLeftY())
+                    .onlyWhile(() -> s.launcherSubsystem.isAtTargetFallback()),
+                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                s.turretSubsystem.setTurretPosition(0),
+                LEDandIntakeRoutine()))
+        .onFalse(LEDandIntakeExitRoutine());
+
+    // Auto zero / zero
     driverController
         .start()
         .onTrue(
@@ -297,6 +297,40 @@ public class Controls {
     connected(launcherTuningController)
         .and(launcherTuningController.y())
         .onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private Command LEDandIntakeRoutine() {
+    return Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+        .andThen(
+            Commands.parallel(
+                    s.indexerSubsystem.runIndexer(),
+                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                    Commands.runOnce(() -> s.intakePivot.restartTimer())
+                        .andThen(
+                            Commands.runOnce(
+                                () ->
+                                    intakeMode =
+                                        driverController.leftTrigger().getAsBoolean()
+                                            ? IntakeMode.INTAKE
+                                            : IntakeMode.LAUNCH)))
+                .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
+        .repeatedly()
+        .withName("Launching Command");
+  }
+
+  private Command LEDandIntakeExitRoutine() {
+    return s.launcherSubsystem
+        .rawStowCommand()
+        .alongWith(
+            Commands.runOnce(
+                () -> {
+                  ledsMode = LEDMode.DEFAULT;
+                  intakeMode =
+                      driverController.leftTrigger().getAsBoolean()
+                          ? IntakeMode.INTAKE
+                          : IntakeMode.DEPLOYED;
+                }))
+        .withName("Launching Finished");
   }
 
   private void updateIntakeMode() {
@@ -414,7 +448,7 @@ public class Controls {
       return;
     }
 
-    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
+    // s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
