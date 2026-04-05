@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
@@ -10,9 +11,13 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -35,12 +40,26 @@ public class Flywheels extends SubsystemBase {
       new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
   public NtTunableDouble targetVelocity;
+  private double lastRPS = 0;
   private long lastPositionUpdateTime = 0;
+  private final double minDerivative = -2;
+  private final double maxDerivative = 2;
 
+  private IntegerPublisher ballPub;
+  private int ballCount = 0;
   public final double FLYWHEEL_TOLERANCE =
       15; // RPS // increased on drive practice 3/18 from 5 -> 10 //Increased to 15 by TD 3/18
   public final NtTunableBoolean TUNER_CONTROLLED =
       new NtTunableBoolean("/SmartDashboard/Tunables/Flywheels", false);
+
+  // Status signals
+  private StatusSignal<AngularVelocity> flywheelOneRPS;
+  private StatusSignal<Current> flywheelOneSupplyCurrent;
+
+  // Cache
+  private double timeEnteredTargetZone = 0;
+  private double lastTime;
+  private boolean hasBall = false;
 
   // Constructor
   public Flywheels() {
@@ -51,16 +70,20 @@ public class Flywheels extends SubsystemBase {
     configureMotors();
 
     var nt = NetworkTableInstance.getDefault();
+    ballPub = nt.getIntegerTopic("flywheels/ballsShot").publish();
     velocityTopic = nt.getDoubleTopic("/launcher/velocity");
     currentTopic = nt.getDoubleTopic("/launcher/current");
     velocityPub = velocityTopic.publish();
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
     currentPub.set(0.0);
-
+    lastTime = Timer.getFPGATimestamp();
     if (RobotBase.isSimulation()) {
       flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
     }
+
+    flywheelOneRPS = FlywheelOne.getVelocity();
+    flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
   }
 
   private void configureMotors() {
@@ -152,6 +175,33 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
   }
 
+  public boolean hasBeenAtTargetFor(double durationSeconds) {
+    boolean atTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
+
+    // at target?
+    if (atTarget) {
+      // if no active timer
+      if (timeEnteredTargetZone < 0) {
+        // First time at target, record the timestamp.
+        timeEnteredTargetZone = Timer.getFPGATimestamp();
+        return false;
+      }
+    } else {
+      // Not at target, reset the timer to -1
+      timeEnteredTargetZone = -1;
+    }
+    // Check if the time at target has exceeded the duration.
+    boolean hasStopped = (Timer.getFPGATimestamp() - timeEnteredTargetZone) >= durationSeconds;
+    if (hasStopped) {
+      resetCachedValues(); // Reset for the next shooting sequence
+    }
+    return hasStopped;
+  }
+
+  public void resetCachedValues() {
+    timeEnteredTargetZone = -1;
+  }
+
   @Override
   public void simulationPeriodic() {
     if (flywheelSim != null) {
@@ -161,9 +211,23 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
+    StatusSignal.refreshAll(flywheelOneSupplyCurrent, flywheelOneRPS);
+    double currentRPS = flywheelOneRPS.getValueAsDouble();
+    double dt = Timer.getFPGATimestamp() - lastTime;
 
-    velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
-    currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
+    if (dt >= 0.02) {
+      double slope = (currentRPS - lastRPS) / dt;
+      if (slope < minDerivative && !hasBall) {
+        hasBall = true;
+      } else if (slope > maxDerivative && hasBall) {
+        hasBall = false;
+        ballCount++;
+      }
+    }
+
+    velocityPub.set(flywheelOneRPS.getValueAsDouble());
+    ballPub.set(ballCount);
+    currentPub.set(flywheelOneSupplyCurrent.getValueAsDouble());
     if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetVelocity.getAtomic();
