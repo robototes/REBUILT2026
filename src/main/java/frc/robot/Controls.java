@@ -104,8 +104,6 @@ public class Controls {
           .withRotationalDeadband(0.0001)
           .withDriveRequestType(DriveRequestType.Velocity);
 
-  private final Telemetry logger = new Telemetry(MaxSpeed);
-
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems, SimWrapper simWrapper) {
     // Configure the trigger bindings
@@ -224,9 +222,6 @@ public class Controls {
           .onTrue(
               s.drivebaseSubsystem.runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero)));
     }
-
-    // logging the telemetry
-    s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
 
     // reset pose incase vision is bugging
     driverController
