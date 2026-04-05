@@ -216,7 +216,8 @@ public class AutoLogic {
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-        .withTimeout(6.5)
+        .until(() -> s.flywheels.hasBeenAtTargetFor(1))
+        .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
         .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isHoodAtTarget()));
   }
