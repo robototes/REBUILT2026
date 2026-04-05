@@ -22,7 +22,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -91,10 +90,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Network tables
 
-  private final DoublePublisher pos_Pub;
-  private final DoublePublisher target_Pub;
-  private final DoublePublisher velocity_Pub;
-  private final DoublePublisher current_Pub;
+  private final DoublePublisher posPub;
+  private final DoublePublisher targetPub;
+  private final DoublePublisher velocityPub;
+  private final DoublePublisher currentPub;
 
   // Status signals
   private final StatusSignal<Angle> position;
@@ -111,24 +110,19 @@ public class TurretSubsystem extends SubsystemBase {
     turretConfig();
     turretRotation.set(new Pose2d[2]);
 
-    SmartDashboard.putNumber("Turret/Position", turretMotor.getPosition().getValueAsDouble());
-    SmartDashboard.putNumber("Turret/Target", targetPos);
-    SmartDashboard.putNumber("Turret/Velocity", turretMotor.getVelocity().getValueAsDouble());
-    SmartDashboard.putNumber("Turret/Current", turretMotor.getStatorCurrent().getValueAsDouble());
-
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable table = inst.getTable("SmartDashboard");
 
     position = turretMotor.getPosition();
-    pos_Pub = table.getDoubleTopic("/Turret/Position").publish();
+    posPub = table.getDoubleTopic("/Turret/Position").publish();
 
     velocity = turretMotor.getVelocity();
-    velocity_Pub = table.getDoubleTopic("/Turret/Velocity").publish();
+    velocityPub = table.getDoubleTopic("/Turret/Velocity").publish();
 
     current = turretMotor.getStatorCurrent();
-    current_Pub = table.getDoubleTopic("/Turret/Current").publish();
+    currentPub = table.getDoubleTopic("/Turret/Current").publish();
 
-    target_Pub = table.getDoubleTopic("/Turret/Target").publish();
+    targetPub = table.getDoubleTopic("/Turret/Target").publish();
   }
 
   public void turretConfig() {
@@ -302,10 +296,10 @@ public class TurretSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     StatusSignal.refreshAll(position, velocity, current); // Refresh
-    pos_Pub.set(position.getValueAsDouble()); // Rotations
-    velocity_Pub.set(velocity.getValueAsDouble()); // RPS
-    current_Pub.set(current.getValueAsDouble()); // Amps
-    target_Pub.set(targetPos);
+    posPub.set(position.getValueAsDouble()); // Rotations
+    velocityPub.set(velocity.getValueAsDouble()); // RPS
+    currentPub.set(current.getValueAsDouble()); // Amps
+    targetPub.set(targetPos);
   }
 
   public void brakeTurret() {
