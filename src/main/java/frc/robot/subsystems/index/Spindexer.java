@@ -11,6 +11,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
@@ -21,7 +22,7 @@ import frc.robot.util.tuning.NtTunableDouble;
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
-  private final double D_TARGET_RPS = 70;
+  private final double D_TARGET_RPS = 5;
   private final double D_TARGET_ACCEL = 1000; // Rotations /s /s
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
@@ -32,6 +33,12 @@ public class Spindexer extends SubsystemBase {
   private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final FlywheelSim motorSim;
+
+  // Oscillate settings
+  private static final double AMPLITUDE = 0.5;
+  private static final double VERTICAL_SHIFT = 0.5;
+  private static final double FREQUENCY = Math.PI * 2;
+  private static final double MAX_RPS_OFFSET = 1.5;
 
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
@@ -76,17 +83,19 @@ public class Spindexer extends SubsystemBase {
   }
 
   public void runVelocity() {
-    if (TUNABLE_ENABLE.get()) {
-      spindexerMotor.setControl(
-          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
-    } else {
-      spindexerMotor.setControl(
-          TARGET_VELOCITY.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
-    }
+    double baseRps = TUNABLE_ENABLE.get() ? TARGET_RPS.get() : D_TARGET_RPS;
+    double accel = TUNABLE_ENABLE.get() ? TARGET_ACCEL.get() : D_TARGET_ACCEL;
+    double velocity = baseRps - MAX_RPS_OFFSET * oscillate(Timer.getFPGATimestamp());
+
+    spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(velocity).withAcceleration(accel));
   }
 
   public void stopMotor() {
     spindexerMotor.stopMotor();
+  }
+
+  private static double oscillate(double time) {
+    return AMPLITUDE * Math.cos(FREQUENCY * time) + VERTICAL_SHIFT;
   }
 
   @Override
