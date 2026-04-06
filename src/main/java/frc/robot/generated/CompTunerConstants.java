@@ -61,8 +61,8 @@ public class CompTunerConstants {
   // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
 
   /**
-   * Limits active: Supply current limit upper bound : lower bound : lower bound duration -> 60 amps
-   * : 40 amps : 0.1 seconds
+   * Limits active: Supply current limit upper bound : lower bound : lower bound duration -> 80 amps
+   * : 40 amps : 2 seconds
    *
    * <p>Stator curret limit: 120 amps
    */
