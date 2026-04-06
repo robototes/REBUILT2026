@@ -46,7 +46,8 @@ public class LaunchCalculator {
   private static final double MIN_SLOPE = 1e-4;
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
-  private static final double ARCTAN_NEAR_ZERO = 1e-4;
+  // Originally 1e-4 without square norm. With square norm it's (1e-4)^2
+  private static final double MIN_DISTANCE_TO_TARGET_SQUARED = 1e-8;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -236,14 +237,16 @@ public class LaunchCalculator {
 
     // subtract the two translation 2ds
     Translation2d targetDifference = virtualTarget.minus(turretPose.getTranslation());
+    double dx = targetDifference.getX();
+    double dy = targetDifference.getY();
     Rotation2d targetAngleFieldRelative;
     // If the distance is practically zero (0.../0...)
-    if (targetDifference.getNorm() < ARCTAN_NEAR_ZERO) {
+    if (dx * dx + dy * dy < MIN_DISTANCE_TO_TARGET_SQUARED) {
       // Just set it to zero so we don't call arctan and throw exceptions for divide by zero
       targetAngleFieldRelative = Rotation2d.kZero;
     } else {
-      // It's difference is big enough, so use it
-      targetAngleFieldRelative = targetDifference.getAngle();
+      // Its' difference is big enough, so use it
+      targetAngleFieldRelative = new Rotation2d(dx, dy);
     }
     // FINAL NUMS
     double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
