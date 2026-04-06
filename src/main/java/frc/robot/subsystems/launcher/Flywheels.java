@@ -84,8 +84,8 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 8.73 / 74; // 5.3/45.2
-    config.Slot0.kS = 0.0;
+    config.Slot0.kV = 6.0 / 45.0; // 5.3/45.2
+    config.Slot0.kS = 0.3;
     config.Slot0.kG = 0.0;
 
     // create PID gains slot 1
@@ -93,8 +93,8 @@ public class Flywheels extends SubsystemBase {
     config.Slot1.kI = 0.0;
     config.Slot1.kD = 0.0;
     config.Slot1.kA = 0.0;
-    config.Slot1.kV = 8.73 / 74; // 5.3/45.2
-    config.Slot1.kS = 0.0;
+    config.Slot1.kV = 6.0 / 45.0; // 5.3/45.2
+    config.Slot1.kS = 0.3;
     config.Slot1.kG = 0.0;
 
     flConfigurator.apply(config);
