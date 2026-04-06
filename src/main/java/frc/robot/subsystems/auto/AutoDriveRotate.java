@@ -5,6 +5,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -72,7 +73,7 @@ public class AutoDriveRotate {
 
       double rotationOutput = pidRotate.calculate(-targetSupplier.getAsDouble());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
-      anglePub.set(targetSupplier.getAsDouble());
+      anglePub.set(Units.radiansPerSecondToRotationsPerMinute(targetSupplier.getAsDouble()));
       SwerveRequest request =
           driveRequest
               .withVelocityX(xSupplier.getAsDouble())
