@@ -155,7 +155,7 @@ task generateBuildInfo {
         deployDir.mkdirs() // Ensure the deploy directory exists
         def buildInfoFile = new File(deployDir, "build-info.txt") // creates one if it doesn't exist
 
-        // Write standard build info to the file
+        // Write build info to the file
         buildInfoFile.text = """
 Build Date: ${new Date().format('yyyy-MM-dd HH:mm:ss')}
 Branch: ${getGitBranch()}
