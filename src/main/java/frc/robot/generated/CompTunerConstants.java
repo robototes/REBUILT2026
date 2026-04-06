@@ -64,7 +64,7 @@ public class CompTunerConstants {
    * Limits active: Supply current limit upper bound : lower bound : lower bound duration -> 80 amps
    * : 40 amps : 2 seconds
    *
-   * <p>Stator curret limit: 120 amps
+   * <p>Stator current limit: 120 amps
    */
   private static final TalonFXConfiguration driveInitialConfigs =
       new TalonFXConfiguration()
