@@ -255,6 +255,7 @@ public class Controls {
         .y()
         .whileTrue(
             Commands.parallel(
+                s.launcherSubsystem.launcherAimCommand(),
                 AutoDriveRotate.autoRotate(
                         s, () -> driverController.getLeftX(), () -> driverController.getLeftY())
                     .onlyWhile(() -> s.launcherSubsystem.isAtTargetFallback()),
@@ -448,7 +449,7 @@ public class Controls {
       return;
     }
 
-    // s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
+    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));

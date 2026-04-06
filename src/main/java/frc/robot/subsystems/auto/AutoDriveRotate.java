@@ -11,10 +11,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;
 
+/** class is designed to rotate only if turret is fixed at 0 */
 public class AutoDriveRotate {
   public static Command autoRotate(
       Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
@@ -38,7 +38,7 @@ public class AutoDriveRotate {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
 
     protected final Subsystems s;
-    protected Translation2d targetTranslation;
+    private final DoubleSupplier targetSupplier;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
     private final DoublePublisher anglePub;
@@ -47,6 +47,14 @@ public class AutoDriveRotate {
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
     public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+      // Added math.pi so that facing forward for turret is facing intake
+      targetSupplier =
+          () ->
+              launchCalc
+                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem)
+                      .targetTurret()
+                      .getRadians()
+                  + Math.PI;
       this.s = s;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
@@ -58,22 +66,10 @@ public class AutoDriveRotate {
       addRequirements(s.drivebaseSubsystem);
     }
 
-    // TODO: Add auto rotate for launching game pieces to corners + climb alignment
-    @Override
-    public void initialize() {
-      targetTranslation = AllianceUtils.getHubTranslation2d();
-    }
-
     @Override
     public void execute() {
       if (s.turretSubsystem == null) return;
-      DoubleSupplier targetSupplier =
-          () ->
-              launchCalc
-                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem)
-                      .targetTurret()
-                      .getRadians()
-                  + Math.PI;
+
       double rotationOutput = pidRotate.calculate(-targetSupplier.getAsDouble());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(targetSupplier.getAsDouble());
