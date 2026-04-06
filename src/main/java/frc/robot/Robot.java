@@ -213,7 +213,7 @@ public class Robot extends TimedRobot {
         .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
 
     // Tell launch calculator to start a new cycle for "hasmovedatleastonce" boolean
-    LaunchCalculator.robotDisable();
+    LaunchCalculator.getInstance().robotDisable();
   }
 
   @Override

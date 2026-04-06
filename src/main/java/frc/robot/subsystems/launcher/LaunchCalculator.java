@@ -31,7 +31,7 @@ public class LaunchCalculator {
   private LaunchingParameters cachedParams;
   private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
-  private static boolean hasMovedAtLeastOnce = false;
+  private boolean hasMovedAtLeastOnce = false;
 
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
@@ -57,6 +57,10 @@ public class LaunchCalculator {
   private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
+
+  // dont move launch param
+  private static final LaunchingParameters defaultParam =
+      new LaunchingParameters(0, Rotation2d.kZero, 0, 0, Pose2d.kZero);
 
   public record LaunchingParameters(
       double targetHood,
@@ -115,7 +119,7 @@ public class LaunchCalculator {
       if (!hasNotMovedSignificantly || !hasNotRotatedSignificantly || !isNotMovingFastEnough) {
         hasMovedAtLeastOnce = true;
       } else {
-        return null; // Still haven't moved, so return null
+        return defaultParam; // Still haven't moved, so return null
       }
     }
     // Check to see if all conditions are met after it has moved at least once
@@ -311,7 +315,7 @@ public class LaunchCalculator {
     return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
   }
 
-  public static void robotDisable() {
+  public void robotDisable() {
     hasMovedAtLeastOnce = false;
   }
 }
