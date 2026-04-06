@@ -57,7 +57,7 @@ public class Flywheels extends SubsystemBase {
   private StatusSignal<Current> flywheelOneSupplyCurrent;
 
   // Cache
-  private double timeEnteredTargetZone = 0;
+  private double timeEnteredTargetZone = -1;
   private double lastTime;
   private boolean hasBall = false;
 
@@ -84,6 +84,7 @@ public class Flywheels extends SubsystemBase {
 
     flywheelOneRPS = FlywheelOne.getVelocity();
     flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
+    lastRPS = flywheelOneRPS.getValueAsDouble();
   }
 
   private void configureMotors() {
@@ -178,24 +179,16 @@ public class Flywheels extends SubsystemBase {
   public boolean hasBeenAtTargetFor(double durationSeconds) {
     boolean atTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
 
-    // at target?
-    if (atTarget) {
-      // if no active timer
-      if (timeEnteredTargetZone < 0) {
-        // First time at target, record the timestamp.
-        timeEnteredTargetZone = Timer.getFPGATimestamp();
-        return false;
-      }
-    } else {
-      // Not at target, reset the timer to -1
+    if (!atTarget) {
       timeEnteredTargetZone = -1;
+      return false;
     }
-    // Check if the time at target has exceeded the duration.
-    boolean hasStopped = (Timer.getFPGATimestamp() - timeEnteredTargetZone) >= durationSeconds;
-    if (hasStopped) {
-      resetCachedValues(); // Reset for the next shooting sequence
+
+    if (timeEnteredTargetZone < 0) {
+      timeEnteredTargetZone = Timer.getFPGATimestamp();
     }
-    return hasStopped;
+
+    return (Timer.getFPGATimestamp() - timeEnteredTargetZone) >= durationSeconds;
   }
 
   public void resetCachedValues() {
@@ -213,7 +206,8 @@ public class Flywheels extends SubsystemBase {
   public void periodic() {
     StatusSignal.refreshAll(flywheelOneSupplyCurrent, flywheelOneRPS);
     double currentRPS = flywheelOneRPS.getValueAsDouble();
-    double dt = Timer.getFPGATimestamp() - lastTime;
+    double now = Timer.getFPGATimestamp();
+    double dt = now - lastTime;
 
     if (dt >= 0.02) {
       double slope = (currentRPS - lastRPS) / dt;
@@ -223,6 +217,8 @@ public class Flywheels extends SubsystemBase {
         hasBall = false;
         ballCount++;
       }
+      lastRPS = currentRPS;
+      lastTime = now;
     }
 
     velocityPub.set(flywheelOneRPS.getValueAsDouble());
