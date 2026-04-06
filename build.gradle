@@ -157,24 +157,24 @@ tasks.register("generateBuildInfo") {
         def buildInfoFile = new File(deployDir, "build-info.txt")
 
         buildInfoFile.text = """
-        ### Project path
-        ${project.projectDir}
-        ### Commit hash
-        ${getGitHash(execOps)}
-        ### Refs to latest commit
-        ${getGitBranch(execOps)}
-        ### Commit time
-        ${getGitCommitTime(execOps)}
-        ### Commit message
-        ${getGitCommitMessage(execOps)}
-        ### Remotes
-        ${getGitRemotes(execOps)}
-        ### Changed files
-        ${getGitChangedFiles(execOps)}
-        ### Untracked files
-        ${getGitUntrackedFiles(execOps)}
-        ### (END)
-        """.trim()
+            |### Project path
+            |${project.projectDir}
+            |### Commit hash
+            |${getGitHash(execOps)}
+            |### Refs to latest commit
+            |${getGitBranch(execOps)}
+            |### Commit time
+            |${getGitCommitTime(execOps)}
+            |### Commit message
+            |${getGitCommitMessage(execOps)}
+            |### Remotes
+            |${getGitRemotes(execOps)}
+            |### Changed files
+            |${getGitChangedFiles(execOps)}
+            |### Untracked files
+            |${getGitUntrackedFiles(execOps)}
+            |### (END)
+        """.stripMargin().trim()
     }
 }
 
