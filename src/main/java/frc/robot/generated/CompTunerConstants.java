@@ -59,7 +59,24 @@ public class CompTunerConstants {
 
   // Initial configs for the drive and steer motors and the azimuth encoder; these cannot be null.
   // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
-  private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
+
+  /**
+   * Limits active: Supply current limit upper bound : lower bound : lower bound duration -> 60 amps
+   * : 40 amps : 0.1 seconds
+   *
+   * <p>Stator curret limit: 120 amps
+   */
+  private static final TalonFXConfiguration driveInitialConfigs =
+      new TalonFXConfiguration()
+          .withCurrentLimits(
+              new CurrentLimitsConfigs()
+                  .withSupplyCurrentLimit(Amps.of(60))
+                  .withSupplyCurrentLimitEnable(true)
+                  .withSupplyCurrentLowerLimit(Amps.of(40))
+                  .withSupplyCurrentLowerTime(Seconds.of(0.1))
+                  .withStatorCurrentLimit(Amps.of(120)) // keep slip guard
+                  .withStatorCurrentLimitEnable(true));
+
   private static final TalonFXConfiguration steerInitialConfigs =
       new TalonFXConfiguration()
           .withCurrentLimits(
