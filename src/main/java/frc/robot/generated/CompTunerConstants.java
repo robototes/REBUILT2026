@@ -70,11 +70,11 @@ public class CompTunerConstants {
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
-                  .withSupplyCurrentLimit(Amps.of(60))
+                  .withSupplyCurrentLimit(Amps.of(80))
                   .withSupplyCurrentLimitEnable(true)
                   .withSupplyCurrentLowerLimit(Amps.of(40))
-                  .withSupplyCurrentLowerTime(Seconds.of(0.1))
-                  .withStatorCurrentLimit(Amps.of(120)) // keep slip guard
+                  .withSupplyCurrentLowerTime(Seconds.of(2))
+                  .withStatorCurrentLimit(Amps.of(kSlipCurrent.magnitude())) // keep slip guard
                   .withStatorCurrentLimitEnable(true));
 
   private static final TalonFXConfiguration steerInitialConfigs =
