@@ -29,6 +29,7 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.subsystems.launcher.LaunchCalculator;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -210,6 +211,9 @@ public class Robot extends TimedRobot {
     }
     CommandScheduler.getInstance()
         .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
+
+    // Tell launch calculator to start a new cycle for "hasmovedatleastonce" boolean
+    LaunchCalculator.robotDisable();
   }
 
   @Override

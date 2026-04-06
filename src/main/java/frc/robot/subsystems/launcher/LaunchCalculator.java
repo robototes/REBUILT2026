@@ -31,6 +31,7 @@ public class LaunchCalculator {
   private LaunchingParameters cachedParams;
   private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
+  private static boolean hasMovedAtLeastOnce = false;
 
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
@@ -97,7 +98,7 @@ public class LaunchCalculator {
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
             <= MIN_DIST_TOLERANCE;
-    boolean hasNotRotatedSigificantly =
+    boolean hasNotRotatedSignificantly =
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
@@ -107,9 +108,19 @@ public class LaunchCalculator {
                 <= MIN_VELOCITY_TOLERANCE
             && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
                 <= MIN_ROTATION_TOLERANCE;
-    // Check to see if all conditions are met
+
+    // On robot startup / entering enabled, check to see if it has moved at least once
+    if (!hasMovedAtLeastOnce) {
+      // has moved enough?
+      if (!hasNotMovedSignificantly || !hasNotRotatedSignificantly || !isNotMovingFastEnough) {
+        hasMovedAtLeastOnce = true;
+      } else {
+        return null; // Still haven't moved, so return null
+      }
+    }
+    // Check to see if all conditions are met after it has moved at least once
     if (hasNotMovedSignificantly
-        && hasNotRotatedSigificantly
+        && hasNotRotatedSignificantly
         && isNotMovingFastEnough
         && cachedParams != null) {
       return cachedParams;
@@ -298,5 +309,9 @@ public class LaunchCalculator {
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
     return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
+  }
+
+  public static void robotDisable() {
+    hasMovedAtLeastOnce = false;
   }
 }
