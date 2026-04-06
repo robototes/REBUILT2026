@@ -1,5 +1,6 @@
 package frc.robot.subsystems.index;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -9,10 +10,16 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.DoubleLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
@@ -39,6 +46,12 @@ public class Spindexer extends SubsystemBase {
   private static final double VERTICAL_SHIFT = 0.5;
   private static final double FREQUENCY = Math.PI * 2;
   private static final double MAX_RPS_OFFSET = 1.5;
+  // Logs
+  private final StatusSignal<AngularVelocity> spindexerRPS;
+  private final DoubleLogEntry statorCurrentLog;
+  private final DoubleLogEntry supplyCurrentLog;
+  private final StatusSignal<Current> statorCurrent;
+  private final StatusSignal<Current> supplyCurrent;
 
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
@@ -53,6 +66,14 @@ public class Spindexer extends SubsystemBase {
     } else {
       motorSim = null;
     }
+
+    // Instiate log variables
+    DataLog log = DataLogManager.getLog();
+    statorCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/statorCurrent");
+    supplyCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/supplyCurrent");
+    statorCurrent = spindexerMotor.getStatorCurrent();
+    supplyCurrent = spindexerMotor.getSupplyCurrent();
+    spindexerRPS = spindexerMotor.getVelocity();
   }
 
   public void spindexerConfig() {
@@ -102,5 +123,14 @@ public class Spindexer extends SubsystemBase {
   public void simulationPeriodic() {
     motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
+  }
+
+  @Override
+  public void periodic() {
+    StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
+    SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
+    // Log stuff
+    statorCurrentLog.append(statorCurrent.getValueAsDouble());
+    supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
   }
 }
