@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -30,9 +31,12 @@ import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
+import frc.robot.util.DriveStateNtLogger;
+import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
+import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -53,6 +57,12 @@ public class Robot extends TimedRobot {
   private final Mechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
   private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
+  private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
+  private final DriveStateNtLogger driveBaseSim;
+  private final DriveStateSignalLogger logger;
+
+  // Cached time for robot.periodic()
+  private double LAST_TIME = 0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -65,7 +75,7 @@ public class Robot extends TimedRobot {
 
     // logging
     if (RobotBase.isReal()) {
-      DataLogManager.start();
+      DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
@@ -133,6 +143,10 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    logger = new DriveStateSignalLogger();
+    subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+    driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
   }
 
   /**
@@ -144,6 +158,13 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    // Resume logging every X seconds
+    double time = Timer.getFPGATimestamp();
+    if (time - LAST_TIME >= 1) {
+      LAST_TIME = time;
+      DataLogManager.getLog().resume();
+    }
+
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation() && m_simWrapper != null) {
       // NOTE: We run the vision period FIRST in robotPeriodic, since it updates
@@ -162,6 +183,8 @@ public class Robot extends TimedRobot {
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
+    driveBaseSim.update();
+    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
