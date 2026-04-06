@@ -239,7 +239,7 @@ public class TurretSubsystem extends SubsystemBase {
    * @return the angular velocity of the turret in rad/s
    */
   public double getOmega() {
-    return Units.rotationsToRadians(velocitySignal.refresh().getValueAsDouble());
+    return Units.rotationsToRadians(velocitySignal.getValueAsDouble());
   }
 
   // Experimental IF WITHIN BOUNDS go to it instead of clamping
