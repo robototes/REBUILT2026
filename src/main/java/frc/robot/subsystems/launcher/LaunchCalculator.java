@@ -128,7 +128,8 @@ public class LaunchCalculator {
    * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
    * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
-   * @param drivetrain the drivebase's CommandSwerveDrivetrain object
+   * @param SwerveDriveState the drivebase's swervedrivestate. It's only called in getParameters()
+   *     and should not use any other drive state
    * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
    *     the entirety of run time
    * @return LaunchingParameters record holding all the target values. Record is defined in the
