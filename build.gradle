@@ -146,3 +146,69 @@ spotless {
         trimTrailingWhitespace()
     }
 }
+
+
+// Task to automatically generate the build-info.txt file
+task generateBuildInfo {
+    doLast {
+        def deployDir = file("src/main/deploy")
+        deployDir.mkdirs() // Ensure the deploy directory exists
+        def buildInfoFile = new File(deployDir, "build-info.txt") // creates one if it doesn't exist
+
+        // Write standard build info to the file
+        buildInfoFile.text = """
+Build Date: ${new Date().format('yyyy-MM-dd HH:mm:ss')}
+Branch: ${getGitBranch()}
+Commit: ${getGitHash()}
+Github User: ${getDeployUser()}
+        """.trim()
+    }
+}
+def getDeployUser() {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            // standard output is a property that expects an outputstream object
+            standardOutput = stdout
+            // Capture result of the following command
+            commandLine 'git', 'config', 'user.name'
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "Unknown"
+    }
+}
+
+// Helper functions to grab Git info
+def getGitHash() {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            // standard output is a property that expects an outputstream object
+            standardOutput = stdout
+            // Capture result of the following command
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "Unknown"
+    }
+}
+
+def getGitBranch() {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            // standard output is a property that expects an outputstream object
+            standardOutput = stdout
+            // Capture result of the following command
+            commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "Unknown"
+    }
+}
+
+// Make sure the build info is generated before Java compiles and before static files are deployed
+processResources.dependsOn generateBuildInfo
