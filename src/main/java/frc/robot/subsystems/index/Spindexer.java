@@ -29,7 +29,7 @@ import frc.robot.util.tuning.NtTunableDouble;
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
-  private final double D_TARGET_RPS = 5;
+  private final double D_TARGET_RPS = 70;
   private final double D_TARGET_ACCEL = 1000; // Rotations /s /s
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
@@ -45,7 +45,7 @@ public class Spindexer extends SubsystemBase {
   private static final double AMPLITUDE = 0.5;
   private static final double VERTICAL_SHIFT = 0.5;
   private static final double FREQUENCY = Math.PI * 2;
-  private static final double MAX_RPS_OFFSET = 1.5;
+  private static final double MAX_RPS_OFFSET = 20;
   // Logs
   private final StatusSignal<AngularVelocity> spindexerRPS;
   private final DoubleLogEntry statorCurrentLog;
@@ -106,9 +106,17 @@ public class Spindexer extends SubsystemBase {
   public void runVelocity() {
     double baseRps = TUNABLE_ENABLE.get() ? TARGET_RPS.get() : D_TARGET_RPS;
     double accel = TUNABLE_ENABLE.get() ? TARGET_ACCEL.get() : D_TARGET_ACCEL;
+    spindexerMotor.setControl(
+        TARGET_VELOCITY.withVelocity(baseRps).withAcceleration(accel).withEnableFOC(true));
+  }
+
+  public void runVelocityOscillate() {
+    double baseRps = TUNABLE_ENABLE.get() ? TARGET_RPS.get() : D_TARGET_RPS;
+    double accel = TUNABLE_ENABLE.get() ? TARGET_ACCEL.get() : D_TARGET_ACCEL;
     double velocity = baseRps - MAX_RPS_OFFSET * oscillate(Timer.getFPGATimestamp());
 
-    spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(velocity).withAcceleration(accel));
+    spindexerMotor.setControl(
+        TARGET_VELOCITY.withVelocity(velocity).withAcceleration(accel).withEnableFOC(true));
   }
 
   public void stopMotor() {
