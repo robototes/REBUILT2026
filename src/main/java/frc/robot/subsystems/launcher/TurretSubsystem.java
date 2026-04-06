@@ -41,9 +41,9 @@ public class TurretSubsystem extends SubsystemBase {
   // The tolerance is this high because the turret position is always updating so it is not
   // always exactly where it should be, I am mainly using this to stop shooting when the
   // turret hits its wraparound point
-  public static final double TURRET_DEGREE_TOLERANCE = 20;
+  public static final double TURRET_DEGREE_TOLERANCE = 12;
 
-  public static final double TURRET_DEGREE_TOLERANCE_FALLBACK = 20;
+  public static final double TURRET_DEGREE_TOLERANCE_FALLBACK = 15;
 
   // Positions
   private double targetPos;
