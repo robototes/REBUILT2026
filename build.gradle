@@ -146,3 +146,81 @@ spotless {
         trimTrailingWhitespace()
     }
 }
+
+
+tasks.register("generateBuildInfo") {
+    doLast {
+        def execOps = services.get(ExecOperations)
+
+        def deployDir = file("src/main/deploy")
+        deployDir.mkdirs()
+        def buildInfoFile = new File(deployDir, "build-info.txt")
+
+        buildInfoFile.text = """
+            |### Project path
+            |${project.projectDir}
+            |### Commit hash
+            |${getGitHash(execOps)}
+            |### Refs to latest commit
+            |${getGitBranch(execOps)}
+            |### Commit time
+            |${getGitCommitTime(execOps)}
+            |### Commit message
+            |${getGitCommitMessage(execOps)}
+            |### Remotes
+            |${getGitRemotes(execOps)}
+            |### Changed files
+            |${getGitChangedFiles(execOps)}
+            |### Untracked files
+            |${getGitUntrackedFiles(execOps)}
+            |### (END)
+        """.stripMargin().trim()
+    }
+}
+
+def getGitBranch(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['rev-parse', '--abbrev-ref', 'HEAD'])
+}
+
+def getGitCommitTime(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['log', '-1', '--format=%cd'])
+}
+
+def getGitCommitMessage(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['log', '-1', '--format=%s'])
+}
+
+def getGitRemotes(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['remote', '-v'])
+}
+
+def getGitChangedFiles(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['diff', '--name-only'])
+    return out.isEmpty() ? "None" : out
+}
+
+def getGitUntrackedFiles(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['ls-files', '--others', '--exclude-standard'])
+    return out.isEmpty() ? "None" : out
+}
+
+def getGitHash(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['rev-parse', '--short', 'HEAD'])
+    return out.isEmpty() ? "None" : out
+}
+
+def executeGitCommand(ExecOperations execOps, List<String> args) {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        execOps.exec {
+            commandLine = ['git'] + args
+            standardOutput = stdout
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "Unknown/Error"
+    }
+}
+
+// Make sure the build info is generated before Java compiles and before static files are deployed
+processResources.dependsOn generateBuildInfo

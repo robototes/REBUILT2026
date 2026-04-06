@@ -47,6 +47,7 @@ public class LaunchCalculator {
   private static final double MIN_SLOPE = 1e-4;
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
+  private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -234,12 +235,13 @@ public class LaunchCalculator {
           (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
     }
 
-    Translation2d virtualTarget =
-        new Translation2d(target.getX() - turretVelocityX * t, target.getY() - turretVelocityY * t);
-
-    Rotation2d targetAngleFieldRelative =
-        virtualTarget.minus(turretPose.getTranslation()).getAngle();
-
+    Rotation2d targetAngleFieldRelative;
+    if (trueDistance < MIN_DISTANCE_TO_TARGET) {
+      targetAngleFieldRelative = Rotation2d.kZero;
+    } else {
+      // We still pass dx and dy to the constructor so it stays "linked" to the vector
+      targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
+    }
     // FINAL NUMS
     double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
