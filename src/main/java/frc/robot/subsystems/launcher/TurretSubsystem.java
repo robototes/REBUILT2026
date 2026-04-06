@@ -96,9 +96,9 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher currentPub;
 
   // Status signals
-  private final StatusSignal<Angle> position;
-  private final StatusSignal<AngularVelocity> velocity;
-  private final StatusSignal<Current> current;
+  private final StatusSignal<Angle> positionSignal;
+  private final StatusSignal<AngularVelocity> velocitySignal;
+  private final StatusSignal<Current> statorCurrentSignal;
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
@@ -113,13 +113,13 @@ public class TurretSubsystem extends SubsystemBase {
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable table = inst.getTable("SmartDashboard");
 
-    position = turretMotor.getPosition();
+    positionSignal = turretMotor.getPosition();
     posPub = table.getDoubleTopic("/Turret/Position").publish();
 
-    velocity = turretMotor.getVelocity();
+    velocitySignal = turretMotor.getVelocity();
     velocityPub = table.getDoubleTopic("/Turret/Velocity").publish();
 
-    current = turretMotor.getStatorCurrent();
+    statorCurrentSignal = turretMotor.getStatorCurrent();
     currentPub = table.getDoubleTopic("/Turret/Current").publish();
 
     targetPub = table.getDoubleTopic("/Turret/Target").publish();
@@ -239,7 +239,7 @@ public class TurretSubsystem extends SubsystemBase {
    * @return the angular velocity of the turret in rad/s
    */
   public double getOmega() {
-    return Units.rotationsToRadians(turretMotor.getVelocity().getValueAsDouble());
+    return Units.rotationsToRadians(velocitySignal.refresh().getValueAsDouble());
   }
 
   // Experimental IF WITHIN BOUNDS go to it instead of clamping
@@ -295,10 +295,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(position, velocity, current); // Refresh
-    posPub.set(position.getValueAsDouble()); // Rotations
-    velocityPub.set(velocity.getValueAsDouble()); // RPS
-    currentPub.set(current.getValueAsDouble()); // Amps
+    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
+    posPub.set(positionSignal.getValueAsDouble()); // Rotations
+    velocityPub.set(velocitySignal.getValueAsDouble()); // RPS
+    currentPub.set(statorCurrentSignal.getValueAsDouble()); // Amps
     targetPub.set(targetPos);
   }
 
