@@ -148,65 +148,77 @@ spotless {
 }
 
 
-// Task to automatically generate the build-info.txt file
-task generateBuildInfo {
+tasks.register("generateBuildInfo") {
     doLast {
-        def deployDir = file("src/main/deploy")
-        deployDir.mkdirs() // Ensure the deploy directory exists
-        def buildInfoFile = new File(deployDir, "build-info.txt") // creates one if it doesn't exist
+        def execOps = services.get(ExecOperations)
 
-        // Write build info to the file
+        def deployDir = file("src/main/deploy")
+        deployDir.mkdirs()
+        def buildInfoFile = new File(deployDir, "build-info.txt")
+
         buildInfoFile.text = """
-Build Date: ${new Date().format('yyyy-MM-dd HH:mm:ss')}
-Branch: ${getGitBranch()}
-Commit: ${getGitHash()}
-Github User: ${getDeployUser()}
+        ### Project path
+        ${project.projectDir}
+        ### Commit hash
+        ${getGitHash(execOps)}
+        ### Refs to latest commit
+        ${getGitBranch(execOps)}
+        ### Commit time
+        ${getGitCommitTime(execOps)}
+        ### Commit message
+        ${getGitCommitMessage(execOps)}
+        ### Remotes
+        ${getGitRemotes(execOps)}
+        ### Changed files
+        ${getGitChangedFiles(execOps)}
+        ### Untracked files
+        ${getGitUntrackedFiles(execOps)}
+        ### (END)
         """.trim()
     }
 }
-def getDeployUser() {
-    try {
-        def stdout = new ByteArrayOutputStream()
-        exec {
-            // standard output is a property that expects an outputstream object
-            standardOutput = stdout
-            // Capture result of the following command
-            commandLine 'git', 'config', 'user.name'
-        }
-        return stdout.toString().trim()
-    } catch (Exception e) {
-        return "Unknown"
-    }
+
+def getGitBranch(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['rev-parse', '--abbrev-ref', 'HEAD'])
 }
 
-// Helper functions to grab Git info
-def getGitHash() {
-    try {
-        def stdout = new ByteArrayOutputStream()
-        exec {
-            // standard output is a property that expects an outputstream object
-            standardOutput = stdout
-            // Capture result of the following command
-            commandLine 'git', 'rev-parse', '--short', 'HEAD'
-        }
-        return stdout.toString().trim()
-    } catch (Exception e) {
-        return "Unknown"
-    }
+def getGitCommitTime(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['log', '-1', '--format=%cd'])
 }
 
-def getGitBranch() {
+def getGitCommitMessage(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['log', '-1', '--format=%s'])
+}
+
+def getGitRemotes(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['remote', '-v'])
+}
+
+def getGitChangedFiles(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['diff', '--name-only'])
+    return out.isEmpty() ? "None" : out
+}
+
+def getGitUntrackedFiles(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['ls-files', '--others', '--exclude-standard'])
+    return out.isEmpty() ? "None" : out
+}
+
+def getGitHash(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['rev-parse', '--short', 'HEAD'])
+    return out.isEmpty() ? "None" : out
+}
+
+def executeGitCommand(ExecOperations execOps, List<String> args) {
     try {
         def stdout = new ByteArrayOutputStream()
-        exec {
-            // standard output is a property that expects an outputstream object
+        execOps.exec {
+            commandLine = ['git'] + args
             standardOutput = stdout
-            // Capture result of the following command
-            commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
         }
         return stdout.toString().trim()
     } catch (Exception e) {
-        return "Unknown"
+        return "Unknown/Error"
     }
 }
 
