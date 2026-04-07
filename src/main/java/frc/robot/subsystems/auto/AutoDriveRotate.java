@@ -54,8 +54,7 @@ public class AutoDriveRotate {
               launchCalc
                       .getParameters(s.drivebaseSubsystem, s.turretSubsystem)
                       .targetTurret()
-                      .getRadians()
-                  + Math.PI;
+                      .getRadians();
       this.s = s;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
