@@ -77,7 +77,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 270; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 360; // degrees
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
@@ -246,41 +246,36 @@ public class TurretSubsystem extends SubsystemBase {
   public Command rotateToTargetWithCalc() {
     return runEnd(
             () -> {
-
-              // This represents where the turret is within a single circle (-180 to 180)
-              double wrappedCurrent =
-                  MathUtil.inputModulus(
-                      Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
+              // Raw current position in degrees (not wrapped)
+              double currentDegrees = Units.rotationsToDegrees(getTurretPosition());
 
               // Get the target from the calculator
               LaunchingParameters params =
                   LaunchCalculator.getInstance().getParameters(driveTrain, this);
               double targetDegrees = -params.targetTurret().getDegrees();
-
               double FFV = params.targetTurretFeedforward();
 
-              // Find the shortest distance to that target from our "wrapped" position
-              double shortestDelta =
-                  MathUtil.inputModulus(targetDegrees - wrappedCurrent, -180, 180);
+              // All possible angles that point the same direction
+              double[] candidates = {
+                targetDegrees,
+                targetDegrees + 360,
+                targetDegrees - 360,
+                targetDegrees + 720,
+                targetDegrees - 720
+              };
 
-              // This is the "ideal" target in the range closest to our current wrapped pos
-              double baseTarget = wrappedCurrent + shortestDelta;
+              // Pick the in-range candidate closest to current position
+              double finalTarget =
+                  MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX); // fallback
+              double bestDist = Double.MAX_VALUE;
 
-              // Check multiple rotations to see which one fits in the hardware limits
-              // We check: baseTarget, baseTarget + 360, and baseTarget - 360
-              double finalTarget = baseTarget;
-
-              if (baseTarget < TURRET_MIN) {
-                if (baseTarget + 360 <= TURRET_MAX) {
-                  finalTarget = baseTarget + 360;
-                } else {
-                  finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
-                }
-              } else if (baseTarget > TURRET_MAX) {
-                if (baseTarget - 360 >= TURRET_MIN) {
-                  finalTarget = baseTarget - 360;
-                } else {
-                  finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
+              for (double candidate : candidates) {
+                if (candidate >= TURRET_MIN && candidate <= TURRET_MAX) {
+                  double dist = Math.abs(candidate - currentDegrees);
+                  if (dist < bestDist) {
+                    bestDist = dist;
+                    finalTarget = candidate;
+                  }
                 }
               }
 
