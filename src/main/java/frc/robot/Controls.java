@@ -262,7 +262,12 @@ public class Controls {
                             () -> getDriveX(),
                             () -> getDriveY(),
                             () -> Units.rotationsToDegrees(s.turretSubsystem.getTurretPosition())),
-                        Commands.none(),
+                        s.drivebaseSubsystem.applyRequest(
+                            () ->
+                                drive
+                                    .withVelocityX(getDriveX())
+                                    .withVelocityY(getDriveY())
+                                    .withRotationalRate(getDriveRotate())),
                         () -> turretKillActive),
                     s.launcherSubsystem.launcherAimCommand(),
                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
