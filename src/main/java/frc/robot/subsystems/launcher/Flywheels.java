@@ -172,8 +172,7 @@ public class Flywheels extends SubsystemBase {
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
-    double velocity = (FlywheelOne.getVelocity().getValueAsDouble());
-
+    double velocity = (flywheelOneRPS.getValueAsDouble());
     boolean atTarget = Math.abs(velocity - targetRPS) <= toleranceRPS;
     return atTarget;
   }
