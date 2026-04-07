@@ -184,8 +184,8 @@ public class Controls {
       return;
     }
 
-    launcherTuningController
-        .y()
+    connected(launcherTuningController)
+        .and(launcherTuningController.y())
         .whileTrue(
             WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
     // Note that X is defined as forward according to WPILib convention,
