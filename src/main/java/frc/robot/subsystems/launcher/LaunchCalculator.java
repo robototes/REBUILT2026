@@ -29,15 +29,14 @@ public class LaunchCalculator {
 
   // Cached variables (mostly for throttling method)
   private LaunchingParameters cachedParams;
-  private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
   private double lastTurretOmega = 0;
 
   // Throttling Magic numbers
-  private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
-  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(1); // Radians
-  private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(2); // M/s
-  private static final double MIN_OMEGA_TOLERANCE = 0.1; // Radians/s
+  private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
+  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(0.5); // Radians
+  private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(0.5); // M/s
+  private static final double MIN_OMEGA_TOLERANCE = 0.05; // Radians/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
@@ -121,7 +120,6 @@ public class LaunchCalculator {
     }
     // cache the pose and chassis speeds
     lastPose = currentPose;
-    lastSpeeds = currentSpeeds;
     lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
