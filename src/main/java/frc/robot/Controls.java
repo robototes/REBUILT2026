@@ -244,15 +244,43 @@ public class Controls {
     // Shooting triggers
     driverController
         .rightTrigger()
+        .and(() -> !driverController.y().getAsBoolean())
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommand(),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                LEDandIntakeRoutine()))
-        .onFalse(LEDandIntakeExitRoutine());
+                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                    .andThen(
+                        Commands.parallel(
+                                s.indexerSubsystem.runIndexer(),
+                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                Commands.runOnce(() -> s.intakePivot.restartTimer())
+                                    .andThen(
+                                        Commands.runOnce(
+                                            () ->
+                                                intakeMode =
+                                                    driverController.leftTrigger().getAsBoolean()
+                                                        ? IntakeMode.INTAKE
+                                                        : IntakeMode.LAUNCH)))
+                            .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
+                    .repeatedly()
+                    .withName("Launching Command")))
+        .onFalse(
+            s.launcherSubsystem
+                .rawStowCommand()
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          ledsMode = LEDMode.DEFAULT;
+                          intakeMode =
+                              driverController.leftTrigger().getAsBoolean()
+                                  ? IntakeMode.INTAKE
+                                  : IntakeMode.DEPLOYED;
+                        })));
     // Fall back shoot
     driverController
         .y()
+        .and(() -> driverController.rightTrigger().getAsBoolean())
         .whileTrue(
             Commands.parallel(
                 s.launcherSubsystem.launcherAimCommand(),
@@ -261,8 +289,34 @@ public class Controls {
                     .onlyWhile(() -> s.launcherSubsystem.isAtTargetFallback()),
                 Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                 s.turretSubsystem.setTurretPosition(0),
-                LEDandIntakeRoutine()))
-        .onFalse(LEDandIntakeExitRoutine());
+                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                    .andThen(
+                        Commands.parallel(
+                                s.indexerSubsystem.runIndexer(),
+                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                Commands.runOnce(() -> s.intakePivot.restartTimer())
+                                    .andThen(
+                                        Commands.runOnce(
+                                            () ->
+                                                intakeMode =
+                                                    driverController.leftTrigger().getAsBoolean()
+                                                        ? IntakeMode.INTAKE
+                                                        : IntakeMode.LAUNCH)))
+                            .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
+                    .repeatedly()
+                    .withName("Launching Command")))
+        .onFalse(
+            s.launcherSubsystem
+                .rawStowCommand()
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          ledsMode = LEDMode.DEFAULT;
+                          intakeMode =
+                              driverController.leftTrigger().getAsBoolean()
+                                  ? IntakeMode.INTAKE
+                                  : IntakeMode.DEPLOYED;
+                        })));
 
     // Auto zero / zero
     driverController
@@ -298,40 +352,6 @@ public class Controls {
     connected(launcherTuningController)
         .and(launcherTuningController.y())
         .onTrue(s.flywheels.setVelocityCommand(60));
-  }
-
-  private Command LEDandIntakeRoutine() {
-    return Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-        .andThen(
-            Commands.parallel(
-                    s.indexerSubsystem.runIndexer(),
-                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                    Commands.runOnce(() -> s.intakePivot.restartTimer())
-                        .andThen(
-                            Commands.runOnce(
-                                () ->
-                                    intakeMode =
-                                        driverController.leftTrigger().getAsBoolean()
-                                            ? IntakeMode.INTAKE
-                                            : IntakeMode.LAUNCH)))
-                .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
-        .repeatedly()
-        .withName("Launching Command");
-  }
-
-  private Command LEDandIntakeExitRoutine() {
-    return s.launcherSubsystem
-        .rawStowCommand()
-        .alongWith(
-            Commands.runOnce(
-                () -> {
-                  ledsMode = LEDMode.DEFAULT;
-                  intakeMode =
-                      driverController.leftTrigger().getAsBoolean()
-                          ? IntakeMode.INTAKE
-                          : IntakeMode.DEPLOYED;
-                }))
-        .withName("Launching Finished");
   }
 
   private void updateIntakeMode() {
