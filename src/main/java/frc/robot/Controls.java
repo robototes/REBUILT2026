@@ -257,7 +257,12 @@ public class Controls {
                                     Commands.waitSeconds(1)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(Commands.runOnce(() -> updateIntakeMode())))
+                                .andThen(
+                                    Commands.runOnce(
+                                        () -> {
+                                          updateIntakeMode();
+                                          ledsMode = LEDMode.LAUNCHING;
+                                        })))
                         .repeatedly())
                 .withName("Launching Command"))
         .onFalse(
