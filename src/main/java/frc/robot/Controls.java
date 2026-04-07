@@ -38,6 +38,7 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 import java.util.Optional;
+import frc.robot.util.tuning.WheelRadiusCharacterization;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -105,8 +106,6 @@ public class Controls {
           .withDeadband(0.0001)
           .withRotationalDeadband(0.0001)
           .withDriveRequestType(DriveRequestType.Velocity);
-
-  private final Telemetry logger = new Telemetry(MaxSpeed);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems, SimWrapper simWrapper) {
@@ -182,6 +181,10 @@ public class Controls {
       return;
     }
 
+    driverController
+        .y()
+        .whileTrue(
+            WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
 
@@ -227,9 +230,6 @@ public class Controls {
               s.drivebaseSubsystem.runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero)));
     }
 
-    // logging the telemetry
-    s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-
     // reset pose incase vision is bugging
     driverController
         .rightBumper()
@@ -259,12 +259,18 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             Commands.parallel(
+                                    Commands.runOnce(() -> s.flywheels.switchSlot(true)),
                                     s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING)))
+                                .andThen(
+                                    Commands.runOnce(
+                                        () -> {
+                                          updateIntakeMode();
+                                          ledsMode = LEDMode.LAUNCHING;
+                                        })))
                         .repeatedly())
                 .withName("Launching Command"))
         .onFalse(
@@ -276,6 +282,7 @@ public class Controls {
         .start()
         .onTrue(
             Commands.parallel(
+                    Commands.runOnce(() -> s.flywheels.switchSlot(false)),
                     Commands.either(
                         s.hood.autoZeroCommand(),
                         s.launcherSubsystem.zeroSubsystemCommand(),
@@ -320,7 +327,8 @@ public class Controls {
   private void updateIntakeMode() {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
-    } else if (driverController.rightTrigger().getAsBoolean()) {
+      ledsMode = LEDMode.INTAKE;
+    } else if (driverController.rightTrigger().getAsBoolean() && s.launcherSubsystem.isAtTarget()) {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
     } else {
@@ -356,8 +364,7 @@ public class Controls {
         .whileTrue(
             Commands.runOnce(
                     () -> {
-                      intakeMode = IntakeMode.INTAKE;
-                      ledsMode = LEDMode.INTAKE;
+                      updateIntakeMode();
                     })
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));

@@ -31,6 +31,7 @@ public class LaunchCalculator {
   private LaunchingParameters cachedParams;
   private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
+  private double lastTurretOmega = 0;
 
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
@@ -46,6 +47,7 @@ public class LaunchCalculator {
   private static final double MIN_SLOPE = 1e-4;
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
+  private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -92,6 +94,7 @@ public class LaunchCalculator {
     SwerveDriveState driveState = drivetrain.getState();
     Pose2d currentPose = drivetrain.getState().Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
+    double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
@@ -100,22 +103,24 @@ public class LaunchCalculator {
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
-        Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
-                <= MIN_ROTATION_TOLERANCE;
+        Math.abs(currentSpeeds.vxMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.vyMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_ROTATION_TOLERANCE;
+    // Has turretSubsystem.getOmega() not changed much
+    boolean hasTurretOmegaChanged = currentTurretOmega - lastTurretOmega <= 0.1;
+
     // Check to see if all conditions are met
     if (hasNotMovedSignificantly
         && hasNotRotatedSigificantly
         && isNotMovingFastEnough
+        && hasTurretOmegaChanged
         && cachedParams != null) {
       return cachedParams;
     }
     // cache the pose and chassis speeds
     lastPose = currentPose;
     lastSpeeds = currentSpeeds;
+    lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
     cachedParams = calculate(drivetrain, turretSubsystem);
@@ -230,12 +235,13 @@ public class LaunchCalculator {
           (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
     }
 
-    Translation2d virtualTarget =
-        new Translation2d(target.getX() - turretVelocityX * t, target.getY() - turretVelocityY * t);
-
-    Rotation2d targetAngleFieldRelative =
-        virtualTarget.minus(turretPose.getTranslation()).getAngle();
-
+    Rotation2d targetAngleFieldRelative;
+    if (trueDistance < MIN_DISTANCE_TO_TARGET) {
+      targetAngleFieldRelative = Rotation2d.kZero;
+    } else {
+      // We still pass dx and dy to the constructor so it stays "linked" to the vector
+      targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
+    }
     // FINAL NUMS
     double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
