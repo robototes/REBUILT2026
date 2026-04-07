@@ -3,6 +3,7 @@ package frc.robot.util;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
@@ -64,6 +65,7 @@ public class GetTargetFromPose {
   public static Trigger autoShoot(CommandSwerveDrivetrain drivetrain) {
     return new Trigger(
         () -> {
+          if (DriverStation.isAutonomousEnabled()) return false;
           var shiftInfo = HubShiftUtil.getShiftedShiftInfo();
 
           boolean pastAllianceLine =
