@@ -19,8 +19,10 @@ public class AutoDriveRotate {
   public static Command autoRotate(
       CommandSwerveDrivetrain drivebaseSubsystem,
       DoubleSupplier xSupplier,
-      DoubleSupplier ySupplier) {
-    return new AutoRotateCommand(drivebaseSubsystem, xSupplier, ySupplier).withName("Auto Align");
+      DoubleSupplier ySupplier,
+      DoubleSupplier turretOffsetDegrees) {
+    return new AutoRotateCommand(drivebaseSubsystem, xSupplier, ySupplier, turretOffsetDegrees)
+        .withName("Auto Align");
   }
 
   // Tunable:
@@ -38,16 +40,21 @@ public class AutoDriveRotate {
     protected Translation2d targetTranslation;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
+    private final DoubleSupplier turretOffsetDegrees;
     private final DoublePublisher anglePub;
 
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
     public AutoRotateCommand(
-        CommandSwerveDrivetrain drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+        CommandSwerveDrivetrain drive,
+        DoubleSupplier xSupplier,
+        DoubleSupplier ySupplier,
+        DoubleSupplier turretOffsetDegrees) {
       this.drive = drive;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
+      this.turretOffsetDegrees = turretOffsetDegrees;
       anglePub =
           NetworkTableInstance.getDefault().getDoubleTopic("/drivebase/targetRotation").publish();
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
@@ -56,7 +63,6 @@ public class AutoDriveRotate {
       addRequirements(drive);
     }
 
-    // TODO: Add auto rotate for launching game pieces to corners + climb alignment
     @Override
     public void initialize() {
       targetTranslation = AllianceUtils.getHubTranslation2d();
@@ -68,7 +74,10 @@ public class AutoDriveRotate {
       Translation2d toTarget = targetTranslation.minus(currentPose.getTranslation());
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
       Rotation2d targetRotate =
-          new Rotation2d(Math.atan2(toTarget.getY(), toTarget.getX()) + Math.PI);
+          new Rotation2d(
+              Math.atan2(toTarget.getY(), toTarget.getX())
+                  + Math.PI
+                  + Math.toRadians(turretOffsetDegrees.getAsDouble()));
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());

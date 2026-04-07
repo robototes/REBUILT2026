@@ -30,6 +30,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -88,6 +89,8 @@ public class Controls {
 
   private LEDMode ledsMode = LEDMode.DEFAULT;
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
+
+  private boolean turretKillActive = false;
 
   public static final double MaxSpeed =
       (RobotType.TYPE == RobotTypesEnum.ALPHA)
@@ -253,8 +256,14 @@ public class Controls {
         .and(new Trigger(() -> !driverController.a().getAsBoolean()))
         .whileTrue(
             Commands.parallel(
-                    // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
-                    // driverController.getLeftX(), ()-> driverController.getLeftY()),
+                    Commands.either(
+                        AutoDriveRotate.autoRotate(
+                            s.drivebaseSubsystem,
+                            () -> getDriveX(),
+                            () -> getDriveY(),
+                            () -> Units.rotationsToDegrees(s.turretSubsystem.getTurretPosition())),
+                        Commands.none(),
+                        () -> turretKillActive),
                     s.launcherSubsystem.launcherAimCommand(),
                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
@@ -445,6 +454,17 @@ public class Controls {
     }
 
     s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
+    driverController
+        .y()
+        .toggleOnTrue(
+            s.turretSubsystem
+                .run(
+                    () ->
+                        s.turretSubsystem.setTurretRawPosition(
+                            s.turretSubsystem.getTurretPosition()))
+                .withName("Turret Kill — Hold Position"))
+        .onTrue(Commands.runOnce(() -> turretKillActive = true))
+        .onFalse(Commands.runOnce(() -> turretKillActive = false));
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
