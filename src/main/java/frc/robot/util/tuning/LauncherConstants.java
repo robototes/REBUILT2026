@@ -62,7 +62,7 @@ public class LauncherConstants {
   // TODO: TOF
   private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(2.55, 3, 46, 1),
-    new LauncherDistanceDataPoint(4, 4.8, 52, 1),
+    new LauncherDistanceDataPoint(4.2, 5, 54.5, 1),
     new LauncherDistanceDataPoint(3.2, 4.5, 48, 1),
     new LauncherDistanceDataPoint(3.75, 5, 50, 1),
     new LauncherDistanceDataPoint(1.5, 2, 41, 1),
@@ -72,7 +72,6 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(5.5, 7, 62, 1),
     new LauncherDistanceDataPoint(5, 6.5, 57.5, 1),
     new LauncherDistanceDataPoint(8, 8, 80, 1)
-
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
