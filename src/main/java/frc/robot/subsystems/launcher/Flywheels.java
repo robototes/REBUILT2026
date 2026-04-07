@@ -9,13 +9,13 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -31,6 +31,10 @@ public class Flywheels extends SubsystemBase {
   private final DoubleTopic velocityTopic; // velocity in rps
   private final DoublePublisher currentPub;
   private final DoublePublisher velocityPub;
+
+  // Debounce stuff
+  private final double DURATION = 1; // second
+  private final Debouncer m_flywheelDebouncer;
 
   private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0);
@@ -48,9 +52,6 @@ public class Flywheels extends SubsystemBase {
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
 
-  // Cache
-  private double timeEnteredTargetZone = 0;
-
   // Constructor
   public Flywheels() {
     FlywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
@@ -66,6 +67,8 @@ public class Flywheels extends SubsystemBase {
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
     currentPub.set(0.0);
+    m_flywheelDebouncer =
+        new Debouncer(DURATION, Debouncer.DebounceType.kRising); // Transition from false to true
 
     if (RobotBase.isSimulation()) {
       flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
@@ -179,31 +182,12 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
   }
 
-  public boolean hasBeenAtTargetFor(double durationSeconds) {
-    boolean atTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
+  public boolean hasBeenAtTarget() {
+    // 2. Pass your 'atTarget' check into the debouncer's calculate method
+    boolean currentlyAtTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
 
-    // at target?
-    if (atTarget) {
-      // if no active timer
-      if (timeEnteredTargetZone < 0) {
-        // First time at target, record the timestamp.
-        timeEnteredTargetZone = Timer.getFPGATimestamp();
-        return false;
-      }
-    } else {
-      // Not at target, reset the timer to -1
-      timeEnteredTargetZone = -1;
-    }
-    // Check if the time at target has exceeded the duration.
-    boolean hasStopped = (Timer.getFPGATimestamp() - timeEnteredTargetZone) >= durationSeconds;
-    if (hasStopped) {
-      resetCachedValues(); // Reset for the next shooting sequence
-    }
-    return hasStopped;
-  }
-
-  public void resetCachedValues() {
-    timeEnteredTargetZone = -1;
+    // Returns true only after 'currentlyAtTarget' has been true for 'durationSeconds'
+    return m_flywheelDebouncer.calculate(currentlyAtTarget);
   }
 
   @Override
