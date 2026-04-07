@@ -79,11 +79,11 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.0;
+    config.Slot0.kP = 0.1;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 6.0 / 45.0; // 5.3/45.2
+    config.Slot0.kV = 6.0 / 45.0;
     config.Slot0.kS = 0.3;
     config.Slot0.kG = 0.0;
 
@@ -92,7 +92,7 @@ public class Flywheels extends SubsystemBase {
     config.Slot1.kI = 0.0;
     config.Slot1.kD = 0.0;
     config.Slot1.kA = 0.0;
-    config.Slot1.kV = 6.0 / 45.0; // 5.3/45.2
+    config.Slot1.kV = 6.0 / 45.0;
     config.Slot1.kS = 0.3;
     config.Slot1.kG = 0.0;
 
@@ -103,7 +103,6 @@ public class Flywheels extends SubsystemBase {
   public void switchSlot(boolean isLaunching) {
     if (isLaunching) {
       request = request.withSlot(1);
-
     } else {
       request = request.withSlot(0);
     }
@@ -177,7 +176,6 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
-
     velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
     currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
     if (TUNER_CONTROLLED.get()) {
