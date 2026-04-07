@@ -69,25 +69,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Mid-Intake"
+            "pathName": "Mid-Intake-Left"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Mid-Rotate"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Mid-Back"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Trench-Back"
+            "pathName": "Back-LeftTrench-Backwards"
           }
         },
         {

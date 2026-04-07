@@ -127,6 +127,13 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
 
+// Increase memory and heap specifically for the robot simulator
+tasks.withType(JavaExec).configureEach {
+    if (name.toLowerCase().contains("simulate")) {
+        jvmArgs "-Xmx2G", "-Xms2G"
+    }
+}
+
 // Spotless
 spotless {
     format "misc", {

@@ -178,10 +178,10 @@ public class VisionSim implements VisionSimInterface {
         }
 
         // Increase std devs based on (average) distance
-        if (numTags == 1 && avgDist > 4) {
+        if (numTags == 1 && avgDist > 1.3) {
           estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         } else {
-          estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
+          estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 3.33));
         }
         m_curStdDevs = estStdDevs;
       }

@@ -37,6 +37,7 @@ public class LaunchCalculator {
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
   private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(1); // Radians
   private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(2); // M/s
+  private static final double MIN_OMEGA_TOLERANCE = 0.1; // Radians/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
@@ -92,7 +93,7 @@ public class LaunchCalculator {
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
     SwerveDriveState driveState = drivetrain.getState();
-    Pose2d currentPose = drivetrain.getState().Pose;
+    Pose2d currentPose = driveState.Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
     double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
@@ -107,13 +108,14 @@ public class LaunchCalculator {
             && Math.abs(currentSpeeds.vyMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
             && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_ROTATION_TOLERANCE;
     // Has turretSubsystem.getOmega() not changed much
-    boolean hasTurretOmegaChanged = currentTurretOmega - lastTurretOmega <= 0.1;
+    boolean isTurretOmegaStable =
+        Math.abs(currentTurretOmega - lastTurretOmega) <= MIN_OMEGA_TOLERANCE;
 
     // Check to see if all conditions are met
     if (hasNotMovedSignificantly
         && hasNotRotatedSigificantly
         && isNotMovingFastEnough
-        && hasTurretOmegaChanged
+        && isTurretOmegaStable
         && cachedParams != null) {
       return cachedParams;
     }
@@ -123,7 +125,7 @@ public class LaunchCalculator {
     lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
-    cachedParams = calculate(drivetrain, turretSubsystem);
+    cachedParams = calculate(driveState, turretSubsystem);
     return cachedParams;
   }
 
@@ -133,20 +135,21 @@ public class LaunchCalculator {
    * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
    * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
-   * @param drivetrain the drivebase's CommandSwerveDrivetrain object
+   * @param SwerveDriveState the drivebase's swervedrivestate. It's only called in getParameters()
+   *     and should not use any other drive state
    * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
    *     the entirety of run time
    * @return LaunchingParameters record holding all the target values. Record is defined in the
    *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
-      CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
+      SwerveDriveState driveState, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
-    Pose2d estimatedPose = driveTrain.getState().Pose;
+    Pose2d estimatedPose = driveState.Pose;
 
     // Predicted robot pose after calculations have finished
-    ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
+    ChassisSpeeds chassisSpeeds = driveState.Speeds;
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
