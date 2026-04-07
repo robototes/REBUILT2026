@@ -6,10 +6,7 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
@@ -42,7 +39,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final Map<String, BooleanPublisher> LL_status_pubs = new HashMap<>();
   private final Map<String, Boolean> LL_online = new HashMap<>();
   private final Map<String, NtTunableBoolean> FILTER_ENABLED = new HashMap<>();
-  private final HashMap<String, Transform3d> transforms = new HashMap<>();
+  // private final HashMap<String, Transform3d> transforms = new HashMap<>();
   private final String[] names = {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C};
 
   // Hardware objects
@@ -127,24 +124,24 @@ public class VisionSubsystemV2 extends SubsystemBase {
     gyro_vy = gyro.getAngularVelocityYWorld();
     gyro_vz = gyro.getAngularVelocityZWorld();
 
-    // Add transforms
-    Transform3d COMP_BOT_FRONT_CAMERA =
-        new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
-    Transform3d COMP_BOT_LEFT_CAMERA =
-        new Transform3d(
-            -0.076,
-            0.311,
-            0.284,
-            new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
+    // // Add transforms
+    // Transform3d COMP_BOT_FRONT_CAMERA =
+    //     new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
+    // Transform3d COMP_BOT_LEFT_CAMERA =
+    //     new Transform3d(
+    //         -0.076,
+    //         0.311,
+    //         0.284,
+    //         new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
 
-    // TODO: Update these numbers with the actual physical location of Camera C!
-    Transform3d COMP_BOT_BACK_CAMERA =
-        new Transform3d(
-            -0.25, // X meters from center
-            0.0, // Y meters from center
-            0.45, // Z meters from floor
-            new Rotation3d(0, 0, Math.PI) // Facing backward (180 degrees)
-            );
+    // // TODO: Update these numbers with the actual physical location of Camera C!
+    // Transform3d COMP_BOT_BACK_CAMERA =
+    //     new Transform3d(
+    //         -0.25, // X meters from center
+    //         0.0, // Y meters from center
+    //         0.45, // Z meters from floor
+    //         new Rotation3d(0, 0, Math.PI) // Facing backward (180 degrees)
+    //         );
 
     for (String name : names) {
       // Updated: All cameras default to TRUE for competition
@@ -159,10 +156,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
       LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
       lastBeats.put(name, LimelightHelpers.getHeartbeat(name));
 
-      // Map the transforms correctly
-      if (name.equals(Hardware.LIMELIGHT_A)) transforms.put(name, COMP_BOT_FRONT_CAMERA);
-      else if (name.equals(Hardware.LIMELIGHT_B)) transforms.put(name, COMP_BOT_LEFT_CAMERA);
-      else if (name.equals(Hardware.LIMELIGHT_C)) transforms.put(name, COMP_BOT_BACK_CAMERA);
+      // // Map the transforms correctly
+      // if (name.equals(Hardware.LIMELIGHT_A)) transforms.put(name, COMP_BOT_FRONT_CAMERA);
+      // else if (name.equals(Hardware.LIMELIGHT_B)) transforms.put(name, COMP_BOT_LEFT_CAMERA);
+      // else if (name.equals(Hardware.LIMELIGHT_C)) transforms.put(name, COMP_BOT_BACK_CAMERA);
     }
   }
 
