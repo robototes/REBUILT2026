@@ -315,7 +315,7 @@ public class Controls {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
       ledsMode = LEDMode.INTAKE;
-    } else if (driverController.rightTrigger().getAsBoolean()) {
+    } else if (driverController.rightTrigger().getAsBoolean() && s.launcherSubsystem.isAtTarget()) {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
     } else {
