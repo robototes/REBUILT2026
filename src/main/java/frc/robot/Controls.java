@@ -273,13 +273,17 @@ public class Controls {
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
-                .alongWith(Commands.runOnce(() -> updateIntakeMode()))
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          updateIntakeMode();
+                          s.flywheels.switchSlot(false);
+                        }))
                 .withName("Launching Finished"));
     driverController
         .start()
         .onTrue(
             Commands.parallel(
-                    Commands.runOnce(() -> s.flywheels.switchSlot(false)),
                     Commands.either(
                         s.hood.autoZeroCommand(),
                         s.launcherSubsystem.zeroSubsystemCommand(),

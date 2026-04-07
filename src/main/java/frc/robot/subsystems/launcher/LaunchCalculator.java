@@ -37,6 +37,7 @@ public class LaunchCalculator {
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
   private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(1); // Radians
   private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(2); // M/s
+  private static final double MIN_OMEGA_TOLERANCE = 0.1; // Radians/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
@@ -107,13 +108,14 @@ public class LaunchCalculator {
             && Math.abs(currentSpeeds.vyMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
             && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_ROTATION_TOLERANCE;
     // Has turretSubsystem.getOmega() not changed much
-    boolean hasTurretOmegaChanged = currentTurretOmega - lastTurretOmega <= 0.1;
+    boolean isTurretOmegaStable =
+        Math.abs(currentTurretOmega - lastTurretOmega) <= MIN_OMEGA_TOLERANCE;
 
     // Check to see if all conditions are met
     if (hasNotMovedSignificantly
         && hasNotRotatedSigificantly
         && isNotMovingFastEnough
-        && hasTurretOmegaChanged
+        && isTurretOmegaStable
         && cachedParams != null) {
       return cachedParams;
     }
