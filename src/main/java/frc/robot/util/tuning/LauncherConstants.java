@@ -59,7 +59,6 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
   };
 
-  // TODO: TOF
   private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(2.55, 3, 46, 1.267),
     new LauncherDistanceDataPoint(4.2, 5, 54.5, 1.233),
