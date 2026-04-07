@@ -242,31 +242,24 @@ public class TurretSubsystem extends SubsystemBase {
     return Units.rotationsToRadians(velocitySignal.getValueAsDouble());
   }
 
-  // Experimental IF WITHIN BOUNDS go to it instead of clamping
   public Command rotateToTargetWithCalc() {
     return runEnd(
             () -> {
-              // Raw current position in degrees (not wrapped)
               double currentDegrees = Units.rotationsToDegrees(getTurretPosition());
 
-              // Get the target from the calculator
               LaunchingParameters params =
                   LaunchCalculator.getInstance().getParameters(driveTrain, this);
               double targetDegrees = -params.targetTurret().getDegrees();
               double FFV = params.targetTurretFeedforward();
 
-              // All possible angles that point the same direction
+              double normalizedTarget =
+                  MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
+
               double[] candidates = {
-                targetDegrees,
-                targetDegrees + 360,
-                targetDegrees - 360,
-                targetDegrees + 720,
-                targetDegrees - 720
+                normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
               };
 
-              // Pick the in-range candidate closest to current position
-              double finalTarget =
-                  MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX); // fallback
+              double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
               double bestDist = Double.MAX_VALUE;
 
               for (double candidate : candidates) {
@@ -279,7 +272,6 @@ public class TurretSubsystem extends SubsystemBase {
                 }
               }
 
-              // Set position (Note: This assumes your PID/Controller uses these degrees)
               // System.out.println(Units.degreesToRotations(finalTarget));
               setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
               targetPos = Units.degreesToRotations(finalTarget);
