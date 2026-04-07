@@ -34,7 +34,10 @@ public class Flywheels extends SubsystemBase {
 
   // Debounce stuff
   private final double DURATION = 1; // second
-  private final Debouncer m_flywheelDebouncer;
+  private final Debouncer m_dippedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kFalling);
+  private final Debouncer m_recoveredDebouncer =
+      new Debouncer(DURATION, Debouncer.DebounceType.kRising);
+  private boolean hasDipped = false;
 
   private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0);
@@ -67,8 +70,6 @@ public class Flywheels extends SubsystemBase {
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
     currentPub.set(0.0);
-    m_flywheelDebouncer =
-        new Debouncer(DURATION, Debouncer.DebounceType.kRising); // Transition from false to true
 
     if (RobotBase.isSimulation()) {
       flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
@@ -171,8 +172,7 @@ public class Flywheels extends SubsystemBase {
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
-    double velocity = (FlywheelOne.getVelocity().getValueAsDouble());
-
+    double velocity = (flywheelOneRPS.getValueAsDouble());
     boolean atTarget = Math.abs(velocity - targetRPS) <= toleranceRPS;
     return atTarget;
   }
@@ -181,12 +181,21 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
   }
 
-  public boolean hasBeenAtTarget() {
-    // 2. Pass your 'atTarget' check into the debouncer's calculate method
-    boolean currentlyAtTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
+  public void resetFuelCheck() {
+    hasDipped = false;
+  }
 
-    // Returns true only after 'currentlyAtTarget' has been true for 'durationSeconds'
-    return m_flywheelDebouncer.calculate(currentlyAtTarget);
+  public boolean isOutOfFuel() {
+    boolean atTarget = atTargetVelocity(request.Velocity, FLYWHEEL_TOLERANCE);
+
+    boolean stillAtTarget = m_dippedDebouncer.calculate(atTarget);
+    if (!stillAtTarget) {
+      hasDipped = true;
+    }
+
+    if (!hasDipped) return false;
+
+    return m_recoveredDebouncer.calculate(atTarget);
   }
 
   @Override

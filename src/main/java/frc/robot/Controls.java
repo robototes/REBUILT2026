@@ -525,8 +525,7 @@ public class Controls {
                 s.ledSubsystem)
             .withName("LED Default Command"));
 
-    Trigger shiftWarning = new Trigger(GetTargetFromPose.autoShoot(s.drivebaseSubsystem));
-
-    shiftWarning.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
+    Trigger leaveZoneWarning = new Trigger(GetTargetFromPose.autoShoot(s.drivebaseSubsystem));
+    leaveZoneWarning.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
   }
 }

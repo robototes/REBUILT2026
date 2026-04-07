@@ -217,7 +217,7 @@ public class AutoLogic {
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-        // .until(() -> s.flywheels.hasBeenAtTarget())
+        .until(() -> s.flywheels.isOutOfFuel())
         .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
         .andThen(Commands.runOnce(() -> s.flywheels.switchSlot(false)));

@@ -279,7 +279,6 @@ public class Robot extends TimedRobot {
     if (subsystems.visionSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
-    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DISABLED);
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
