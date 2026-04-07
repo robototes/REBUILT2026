@@ -37,8 +37,8 @@ import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
-import java.util.Optional;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
+import java.util.Optional;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -276,13 +276,17 @@ public class Controls {
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
-                .alongWith(Commands.runOnce(() -> updateIntakeMode()))
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          updateIntakeMode();
+                          s.flywheels.switchSlot(false);
+                        }))
                 .withName("Launching Finished"));
     driverController
         .start()
         .onTrue(
             Commands.parallel(
-                    Commands.runOnce(() -> s.flywheels.switchSlot(false)),
                     Commands.either(
                         s.hood.autoZeroCommand(),
                         s.launcherSubsystem.zeroSubsystemCommand(),
@@ -487,14 +491,14 @@ public class Controls {
       return;
     }
     s.ledSubsystem.setDefaultCommand(
-    Commands.run(
-        () -> {
-          if (RobotState.isTeleop()) {
-            s.ledSubsystem.setMode(ledsMode);
-          }
-        },
-        s.ledSubsystem)
-    .withName("LED Default Command"));
+        Commands.run(
+                () -> {
+                  if (RobotState.isTeleop()) {
+                    s.ledSubsystem.setMode(ledsMode);
+                  }
+                },
+                s.ledSubsystem)
+            .withName("LED Default Command"));
 
     Trigger shiftWarning =
         new Trigger(
