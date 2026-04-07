@@ -463,8 +463,7 @@ public class Controls {
                         s.turretSubsystem.setTurretRawPosition(
                             s.turretSubsystem.getTurretPosition()))
                 .withName("Turret Kill — Hold Position"))
-        .onTrue(Commands.runOnce(() -> turretKillActive = true))
-        .onFalse(Commands.runOnce(() -> turretKillActive = false));
+        .onTrue(Commands.runOnce(() -> turretKillActive = !turretKillActive));
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
