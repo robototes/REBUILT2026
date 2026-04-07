@@ -16,14 +16,12 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.Robot;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.simulation.VisionSim;
 import frc.robot.util.tuning.NtTunableBoolean;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,6 +32,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
   // HB cache
   private final Map<String, Double> lastBeats = new HashMap<>();
+
+  // Pose & Timestamp tracking for Velocity/Duplicate gates
+  private final Map<String, Pose2d> lastVisionPoses = new HashMap<>();
+  private final Map<String, Double> lastVisionTimestamps = new HashMap<>();
 
   // -- CONFIGURATION MAPS -- //
   private final Map<String, NtTunableBoolean> LL_enabled = new HashMap<>();
@@ -67,6 +69,11 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double MIN_RMSE = 0.01;
   private static final double MIN_STD_DEV = 0.01;
 
+  // New Constants from alternative vision system
+  private static final double FIELD_MARGIN = 0.5; // Meters
+  private static final double MAX_VISION_IMPLIED_SPEED = 7.0; // m/s
+  private static final double SPREAD_INFLATE_START = 0.10; // meters
+
   // Limelight settings
   private static final int APRIL_TAG_COMP_PIPELINE = 0;
   private static final int ENABLED_IMU_MODE = 4;
@@ -78,9 +85,6 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private final double FIELD_LENGTH = field.getFieldLength();
   private final double FIELD_WIDTH = field.getFieldWidth();
-
-  // Vision simulation
-  private final VisionSim sim;
 
   public VisionSubsystemV2(CommandSwerveDrivetrain drivetrain) {
     this.driveBase = drivetrain;
@@ -124,29 +128,41 @@ public class VisionSubsystemV2 extends SubsystemBase {
     gyro_vz = gyro.getAngularVelocityZWorld();
 
     // Add transforms
+    Transform3d COMP_BOT_FRONT_CAMERA =
+        new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
     Transform3d COMP_BOT_LEFT_CAMERA =
         new Transform3d(
             -0.076,
             0.311,
             0.284,
             new Rotation3d(0, Units.degreesToRadians(8), Units.degreesToRadians(90)));
-    Transform3d COMP_BOT_FRONT_CAMERA =
-        new Transform3d(0.267, -0.051, 0.451, new Rotation3d(0, Units.degreesToRadians(15), 0));
-    // ADd transforms
-    for (String name : names) {
-      if (name.equals(Hardware.LIMELIGHT_C)) {
-        continue;
-      } else if (name.equals(Hardware.LIMELIGHT_A)) {
-        transforms.put(name, COMP_BOT_FRONT_CAMERA);
-      } else if (name.equals(Hardware.LIMELIGHT_B)) {
-        transforms.put(name, COMP_BOT_LEFT_CAMERA);
-      }
-    }
 
-    if (Robot.isSimulation()) {
-      sim = new VisionSim(names, transforms, drivetrain);
-    } else {
-      sim = null;
+    // TODO: Update these numbers with the actual physical location of Camera C!
+    Transform3d COMP_BOT_BACK_CAMERA =
+        new Transform3d(
+            -0.25, // X meters from center
+            0.0, // Y meters from center
+            0.45, // Z meters from floor
+            new Rotation3d(0, 0, Math.PI) // Facing backward (180 degrees)
+            );
+
+    for (String name : names) {
+      // Updated: All cameras default to TRUE for competition
+      boolean defaultEnabled = true;
+
+      LL_enabled.put(
+          name, new NtTunableBoolean("SmartDashboard/Vision/Enabled_" + name, defaultEnabled));
+      LL_status_pubs.put(
+          name, inst.getBooleanTopic("SmartDashboard/Vision/Status_" + name).publish());
+      LL_online.put(name, false);
+
+      LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
+      lastBeats.put(name, LimelightHelpers.getHeartbeat(name));
+
+      // Map the transforms correctly
+      if (name.equals(Hardware.LIMELIGHT_A)) transforms.put(name, COMP_BOT_FRONT_CAMERA);
+      else if (name.equals(Hardware.LIMELIGHT_B)) transforms.put(name, COMP_BOT_LEFT_CAMERA);
+      else if (name.equals(Hardware.LIMELIGHT_C)) transforms.put(name, COMP_BOT_BACK_CAMERA);
     }
   }
 
@@ -170,12 +186,13 @@ public class VisionSubsystemV2 extends SubsystemBase {
         LimelightHelpers.SetRobotOrientation(name, yaw, vz, pitch, vy, roll, vx);
 
         PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
-        processVision(estimate, vz, roll, pitch);
+        processVision(name, estimate, vz, roll, pitch);
       }
     }
   }
 
-  private void processVision(PoseEstimate estimate, double angVel, double roll, double pitch) {
+  private void processVision(
+      String name, PoseEstimate estimate, double angVel, double roll, double pitch) {
     // if no tags
     if (estimate == null || estimate.tagCount == 0) return;
     // if spinning too fast
@@ -187,40 +204,66 @@ public class VisionSubsystemV2 extends SubsystemBase {
     // if too far
     if (dist >= MAX_DISTANCE_METERS) return;
 
-    // if the pose is outside bounds
-    if (estimate.pose.getX() < 0
-        || estimate.pose.getX() > FIELD_LENGTH
-        || estimate.pose.getY() < 0
-        || estimate.pose.getY() > FIELD_WIDTH) return;
+    // if the pose is outside bounds (now checks with a configured margin)
+    if (!isPoseOnField(estimate.pose)) return;
+
+    // Duplicate pose check
+    Pose2d lastPose = lastVisionPoses.get(name);
+    if (lastPose != null && lastPose.equals(estimate.pose)) return;
+
+    // Velocity Plausibility Gate
+    double lastTs = lastVisionTimestamps.getOrDefault(name, 0.0);
+    double dt = estimate.timestampSeconds - lastTs;
+    if (lastPose != null && dt > 0 && dt <= 1.0) {
+      double impliedSpeed =
+          estimate.pose.getTranslation().getDistance(lastPose.getTranslation()) / dt;
+      if (impliedSpeed > MAX_VISION_IMPLIED_SPEED) return;
+    }
 
     // -- Standard deviation scaling -- //
 
     // calculate root mean sum error
     double stdDevXY = STD_DEV_SCALAR * Math.pow(dist, DISTANCE_POWER_FACTOR);
     double RMSE = 1;
+    double actualRMSE = 0; // Track actual RMSE separately to inflate correctly
     double harmonicSum = 1;
+
     if (FILTER_ENABLED.get("RMSE Filter").get()) {
-      RMSE = Math.max(RMSE(estimate), 0.01);
+      actualRMSE = RMSE(estimate);
+      RMSE = Math.max(actualRMSE, MIN_RMSE);
       // check to see if RMSE is too large
       if (RMSE > RMSE_REJECT_THRESHOLD) return;
     }
+
     if (FILTER_ENABLED.get("Harmonic sum Filter").get()) {
       // Calculate the harmonic sum of all tags detected by this limelight
       harmonicSum = harmonicSum(estimate.rawFiducials);
       // if limelight isn't certain about ANY tags
       if (harmonicSum == 0) return;
     }
+
     // calculate std dev: It's broken into three parts, penalize for distance, reward for certain
     // tags, RMSE of tags
     stdDevXY = Math.max(stdDevXY / Math.sqrt(harmonicSum) * Math.max(RMSE, MIN_RMSE), MIN_STD_DEV);
 
+    // Dynamic Spread Inflation: Inflate standard deviation if tags disagree mildly
+    if (FILTER_ENABLED.get("RMSE Filter").get() && actualRMSE > SPREAD_INFLATE_START) {
+      double spreadInflation = Math.pow(actualRMSE / SPREAD_INFLATE_START, 2.0);
+      stdDevXY *= spreadInflation;
+    }
+
     robotPoseOutOfBoundsReset(estimate, estimate.tagCount);
+
     // add the vision measurement to robot pose
     driveBase.addVisionMeasurement(
         estimate.pose,
         estimate.timestampSeconds,
         VecBuilder.fill(stdDevXY, stdDevXY, ROTATION_STD_DEV_REJECT) // Trust gyro for rotation
         );
+
+    // Update state cache for velocity/duplicate checks
+    lastVisionPoses.put(name, estimate.pose);
+    lastVisionTimestamps.put(name, estimate.timestampSeconds);
   }
 
   // --- STD-DEVS helpers --- //
@@ -278,7 +321,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private boolean isPoseOnField(Pose2d pose) {
     double x = pose.getX();
     double y = pose.getY();
-    return x <= FIELD_LENGTH && x >= 0 && y <= FIELD_WIDTH && y >= 0;
+    return x >= -FIELD_MARGIN
+        && x <= FIELD_LENGTH + FIELD_MARGIN
+        && y >= -FIELD_MARGIN
+        && y <= FIELD_WIDTH + FIELD_MARGIN;
   }
 
   // ---- Limelight Status helpers ---- //
@@ -338,12 +384,5 @@ public class VisionSubsystemV2 extends SubsystemBase {
       LimelightHelpers.SetIMUMode(limelightName, ENABLED_IMU_MODE); // MT2 External IMU Mode
     }
     LimelightHelpers.setPipelineIndex(limelightName, APRIL_TAG_COMP_PIPELINE);
-  }
-
-  @Override
-  public void periodic() {
-    if (Robot.isSimulation()) {
-      sim.update();
-    }
   }
 }
