@@ -75,7 +75,7 @@ public class GetTargetFromPose {
             return true;
           }
 
-          if ((shiftInfo.remainingTime() <= 2.0 || shiftInfo.active()) && !pastAllianceLine) {
+          if ((shiftInfo.active()) && !pastAllianceLine) {
             return true;
           }
 
