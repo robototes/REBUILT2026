@@ -46,6 +46,7 @@ public class LaunchCalculator {
   private static final double MIN_SLOPE = 1e-4;
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
+  private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -90,7 +91,7 @@ public class LaunchCalculator {
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
     SwerveDriveState driveState = drivetrain.getState();
-    Pose2d currentPose = drivetrain.getState().Pose;
+    Pose2d currentPose = driveState.Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
     // If the robot has moved within a certain threshold
     boolean hasNotMovedSignificantly =
@@ -118,7 +119,7 @@ public class LaunchCalculator {
     lastSpeeds = currentSpeeds;
 
     // Recalcualate
-    cachedParams = calculate(drivetrain, turretSubsystem);
+    cachedParams = calculate(driveState, turretSubsystem);
     return cachedParams;
   }
 
@@ -128,20 +129,21 @@ public class LaunchCalculator {
    * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
    * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
-   * @param drivetrain the drivebase's CommandSwerveDrivetrain object
+   * @param SwerveDriveState the drivebase's swervedrivestate. It's only called in getParameters()
+   *     and should not use any other drive state
    * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
    *     the entirety of run time
    * @return LaunchingParameters record holding all the target values. Record is defined in the
    *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
-      CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
+      SwerveDriveState driveState, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
-    Pose2d estimatedPose = driveTrain.getState().Pose;
+    Pose2d estimatedPose = driveState.Pose;
 
     // Predicted robot pose after calculations have finished
-    ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
+    ChassisSpeeds chassisSpeeds = driveState.Speeds;
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
@@ -230,12 +232,13 @@ public class LaunchCalculator {
           (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
     }
 
-    Translation2d virtualTarget =
-        new Translation2d(target.getX() - turretVelocityX * t, target.getY() - turretVelocityY * t);
-
-    Rotation2d targetAngleFieldRelative =
-        virtualTarget.minus(turretPose.getTranslation()).getAngle();
-
+    Rotation2d targetAngleFieldRelative;
+    if (trueDistance < MIN_DISTANCE_TO_TARGET) {
+      targetAngleFieldRelative = Rotation2d.kZero;
+    } else {
+      // We still pass dx and dy to the constructor so it stays "linked" to the vector
+      targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
+    }
     // FINAL NUMS
     double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
