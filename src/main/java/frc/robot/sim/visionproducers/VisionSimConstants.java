@@ -26,8 +26,8 @@ public class VisionSimConstants {
   public static final int kCameraResWidth = 320;
   public static final int kCameraResHeight = 240;
   public static final double kCameraFOVDegrees = 90.0;
-  public static final double kCalibErrorAvg = 0.35;
-  public static final double kCalibErrorStdDev = 0.10;
+  public static final double kCalibErrorAvg = 0.12;
+  public static final double kCalibErrorStdDev = 0.035;
   public static final double kCameraFPS = 15;
   public static final double kAvgLatencyMs = 50;
   public static final double kLatencyStdDevMs = 15;
