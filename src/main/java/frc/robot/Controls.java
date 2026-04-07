@@ -520,16 +520,8 @@ public class Controls {
                 s.ledSubsystem)
             .withName("LED Default Command"));
 
-    Trigger shiftWarning =
-        new Trigger(
-            () -> {
-              if (RobotState.isAutonomous()) return false;
+    Trigger shiftWarning = new Trigger(GetTargetFromPose.autoShoot(s.drivebaseSubsystem));
 
-              var shiftInfo = HubShiftUtil.getOfficialShiftInfo();
-
-              return shiftInfo.remainingTime() <= 4.0;
-            });
-
-    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 5, 0.1));
+    shiftWarning.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
   }
 }
