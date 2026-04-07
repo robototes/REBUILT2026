@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;
 
 public class AutoDriveRotate {
@@ -71,7 +72,8 @@ public class AutoDriveRotate {
     @Override
     public void execute() {
       Pose2d currentPose = drive.getState().Pose;
-      Translation2d toTarget = targetTranslation.minus(currentPose.getTranslation());
+      Pose2d turretPose = currentPose.transformBy(LauncherConstants.turretTransform());
+      Translation2d toTarget = targetTranslation.minus(turretPose.getTranslation());
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
       Rotation2d targetRotate =
           new Rotation2d(
