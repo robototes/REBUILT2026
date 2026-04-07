@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
+import frc.robot.util.tuning.LauncherConstants;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected double flywheelsGoal;
@@ -52,7 +53,9 @@ public class LauncherSubsystem extends SubsystemBase {
         && s.hood.atTargetPosition()
         && s.turretSubsystem.atTarget()
         && !LaunchCalculator.isApproachingTrench(
-            s.drivebaseSubsystem.getState().Pose, s.drivebaseSubsystem.getState().Speeds);
+            s.drivebaseSubsystem.getState().Pose, s.drivebaseSubsystem.getState().Speeds)
+        && !LaunchCalculator.isUnderClimb(
+            s.drivebaseSubsystem.getState().Pose.transformBy(LauncherConstants.turretTransform()));
   }
 
   public boolean isHoodAtTarget() {
