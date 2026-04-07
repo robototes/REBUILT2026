@@ -105,8 +105,6 @@ public class Controls {
           .withRotationalDeadband(0.0001)
           .withDriveRequestType(DriveRequestType.Velocity);
 
-  private final Telemetry logger = new Telemetry(MaxSpeed);
-
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems, SimWrapper simWrapper) {
     // Configure the trigger bindings
@@ -230,9 +228,6 @@ public class Controls {
               s.drivebaseSubsystem.runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero)));
     }
 
-    // logging the telemetry
-    s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-
     // reset pose incase vision is bugging
     driverController
         .rightBumper()
@@ -261,12 +256,13 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             Commands.parallel(
+                                    Commands.runOnce(() -> s.flywheels.switchSlot(true)),
                                     s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING)))
+                                .andThen(Commands.runOnce(() -> updateIntakeMode())))
                         .repeatedly())
                 .withName("Launching Command"))
         .onFalse(
@@ -278,6 +274,7 @@ public class Controls {
         .start()
         .onTrue(
             Commands.parallel(
+                    Commands.runOnce(() -> s.flywheels.switchSlot(false)),
                     Commands.either(
                         s.hood.autoZeroCommand(),
                         s.launcherSubsystem.zeroSubsystemCommand(),
@@ -312,6 +309,7 @@ public class Controls {
   private void updateIntakeMode() {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
+      ledsMode = LEDMode.INTAKE;
     } else if (driverController.rightTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
@@ -348,8 +346,7 @@ public class Controls {
         .whileTrue(
             Commands.runOnce(
                     () -> {
-                      intakeMode = IntakeMode.INTAKE;
-                      ledsMode = LEDMode.INTAKE;
+                      updateIntakeMode();
                     })
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));

@@ -4,7 +4,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -33,7 +33,7 @@ public class Flywheels extends SubsystemBase {
   private final DoublePublisher velocityPub;
 
   private FlywheelsSim flywheelSim;
-  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
+  private VelocityVoltage request = new VelocityVoltage(0);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
@@ -79,10 +79,10 @@ public class Flywheels extends SubsystemBase {
     TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
     TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 60;
+    config.CurrentLimits.SupplyCurrentLimit = 80;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLowerLimit = 0;
-    config.CurrentLimits.StatorCurrentLimit = 80;
+    config.CurrentLimits.StatorCurrentLimit = 100;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create coast mode for motors
@@ -90,25 +90,41 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 1;
+    config.Slot0.kP = 0.0;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 8.73 / 74;
-    config.Slot0.kS = 0.0;
+    config.Slot0.kV = 6.0 / 45.0; // 5.3/45.2
+    config.Slot0.kS = 0.3;
     config.Slot0.kG = 0.0;
 
-    config.MotionMagic.MotionMagicAcceleration = 1000; // RPS^2
+    // create PID gains slot 1
+    config.Slot1.kP = 1.0;
+    config.Slot1.kI = 0.0;
+    config.Slot1.kD = 0.0;
+    config.Slot1.kA = 0.0;
+    config.Slot1.kV = 6.0 / 45.0; // 5.3/45.2
+    config.Slot1.kS = 0.3;
+    config.Slot1.kG = 0.0;
 
     flConfigurator.apply(config);
     frConfigurator.apply(config);
   }
 
+  public void switchSlot(boolean isLaunching) {
+    if (isLaunching) {
+      request = request.withSlot(1);
+
+    } else {
+      request = request.withSlot(0);
+    }
+  }
+
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
-              motionMagicRequest.Velocity = rps;
-              FlywheelTwo.setControl(motionMagicRequest);
+              request.Velocity = rps;
+              FlywheelTwo.setControl(request);
               FlywheelOne.setControl(follow);
             },
             () -> {
@@ -121,8 +137,8 @@ public class Flywheels extends SubsystemBase {
   public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
     return runEnd(
             () -> {
-              motionMagicRequest.Velocity = rps.getAsDouble();
-              FlywheelTwo.setControl(motionMagicRequest);
+              request.Velocity = rps.getAsDouble();
+              FlywheelTwo.setControl(request);
               FlywheelOne.setControl(follow);
             },
             () -> {
@@ -133,8 +149,8 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void setVelocityRPS(double rps) {
-    motionMagicRequest.Velocity = rps;
-    FlywheelTwo.setControl(motionMagicRequest);
+    request.Velocity = rps;
+    FlywheelTwo.setControl(request);
     FlywheelOne.setControl(follow);
   }
 
