@@ -212,7 +212,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance()
         .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
 
-    // Tell launch calculator to start a new cycle for "hasmovedatleastonce" boolean
+    // Tell launch calculator to start a new cycle for "hasMovedAtLeastOnce" boolean
     LaunchCalculator.getInstance().robotDisable();
   }
 
