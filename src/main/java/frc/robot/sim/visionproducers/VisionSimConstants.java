@@ -31,7 +31,7 @@ public class VisionSimConstants {
   public static final double kCameraFPS = 15;
   public static final double kAvgLatencyMs = 50;
   public static final double kLatencyStdDevMs = 15;
-  public static final double kMinTargetAreaPixels = 10.0;
+  public static final double kMinTargetAreaPixels = 1.1;
   public static final double kMaxSightRangeMeters = 3.0;
 
   /** Per-camera configuration for vision simulation. */
