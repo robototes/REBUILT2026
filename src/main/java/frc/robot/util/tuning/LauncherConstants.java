@@ -59,20 +59,20 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
   };
 
-  // TODO: Tune comp data points for launcher V3
-  // Notably, TOF is currently not accurately tuned (but it worked decently today 4/3)
+  // TODO: TOF
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1, 1.4, 40, 1.5),
-    new LauncherDistanceDataPoint(1.5, 2, 40, 1.23),
-    new LauncherDistanceDataPoint(2, 3, 40.5, 0.9),
-    new LauncherDistanceDataPoint(2.505, 3.7, 40, 1.067),
-    new LauncherDistanceDataPoint(3, 5, 42, 1.3),
-    new LauncherDistanceDataPoint(3.87, 5.7, 42.5, 1.1),
-    new LauncherDistanceDataPoint(4.3, 6.5, 43, 1.4),
-    new LauncherDistanceDataPoint(4.705, 7.5, 50, 1.3),
-    new LauncherDistanceDataPoint(5.5, 8, 57.5, 1.6),
-    new LauncherDistanceDataPoint(10, 9, 80, 1.34)
-    // new LauncherDistanceDataPoint(2.025, minTime, flywheelOffset, maxTime)
+    new LauncherDistanceDataPoint(2.55, 3, 46, 1),
+    new LauncherDistanceDataPoint(4, 4.8, 52, 1),
+    new LauncherDistanceDataPoint(3.2, 4.5, 48, 1),
+    new LauncherDistanceDataPoint(3.75, 5, 50, 1),
+    new LauncherDistanceDataPoint(1.5, 2, 41, 1),
+    new LauncherDistanceDataPoint(2, 3, 40, 1),
+    new LauncherDistanceDataPoint(1, 1.5, 40, 1),
+    new LauncherDistanceDataPoint(4.5, 5.5, 55, 1),
+    new LauncherDistanceDataPoint(5.5, 7, 62, 1),
+    new LauncherDistanceDataPoint(5, 6.5, 57.5, 1),
+    new LauncherDistanceDataPoint(8, 8, 80, 1)
+
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
