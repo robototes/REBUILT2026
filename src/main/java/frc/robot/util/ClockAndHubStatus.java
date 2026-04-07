@@ -1,28 +1,14 @@
 package frc.robot.util;
 
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.Setter;
 
 public class ClockAndHubStatus {
-  public double matchLength = 2.5;
-
-  private Translation2d pointLeftFieldTop = new Translation2d(2, 6);
-  private Translation2d pointLeftFieldBottom = new Translation2d(2, 2);
-  private Translation2d pointRightFieldTop = new Translation2d(14, 6);
-  private Translation2d pointRightFieldBottom = new Translation2d(14, 2);
-
-  private double fieldLength = Units.inchesToMeters(651.2);
-  private double fieldWidth = Units.inchesToMeters(317.7);
-  private double allianceLineX = Units.inchesToMeters(158.6);
-  private double robotOffset = Units.inchesToMeters(15);
-
+  // seconds
   private static final double TRANSITION_PERIOD_END_TIME = 130;
   private static final double SHIFT_1_END_TIME = 105;
   private static final double SHIFT_2_END_TIME = 80;
@@ -31,32 +17,6 @@ public class ClockAndHubStatus {
   private static final Timer shiftTimer = new Timer();
 
   boolean redInactiveFirst = false;
-
-  public Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
-    if (isHubActive(0)) {
-      return AllianceUtils.getHubTranslation2d();
-    }
-
-    if (AllianceUtils.isBlue()) {
-      if (drivetrain.getState().Pose.getX() <= allianceLineX + robotOffset) {
-        return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
-        return pointLeftFieldTop;
-      } else {
-        return pointLeftFieldBottom;
-      }
-    } else if (AllianceUtils.isRed()) {
-      if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
-        return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
-        return pointRightFieldTop;
-      } else {
-        return pointRightFieldBottom;
-      }
-    } else {
-      return AllianceUtils.getHubTranslation2d();
-    }
-  }
 
   /** Starts the timer at the begining of teleop. */
   public static void initialize() {
@@ -167,7 +127,7 @@ public class ClockAndHubStatus {
     if (!winOverride.isEmpty()) {
       return winOverride.get()
           ? (alliance == Alliance.Blue ? Alliance.Red : Alliance.Blue)
-          : (alliance == Alliance.Blue ? Alliance.Blue : Alliance.Red);
+          : (alliance);
     }
 
     // Return FMS value

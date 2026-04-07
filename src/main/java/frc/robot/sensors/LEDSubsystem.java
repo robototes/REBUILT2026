@@ -138,7 +138,6 @@ public class LEDSubsystem extends SubsystemBase {
 
     setHardwareColor(color);
 
-    currentPatternPub.set(currentPattern.name());
     currentColorPub.set(color.toHexString());
     alternatingColorsPub.set("A:None | B:None");
   }

@@ -276,7 +276,6 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
 
-    HubShiftUtil instance = new HubShiftUtil();
     if (subsystems.visionSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
