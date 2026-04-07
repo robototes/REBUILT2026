@@ -277,6 +277,10 @@ public class Robot extends TimedRobot {
     // this line or comment it out.
 
     HubShiftUtil instance = new HubShiftUtil();
+    if (subsystems.visionSubsystem != null) {
+      subsystems.visionSubsystem.update();
+    }
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DISABLED);
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }

@@ -487,8 +487,14 @@ public class Controls {
       return;
     }
     s.ledSubsystem.setDefaultCommand(
-        Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
-            .withName("LED Default Command"));
+    Commands.run(
+        () -> {
+          if (RobotState.isTeleop()) {
+            s.ledSubsystem.setMode(ledsMode);
+          }
+        },
+        s.ledSubsystem)
+    .withName("LED Default Command"));
 
     Trigger shiftWarning =
         new Trigger(
