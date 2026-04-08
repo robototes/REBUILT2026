@@ -137,9 +137,7 @@ public class LEDSubsystem extends SubsystemBase {
     primaryColor = color;
 
     setHardwareColor(color);
-
-    currentColorPub.set(color.toHexString());
-    alternatingColorsPub.set("A:None | B:None");
+    publishState();
   }
 
   private void setAlternating(RGBWColor a, RGBWColor b, double interval) {
@@ -153,22 +151,12 @@ public class LEDSubsystem extends SubsystemBase {
     showingPrimary = true;
     lastToggleTime = Timer.getFPGATimestamp();
 
-    currentPatternPub.set(currentPattern.name());
-    currentColorPub.set("NONE");
-    alternatingColorsPub.set("A:" + a.toHexString() + " | B:" + b.toHexString());
-
     setHardwareColor(a);
     publishState();
   }
 
   private void setRainbow() {
     currentPattern = LEDPattern.RAINBOW;
-
-    // Update publishers
-    currentPatternPub.set(currentPattern.name());
-    currentColorPub.set("NONE");
-    alternatingColorsPub.set("A:None | B:None");
-
     candle.setControl(rainbowAnimation);
     publishState();
   }

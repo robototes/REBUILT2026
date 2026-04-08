@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -49,13 +50,13 @@ public class LauncherSubsystem extends SubsystemBase {
     if (launchParameters == null) {
       return false;
     }
+    SwerveDriveState driveState = s.drivebaseSubsystem.getState();
     return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
         && s.hood.atTargetPosition()
         && s.turretSubsystem.atTarget()
-        && !LaunchCalculator.isApproachingTrench(
-            s.drivebaseSubsystem.getState().Pose, s.drivebaseSubsystem.getState().Speeds)
+        && !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds)
         && !LaunchCalculator.isUnderClimb(
-            s.drivebaseSubsystem.getState().Pose.transformBy(LauncherConstants.turretTransform()));
+            driveState.Pose.transformBy(LauncherConstants.turretTransform()));
   }
 
   public boolean isHoodAtTarget() {

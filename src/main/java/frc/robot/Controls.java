@@ -90,7 +90,7 @@ public class Controls {
   private LEDMode ledsMode = LEDMode.DEFAULT;
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
 
-  private boolean turretKillActive = false;
+  public static boolean turretKillActive = false;
 
   public static final double MaxSpeed =
       (RobotType.TYPE == RobotTypesEnum.ALPHA)
@@ -109,6 +109,8 @@ public class Controls {
           .withDeadband(0.0001)
           .withRotationalDeadband(0.0001)
           .withDriveRequestType(DriveRequestType.Velocity);
+
+  private Trigger readyToShoot = new Trigger(() -> false);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems, SimWrapper simWrapper) {
@@ -252,9 +254,9 @@ public class Controls {
 
     driverController
         .rightTrigger()
-        .or(GetTargetFromPose.autoShoot(s.drivebaseSubsystem))
-        .and(new Trigger(() -> !driverController.a().getAsBoolean()))
-        .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(15.0)))
+        .or(readyToShoot)
+        .and(driverController.a().negate())
+        .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
         .whileTrue(
             Commands.parallel(
                     Commands.either(
@@ -319,12 +321,14 @@ public class Controls {
     driverController
         .x()
         .onTrue(
-            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false))));
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
+                .withName("Enable Alliance Win Override"));
 
     driverController
         .b()
         .onTrue(
-            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true))));
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
+                .withName("Disable Alliance Win Override"));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
@@ -469,7 +473,9 @@ public class Controls {
                         s.turretSubsystem.setTurretRawPosition(
                             s.turretSubsystem.getTurretPosition()))
                 .withName("Turret Kill — Hold Position"))
-        .onTrue(Commands.runOnce(() -> turretKillActive = !turretKillActive));
+        .onTrue(
+            Commands.runOnce(() -> turretKillActive = !turretKillActive)
+                .withName("Toggle Turret Kill"));
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
@@ -526,7 +532,7 @@ public class Controls {
                 s.ledSubsystem)
             .withName("LED Default Command"));
 
-    Trigger leaveZoneWarning = new Trigger(GetTargetFromPose.autoShoot(s.drivebaseSubsystem));
-    leaveZoneWarning.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
+    readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
+    readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
   }
 }
