@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -126,12 +129,12 @@ public class VisionSubsystemV2 extends SubsystemBase {
     BaseStatusSignal.refreshAll(gyro_yaw, gyro_pitch, gyro_roll, gyro_vx, gyro_vy, gyro_vz);
 
     // All angular velocities and angles are already defaulted to deg/s
-    double yaw = gyro_yaw.getValueAsDouble();
-    double pitch = gyro_pitch.getValueAsDouble();
-    double roll = gyro_roll.getValueAsDouble();
-    double vx = gyro_vx.getValueAsDouble();
-    double vy = gyro_vy.getValueAsDouble();
-    double vz = gyro_vz.getValueAsDouble();
+    double yaw = gyro_yaw.getValue().in(Degrees);
+    double pitch = gyro_pitch.getValue().in(Degrees);
+    double roll = gyro_roll.getValue().in(Degrees);
+    double vx = gyro_vx.getValue().in(DegreesPerSecond);
+    double vy = gyro_vy.getValue().in(DegreesPerSecond);
+    double vz = gyro_vz.getValue().in(DegreesPerSecond);
 
     for (String name : names) {
       if (isEnabled(name) && isOnline(name)) {
