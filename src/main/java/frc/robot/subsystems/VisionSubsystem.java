@@ -508,7 +508,10 @@ public class VisionSubsystem extends SubsystemBase {
             * Math.pow(avgTagDist, P_XY.get())
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
-    double theta = VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
+    double theta =
+        (numOfTags == 1)
+            ? Double.MAX_VALUE
+            : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
 
     SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
     SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
