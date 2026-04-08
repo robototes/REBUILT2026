@@ -54,7 +54,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double MAX_ANGULAR_VELOCITY = 720;
   private static final double MAX_DISTANCE_METERS = 8.5;
   private static final double MAX_TILT = 10;
-  private static final double STALENESS_THRESHOLD = 1.0;
+  private static final double STALENESS_THRESHOLD = 2.0; // seconds
   private static final double AMBIGUITY_THRESHOLD = 0.4;
   private static final double ROTATION_STD_DEV_REJECT = 999999;
   private static final double RMSE_REJECT_THRESHOLD = 0.5;
@@ -65,6 +65,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final int RESET_MIN_TAGS = 2;
   private static final double MIN_RMSE = 0.01;
   private static final double MIN_STD_DEV = 0.01;
+  private static final double MIN_DIST_DELTA = 0.001;
 
   // Sanity Gate Constants
   private static final double FIELD_MARGIN = 0.5;
@@ -158,7 +159,9 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
     // Duplicate Pose Gate
     Pose2d lastPose = lastVisionPoses.get(name);
-    if (lastPose != null && lastPose.equals(estimate.pose)) return;
+    if (lastPose != null
+        && lastPose.getTranslation().getDistance(estimate.pose.getTranslation()) < MIN_DIST_DELTA)
+      return;
 
     // Velocity Gate
     double lastTs = lastVisionTimestamps.getOrDefault(name, 0.0);
