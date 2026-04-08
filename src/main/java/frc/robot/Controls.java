@@ -36,6 +36,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import frc.robot.util.tuning.WheelRadiusCharacterization;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -178,6 +179,10 @@ public class Controls {
       return;
     }
 
+    driverController
+        .y()
+        .whileTrue(
+            WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
 
@@ -352,7 +357,7 @@ public class Controls {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
       ledsMode = LEDMode.INTAKE;
-    } else if (driverController.rightTrigger().getAsBoolean()) {
+    } else if (driverController.rightTrigger().getAsBoolean() && s.launcherSubsystem.isAtTarget()) {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
     } else {
