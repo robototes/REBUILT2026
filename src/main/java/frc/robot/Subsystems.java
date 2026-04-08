@@ -14,11 +14,14 @@ import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
+import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.VisionSubsystemV2;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
@@ -33,9 +36,6 @@ import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
-import frc.robot.sim.SimWrapper;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.RobotBase;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -173,7 +173,8 @@ public class Subsystems {
     // encapsulates vision simulation and ground-truth physics. It requires a pose-reset
     // consumer which we pass as the drivetrain's resetPose method.
     if (drivebaseSubsystem != null && RobotBase.isSimulation()) {
-      simWrapper = new SimWrapper(drivebaseSubsystem, (Pose2d p) -> drivebaseSubsystem.resetPose(p));
+      simWrapper =
+          new SimWrapper(drivebaseSubsystem, (Pose2d p) -> drivebaseSubsystem.resetPose(p));
     } else {
       simWrapper = null;
     }
