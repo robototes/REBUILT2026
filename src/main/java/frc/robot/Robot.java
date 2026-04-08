@@ -207,8 +207,8 @@ public class Robot extends TimedRobot {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
       }
+      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
     }
-    CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
   }
 
   /** This function is called periodically during autonomous. */
