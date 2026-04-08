@@ -61,8 +61,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final double AMBIGUITY_THRESHOLD = 0.4;
   private static final double ROTATION_STD_DEV_REJECT = 999999;
   private static final double RMSE_REJECT_THRESHOLD = 0.5;
-  private static final double STD_DEV_SCALAR = 0.035;
-  private static final double DISTANCE_POWER_FACTOR = 1.4;
+  private static final double STD_DEV_SCALAR = 0.025;
+  private static final double DISTANCE_POWER_FACTOR = 1.3;
   private static final double IMU_ASSIST_ALPHA = 0.1;
   private static final double RESET_MAX_AMBIGUITY_THRESHOLD = 0.15;
   private static final int RESET_MIN_TAGS = 2;
