@@ -1,11 +1,12 @@
 package frc.robot.subsystems.auto;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -14,6 +15,7 @@ import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 /** class is designed to rotate only if turret is fixed at 0 */
 public class AutoDriveRotate {
@@ -39,7 +41,7 @@ public class AutoDriveRotate {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
 
     protected final Subsystems s;
-    private final DoubleSupplier targetSupplier;
+    private final Supplier<Rotation2d> targetSupplier;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
     private final DoublePublisher anglePub;
@@ -50,11 +52,7 @@ public class AutoDriveRotate {
     public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
       // Added math.pi so that facing forward for turret is facing intake
       targetSupplier =
-          () ->
-              launchCalc
-                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem)
-                      .targetTurret()
-                      .getRadians();
+          () -> launchCalc.getParameters(s.drivebaseSubsystem, s.turretSubsystem).targetTurret();
       this.s = s;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
@@ -70,15 +68,23 @@ public class AutoDriveRotate {
     public void execute() {
       if (s.turretSubsystem == null) return;
 
-      double rotationOutput = pidRotate.calculate(-targetSupplier.getAsDouble());
+      SwerveDriveState currentState = s.drivebaseSubsystem.getState();
+      Rotation2d currentRobotRotation = currentState.Pose.getRotation();
+
+      Rotation2d robotRelativeTarget = targetSupplier.get();
+
+      double fieldRelativeSetpoint = currentRobotRotation.plus(robotRelativeTarget).getRadians();
+
+      double rotationOutput =
+          pidRotate.calculate(currentRobotRotation.getRadians(), fieldRelativeSetpoint);
+
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
-      anglePub.set(Units.radiansPerSecondToRotationsPerMinute(targetSupplier.getAsDouble()));
+      anglePub.set(fieldRelativeSetpoint);
       SwerveRequest request =
           driveRequest
               .withVelocityX(xSupplier.getAsDouble())
               .withVelocityY(ySupplier.getAsDouble())
-              .withRotationalRate(rotationOutput)
-              .withCenterOfRotation(turretTranslation);
+              .withRotationalRate(rotationOutput);
       // Set the drive control with the created request
       s.drivebaseSubsystem.setControl(request);
     }
