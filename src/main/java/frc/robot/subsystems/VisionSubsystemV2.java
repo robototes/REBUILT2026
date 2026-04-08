@@ -135,11 +135,12 @@ public class VisionSubsystemV2 extends SubsystemBase {
 
     for (String name : names) {
       if (isEnabled(name) && isOnline(name)) {
-        LimelightHelpers.SetRobotOrientation_NoFlush(name, yaw, yaw, pitch, pitch, roll, roll);
+        LimelightHelpers.SetRobotOrientation_NoFlush(name, yaw, vz, pitch, vy, roll, vx);
         PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name);
         processVision(name, estimate, vz, roll, pitch);
       }
     }
+    LimelightHelpers.Flush();
   }
 
   private void processVision(
