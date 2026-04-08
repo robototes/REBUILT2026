@@ -322,13 +322,15 @@ public class Controls {
         .x()
         .onTrue(
             Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
-                .withName("Enable Alliance Win Override"));
+                .withName("Enable Alliance Win Override")
+                .ignoringDisable(true));
 
     driverController
         .b()
         .onTrue(
             Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
-                .withName("Disable Alliance Win Override"));
+                .withName("Disable Alliance Win Override")
+                .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)

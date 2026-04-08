@@ -43,6 +43,43 @@ public class HubShiftUtil {
   private static final boolean[] activeSchedule = {true, true, false, true, false, true};
   private static final boolean[] inactiveSchedule = {true, false, true, false, true, true};
 
+  // Pre-cached shifted time arrays for both alliance schedule cases
+  private static final double[] shiftedStartTimesActive;
+  private static final double[] shiftedEndTimesActive;
+  private static final double[] shiftedStartTimesInactive;
+  private static final double[] shiftedEndTimesInactive;
+
+  static {
+    shiftedStartTimesActive = computeShiftedStartTimes(activeSchedule);
+    shiftedEndTimesActive = computeShiftedEndTimes(activeSchedule);
+    shiftedStartTimesInactive = computeShiftedStartTimes(inactiveSchedule);
+    shiftedEndTimesInactive = computeShiftedEndTimes(inactiveSchedule);
+  }
+
+  private static double[] computeShiftedStartTimes(boolean[] schedule) {
+    double[] starts = shiftStartTimes.clone();
+    for (int i = 1; i < schedule.length; i++) {
+      if (schedule[i] && !schedule[i - 1]) {
+        starts[i] += approachingActiveFudge;
+      } else if (!schedule[i] && schedule[i - 1]) {
+        starts[i] += endingActiveFudge;
+      }
+    }
+    return starts;
+  }
+
+  private static double[] computeShiftedEndTimes(boolean[] schedule) {
+    double[] ends = shiftEndTimes.clone();
+    for (int i = 1; i < schedule.length; i++) {
+      if (schedule[i] && !schedule[i - 1]) {
+        ends[i - 1] += approachingActiveFudge;
+      } else if (!schedule[i] && schedule[i - 1]) {
+        ends[i - 1] += endingActiveFudge;
+      }
+    }
+    return ends;
+  }
+
   @Setter private static Supplier<Optional<Boolean>> allianceWinOverride = () -> Optional.empty();
 
   public static Optional<Boolean> getAllianceWinOverride() {
@@ -81,13 +118,10 @@ public class HubShiftUtil {
   }
 
   private static boolean[] getSchedule() {
-    boolean[] currentSchedule;
     Alliance startAlliance = getFirstActiveAlliance();
-    currentSchedule =
-        startAlliance == DriverStation.getAlliance().orElse(Alliance.Blue)
-            ? activeSchedule
-            : inactiveSchedule;
-    return currentSchedule;
+    return startAlliance == DriverStation.getAlliance().orElse(Alliance.Blue)
+        ? activeSchedule
+        : inactiveSchedule;
   }
 
   private static ShiftInfo getShiftInfo(
@@ -137,8 +171,7 @@ public class HubShiftUtil {
       active = currentSchedule[currentShiftIndex];
       currentShift = shiftsEnums[currentShiftIndex];
     }
-    ShiftInfo shiftInfo = new ShiftInfo(currentShift, stateTimeElapsed, stateTimeRemaining, active);
-    return shiftInfo;
+    return new ShiftInfo(currentShift, stateTimeElapsed, stateTimeRemaining, active);
   }
 
   public static ShiftInfo getOfficialShiftInfo() {
@@ -146,24 +179,11 @@ public class HubShiftUtil {
   }
 
   public static ShiftInfo getShiftedShiftInfo() {
-    boolean[] shiftSchedule = getSchedule();
-    double[] shiftedShiftStartTimes = shiftStartTimes.clone();
-    double[] shiftedShiftEndTimes = shiftEndTimes.clone();
-
-    // Adjust shift times based on active/inactive transitions to account for ball flight time etc.
-    for (int i = 1; i < shiftSchedule.length; i++) {
-      boolean currentActive = shiftSchedule[i];
-      boolean prevActive = shiftSchedule[i - 1];
-
-      if (currentActive && !prevActive) { // Transition from inactive to active
-        shiftedShiftStartTimes[i] += approachingActiveFudge;
-        shiftedShiftEndTimes[i - 1] += approachingActiveFudge;
-      } else if (!currentActive && prevActive) { // Transition from active to inactive
-        shiftedShiftStartTimes[i] += endingActiveFudge;
-        shiftedShiftEndTimes[i - 1] += endingActiveFudge;
-      }
+    boolean[] schedule = getSchedule();
+    if (schedule == activeSchedule) {
+      return getShiftInfo(activeSchedule, shiftedStartTimesActive, shiftedEndTimesActive);
+    } else {
+      return getShiftInfo(inactiveSchedule, shiftedStartTimesInactive, shiftedEndTimesInactive);
     }
-
-    return getShiftInfo(shiftSchedule, shiftedShiftStartTimes, shiftedShiftEndTimes);
   }
 }
