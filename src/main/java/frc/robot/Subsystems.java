@@ -3,7 +3,6 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
-import static frc.robot.Subsystems.SubsystemConstants.GAMEPIECE_DETECTION_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.HOOD_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ARM_ENABLED;
@@ -20,7 +19,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
-import frc.robot.subsystems.DetectionSubsystem;
 import frc.robot.subsystems.VisionSubsystemV2;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
@@ -48,10 +46,10 @@ public class Subsystems {
     public static final boolean FEEDER_ENABLED = true;
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
-    public static final boolean GAMEPIECE_DETECTION_ENABLED = true;
     public static final boolean TURRET_ENABLED = true;
     public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
-    public static final boolean LAUNCHER_ENABLED = HOOD_ENABLED && FLYWHEELS_ENABLED;
+    public static final boolean LAUNCHER_ENABLED =
+        HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
     public static final boolean LEDS_ENABLED = true;
   }
@@ -61,7 +59,6 @@ public class Subsystems {
   public final LauncherSubsystem launcherSubsystem;
   public final Flywheels flywheels;
   public final Hood hood;
-  public final DetectionSubsystem detectionSubsystem;
   public final Spindexer spindexerSubsystem;
   public final Feeder feederSubsystem;
   public final IntakeRollers intakeRollers;
@@ -115,12 +112,6 @@ public class Subsystems {
       hood = new Hood();
     } else {
       hood = null;
-    }
-
-    if (GAMEPIECE_DETECTION_ENABLED) {
-      detectionSubsystem = new DetectionSubsystem(drivebaseSubsystem);
-    } else {
-      detectionSubsystem = null;
     }
 
     if (SPINDEXER_ENABLED) {

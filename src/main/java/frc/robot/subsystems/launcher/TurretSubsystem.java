@@ -3,6 +3,7 @@ package frc.robot.subsystems.launcher;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -13,19 +14,22 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.LaunchCalculator;
-import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
 import java.util.function.Supplier;
 
@@ -39,11 +43,10 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
   private static final double NOMINAL_BATTERY_VOLTAGE = 12;
 
-  /**
-   * The tolerance for the turret to be considered "at target" in degrees. To find a good value,
-   * open Phoenix Tuner X, plot the closed loop error, and this value should be the maximum error.
-   */
-  public static final double TURRET_DEGREE_TOLERANCE = 8; // Degrees
+  // The tolerance is this high because the turret position is always updating so it is not
+  // always exactly where it should be, I am mainly using this to stop shooting when the
+  // turret hits its wraparound point
+  public static final double TURRET_DEGREE_TOLERANCE = 20;
 
   // Positions
   private double targetPos;
@@ -85,6 +88,18 @@ public class TurretSubsystem extends SubsystemBase {
           .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
           .publish();
 
+  // Network tables
+
+  private final DoublePublisher posPub;
+  private final DoublePublisher targetPub;
+  private final DoublePublisher velocityPub;
+  private final DoublePublisher currentPub;
+
+  // Status signals
+  private final StatusSignal<Angle> positionSignal;
+  private final StatusSignal<AngularVelocity> velocitySignal;
+  private final StatusSignal<Current> statorCurrentSignal;
+
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
     turretMotor =
@@ -94,6 +109,20 @@ public class TurretSubsystem extends SubsystemBase {
     zeroPublisher.set(false);
     turretConfig();
     turretRotation.set(new Pose2d[2]);
+
+    NetworkTableInstance inst = NetworkTableInstance.getDefault();
+    NetworkTable table = inst.getTable("SmartDashboard");
+
+    positionSignal = turretMotor.getPosition();
+    posPub = table.getDoubleTopic("/Turret/Position").publish();
+
+    velocitySignal = turretMotor.getVelocity();
+    velocityPub = table.getDoubleTopic("/Turret/Velocity").publish();
+
+    statorCurrentSignal = turretMotor.getStatorCurrent();
+    currentPub = table.getDoubleTopic("/Turret/Current").publish();
+
+    targetPub = table.getDoubleTopic("/Turret/Target").publish();
   }
 
   public void turretConfig() {
@@ -201,16 +230,16 @@ public class TurretSubsystem extends SubsystemBase {
     return turretMotor.getPosition().getValueAsDouble();
   }
 
-  public boolean atTarget(double degreeTolerance) {
+  public boolean atTarget() {
     return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
-        < Units.degreesToRotations(degreeTolerance);
+        < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
   /**
    * @return the angular velocity of the turret in rad/s
    */
   public double getOmega() {
-    return Units.rotationsToRadians(turretMotor.getVelocity().getValueAsDouble());
+    return Units.rotationsToRadians(velocitySignal.getValueAsDouble());
   }
 
   // Experimental IF WITHIN BOUNDS go to it instead of clamping
@@ -266,10 +295,11 @@ public class TurretSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Turret/Position", turretMotor.getPosition().getValueAsDouble());
-    SmartDashboard.putNumber("Turret/Target", targetPos);
-    SmartDashboard.putNumber("Turret/Velocity", turretMotor.getVelocity().getValueAsDouble());
-    SmartDashboard.putNumber("Turret/Current", turretMotor.getStatorCurrent().getValueAsDouble());
+    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
+    posPub.set(positionSignal.getValueAsDouble()); // Rotations
+    velocityPub.set(velocitySignal.getValueAsDouble()); // RPS
+    currentPub.set(statorCurrentSignal.getValueAsDouble()); // Amps
+    targetPub.set(targetPos);
   }
 
   public void brakeTurret() {

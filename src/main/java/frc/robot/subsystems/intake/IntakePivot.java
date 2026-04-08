@@ -14,6 +14,7 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -26,21 +27,24 @@ public class IntakePivot extends SubsystemBase {
   private final TalonFX pivotMotor;
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
-  private static final double AUTO_ZERO_VOLTAGE = 0.5;
+  private static final double AUTO_ZERO_VOLTAGE = 8;
+  private final Timer timer = new Timer();
 
   // Positions
+  // -0.17 Vertical Pos.
   private double targetPos;
-  public static final double DEPLOYED_POS = -0.425;
-  public static final double LAUNCH_POS = -0.21;
+  public static final double DEPLOYED_POS = -0.43;
+  public static final double LAUNCH_POS_IN = -0.13;
+  public static final double LAUNCH_POS_OUT = -0.292;
   public static final double RETRACTED_POS = 0.0;
-  public static final double EXTAKE_POS = -0.30;
+  public static final double EXTAKE_POS = -0.3;
 
   // PID variables
-  private static final double kP = 23;
+  private static final double kP = 40;
   private static final double kI = 0;
-  private static final double kD = 0;
-  private static final double kG = 0.6;
-  private static final double kS = 0.4101;
+  private static final double kD = 1;
+  private static final double kG = 0.4;
+  private static final double kS = 0.2;
   private static final double kV = 0;
   private static final double kA = 0;
 
@@ -50,15 +54,15 @@ public class IntakePivot extends SubsystemBase {
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 100;
-  private static final double ACCELERATION = 50;
+  private static final double ACCELERATION = 400;
   private static final double JERK = 0;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 35;
 
   // Soft Limits
-  private static final double PIVOT_MIN = -0.45; // rotations
-  private static final double PIVOT_MAX = 0.0;
+  public static final double PIVOT_MIN = -0.45; // rotations
+  public static final double PIVOT_MAX = 0.0;
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
@@ -125,6 +129,17 @@ public class IntakePivot extends SubsystemBase {
     pivotMotor.setControl(request.withPosition(pos));
   }
 
+  public void restartTimer() {
+    timer.restart();
+  }
+
+  public void oscillatePivot() {
+    double offset = (1 + Math.cos(2 * Math.PI * (timer.get() / 0.5) + Math.PI)) / 2;
+    double pos = LAUNCH_POS_OUT + offset * (LAUNCH_POS_IN - LAUNCH_POS_OUT);
+    targetPos = pos;
+    setPivotPosition(pos);
+  }
+
   public Command zeroPivot() {
     return runOnce(
             () -> {
@@ -167,11 +182,18 @@ public class IntakePivot extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroPivot();
     }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
-        .until(() -> pivotMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
-        .andThen(zeroPivot())
+    return Commands.sequence(
+            voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
+                .withDeadline(
+                    Commands.waitSeconds(0.5)
+                        .andThen(
+                            Commands.waitUntil(
+                                () ->
+                                    pivotMotor.getStatorCurrent().getValueAsDouble()
+                                        >= (STATOR_CURRENT_LIMIT - 1)))),
+            zeroPivot())
         .withTimeout(3)
-        .withName("Automatic Zero pivot");
+        .withName("Automatic Zero Pivot");
   }
 
   @Override

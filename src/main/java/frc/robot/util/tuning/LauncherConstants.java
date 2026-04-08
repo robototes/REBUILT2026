@@ -6,25 +6,29 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
-  private static final Translation2d LAUNCHER_OFFSET =
-      RobotType.isAlpha() ? new Translation2d(0.2159, -0.1397) : new Translation2d(0.2159, 0.1397);
+  private static final Transform2d LAUNCHER_OFFSET =
+      RobotType.isAlpha()
+          ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
+          : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
 
-  private static final StructArrayPublisher<Pose2d> turretToTarget =
-      NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretToTarget", Pose2d.struct)
-          .publish();
-  private static final StructArrayPublisher<Pose2d> turretRotationalVelocity =
-      NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretRotationalVelocity", Pose2d.struct)
-          .publish();
+  private static final NetworkTable table =
+      NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
+  private static final StructPublisher<Pose2d> turretPose =
+      table.getStructTopic("Turret Pose", Pose2d.struct).publish();
+  private static final DoublePublisher turretToHubDistance =
+      table.getDoubleTopic("Turret to hub distance").publish();
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
+  private static double flywheelOffset = 0.65;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -56,13 +60,17 @@ public class LauncherConstants {
   };
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1.31, 1.836, 65, 0.87),
-    new LauncherDistanceDataPoint(2.52, 3.672, 72, 1.1),
-    new LauncherDistanceDataPoint(3.32, 4.896, 75, 1.13),
-    new LauncherDistanceDataPoint(3.87, 6.12, 79, 1.1),
-    new LauncherDistanceDataPoint(4.27, 6.732, 82, 1),
-    new LauncherDistanceDataPoint(6.4, 8.568, 100, 1.34),
-    new LauncherDistanceDataPoint(10, 8.568, 100, 1.34)
+    new LauncherDistanceDataPoint(1, 1.5, 40, 1.333),
+    new LauncherDistanceDataPoint(1.5, 2, 41, 0.933),
+    new LauncherDistanceDataPoint(2, 3, 40, 0.9),
+    new LauncherDistanceDataPoint(2.55, 3, 46, 1.267),
+    new LauncherDistanceDataPoint(3.2, 4.5, 48, 1.133),
+    new LauncherDistanceDataPoint(3.75, 5, 50, 1.2),
+    new LauncherDistanceDataPoint(4.2, 5, 54.5, 1.233),
+    new LauncherDistanceDataPoint(4.5, 5.5, 55, 1.3),
+    new LauncherDistanceDataPoint(5, 6.5, 57.5, 1.267),
+    new LauncherDistanceDataPoint(5.5, 7, 62, 1.267),
+    new LauncherDistanceDataPoint(8, 8, 80, 1.53)
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
@@ -101,8 +109,14 @@ public class LauncherConstants {
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
-    Transform2d fieldRelativeLauncherOffset = new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
-    return robot.plus(fieldRelativeLauncherOffset).getTranslation();
+    return LAUNCHER_OFFSET.getTranslation();
+  }
+
+  public static void UpdateNT(Pose2d robot) {
+    Pose2d result = robot.transformBy(LAUNCHER_OFFSET);
+    turretPose.set(result);
+    turretToHubDistance.set(
+        AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm());
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
@@ -111,7 +125,7 @@ public class LauncherConstants {
   }
 
   public static Transform2d turretTransform() {
-    return new Transform2d(LAUNCHER_OFFSET, Rotation2d.kZero);
+    return LAUNCHER_OFFSET;
   }
 
   public static double getHoodAngleFromDistance(double distance) {
@@ -145,8 +159,9 @@ public class LauncherConstants {
   // radius is launcher offset from center of robot
   // then converts angular speed into tangent velocity
   public static Translation2d angularVelocity(Pose2d robot, ChassisSpeeds fieldSpeeds) {
-    Translation2d angle = LAUNCHER_OFFSET.rotateBy(robot.getRotation());
-    double angleVelocitySpeed = (fieldSpeeds.omegaRadiansPerSecond * LAUNCHER_OFFSET.getNorm());
+    Translation2d angle = LAUNCHER_OFFSET.getTranslation().rotateBy(robot.getRotation());
+    double angleVelocitySpeed =
+        (fieldSpeeds.omegaRadiansPerSecond * LAUNCHER_OFFSET.getTranslation().getNorm());
     double vx = -angle.getY() * angleVelocitySpeed;
     double vy = angle.getX() * angleVelocitySpeed;
     return new Translation2d(vx, vy);

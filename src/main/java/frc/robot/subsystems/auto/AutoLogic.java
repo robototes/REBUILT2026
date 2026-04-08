@@ -210,10 +210,12 @@ public class AutoLogic {
 
   public static Command launcherCommand() {
     return Commands.parallel(
-            s.launcherSubsystem.launcherAimCommandV2(),
+            Commands.runOnce(() -> s.flywheels.switchSlot(true)),
+            s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-        .withTimeout(6.5);
+        .withTimeout(6.5)
+        .andThen(Commands.runOnce(() -> s.flywheels.switchSlot(false)));
   }
 
   public static Command autoStowCommand() {

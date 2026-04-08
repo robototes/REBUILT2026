@@ -51,15 +51,13 @@ public class Hood extends SubsystemBase {
       1; // voltage/speed to control the motor for manual control
   private static final double STATOR_CURRENT_LIMIT = 30; // stator limit in amps
   // both forward and backward soft limits are in Rotor rotations
-  private static final double FORWARD_SOFT_LIMIT =
-      11.628; // LIMITED TO 19 - March 14th Physical limit
+  private static final double FORWARD_SOFT_LIMIT = 9;
   private static final double BACKWARD_SOFT_LIMIT = -0.01224; // -0.02 rotations, past zeroing point
 
   public final NtTunableBoolean TUNER_CONTROLLED =
       new NtTunableBoolean("/SmartDashboard/Tunables/Hood", false);
 
-  // Mechanism tuning required !! TODO: TUNE
-  private static final double AUTO_ZERO_VOLTAGE = -0.5;
+  private static final double AUTO_ZERO_VOLTAGE = -3;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -195,11 +193,18 @@ public class Hood extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroHoodCommand();
     }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
-        .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
-        .andThen(zeroHoodCommand())
+    return Commands.sequence(
+            voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
+                .withDeadline(
+                    Commands.waitSeconds(0.5)
+                        .andThen(
+                            Commands.waitUntil(
+                                () ->
+                                    hood.getStatorCurrent().getValueAsDouble()
+                                        >= (STATOR_CURRENT_LIMIT - 1)))),
+            zeroHoodCommand())
         .withTimeout(3)
-        .withName("Automatic Zero hood");
+        .withName("Automatic Zero Hood");
   }
 
   @Override

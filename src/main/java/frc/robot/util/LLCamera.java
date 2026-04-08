@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.TimestampedDoubleArray;
@@ -10,6 +11,9 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class LLCamera {
 
   private final String name;
+  private double lastTimestampSeconds = 0;
+  private Pose2d lastPose2dMT1 = null;
+  private Pose2d lastPose2dMT2 = null;
 
   public LLCamera(String name) {
     this.name = name;
@@ -73,6 +77,32 @@ public class LLCamera {
 
   public String getName() {
     return name;
+  }
+
+  public Pose2d getlastPoseMT1() {
+    if (lastPose2dMT1 == null) lastPose2dMT1 = new Pose2d();
+    return lastPose2dMT1;
+  }
+
+  public void setlastPoseMT1(Pose2d newPose2d) {
+    lastPose2dMT1 = newPose2d;
+  }
+
+  public Pose2d getlastPoseMT2() {
+    if (lastPose2dMT2 == null) lastPose2dMT2 = new Pose2d();
+    return lastPose2dMT2;
+  }
+
+  public void setlastPoseMT2(Pose2d newPose2d) {
+    lastPose2dMT2 = newPose2d;
+  }
+
+  public void setLastTimestampSeconds(double timestampSeconds) {
+    lastTimestampSeconds = timestampSeconds;
+  }
+
+  public double getLastTimestampSeconds() {
+    return lastTimestampSeconds;
   }
 
   public BetterPoseEstimate getPoseEstimateMegatag2() {
