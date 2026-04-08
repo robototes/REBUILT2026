@@ -125,6 +125,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
     updateLimeLightStatus();
     BaseStatusSignal.refreshAll(gyro_yaw, gyro_pitch, gyro_roll, gyro_vx, gyro_vy, gyro_vz);
 
+    // All angular velocities and angles are already defaulted to deg/s
     double yaw = gyro_yaw.getValueAsDouble();
     double pitch = gyro_pitch.getValueAsDouble();
     double roll = gyro_roll.getValueAsDouble();
