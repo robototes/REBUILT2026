@@ -18,31 +18,32 @@ import java.util.List;
 public class ClimbAutoAlign extends Command {
   private static final AprilTagFieldLayout layout = AllianceUtils.FIELD_LAYOUT;
 
-  private static final double X_OFFSET = Units.inchesToMeters(47.0 / 2.0);
-  private static final double Y_OFFSET = Units.inchesToMeters(11.38);
+  private static final double ROBOT_WIDTH = 0.61 / 2.0;
+  private static final double X_OFFSET = Units.inchesToMeters(43.510) + ROBOT_WIDTH;
+  private static final double Y_OFFSET = Units.inchesToMeters((32.250 / 2.0) + (5.875 / 2.0));
 
   private static final Pose2d BLUE_LEFT =
       layout
-          .getTagPose(15)
-          .get()
-          .toPose2d()
-          .plus(new Transform2d(X_OFFSET, Y_OFFSET, Rotation2d.k180deg));
-  private static final Pose2d BLUE_RIGHT =
-      layout
-          .getTagPose(15)
+          .getTagPose(31)
           .get()
           .toPose2d()
           .plus(new Transform2d(X_OFFSET, -Y_OFFSET, Rotation2d.k180deg));
+  private static final Pose2d BLUE_RIGHT =
+      layout
+          .getTagPose(31)
+          .get()
+          .toPose2d()
+          .plus(new Transform2d(X_OFFSET, Y_OFFSET, Rotation2d.k180deg));
 
   private static final Pose2d RED_LEFT =
       layout
-          .getTagPose(31)
+          .getTagPose(15)
           .get()
           .toPose2d()
           .plus(new Transform2d(X_OFFSET, -Y_OFFSET, Rotation2d.k180deg));
   private static final Pose2d RED_RIGHT =
       layout
-          .getTagPose(31)
+          .getTagPose(15)
           .get()
           .toPose2d()
           .plus(new Transform2d(X_OFFSET, Y_OFFSET, Rotation2d.k180deg));
