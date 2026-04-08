@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.BooleanPublisher;
@@ -40,6 +41,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private final Map<String, StructPublisher<Pose2d>> LL_pose_pubs = new HashMap<>();
   private final Map<String, Boolean> LL_online = new HashMap<>();
   private final Map<String, NtTunableBoolean> FILTER_ENABLED = new HashMap<>();
+  private final Map<String, Debouncer> heartbeatDebouncers = new HashMap<>();
 
   private final String[] names = {Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C};
 
@@ -100,6 +102,8 @@ public class VisionSubsystemV2 extends SubsystemBase {
       LL_online.put(name, false);
       LimelightHelpers.SetIMUAssistAlpha(name, IMU_ASSIST_ALPHA);
       lastBeats.put(name, LimelightHelpers.getHeartbeat(name));
+      heartbeatDebouncers.put(
+          name, new Debouncer(STALENESS_THRESHOLD, Debouncer.DebounceType.kFalling));
     }
 
     FILTER_ENABLED.put(
@@ -257,9 +261,10 @@ public class VisionSubsystemV2 extends SubsystemBase {
         changeStatus(name, false);
         continue;
       }
-      double currentBeat = LimelightHelpers.getHeartbeat(name) / 1_000_000.0;
-      boolean online = (currentBeat - lastBeats.getOrDefault(name, 0.0)) < STALENESS_THRESHOLD;
+      double currentBeat = LimelightHelpers.getHeartbeat(name);
+      boolean beating = currentBeat != lastBeats.get(name);
       lastBeats.put(name, currentBeat);
+      boolean online = heartbeatDebouncers.get(name).calculate(beating);
       changeStatus(name, online);
     }
   }
