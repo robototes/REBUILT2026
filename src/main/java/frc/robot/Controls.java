@@ -36,6 +36,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import frc.robot.util.tuning.WheelRadiusCharacterization;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -178,6 +179,10 @@ public class Controls {
       return;
     }
 
+    driverController
+        .y()
+        .whileTrue(
+            WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
 
@@ -251,18 +256,29 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             Commands.parallel(
+                                    Commands.runOnce(() -> s.flywheels.switchSlot(true)),
                                     s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING)))
+                                .andThen(
+                                    Commands.runOnce(
+                                        () -> {
+                                          updateIntakeMode();
+                                          ledsMode = LEDMode.LAUNCHING;
+                                        })))
                         .repeatedly())
                 .withName("Launching Command"))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
-                .alongWith(Commands.runOnce(() -> updateIntakeMode()))
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          updateIntakeMode();
+                          s.flywheels.switchSlot(false);
+                        }))
                 .withName("Launching Finished"));
     driverController
         .start()
@@ -302,7 +318,8 @@ public class Controls {
   private void updateIntakeMode() {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
-    } else if (driverController.rightTrigger().getAsBoolean()) {
+      ledsMode = LEDMode.INTAKE;
+    } else if (driverController.rightTrigger().getAsBoolean() && s.launcherSubsystem.isAtTarget()) {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
     } else {
@@ -338,8 +355,7 @@ public class Controls {
         .whileTrue(
             Commands.runOnce(
                     () -> {
-                      intakeMode = IntakeMode.INTAKE;
-                      ledsMode = LEDMode.INTAKE;
+                      updateIntakeMode();
                     })
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));

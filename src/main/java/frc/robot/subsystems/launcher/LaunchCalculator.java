@@ -31,11 +31,13 @@ public class LaunchCalculator {
   private LaunchingParameters cachedParams;
   private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
+  private double lastTurretOmega = 0;
 
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
   private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(1); // Radians
   private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(2); // M/s
+  private static final double MIN_OMEGA_TOLERANCE = 0.1; // Radians/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
@@ -93,6 +95,7 @@ public class LaunchCalculator {
     SwerveDriveState driveState = drivetrain.getState();
     Pose2d currentPose = driveState.Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
+    double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
@@ -101,22 +104,25 @@ public class LaunchCalculator {
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
-        Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
-                <= MIN_ROTATION_TOLERANCE;
+        Math.abs(currentSpeeds.vxMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.vyMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_ROTATION_TOLERANCE;
+    // Has turretSubsystem.getOmega() not changed much
+    boolean isTurretOmegaStable =
+        Math.abs(currentTurretOmega - lastTurretOmega) <= MIN_OMEGA_TOLERANCE;
+
     // Check to see if all conditions are met
     if (hasNotMovedSignificantly
         && hasNotRotatedSigificantly
         && isNotMovingFastEnough
+        && isTurretOmegaStable
         && cachedParams != null) {
       return cachedParams;
     }
     // cache the pose and chassis speeds
     lastPose = currentPose;
     lastSpeeds = currentSpeeds;
+    lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
     cachedParams = calculate(driveState, turretSubsystem);
