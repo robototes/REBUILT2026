@@ -17,7 +17,8 @@ public class Hardware {
   public static final int SPINDEXER_MOTOR_ID = 31;
 
   // Climb Motor (35-39)
-  public static final int CLIMB_MOTOR_ID = 35;
+  public static final int CLIMB_DRIVE_MOTOR_ID = 35;
+  public static final int CLIMB_PIVOT_MOTOR_ID = 36;
 
   // CANdle
   public static final int CANDLE_ID = 40;

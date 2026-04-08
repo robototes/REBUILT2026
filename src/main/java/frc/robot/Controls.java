@@ -30,6 +30,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.ClimbAutoAlign;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -116,6 +117,7 @@ public class Controls {
     configureVisionBindings();
     configureTurretBindings();
     configureLedBindings();
+    configureClimbBindings();
   }
 
   private Trigger connected(CommandXboxController controller) {
@@ -288,6 +290,7 @@ public class Controls {
                         s.intakePivot.zeroPivot(),
                         () -> DriverStation.isEnabled()),
                     s.turretSubsystem.zeroTurret(),
+                    Commands.runOnce(() -> s.climbSubsystem.zeroPivot()),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
@@ -487,5 +490,24 @@ public class Controls {
             });
 
     shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 5, 0.1));
+  }
+
+  private void configureClimbBindings() {
+    if (s.climbSubsystem == null || s.drivebaseSubsystem == null) {
+      return;
+    }
+
+    new Trigger(() -> intakeMode != IntakeMode.RETRACTED).onTrue(s.climbSubsystem.stowCommand());
+
+    driverController
+        .povRight()
+        .whileTrue(
+            Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED)
+                .andThen(
+                    new ClimbAutoAlign(s.drivebaseSubsystem)
+                        .alongWith(s.climbSubsystem.climbCommand()))
+                .withName("Climb Sequence"));
+
+    driverController.povLeft().whileTrue(s.climbSubsystem.lowerCommand());
   }
 }

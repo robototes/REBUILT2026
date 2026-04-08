@@ -1,5 +1,6 @@
 package frc.robot;
 
+import static frc.robot.Subsystems.SubsystemConstants.CLIMB_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
+import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
@@ -47,6 +49,7 @@ public class Subsystems {
     public static final boolean FLYWHEELS_ENABLED = true;
     public static final boolean HOOD_ENABLED = true;
     public static final boolean TURRET_ENABLED = true;
+    public static final boolean CLIMB_ENABLED = true;
     public static final boolean INTAKE_ENABLED = INTAKE_ARM_ENABLED && INTAKE_ROLLERS_ENABLED;
     public static final boolean LAUNCHER_ENABLED =
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
@@ -68,6 +71,7 @@ public class Subsystems {
   public final TurretSubsystem turretSubsystem;
   public final IndexerSubsystem indexerSubsystem;
   public final LEDSubsystem ledSubsystem;
+  public final ClimbSubsystem climbSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -161,6 +165,12 @@ public class Subsystems {
       SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;
+    }
+
+    if (CLIMB_ENABLED) {
+      climbSubsystem = new ClimbSubsystem();
+    } else {
+      climbSubsystem = null;
     }
   }
 }
