@@ -4,7 +4,6 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -17,8 +16,7 @@ import frc.robot.util.AllianceUtils;
 import java.util.List;
 
 public class ClimbAutoAlign extends Command {
-  private static final AprilTagFieldLayout layout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+  private static final AprilTagFieldLayout layout = AllianceUtils.FIELD_LAYOUT;
 
   private static final double X_OFFSET = Units.inchesToMeters(47.0 / 2.0);
   private static final double Y_OFFSET = Units.inchesToMeters(11.38);
