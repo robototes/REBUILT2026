@@ -335,7 +335,7 @@ public class Robot extends TimedRobot {
   }
 
   private void supplyYawToAllLimelights() {
-    if (subsystems.visionSubsystem != null) {
+    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       double heading = subsystems.drivebaseSubsystem.getPigeon2().getYaw().getValueAsDouble();
       if (subsystems.visionSubsystem.limelightaOnline) {
         supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, heading);
