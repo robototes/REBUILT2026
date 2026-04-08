@@ -15,6 +15,7 @@ import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -54,6 +55,7 @@ public class Flywheels extends SubsystemBase {
 
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
+  private StatusSignal<Current> flywheelOneSupplyCurrent;
 
   // Constructor
   public Flywheels() {
@@ -76,6 +78,7 @@ public class Flywheels extends SubsystemBase {
     }
 
     flywheelOneRPS = FlywheelOne.getVelocity();
+    flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
   }
 
   private void configureMotors() {
@@ -207,8 +210,9 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
-    velocityPub.set(FlywheelOne.getVelocity().getValueAsDouble());
-    currentPub.set(FlywheelOne.getSupplyCurrent().getValueAsDouble());
+    StatusSignal.refreshAll(flywheelOneRPS, flywheelOneSupplyCurrent);
+    velocityPub.set(flywheelOneRPS.getValueAsDouble());
+    currentPub.set(flywheelOneSupplyCurrent.getValueAsDouble());
     if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetVelocity.getAtomic();

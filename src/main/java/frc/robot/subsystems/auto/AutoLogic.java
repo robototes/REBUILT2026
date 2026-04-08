@@ -213,11 +213,15 @@ public class AutoLogic {
 
   public static Command launcherCommand() {
     return Commands.parallel(
-            Commands.runOnce(() -> s.flywheels.switchSlot(true)),
+            Commands.runOnce(
+                () -> {
+                  s.flywheels.switchSlot(true);
+                  s.flywheels.resetFuelCheck();
+                }),
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-        .until(() -> s.flywheels.isOutOfFuel())
+        // .until(() -> s.flywheels.isOutOfFuel())
         .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
         .andThen(Commands.runOnce(() -> s.flywheels.switchSlot(false)));
