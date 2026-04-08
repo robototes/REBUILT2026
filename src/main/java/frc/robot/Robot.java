@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
-import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -32,6 +31,7 @@ import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
 import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.HubShiftUtil;
+import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
 import frc.robot.util.tuning.NtTunableBoolean;
@@ -50,7 +50,7 @@ public class Robot extends TimedRobot {
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
-  private final SimWrapper m_simWrapper;
+  // SimWrapper is owned by Subsystems in simulation; access via subsystems.simWrapper
   private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
@@ -89,7 +89,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
 
-    controls = new Controls(subsystems, m_simWrapper);
+    controls = new Controls(subsystems, subsystems.simWrapper);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
@@ -151,11 +151,11 @@ public class Robot extends TimedRobot {
     }
 
     // $VISIONSIM - Wrapper for sim features
-    if (Robot.isSimulation() && m_simWrapper != null) {
+    if (Robot.isSimulation() && subsystems.simWrapper != null) {
       // NOTE: We run the vision period FIRST in robotPeriodic, since it updates
       // NetworkTables with the limelight data, in-case any code in this loop
       // needs that info and doesnt want it delayed 20ms.
-      m_simWrapper.robotPeriodic();
+      subsystems.simWrapper.robotPeriodic();
     }
 
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
@@ -243,6 +243,20 @@ public class Robot extends TimedRobot {
     limelightsRecord();
   }
 
+  public void limelightsRecord() {
+    if (subsystems.visionSubsystemV2 != null) {
+      if (subsystems.visionSubsystemV2.isOnline(Hardware.LIMELIGHT_A)) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+      }
+      if (subsystems.visionSubsystemV2.isOnline(Hardware.LIMELIGHT_B)) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+      }
+      if (subsystems.visionSubsystemV2.isOnline(Hardware.LIMELIGHT_C)) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_C, MAX_TIME_RECORD);
+      }
+    }
+  }
+
   @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.
@@ -263,8 +277,8 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     // $VISIONSIM - Wrapper for sim features
-    if (m_simWrapper != null) {
-      m_simWrapper.simulationPeriodic();
+    if (subsystems.simWrapper != null) {
+      subsystems.simWrapper.simulationPeriodic();
     }
 
     robotSim.updateFuelSim();

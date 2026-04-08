@@ -33,6 +33,9 @@ import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import frc.robot.sim.SimWrapper;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.RobotBase;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -68,6 +71,7 @@ public class Subsystems {
   public final IndexerSubsystem indexerSubsystem;
   public final LEDSubsystem ledSubsystem;
   public final VisionSubsystemV2 visionSubsystemV2;
+  public final SimWrapper simWrapper;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -156,11 +160,22 @@ public class Subsystems {
       ledSubsystem = null;
     }
 
+    // Initialize VisionSubsystemV2 if enabled and drivetrain exists. Assign via a temp
+    // local to avoid compile-time dead-code warnings from constant folding.
+    VisionSubsystemV2 _visionTemp = null;
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
-      visionSubsystemV2 = new VisionSubsystemV2(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystemV2);
+      _visionTemp = new VisionSubsystemV2(drivebaseSubsystem);
+      SmartDashboard.putData(_visionTemp);
+    }
+    visionSubsystemV2 = _visionTemp;
+
+    // Create SimWrapper when running in simulation and the drivetrain exists. The SimWrapper
+    // encapsulates vision simulation and ground-truth physics. It requires a pose-reset
+    // consumer which we pass as the drivetrain's resetPose method.
+    if (drivebaseSubsystem != null && RobotBase.isSimulation()) {
+      simWrapper = new SimWrapper(drivebaseSubsystem, (Pose2d p) -> drivebaseSubsystem.resetPose(p));
     } else {
-      visionSubsystemV2 = null;
+      simWrapper = null;
     }
   }
 }
