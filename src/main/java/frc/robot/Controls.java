@@ -254,6 +254,7 @@ public class Controls {
         .rightTrigger()
         .or(GetTargetFromPose.autoShoot(s.drivebaseSubsystem))
         .and(new Trigger(() -> !driverController.a().getAsBoolean()))
+        .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(15.0)))
         .whileTrue(
             Commands.parallel(
                     Commands.either(

@@ -306,4 +306,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       resetPose(new Pose2d(new Translation2d(clampedX, clampedY), current.getRotation()));
     }
   }
+
+  public boolean isBeached(double pitchThreshold) {
+    return Math.abs(getPigeon2().getPitch().getValueAsDouble()) > pitchThreshold;
+  }
 }
