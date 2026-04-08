@@ -65,7 +65,7 @@ public class VisionSubsystemV2 extends SubsystemBase {
   private static final int RESET_MIN_TAGS = 2;
   private static final double MIN_RMSE = 0.01;
   private static final double MIN_STD_DEV = 0.01;
-  private static final double MIN_DIST_DELTA = 0.001;
+  private static final double MIN_DIST_DELTA = 0.01;
 
   // Sanity Gate Constants
   private static final double FIELD_MARGIN = 0.5;
