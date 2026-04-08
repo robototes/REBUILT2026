@@ -308,6 +308,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   public boolean isBeached(double pitchThreshold) {
-    return Math.abs(getPigeon2().getPitch().getValueAsDouble()) > pitchThreshold;
+    double pitch = Math.abs(getPigeon2().getPitch().getValueAsDouble());
+    double roll = Math.abs(getPigeon2().getRoll().getValueAsDouble());
+    return pitch > pitchThreshold || roll > pitchThreshold;
   }
 }
