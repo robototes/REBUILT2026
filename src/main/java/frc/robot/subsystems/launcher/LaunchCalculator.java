@@ -29,15 +29,14 @@ public class LaunchCalculator {
 
   // Cached variables (mostly for throttling method)
   private LaunchingParameters cachedParams;
-  private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
   private double lastTurretOmega = 0;
 
   // Throttling Magic numbers
-  private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
-  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(1); // Radians
-  private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(2); // M/s
-  private static final double MIN_OMEGA_TOLERANCE = 0.1; // Radians/s
+  private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
+  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(0.5); // Radians
+  private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(0.5); // M/s
+  private static final double MIN_OMEGA_TOLERANCE = 0.05; // Radians/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
@@ -58,6 +57,10 @@ public class LaunchCalculator {
   private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
+  private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_X = Units.inchesToMeters(47.0 / 2);
+  private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
+  private static final List<Pose2d> underclimbTags = new ArrayList<>();
+  private static final int[] underclimbTagIds = {15, 31};
 
   public record LaunchingParameters(
       double targetHood,
@@ -71,6 +74,15 @@ public class LaunchCalculator {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
         trenchTags.add(t.get().toPose2d());
+      } else {
+        edu.wpi.first.wpilibj.DriverStation.reportWarning(
+            "Tag " + tag + " not found in launch calculator", false);
+      }
+    }
+    for (int tag : underclimbTagIds) {
+      Optional<Pose3d> t = field.getTagPose(tag);
+      if (t.isPresent()) {
+        underclimbTags.add(t.get().toPose2d());
       } else {
         edu.wpi.first.wpilibj.DriverStation.reportWarning(
             "Tag " + tag + " not found in launch calculator", false);
@@ -121,7 +133,6 @@ public class LaunchCalculator {
     }
     // cache the pose and chassis speeds
     lastPose = currentPose;
-    lastSpeeds = currentSpeeds;
     lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
@@ -305,5 +316,12 @@ public class LaunchCalculator {
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
     return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
+  }
+
+  public static boolean isUnderClimb(Pose2d turretPose) {
+    Pose2d nearestTag = turretPose.nearest(underclimbTags);
+    double dx = Math.abs(turretPose.getX() - nearestTag.getX());
+    double dy = Math.abs(turretPose.getY() - nearestTag.getY());
+    return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;
   }
 }

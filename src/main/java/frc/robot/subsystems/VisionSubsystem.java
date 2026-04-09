@@ -263,8 +263,13 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (estimate == null || estimate.tagCount <= 0) return;
 
-    rawFieldPoseEntry.set(estimate.pose3d);
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
+    if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
+      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp");
+      return;
+    }
+
+    rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
         && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
@@ -508,7 +513,10 @@ public class VisionSubsystem extends SubsystemBase {
             * Math.pow(avgTagDist, P_XY.get())
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
-    double theta = VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
+    double theta =
+        (numOfTags == 1)
+            ? Double.MAX_VALUE
+            : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
 
     SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
     SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);

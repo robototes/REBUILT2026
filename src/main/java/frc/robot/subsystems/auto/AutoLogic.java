@@ -229,7 +229,8 @@ public class AutoLogic {
 
   public static Command launcherSimCommand() {
     return Commands.sequence(
-        AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), // SIM PURPOSES ONLY
+        AutoDriveRotate.autoRotate(
+            s.drivebaseSubsystem, () -> 0, () -> 0, () -> 0), // SIM PURPOSES ONLY
         Commands.run(
                 () ->
                     FuelSim.getInstance()
