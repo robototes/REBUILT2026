@@ -18,18 +18,16 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
-import java.util.function.DoubleSupplier;
 
 public class Flywheels extends SubsystemBase {
-  private final TalonFX FlywheelOne; // left
-  private final TalonFX FlywheelTwo; // right
+  private final TalonFX FlywheelOne; // left spins clockwise
+  private final TalonFX FlywheelTwo; // right spins counterclockwise
   private final DoubleTopic currentTopic; // supply current in amps
   private final DoubleTopic velocityTopic; // velocity in rps
   private final DoublePublisher currentPub;
@@ -48,8 +46,6 @@ public class Flywheels extends SubsystemBase {
 
   private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0).withEnableFOC(true);
-  private final Follower follow =
-      new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
   public NtTunableDouble targetVelocity;
   private long lastPositionUpdateTime = 0;
@@ -79,11 +75,7 @@ public class Flywheels extends SubsystemBase {
     velocityPub.set(0.0);
     currentPub.set(0.0);
 
-    if (RobotBase.isSimulation()) {
-      flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
-    }
-
-    flywheelOneRPS = FlywheelTwo.getVelocity();
+    flywheelOneRPS = FlywheelOne.getVelocity();
     flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
 
     FlywheelOne.clearStickyFaults();
@@ -101,7 +93,6 @@ public class Flywheels extends SubsystemBase {
 
     // create coast mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // create PID gains
     config.Slot0.kP = 1;
@@ -112,8 +103,13 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kS = 0.3;
     config.Slot0.kG = 0.0;
 
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     applyConfig(FlywheelOne, config);
+
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     applyConfig(FlywheelTwo, config);
+
+    FlywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
   }
 
   private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
@@ -138,53 +134,33 @@ public class Flywheels extends SubsystemBase {
     }
   }
 
-
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
               request.Velocity = rps;
-              FlywheelTwo.setControl(request);
-              //FlywheelOne.setControl(follow);
+              FlywheelOne.setControl(request);
             },
             () -> {
               FlywheelOne.stopMotor();
-              FlywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Velocity");
   }
 
-  public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
-    return runEnd(
-            () -> {
-              request.Velocity = rps.getAsDouble();
-              FlywheelTwo.setControl(request);
-              //FlywheelOne.setControl(follow);
-            },
-            () -> {
-              FlywheelOne.stopMotor();
-              FlywheelTwo.stopMotor();
-            })
-        .withName("Set Flywheel Supplied Velocity");
-  }
-
   public void setVelocityRPS(double rps) {
     request.Velocity = rps;
-    FlywheelTwo.setControl(request);
-    //FlywheelOne.setControl(follow);
+    FlywheelOne.setControl(request);
   }
 
   public Command stopCommand() {
     return runOnce(
             () -> {
               FlywheelOne.stopMotor();
-              FlywheelTwo.stopMotor();
             })
         .withName("Stop Flywheels");
   }
 
-  public void stopVoid() {
+  public void stop() {
     FlywheelOne.stopMotor();
-    FlywheelTwo.stopMotor();
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {

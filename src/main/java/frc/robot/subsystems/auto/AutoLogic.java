@@ -222,7 +222,8 @@ public class AutoLogic {
                 .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
         // .until(() -> s.flywheels.isOutOfFuel())
         .withTimeout(4.5)
-        .andThen(s.launcherSubsystem.rawStowCommand());  }
+        .andThen(s.launcherSubsystem.rawStowCommand());
+  }
 
   public static Command launcherSimCommand() {
     return Commands.sequence(

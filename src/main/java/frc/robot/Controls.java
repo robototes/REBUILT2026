@@ -256,7 +256,7 @@ public class Controls {
 
     driverController
         .rightTrigger()
-        //.or(readyToShoot)
+        // .or(readyToShoot)
         .and(driverController.a().negate())
         // .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
         .whileTrue(
@@ -331,13 +331,6 @@ public class Controls {
             Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
                 .withName("Disable Alliance Win Override")
                 .ignoringDisable(true));
-
-    if (s.flywheels.TUNER_CONTROLLED.get()) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.leftBumper())
-          .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
-      launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
-    }
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
