@@ -258,7 +258,7 @@ public class Controls {
         .rightTrigger()
         .or(readyToShoot)
         .and(driverController.a().negate())
-        .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
+        // .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
         .whileTrue(
             Commands.parallel(
                     Commands.either(

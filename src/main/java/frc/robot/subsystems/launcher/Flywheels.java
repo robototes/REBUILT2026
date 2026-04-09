@@ -85,6 +85,9 @@ public class Flywheels extends SubsystemBase {
 
     flywheelOneRPS = FlywheelOne.getVelocity();
     flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
+
+    FlywheelOne.clearStickyFaults();
+    FlywheelTwo.clearStickyFaults();
   }
 
   private void configureMotors() {
