@@ -279,7 +279,6 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             Commands.parallel(
-                                    Commands.runOnce(() -> s.flywheels.switchSlot(true)),
                                     s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
@@ -300,7 +299,6 @@ public class Controls {
                     Commands.runOnce(
                         () -> {
                           updateIntakeMode();
-                          s.flywheels.switchSlot(false);
                         }))
                 .withName("Launching Finished"));
     driverController
