@@ -248,15 +248,12 @@ public class Robot extends TimedRobot {
       double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightcOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
         }
       }
