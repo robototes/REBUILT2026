@@ -26,8 +26,8 @@ import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 
 public class Flywheels extends SubsystemBase {
-  private final TalonFX FlywheelOne; // left spins clockwise
-  private final TalonFX FlywheelTwo; // right spins counterclockwise
+  private final TalonFX flywheelOne; // left spins clockwise
+  private final TalonFX flywheelTwo; // right spins counterclockwise
   private final DoubleTopic currentTopic; // supply current in amps
   private final DoubleTopic velocityTopic; // velocity in rps
   private final DoublePublisher currentPub;
@@ -44,7 +44,6 @@ public class Flywheels extends SubsystemBase {
   private static final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
   private static final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
 
-  private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0).withEnableFOC(true);
 
   public NtTunableDouble targetVelocity;
@@ -61,8 +60,8 @@ public class Flywheels extends SubsystemBase {
 
   // Constructor
   public Flywheels() {
-    FlywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
-    FlywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
+    flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
+    flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
     targetVelocity = new NtTunableDouble("/launcher/flywheelTuner", 0.0);
     configureMotors();
@@ -75,11 +74,11 @@ public class Flywheels extends SubsystemBase {
     velocityPub.set(0.0);
     currentPub.set(0.0);
 
-    flywheelOneRPS = FlywheelOne.getVelocity();
-    flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
+    flywheelOneRPS = flywheelOne.getVelocity();
+    flywheelOneSupplyCurrent = flywheelOne.getSupplyCurrent();
 
-    FlywheelOne.clearStickyFaults();
-    FlywheelTwo.clearStickyFaults();
+    flywheelOne.clearStickyFaults();
+    flywheelTwo.clearStickyFaults();
   }
 
   private void configureMotors() {
@@ -104,12 +103,12 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kG = 0.0;
 
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    applyConfig(FlywheelOne, config);
+    applyConfig(flywheelOne, config);
 
     config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-    applyConfig(FlywheelTwo, config);
+    applyConfig(flywheelTwo, config);
 
-    FlywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
+    flywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
   }
 
   private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
@@ -138,29 +137,29 @@ public class Flywheels extends SubsystemBase {
     return runEnd(
             () -> {
               request.Velocity = rps;
-              FlywheelOne.setControl(request);
+              flywheelOne.setControl(request);
             },
             () -> {
-              FlywheelOne.stopMotor();
+              flywheelOne.stopMotor();
             })
         .withName("Set Flywheel Velocity");
   }
 
   public void setVelocityRPS(double rps) {
     request.Velocity = rps;
-    FlywheelOne.setControl(request);
+    flywheelOne.setControl(request);
   }
 
   public Command stopCommand() {
     return runOnce(
             () -> {
-              FlywheelOne.stopMotor();
+              flywheelOne.stopMotor();
             })
         .withName("Stop Flywheels");
   }
 
   public void stop() {
-    FlywheelOne.stopMotor();
+    flywheelOne.stopMotor();
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
@@ -188,13 +187,6 @@ public class Flywheels extends SubsystemBase {
     if (!hasDipped) return false;
 
     return m_recoveredDebouncer.calculate(atTarget);
-  }
-
-  @Override
-  public void simulationPeriodic() {
-    if (flywheelSim != null) {
-      flywheelSim.update();
-    }
   }
 
   @Override
