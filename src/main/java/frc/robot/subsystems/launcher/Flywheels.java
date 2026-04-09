@@ -126,22 +126,22 @@ public class Flywheels extends SubsystemBase {
   }
 
   private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
-    int ID = motor.getDeviceID();
+    int id = motor.getDeviceID();
     StatusCode status = StatusCode.StatusCodeNotInitialized;
     for (int i = 0; i < MAX_APPLY_CONFIG_ATTEMPTS; i++) {
       status = motor.getConfigurator().apply(config, MAX_APPLY_CONFIG_TIMEOUT);
       if (status.isOK()) {
-        DataLogManager.log("Successfully applied configuation to motor ID " + ID);
+        DataLogManager.log("Successfully applied configuration to motor ID " + id);
         break; // Success, exit the loop
       }
     }
     if (!status.isOK()) {
       DriverStation.reportError(
           "CRITICAL: Failed to configure Talon ID "
-              + ID
+              + id
               + " after "
               + MAX_APPLY_CONFIG_ATTEMPTS
-              + "attempts: "
+              + " attempts: "
               + status.getDescription(),
           true);
     }
