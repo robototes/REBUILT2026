@@ -3,7 +3,6 @@ package frc.robot.subsystems.launcher;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -90,8 +89,6 @@ public class Flywheels extends SubsystemBase {
 
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
-    TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
-    TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
     config.CurrentLimits.SupplyCurrentLimit = 80;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
