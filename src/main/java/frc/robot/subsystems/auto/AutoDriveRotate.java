@@ -34,8 +34,6 @@ public class AutoDriveRotate {
 
   // Launch Calculator Instance
   private static final LaunchCalculator launchCalc = LaunchCalculator.getInstance();
-  private static final Translation2d turretTranslation =
-      LauncherConstants.turretTransform().getTranslation();
 
   private static class AutoRotateCommand extends Command {
     protected final PIDController pidRotate = new PIDController(kP, kI, kD);
