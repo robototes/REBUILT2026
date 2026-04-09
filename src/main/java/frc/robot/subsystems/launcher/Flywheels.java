@@ -45,7 +45,7 @@ public class Flywheels extends SubsystemBase {
 
   // Config apply
   private final double MAX_APPLY_CONFIG_ATTEMPTS = 5;
-  private final double MAX_APPLY_CONFIG_TIMEOUT = 0.03; // seconds, or 30 miliseconds
+  private final double MAX_APPLY_CONFIG_TIMEOUT = 0.01; // Default is 10 ms
 
   private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0);
@@ -121,22 +121,25 @@ public class Flywheels extends SubsystemBase {
     config.Slot1.kS = 0.3;
     config.Slot1.kG = 0.0;
 
-    applyConfig(frConfigurator, config);
-    applyConfig(flConfigurator, config);
+    applyConfig(FlywheelOne, config);
+    applyConfig(FlywheelTwo, config);
   }
 
-  public void applyConfig(TalonFXConfigurator configurator, TalonFXConfiguration config) {
+  public void applyConfig(TalonFX motor, TalonFXConfiguration config) {
+    int ID = motor.getDeviceID();
     StatusCode status = StatusCode.StatusCodeNotInitialized;
     for (int i = 0; i < MAX_APPLY_CONFIG_ATTEMPTS; i++) {
-      status = configurator.apply(config, MAX_APPLY_CONFIG_TIMEOUT);
+      status = motor.getConfigurator().apply(config, MAX_APPLY_CONFIG_TIMEOUT);
       if (status.isOK()) {
-        DataLogManager.log("Successfully applied configuation to motor");
+        DataLogManager.log("Successfully applied configuation to motor ID " + ID);
         break; // Success, exit the loop
       }
     }
     if (!status.isOK()) {
       DriverStation.reportError(
-          "CRITICAL: Failed to configure Talon after "
+          "CRITICAL: Failed to configure Talon ID "
+              + ID
+              + " after "
               + MAX_APPLY_CONFIG_ATTEMPTS
               + "attempts: "
               + status.getDescription(),
