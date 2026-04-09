@@ -45,7 +45,11 @@ public class AutoDriveRotate {
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier turretPos) {
+    public AutoRotateCommand(
+        Subsystems s,
+        DoubleSupplier xSupplier,
+        DoubleSupplier ySupplier,
+        DoubleSupplier turretPos) {
       this.turretPos = turretPos;
       targetSupplier =
           () -> launchCalc.getParameters(s.drivebaseSubsystem, s.turretSubsystem).targetTurret();
@@ -71,7 +75,9 @@ public class AutoDriveRotate {
 
       // Added math.pi so that facing forward for turret is facing intake
       double fieldRelativeSetpoint =
-          currentRobotRotation.plus(robotRelativeTarget).getRadians() + turretPos.getAsDouble() + Math.PI;
+          currentRobotRotation.plus(robotRelativeTarget).getRadians()
+              + turretPos.getAsDouble()
+              + Math.PI;
 
       double rotationOutput =
           pidRotate.calculate(currentRobotRotation.getRadians(), fieldRelativeSetpoint);
