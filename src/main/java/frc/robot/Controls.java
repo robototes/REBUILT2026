@@ -30,13 +30,16 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
+import java.util.Optional;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -87,6 +90,8 @@ public class Controls {
   private LEDMode ledsMode = LEDMode.DEFAULT;
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
 
+  public static boolean turretKillActive = false;
+
   public static final double MaxSpeed =
       (RobotType.TYPE == RobotTypesEnum.ALPHA)
           ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
@@ -104,6 +109,8 @@ public class Controls {
           .withDeadband(0.0001)
           .withRotationalDeadband(0.0001)
           .withDriveRequestType(DriveRequestType.Velocity);
+
+  private Trigger readyToShoot = new Trigger(() -> false);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems, SimWrapper simWrapper) {
@@ -179,8 +186,10 @@ public class Controls {
       return;
     }
 
-    driverController
-        .y()
+    readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
+
+    connected(launcherTuningController)
+        .and(launcherTuningController.y())
         .whileTrue(
             WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
     // Note that X is defined as forward according to WPILib convention,
@@ -248,10 +257,24 @@ public class Controls {
     // Shooting triggers
     driverController
         .rightTrigger()
+        .or(readyToShoot)
+        .and(driverController.a().negate())
+        .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
         .whileTrue(
             Commands.parallel(
-                    // AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()->
-                    // driverController.getLeftX(), ()-> driverController.getLeftY()),
+                    Commands.either(
+                        AutoDriveRotate.autoRotate(
+                            s.drivebaseSubsystem,
+                            () -> getDriveX(),
+                            () -> getDriveY(),
+                            () -> Units.rotationsToDegrees(s.turretSubsystem.getTurretPosition())),
+                        s.drivebaseSubsystem.applyRequest(
+                            () ->
+                                drive
+                                    .withVelocityX(getDriveX())
+                                    .withVelocityY(getDriveY())
+                                    .withRotationalRate(getDriveRotate())),
+                        () -> turretKillActive),
                     s.launcherSubsystem.launcherAimCommand(),
                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
@@ -334,6 +357,20 @@ public class Controls {
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
+
+    driverController
+        .x()
+        .onTrue(
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
+                .withName("Enable Alliance Win Override")
+                .ignoringDisable(true));
+
+    driverController
+        .b()
+        .onTrue(
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
+                .withName("Disable Alliance Win Override")
+                .ignoringDisable(true));
 
     if (s.flywheels.TUNER_CONTROLLED.get()) {
       connected(launcherTuningController)
@@ -469,6 +506,18 @@ public class Controls {
     }
 
     s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
+    driverController
+        .y()
+        .toggleOnTrue(
+            s.turretSubsystem
+                .run(
+                    () ->
+                        s.turretSubsystem.setTurretRawPosition(
+                            s.turretSubsystem.getTurretPosition()))
+                .withName("Turret Kill — Hold Position"))
+        .onTrue(
+            Commands.runOnce(() -> turretKillActive = !turretKillActive)
+                .withName("Toggle Turret Kill"));
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
@@ -516,19 +565,15 @@ public class Controls {
       return;
     }
     s.ledSubsystem.setDefaultCommand(
-        Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
+        Commands.run(
+                () -> {
+                  if (RobotState.isTeleop()) {
+                    s.ledSubsystem.setMode(ledsMode);
+                  }
+                },
+                s.ledSubsystem)
             .withName("LED Default Command"));
 
-    Trigger shiftWarning =
-        new Trigger(
-            () -> {
-              if (RobotState.isAutonomous()) return false;
-
-              var shiftInfo = HubShiftUtil.getOfficialShiftInfo();
-
-              return shiftInfo.remainingTime() <= 4.0;
-            });
-
-    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 5, 0.1));
+    readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
   }
 }
