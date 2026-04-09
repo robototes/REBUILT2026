@@ -30,8 +30,8 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
-import frc.robot.subsystems.auto.ClimbAutoAlign;
 import frc.robot.subsystems.auto.AutoDriveRotate;
+import frc.robot.subsystems.auto.ClimbAutoAlign;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -318,7 +318,6 @@ public class Controls {
                         s.intakePivot.zeroPivot(),
                         () -> DriverStation.isEnabled()),
                     s.turretSubsystem.zeroTurret(),
-                    Commands.runOnce(() -> s.climbSubsystem.zeroPivot()),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
