@@ -263,8 +263,13 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (estimate == null || estimate.tagCount <= 0) return;
 
-    rawFieldPoseEntry.set(estimate.pose3d);
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
+    if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
+      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp");
+      return;
+    }
+
+    rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
         && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)

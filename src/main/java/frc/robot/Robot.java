@@ -210,6 +210,7 @@ public class Robot extends TimedRobot {
     }
     CommandScheduler.getInstance()
         .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
+    Controls.turretKillActive = false;
   }
 
   @Override
@@ -237,7 +238,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    // subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -272,6 +273,10 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+
+    if (subsystems.visionSubsystem != null) {
+      subsystems.visionSubsystem.update();
+    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
