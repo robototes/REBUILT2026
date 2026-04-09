@@ -15,7 +15,6 @@ import frc.robot.subsystems.launcher.LaunchCalculator;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-/** class is designed to rotate only if turret is fixed at 0 */
 public class AutoDriveRotate {
   public static Command autoRotate(
       Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier turretPos) {
