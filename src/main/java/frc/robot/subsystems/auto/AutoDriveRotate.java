@@ -18,8 +18,8 @@ import java.util.function.Supplier;
 /** class is designed to rotate only if turret is fixed at 0 */
 public class AutoDriveRotate {
   public static Command autoRotate(
-      Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
-    return new AutoRotateCommand(s, xSupplier, ySupplier).withName("Auto Align");
+      Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier turretPos) {
+    return new AutoRotateCommand(s, xSupplier, ySupplier, turretPos).withName("Auto Align");
   }
 
   // Tunable:
@@ -41,11 +41,12 @@ public class AutoDriveRotate {
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
     private final DoublePublisher anglePub;
-
+    private final DoubleSupplier turretPos;
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-    public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
+    public AutoRotateCommand(Subsystems s, DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier turretPos) {
+      this.turretPos = turretPos;
       targetSupplier =
           () -> launchCalc.getParameters(s.drivebaseSubsystem, s.turretSubsystem).targetTurret();
       this.s = s;
@@ -70,7 +71,7 @@ public class AutoDriveRotate {
 
       // Added math.pi so that facing forward for turret is facing intake
       double fieldRelativeSetpoint =
-          currentRobotRotation.plus(robotRelativeTarget).getRadians() + Math.PI;
+          currentRobotRotation.plus(robotRelativeTarget).getRadians() + turretPos.getAsDouble() + Math.PI;
 
       double rotationOutput =
           pidRotate.calculate(currentRobotRotation.getRadians(), fieldRelativeSetpoint);

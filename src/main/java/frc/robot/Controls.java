@@ -264,10 +264,10 @@ public class Controls {
             Commands.parallel(
                     Commands.either(
                         AutoDriveRotate.autoRotate(
-                            s.drivebaseSubsystem,
+                            s,
                             () -> getDriveX(),
                             () -> getDriveY(),
-                            () -> Units.rotationsToDegrees(s.turretSubsystem.getTurretPosition())),
+                            () -> Units.rotationsToRadians(s.turretSubsystem.getTurretPosition())),
                         s.drivebaseSubsystem.applyRequest(
                             () ->
                                 drive
