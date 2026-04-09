@@ -123,6 +123,8 @@ public class Flywheels extends SubsystemBase {
 
     applyConfig(FlywheelOne, config);
     applyConfig(FlywheelTwo, config);
+    // Set control once so that it follows for the entire time it's on
+    FlywheelOne.setControl(follow);
   }
 
   private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
@@ -160,10 +162,8 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps;
               FlywheelTwo.setControl(request);
-              FlywheelOne.setControl(follow);
             },
             () -> {
-              FlywheelOne.stopMotor();
               FlywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Velocity");
@@ -174,10 +174,8 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps.getAsDouble();
               FlywheelTwo.setControl(request);
-              FlywheelOne.setControl(follow);
             },
             () -> {
-              FlywheelOne.stopMotor();
               FlywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Supplied Velocity");
@@ -186,20 +184,17 @@ public class Flywheels extends SubsystemBase {
   public void setVelocityRPS(double rps) {
     request.Velocity = rps;
     FlywheelTwo.setControl(request);
-    FlywheelOne.setControl(follow);
   }
 
   public Command stopCommand() {
     return runOnce(
             () -> {
-              FlywheelOne.stopMotor();
               FlywheelTwo.stopMotor();
             })
         .withName("Stop Flywheels");
   }
 
   public void stopVoid() {
-    FlywheelOne.stopMotor();
     FlywheelTwo.stopMotor();
   }
 
