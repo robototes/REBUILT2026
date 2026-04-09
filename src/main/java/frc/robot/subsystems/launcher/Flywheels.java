@@ -44,7 +44,7 @@ public class Flywheels extends SubsystemBase {
   private boolean hasDipped = false;
 
   // Config apply
-  private final double MAX_APPLY_CONFIG_ATTEMPTS = 5;
+  private final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
   private final double MAX_APPLY_CONFIG_TIMEOUT = 0.01; // Default is 10 ms
 
   private FlywheelsSim flywheelSim;
@@ -125,7 +125,7 @@ public class Flywheels extends SubsystemBase {
     applyConfig(FlywheelTwo, config);
   }
 
-  public void applyConfig(TalonFX motor, TalonFXConfiguration config) {
+  private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
     int ID = motor.getDeviceID();
     StatusCode status = StatusCode.StatusCodeNotInitialized;
     for (int i = 0; i < MAX_APPLY_CONFIG_ATTEMPTS; i++) {
