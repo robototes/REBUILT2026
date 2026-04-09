@@ -186,6 +186,8 @@ public class Controls {
       return;
     }
 
+    readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
+
     connected(launcherTuningController)
         .and(launcherTuningController.y())
         .whileTrue(
@@ -534,7 +536,6 @@ public class Controls {
                 s.ledSubsystem)
             .withName("LED Default Command"));
 
-    readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
     readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
   }
 }
