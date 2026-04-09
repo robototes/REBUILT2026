@@ -136,7 +136,11 @@ public class Flywheels extends SubsystemBase {
     }
     if (!status.isOK()) {
       DriverStation.reportError(
-          "CRITICAL: Failed to configure Talon after 5 attempts: " + status.getDescription(), true);
+          "CRITICAL: Failed to configure Talon after "
+              + MAX_APPLY_CONFIG_ATTEMPTS
+              + "attempts: "
+              + status.getDescription(),
+          true);
     }
   }
 
