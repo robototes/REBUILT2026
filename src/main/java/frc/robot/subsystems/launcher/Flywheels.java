@@ -1,8 +1,8 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -16,6 +16,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -34,11 +36,15 @@ public class Flywheels extends SubsystemBase {
   private final DoublePublisher velocityPub;
 
   // Debounce stuff
-  private final double DURATION = 1; // second
+  private static final double DURATION = 1; // second
   private final Debouncer m_dippedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kFalling);
   private final Debouncer m_recoveredDebouncer =
       new Debouncer(DURATION, Debouncer.DebounceType.kRising);
   private boolean hasDipped = false;
+
+  // Config apply
+  private static final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
+  private static final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
 
   private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0);
@@ -83,8 +89,6 @@ public class Flywheels extends SubsystemBase {
 
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
-    TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
-    TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
     config.CurrentLimits.SupplyCurrentLimit = 80;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -114,8 +118,30 @@ public class Flywheels extends SubsystemBase {
     config.Slot1.kS = 0.3;
     config.Slot1.kG = 0.0;
 
-    flConfigurator.apply(config);
-    frConfigurator.apply(config);
+    applyConfig(FlywheelOne, config);
+    applyConfig(FlywheelTwo, config);
+  }
+
+  private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
+    int id = motor.getDeviceID();
+    StatusCode status = StatusCode.StatusCodeNotInitialized;
+    for (int i = 0; i < MAX_APPLY_CONFIG_ATTEMPTS; i++) {
+      status = motor.getConfigurator().apply(config, MAX_APPLY_CONFIG_TIMEOUT);
+      if (status.isOK()) {
+        DataLogManager.log("Successfully applied configuration to motor ID " + id);
+        break; // Success, exit the loop
+      }
+    }
+    if (!status.isOK()) {
+      DriverStation.reportError(
+          "CRITICAL: Failed to configure Talon ID "
+              + id
+              + " after "
+              + MAX_APPLY_CONFIG_ATTEMPTS
+              + " attempts: "
+              + status.getDescription(),
+          true);
+    }
   }
 
   public void switchSlot(boolean isLaunching) {
