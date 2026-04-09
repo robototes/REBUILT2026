@@ -37,15 +37,15 @@ public class Flywheels extends SubsystemBase {
   private final DoublePublisher velocityPub;
 
   // Debounce stuff
-  private final double DURATION = 1; // second
+  private static final double DURATION = 1; // second
   private final Debouncer m_dippedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kFalling);
   private final Debouncer m_recoveredDebouncer =
       new Debouncer(DURATION, Debouncer.DebounceType.kRising);
   private boolean hasDipped = false;
 
   // Config apply
-  private final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
-  private final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
+  private static final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
+  private static final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
 
   private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0);
