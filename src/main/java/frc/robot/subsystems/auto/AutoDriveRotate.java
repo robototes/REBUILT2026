@@ -44,7 +44,6 @@ public class AutoDriveRotate {
     private final Supplier<Rotation2d> targetSupplier;
     private final DoubleSupplier xSupplier;
     private final DoubleSupplier ySupplier;
-    private final DoubleSupplier turretOffsetDegrees;
     private final DoublePublisher anglePub;
 
     private final SwerveRequest.FieldCentric driveRequest =
@@ -56,7 +55,6 @@ public class AutoDriveRotate {
       this.s = s;
       this.xSupplier = xSupplier;
       this.ySupplier = ySupplier;
-      this.turretOffsetDegrees = turretOffsetDegrees;
       anglePub =
           NetworkTableInstance.getDefault().getDoubleTopic("/drivebase/targetRotation").publish();
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
