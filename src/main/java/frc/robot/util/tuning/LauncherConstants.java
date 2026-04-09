@@ -105,7 +105,7 @@ public class LauncherConstants {
   // }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
-    return flywheelMap.get(distance + 0.4);
+    return flywheelMap.get(distance);
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
@@ -129,7 +129,7 @@ public class LauncherConstants {
   }
 
   public static double getHoodAngleFromDistance(double distance) {
-    return hoodMap.get(distance + 0.4);
+    return hoodMap.get(distance);
   }
 
   public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot) {
