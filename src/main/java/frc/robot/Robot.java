@@ -193,16 +193,13 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().cancelAll();
     if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
-        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_A, true);
+        LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
-        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_B, true);
+        LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_B, THROTTLE_ON);
       }
       if (subsystems.visionSubsystem.limelightcOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
-        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_C, true);
+        LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_ON);
       }
     }
     if (subsystems.turretSubsystem != null) {
@@ -233,7 +230,22 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    if (subsystems.visionSubsystem != null) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_A, true);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_B, true);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_C, true);
+      }
+    }
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
@@ -322,8 +334,6 @@ public class Robot extends TimedRobot {
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
       LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
       // seed internal limelight imu for mt2
       LimelightHelpers.SetIMUMode(limelightName, 1);
       LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
