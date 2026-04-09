@@ -83,7 +83,7 @@ public class Flywheels extends SubsystemBase {
       flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
     }
 
-    flywheelOneRPS = FlywheelOne.getVelocity();
+    flywheelOneRPS = FlywheelTwo.getVelocity();
     flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
 
     FlywheelOne.clearStickyFaults();
@@ -144,7 +144,7 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps;
               FlywheelTwo.setControl(request);
-              FlywheelOne.setControl(follow);
+              //FlywheelOne.setControl(follow);
             },
             () -> {
               FlywheelOne.stopMotor();
@@ -158,7 +158,7 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps.getAsDouble();
               FlywheelTwo.setControl(request);
-              FlywheelOne.setControl(follow);
+              //FlywheelOne.setControl(follow);
             },
             () -> {
               FlywheelOne.stopMotor();
@@ -170,7 +170,7 @@ public class Flywheels extends SubsystemBase {
   public void setVelocityRPS(double rps) {
     request.Velocity = rps;
     FlywheelTwo.setControl(request);
-    FlywheelOne.setControl(follow);
+    //FlywheelOne.setControl(follow);
   }
 
   public Command stopCommand() {
