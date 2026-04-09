@@ -45,7 +45,7 @@ public class Flywheels extends SubsystemBase {
 
   // Config apply
   private final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
-  private final double MAX_APPLY_CONFIG_TIMEOUT = 0.01; // Default is 10 ms
+  private final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
 
   private FlywheelsSim flywheelSim;
   private VelocityVoltage request = new VelocityVoltage(0);
