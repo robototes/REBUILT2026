@@ -47,7 +47,7 @@ public class Flywheels extends SubsystemBase {
   private static final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
 
   private FlywheelsSim flywheelSim;
-  private VelocityVoltage request = new VelocityVoltage(0);
+  private VelocityVoltage request = new VelocityVoltage(0).withEnableFOC(true);
   private final Follower follow =
       new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
 
@@ -93,33 +93,24 @@ public class Flywheels extends SubsystemBase {
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 80;
+    config.CurrentLimits.SupplyCurrentLimit = 100;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLowerLimit = 0;
-    config.CurrentLimits.StatorCurrentLimit = 100;
+    config.CurrentLimits.StatorCurrentLimit = 130;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create coast mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 0.1;
+    config.Slot0.kP = 1;
     config.Slot0.kI = 0.0;
     config.Slot0.kD = 0.0;
     config.Slot0.kA = 0.0;
-    config.Slot0.kV = 6.0 / 45.0;
+    config.Slot0.kV = (6.0 / 45.0) * 1.05;
     config.Slot0.kS = 0.3;
     config.Slot0.kG = 0.0;
-
-    // create PID gains slot 1
-    config.Slot1.kP = 1.0;
-    config.Slot1.kI = 0.0;
-    config.Slot1.kD = 0.0;
-    config.Slot1.kA = 0.0;
-    config.Slot1.kV = 6.0 / 45.0;
-    config.Slot1.kS = 0.3;
-    config.Slot1.kG = 0.0;
 
     applyConfig(FlywheelOne, config);
     applyConfig(FlywheelTwo, config);
@@ -149,13 +140,6 @@ public class Flywheels extends SubsystemBase {
     }
   }
 
-  public void switchSlot(boolean isLaunching) {
-    if (isLaunching) {
-      request = request.withSlot(1);
-    } else {
-      request = request.withSlot(0);
-    }
-  }
 
   public Command setVelocityCommand(double rps) {
     return runEnd(

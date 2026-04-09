@@ -7,8 +7,8 @@ public class Hardware {
   public static final int INTAKE_MOTOR_TWO_ID = 17;
 
   // Launcher Motors (20-29)
-  public static final int FLYWHEEL_ONE_ID = 20;
-  public static final int FLYWHEEL_TWO_ID = 21;
+  public static final int FLYWHEEL_ONE_ID = 21;
+  public static final int FLYWHEEL_TWO_ID = 20;
   public static final int HOOD_MOTOR_ID = 22;
   public static final int TURRET_MOTOR_ID = 23;
 

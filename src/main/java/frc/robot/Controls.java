@@ -256,7 +256,7 @@ public class Controls {
 
     driverController
         .rightTrigger()
-        .or(readyToShoot)
+        //.or(readyToShoot)
         .and(driverController.a().negate())
         // .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
         .whileTrue(
@@ -279,7 +279,6 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             Commands.parallel(
-                                    Commands.runOnce(() -> s.flywheels.switchSlot(true)),
                                     s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
@@ -300,7 +299,6 @@ public class Controls {
                     Commands.runOnce(
                         () -> {
                           updateIntakeMode();
-                          s.flywheels.switchSlot(false);
                         }))
                 .withName("Launching Finished"));
     driverController
