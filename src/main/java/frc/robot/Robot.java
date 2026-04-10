@@ -234,7 +234,7 @@ public class Robot extends TimedRobot {
         subsystems.hood.setHoodPosition(0);
       } else {
         DriverStation.reportWarning(
-            "Attempted to set hood position although it hasn't been zeroed", null);
+            "Attempted to set hood position although it hasn't been zeroed", false);
       }
     }
   }
