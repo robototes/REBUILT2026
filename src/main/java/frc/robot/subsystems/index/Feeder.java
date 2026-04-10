@@ -51,6 +51,7 @@ public class Feeder extends SubsystemBase {
             Hardware.FEEDER_MOTOR_ID,
             (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     feederConfig();
+    feedMotor.clearStickyFaults();
 
     if (RobotBase.isSimulation()) {
       LinearSystem feedMotorSystem =
@@ -100,6 +101,14 @@ public class Feeder extends SubsystemBase {
       feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
     } else {
       feedMotor.setControl(TARGET_VELOCITY.withVelocity(D_TARGET_RPS));
+    }
+  }
+
+  public void setVelocity(double rps) {
+    if (TUNABLE_ENABLE.get()) {
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+    } else {
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
     }
   }
 

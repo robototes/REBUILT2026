@@ -49,6 +49,8 @@ public class IntakeRollers extends SubsystemBase {
             (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
+    leftRoller.clearStickyFaults();
+    rightRoller.clearStickyFaults();
     networktables();
 
     // sim creator

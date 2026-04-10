@@ -66,7 +66,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 20; // ampsd
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 200;
@@ -109,6 +109,7 @@ public class TurretSubsystem extends SubsystemBase {
             RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     zeroPublisher.set(false);
     turretConfig();
+    turretMotor.clearStickyFaults();
     turretRotation.set(new Pose2d[2]);
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();

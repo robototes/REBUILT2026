@@ -3,11 +3,9 @@ package frc.robot.subsystems.launcher;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -150,7 +148,7 @@ public class Flywheels extends SubsystemBase {
   public void setVelocityRPS(double rps) {
     request.Velocity = rps;
     flywheelOne.setControl(request);
-                  flywheelTwo.setControl(request);
+    flywheelTwo.setControl(request);
   }
 
   public Command stopCommand() {
@@ -175,6 +173,10 @@ public class Flywheels extends SubsystemBase {
 
   public Trigger atTargetVelocityTrigger(double targetRPS, double toleranceRPS) {
     return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
+  }
+
+  public double getTargetSpeed() {
+    return request.Velocity;
   }
 
   public void resetFuelCheck() {
