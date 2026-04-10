@@ -70,9 +70,11 @@ public class LauncherSubsystem extends SubsystemBase {
   public Command rawStowCommand() {
     hoodGoal = 0;
     flywheelsGoal = 0;
-    return Commands.parallel(
-            Commands.runOnce(() -> s.hood.setHoodPosition(0)),
-            Commands.runOnce(() -> s.flywheels.setVelocityRPS(Flywheels.IDLE_FLYWHEEL_RPS)))
+    return Commands.runOnce(
+            () -> {
+              flywheelsGoal = Flywheels.IDLE_FLYWHEEL_RPS;
+              s.flywheels.runIdleRPS();
+            })
         .withName("Raw Stow Command");
   }
 }

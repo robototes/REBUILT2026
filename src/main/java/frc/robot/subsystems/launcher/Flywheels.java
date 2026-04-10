@@ -153,6 +153,10 @@ public class Flywheels extends SubsystemBase {
     flywheelOne.setControl(request);
   }
 
+  public void runIdleRPS() {
+    setVelocityRPS(IDLE_FLYWHEEL_RPS);
+  }
+
   public Command stopCommand() {
     return runOnce(
             () -> {
