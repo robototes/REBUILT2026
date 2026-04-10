@@ -58,6 +58,9 @@ public class Flywheels extends SubsystemBase {
   private StatusSignal<AngularVelocity> flywheelOneRPS;
   private StatusSignal<Current> flywheelOneSupplyCurrent;
 
+  // idle flywheel
+  public static final double IDLE_FLYWHEEL_RPS = 10;
+
   // Constructor
   public Flywheels() {
     flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
