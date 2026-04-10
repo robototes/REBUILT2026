@@ -83,6 +83,7 @@ public class Flywheels extends SubsystemBase {
 
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
+
     // set current limits
     config.CurrentLimits.SupplyCurrentLimit = 80;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -108,7 +109,8 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     applyConfig(flywheelTwo, config);
 
-    // flywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
+    flywheelTwo.setControl(
+        new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed).withUpdateFreqHz(1000));
   }
 
   private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
@@ -138,11 +140,9 @@ public class Flywheels extends SubsystemBase {
             () -> {
               request.Velocity = rps;
               flywheelOne.setControl(request);
-              flywheelTwo.setControl(request);
             },
             () -> {
               flywheelOne.stopMotor();
-              flywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Velocity");
   }
@@ -150,21 +150,18 @@ public class Flywheels extends SubsystemBase {
   public void setVelocityRPS(double rps) {
     request.Velocity = rps;
     flywheelOne.setControl(request);
-                  flywheelTwo.setControl(request);
   }
 
   public Command stopCommand() {
     return runOnce(
             () -> {
               flywheelOne.stopMotor();
-              flywheelTwo.stopMotor();
             })
         .withName("Stop Flywheels");
   }
 
   public void stop() {
     flywheelOne.stopMotor();
-    flywheelTwo.stopMotor();
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
