@@ -65,7 +65,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 40; // ampsd
+  private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
 
   // Gear Ratio
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
