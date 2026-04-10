@@ -56,7 +56,7 @@ public class Robot extends TimedRobot {
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
-  private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
+  private final double BROWNOUT_VOLTAGE = 7.0;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
