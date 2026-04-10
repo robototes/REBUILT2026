@@ -308,6 +308,18 @@ public class Controls {
         .and(readyToShoot)
         .whileTrue(
             Commands.parallel(
+                    Commands.either(
+                        AutoDriveRotate.autoRotate(
+                                s.drivebaseSubsystem,
+                                () -> getDriveX(),
+                                () -> getDriveY(),
+                                () ->
+                                    Units.rotationsToDegrees(s.turretSubsystem.getTurretPosition()))
+                            .andThen(
+                                Commands.run(
+                                    () -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake()))),
+                        Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())),
+                        () -> turretKillActive),
                     Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())),
                     s.launcherSubsystem.launcherAimCommand(),
                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
