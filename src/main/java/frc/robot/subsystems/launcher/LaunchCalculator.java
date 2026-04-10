@@ -234,20 +234,20 @@ public class LaunchCalculator {
     }
     // Velocity feedforward
     double feedforwardAngularVelocity = 0;
-    if (trueDistance > VFF_DIST_TOLERANCE) {
-      // Calculated using the 2D cross product. We find the tangential velocity by taking the dot
-      // product of our velocity vector and a vector perpendicular to our target direction (swapped
-      // x and y) to get the velocity component that is tangent to the target. then divide by the
-      // distance to normalize the magnitude in m/s
-      double tangentialVel =
-          (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
+    // if (trueDistance > VFF_DIST_TOLERANCE) {
+    //   // Calculated using the 2D cross product. We find the tangential velocity by taking the dot
+    //   // product of our velocity vector and a vector perpendicular to our target direction (swapped
+    //   // x and y) to get the velocity component that is tangent to the target. then divide by the
+    //   // distance to normalize the magnitude in m/s
+    //   double tangentialVel =
+    //       (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
 
-      // Calculated using the standard angular velocity formula (linear velocity / radius). We
-      // offset it with the robot's field angular velocity to get the true angular velocity in
-      // radians per second
-      feedforwardAngularVelocity =
-          (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
-    }
+    //   // Calculated using the standard angular velocity formula (linear velocity / radius). We
+    //   // offset it with the robot's field angular velocity to get the true angular velocity in
+    //   // radians per second
+    //   feedforwardAngularVelocity =
+    //       (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
+    // }
 
     Rotation2d targetAngleFieldRelative;
     if (trueDistance < MIN_DISTANCE_TO_TARGET) {
