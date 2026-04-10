@@ -84,10 +84,10 @@ public class Flywheels extends SubsystemBase {
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 100;
+    config.CurrentLimits.SupplyCurrentLimit = 80;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLowerLimit = 0;
-    config.CurrentLimits.StatorCurrentLimit = 130;
+    config.CurrentLimits.StatorCurrentLimit = 80;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // create coast mode for motors
