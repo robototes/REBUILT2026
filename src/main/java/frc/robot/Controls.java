@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -332,6 +333,11 @@ public class Controls {
             Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
                 .withName("Disable Alliance Win Override")
                 .ignoringDisable(true));
+    driverController
+        .leftStick()
+        .onTrue(
+            Commands.startEnd(
+                () -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake()), () -> {}));
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
