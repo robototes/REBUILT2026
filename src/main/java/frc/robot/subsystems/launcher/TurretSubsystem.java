@@ -69,9 +69,9 @@ public class TurretSubsystem extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 20; // ampsd
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 200;
-  private static final double ACCELERATION = 1200;
-  private static final double JERK = 6000;
+  private static final double CRUISE_VELOCITY = 1;
+  private static final double ACCELERATION = 1.2;
+  private static final double JERK = 2;
 
   // Gear Ratio
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
