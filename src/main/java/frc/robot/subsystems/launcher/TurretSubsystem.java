@@ -41,7 +41,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
-  private static final double NOMINAL_BATTERY_VOLTAGE = 12;
 
   // The tolerance is this high because the turret position is always updating so it is not
   // always exactly where it should be, I am mainly using this to stop shooting when the
@@ -66,7 +65,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 20; // ampsd
+  private static final int SUPPLY_CURRENT_LIMIT = 40; // ampsd
 
   // Motion Magic Config
   private static final double CRUISE_VELOCITY = 1;
