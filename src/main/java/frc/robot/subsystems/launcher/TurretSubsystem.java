@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
-  private final MotionMagicVoltage request = new MotionMagicVoltage(0);
+  private final PositionVoltage request = new PositionVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
 
@@ -55,22 +55,17 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = RobotType.isAlpha() ? 2.97 : 500;
+  private static final double kP = RobotType.isAlpha() ? 2.97 : 180;
   private static final double kI = 0;
-  private static final double kD = 0;
+  private static final double kD = RobotType.isAlpha() ? 0 : 18;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.346;
-  private static final double kV = (0.884766 * 12) / 1.125; // volts per requested rps
+  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.36;
+  private static final double kV = 12 / 1.29; // volts per requested rps
   private static final double kA = 0.12;
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
   private static final int SUPPLY_CURRENT_LIMIT = 40; // ampsd
-
-  // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 1.2;
-  private static final double ACCELERATION = 3;
-  private static final double JERK = 6;
 
   // Gear Ratio
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
@@ -144,10 +139,6 @@ public class TurretSubsystem extends SubsystemBase {
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(TURRET_MIN);
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-
-    config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;
-    config.MotionMagic.MotionMagicAcceleration = ACCELERATION;
-    config.MotionMagic.MotionMagicJerk = JERK;
 
     config.Slot0.kP = kP;
     config.Slot0.kI = kI;
