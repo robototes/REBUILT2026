@@ -94,6 +94,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher targetPub;
   private final DoublePublisher velocityPub;
   private final DoublePublisher currentPub;
+  private final DoublePublisher ffPub;
 
   // Status signals
   private final StatusSignal<Angle> positionSignal;
@@ -123,6 +124,8 @@ public class TurretSubsystem extends SubsystemBase {
     currentPub = table.getDoubleTopic("/Turret/Current").publish();
 
     targetPub = table.getDoubleTopic("/Turret/Target").publish();
+
+    ffPub = table.getDoubleTopic("/Turret/FF Volts").publish();
   }
 
   public void turretConfig() {
@@ -170,6 +173,7 @@ public class TurretSubsystem extends SubsystemBase {
     // dutycycle per requested rotation per second, so multiply
     // 12 to get true voltage
     double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV * NOMINAL_BATTERY_VOLTAGE;
+    ffPub.set(feedforwardVolts);
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
   }
