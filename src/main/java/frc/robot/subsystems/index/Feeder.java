@@ -103,6 +103,14 @@ public class Feeder extends SubsystemBase {
     }
   }
 
+  public void setVelocity(double rps) {
+    if (TUNABLE_ENABLE.get()) {
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+    } else {
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
+    }
+  }
+
   public void stopMotor() {
     feedMotor.stopMotor();
   }

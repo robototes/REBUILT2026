@@ -107,6 +107,14 @@ public class Spindexer extends SubsystemBase {
     }
   }
 
+  public void setVelocity(double rps) {
+    if (TUNABLE_ENABLE.get()) {
+      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+    } else {
+      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
+    }
+  }
+
   public void stopMotor() {
     spindexerMotor.stopMotor();
   }
