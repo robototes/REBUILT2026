@@ -50,6 +50,7 @@ public class Spindexer extends SubsystemBase {
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
+    spindexerMotor.clearStickyFaults();
 
     if (RobotBase.isSimulation()) {
       LinearSystem spindexerMotorSystem =

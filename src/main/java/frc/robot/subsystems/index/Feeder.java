@@ -51,6 +51,7 @@ public class Feeder extends SubsystemBase {
             Hardware.FEEDER_MOTOR_ID,
             (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     feederConfig();
+    feedMotor.clearStickyFaults();
 
     if (RobotBase.isSimulation()) {
       LinearSystem feedMotorSystem =
