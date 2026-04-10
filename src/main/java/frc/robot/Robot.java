@@ -227,6 +227,16 @@ public class Robot extends TimedRobot {
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.brakeTurret();
     }
+
+    // Zero hood before moving to autonomous or teleop
+    if (subsystems.hood != null) {
+      if (subsystems.hood.isHoodZeroed()) {
+        subsystems.hood.setHoodPosition(0);
+      } else {
+        DriverStation.reportWarning(
+            "Attempted to set hood position although it hasn't been zeroed", null);
+      }
+    }
   }
 
   @Override
