@@ -28,7 +28,7 @@ import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 
 public class Feeder extends SubsystemBase {
-  private final double D_TARGET_RPS = 70;
+  private final double D_TARGET_RPS = 35;
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
@@ -85,7 +85,7 @@ public class Feeder extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 120;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
 
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 70;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 80;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
 

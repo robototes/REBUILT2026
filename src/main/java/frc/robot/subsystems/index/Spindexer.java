@@ -28,7 +28,7 @@ import frc.robot.util.tuning.NtTunableDouble;
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
-  private final double D_TARGET_RPS = 70;
+  private final double D_TARGET_RPS = 55;
   private final double D_TARGET_ACCEL = 1000; // Rotations /s /s
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
