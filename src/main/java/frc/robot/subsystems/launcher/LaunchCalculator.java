@@ -129,7 +129,12 @@ public class LaunchCalculator {
         && isNotMovingFastEnough
         && isTurretOmegaStable
         && cachedParams != null) {
-      return cachedParams;
+      return new LaunchingParameters(
+          cachedParams.targetHood,
+          cachedParams.targetTurret,
+          cachedParams.targetFlywheels,
+          0,
+          cachedParams.turretPose);
     }
     // cache the pose and chassis speeds
     lastPose = currentPose;
