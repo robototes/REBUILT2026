@@ -28,7 +28,7 @@ import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 
 public class Feeder extends SubsystemBase {
-  private final double D_TARGET_RPS = 95;
+  private final double D_TARGET_RPS = 70;
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
