@@ -178,9 +178,6 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
   }
-  public void zeroFeedForward() {
-    request.withFeedForward(0);
-  }
 
   public void setTurretRawPosition(double pos) {
     turretMotor.setControl(request.withPosition(pos).withFeedForward(0));

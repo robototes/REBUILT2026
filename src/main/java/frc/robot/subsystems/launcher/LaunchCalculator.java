@@ -129,7 +129,6 @@ public class LaunchCalculator {
         && isNotMovingFastEnough
         && isTurretOmegaStable
         && cachedParams != null) {
-          turretSubsystem.zeroFeedForward();
       return cachedParams;
     }
     // cache the pose and chassis speeds
