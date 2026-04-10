@@ -333,11 +333,41 @@ public class Controls {
             Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
                 .withName("Disable Alliance Win Override")
                 .ignoringDisable(true));
+
     driverController
-        .leftStick()
-        .onTrue(
-            Commands.startEnd(
-                () -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake()), () -> {}));
+        .rightTrigger()
+        .and(readyToShoot)
+        .whileTrue(
+            Commands.parallel(
+                    Commands.startEnd(
+                        () -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake()), () -> {}),
+                    s.launcherSubsystem.launcherAimCommand(),
+                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(
+                            Commands.parallel(
+                                    s.indexerSubsystem.runIndexer(),
+                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                    Commands.waitSeconds(1)
+                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
+                                .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
+                                .andThen(
+                                    Commands.runOnce(
+                                        () -> {
+                                          updateIntakeMode();
+                                          ledsMode = LEDMode.LAUNCHING;
+                                        })))
+                        .repeatedly())
+                .withName("Launching Command"))
+        .onFalse(
+            s.launcherSubsystem
+                .rawStowCommand()
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          updateIntakeMode();
+                        }))
+                .withName("Launching Finished"));
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
