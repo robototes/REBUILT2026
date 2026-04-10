@@ -39,18 +39,4 @@ public class IndexerSubsystem extends SubsystemBase {
           spindexerSubsystem.stopMotor();
         });
   }
-
-  public Command runIndexerFaster() {
-    return Commands.runEnd(
-        () -> {
-          double fRPS = 90;
-          double sRPS = 70;
-          feeder.setVelocity(fRPS);
-          spindexerSubsystem.setVelocity(sRPS);
-        },
-        () -> {
-          feeder.stopMotor();
-          spindexerSubsystem.stopMotor();
-        });
-  }
 }

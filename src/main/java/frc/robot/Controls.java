@@ -259,7 +259,6 @@ public class Controls {
         .rightTrigger()
         .or(readyToShoot)
         .and(driverController.a().negate())
-        // .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
         .whileTrue(
             Commands.parallel(
                     Commands.either(
@@ -282,6 +281,40 @@ public class Controls {
                             Commands.parallel(
                                     s.indexerSubsystem.runIndexer(
                                         () -> s.flywheels.getTargetSpeed()),
+                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                    Commands.waitSeconds(1)
+                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
+                                .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
+                                .andThen(
+                                    Commands.runOnce(
+                                        () -> {
+                                          updateIntakeMode();
+                                          ledsMode = LEDMode.LAUNCHING;
+                                        })))
+                        .repeatedly())
+                .withName("Launching Command"))
+        .onFalse(
+            s.launcherSubsystem
+                .rawStowCommand()
+                .alongWith(
+                    Commands.runOnce(
+                        () -> {
+                          updateIntakeMode();
+                        }))
+                .withName("Launching Finished"));
+
+    driverController
+        .rightTrigger()
+        .and(readyToShoot)
+        .whileTrue(
+            Commands.parallel(
+                    Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())),
+                    s.launcherSubsystem.launcherAimCommand(),
+                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(
+                            Commands.parallel(
+                                    s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
@@ -333,41 +366,6 @@ public class Controls {
             Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
                 .withName("Disable Alliance Win Override")
                 .ignoringDisable(true));
-
-    driverController
-        .rightTrigger()
-        .and(readyToShoot)
-        .whileTrue(
-            Commands.parallel(
-                    Commands.startEnd(
-                        () -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake()), () -> {}),
-                    s.launcherSubsystem.launcherAimCommand(),
-                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(
-                            Commands.parallel(
-                                    s.indexerSubsystem.runIndexer(),
-                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                    Commands.waitSeconds(1)
-                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
-                                .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(
-                                    Commands.runOnce(
-                                        () -> {
-                                          updateIntakeMode();
-                                          ledsMode = LEDMode.LAUNCHING;
-                                        })))
-                        .repeatedly())
-                .withName("Launching Command"))
-        .onFalse(
-            s.launcherSubsystem
-                .rawStowCommand()
-                .alongWith(
-                    Commands.runOnce(
-                        () -> {
-                          updateIntakeMode();
-                        }))
-                .withName("Launching Finished"));
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
