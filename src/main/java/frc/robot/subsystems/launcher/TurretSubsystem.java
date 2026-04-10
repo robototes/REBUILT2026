@@ -41,7 +41,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
-  private static final double NOMINAL_BATTERY_VOLTAGE = 12;
 
   // The tolerance is this high because the turret position is always updating so it is not
   // always exactly where it should be, I am mainly using this to stop shooting when the
@@ -61,17 +60,17 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kD = 0;
   private static final double kG = 0;
   private static final double kS = RobotType.isAlpha() ? 0.41 : 0.346;
-  private static final double kV = 0.884766 / 1.125;
+  private static final double kV = (0.884766 * 12) / 1.125; // volts per requested rps
   private static final double kA = 0.12;
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 20; // ampsd
+  private static final int SUPPLY_CURRENT_LIMIT = 40; // ampsd
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 1;
-  private static final double ACCELERATION = 1.2;
-  private static final double JERK = 2;
+  private static final double CRUISE_VELOCITY = 1.2;
+  private static final double ACCELERATION = 3;
+  private static final double JERK = 6;
 
   // Gear Ratio
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
@@ -173,7 +172,8 @@ public class TurretSubsystem extends SubsystemBase {
     // KV must be converted to volts. Right now it's only in
     // dutycycle per requested rotation per second, so multiply
     // 12 to get true voltage
-    double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV * NOMINAL_BATTERY_VOLTAGE;
+    double feedforwardVolts =
+        0; // Units.radiansToRotations(FFVelocity) * kV * NOMINAL_BATTERY_VOLTAGE;
     ffPub.set(feedforwardVolts);
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
