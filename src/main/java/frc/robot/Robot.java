@@ -10,6 +10,8 @@ import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -77,6 +79,7 @@ public class Robot extends TimedRobot {
     if (RobotBase.isReal()) {
       DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
+      NetworkTableInstance.getDefault().startEntryDataLog(DataLogManager.getLog(), "", "NT:");
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
