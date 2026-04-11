@@ -78,7 +78,6 @@ public class Robot extends TimedRobot {
     if (RobotBase.isReal()) {
       DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
-      NetworkTableInstance.getDefault().startEntryDataLog(DataLogManager.getLog(), "", "NT:");
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
