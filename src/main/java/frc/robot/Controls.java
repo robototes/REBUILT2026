@@ -216,13 +216,15 @@ public class Controls {
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on back button press
-    driverController
-        .back()
-        .onTrue(
-            s.drivebaseSubsystem
-                .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
-                .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
-                .withName("Reset gyro"));
+    // driverController
+    //     .back()
+    //     .onTrue(
+    //         s.drivebaseSubsystem
+    //             .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
+    //             .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
+    //             .withName("Reset gyro"));
+
+    driverController.rightBumper().whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
 
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
@@ -240,7 +242,7 @@ public class Controls {
 
     // reset pose incase vision is bugging
     driverController
-        .rightBumper()
+        .back()
         .onTrue(
             s.drivebaseSubsystem
                 .runOnce(
@@ -303,51 +305,6 @@ public class Controls {
                         }))
                 .withName("Launching Finished"));
 
-    driverController
-        .rightTrigger()
-        .and(readyToShoot)
-        .whileTrue(
-            Commands.parallel(
-                    Commands.either(
-                        AutoDriveRotate.autoRotate(
-                                s.drivebaseSubsystem,
-                                () -> getDriveX(),
-                                () -> getDriveY(),
-                                () ->
-                                    Units.rotationsToDegrees(s.turretSubsystem.getTurretPosition()))
-                            .andThen(
-                                Commands.run(
-                                    () -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake()))),
-                        Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())),
-                        () -> turretKillActive),
-                    Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())),
-                    s.launcherSubsystem.launcherAimCommand(),
-                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                        .andThen(
-                            Commands.parallel(
-                                    s.indexerSubsystem.runIndexer(),
-                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                    Commands.waitSeconds(1)
-                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
-                                .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
-                                .andThen(
-                                    Commands.runOnce(
-                                        () -> {
-                                          updateIntakeMode();
-                                          ledsMode = LEDMode.LAUNCHING;
-                                        })))
-                        .repeatedly())
-                .withName("Launching Command"))
-        .onFalse(
-            s.launcherSubsystem
-                .rawStowCommand()
-                .alongWith(
-                    Commands.runOnce(
-                        () -> {
-                          updateIntakeMode();
-                        }))
-                .withName("Launching Finished"));
     driverController
         .start()
         .onTrue(
