@@ -8,9 +8,13 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
-import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -148,6 +152,16 @@ public class Robot extends TimedRobot {
     logger = new DriveStateSignalLogger();
     subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
     driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
+
+    // Explicitly register struct schemas with the DataLog
+    if (RobotBase.isReal()) {
+      DataLog log = DataLogManager.getLog();
+      log.addSchema(Pose2d.struct);
+      log.addSchema(Pose3d.struct);
+      log.addSchema(ChassisSpeeds.struct);
+      log.addSchema(SwerveModuleState.struct);
+      log.addSchema(SwerveModulePosition.struct);
+    }
   }
 
   /**
