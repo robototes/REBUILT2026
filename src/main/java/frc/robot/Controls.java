@@ -224,7 +224,7 @@ public class Controls {
     //             .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
     //             .withName("Reset gyro"));
 
-    driverController.rightBumper().whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
+    driverController.a().whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
 
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
@@ -260,7 +260,7 @@ public class Controls {
     driverController
         .rightTrigger()
         .or(readyToShoot)
-        .and(driverController.a().negate())
+        .and(driverController.rightBumper().negate())
         .whileTrue(
             Commands.parallel(
                     Commands.either(
