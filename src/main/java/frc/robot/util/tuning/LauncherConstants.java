@@ -69,7 +69,7 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(4.2, 5, 52, 1.233),
     new LauncherDistanceDataPoint(4.5, 5.5, 53, 1.3),
     new LauncherDistanceDataPoint(5, 6.5, 53.1, 1.267),
-    new LauncherDistanceDataPoint(5.5, 7, 55, 1.267),
+    new LauncherDistanceDataPoint(5.8, 6.8, 59, 1.267),
     new LauncherDistanceDataPoint(8, 8, 90, 1.53)
   };
 
