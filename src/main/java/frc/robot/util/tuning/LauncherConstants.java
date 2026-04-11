@@ -63,13 +63,13 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(1, 1.5, 38, 1.333),
     new LauncherDistanceDataPoint(1.5, 2, 39, 0.933),
     new LauncherDistanceDataPoint(2, 3, 36.5, 0.9),
-    new LauncherDistanceDataPoint(2.55, 3, 44, 1.267),
+    new LauncherDistanceDataPoint(2.55, 3, 44, 1.121),
     new LauncherDistanceDataPoint(3.2, 4.5, 44, 1.133),
-    new LauncherDistanceDataPoint(3.75, 5, 47.8, 1.2),
-    new LauncherDistanceDataPoint(4.2, 5, 52, 1.233),
-    new LauncherDistanceDataPoint(4.5, 5.5, 53, 1.3),
-    new LauncherDistanceDataPoint(5, 6.5, 53.1, 1.267),
-    new LauncherDistanceDataPoint(5.8, 6.8, 59, 1.267),
+    new LauncherDistanceDataPoint(3.75, 5, 47.8, 1.151),
+    new LauncherDistanceDataPoint(4.2, 5, 52, 1.23),
+    new LauncherDistanceDataPoint(4.5, 5.5, 53, 1.23),
+    new LauncherDistanceDataPoint(5, 6.5, 53.1, 1.24),
+    new LauncherDistanceDataPoint(5.8, 6.8, 59, 1.25),
     new LauncherDistanceDataPoint(8, 8, 90, 1.53)
   };
 
