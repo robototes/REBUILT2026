@@ -1,10 +1,15 @@
 package frc.robot.util;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.networktables.DoubleArrayPublisher;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,16 +24,18 @@ public class DriveStateNtLogger {
   /* Robot swerve drive state */
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
 
-  private final DoubleArrayPublisher drivePose =
-      driveStateTable.getDoubleArrayTopic("Pose").publish();
-  private final DoubleArrayPublisher driveSpeeds =
-      driveStateTable.getDoubleArrayTopic("Speeds").publish();
-  private final DoubleArrayPublisher driveModuleStates =
-      driveStateTable.getDoubleArrayTopic("ModuleStates").publish();
-  private final DoubleArrayPublisher driveModuleTargets =
-      driveStateTable.getDoubleArrayTopic("ModuleTargets").publish();
-  private final DoubleArrayPublisher driveModulePositions =
-      driveStateTable.getDoubleArrayTopic("ModulePositions").publish();
+  // This correctly publishes as a Struct, completely avoiding the race condition
+  private final StructPublisher<Pose2d> drivePose =
+      driveStateTable.getStructTopic("Pose", Pose2d.struct).publish();
+
+  private final StructPublisher<ChassisSpeeds> driveSpeeds =
+      driveStateTable.getStructTopic("Speeds", ChassisSpeeds.struct).publish();
+  private final StructArrayPublisher<SwerveModuleState> driveModuleStates =
+      driveStateTable.getStructArrayTopic("ModuleStates", SwerveModuleState.struct).publish();
+  private final StructArrayPublisher<SwerveModuleState> driveModuleTargets =
+      driveStateTable.getStructArrayTopic("ModuleTargets", SwerveModuleState.struct).publish();
+  private final StructArrayPublisher<SwerveModulePosition> driveModulePositions =
+      driveStateTable.getStructArrayTopic("ModulePositions", SwerveModulePosition.struct).publish();
   private final DoublePublisher driveTimestamp =
       driveStateTable.getDoubleTopic("Timestamp").publish();
   private final DoublePublisher driveOdometryFrequency =
@@ -85,7 +92,10 @@ public class DriveStateNtLogger {
   // should be updated periodically in robot.periodic()
   public void update() {
     SwerveDriveState state = telem.returnDriveState();
-    if (state == null) return;
+    // null check
+    if (state == null) {
+      return;
+    }
 
     for (int i = 0; i < 4; ++i) {
       m_moduleSpeeds[i].setAngle(state.ModuleStates[i].angle);
@@ -93,31 +103,12 @@ public class DriveStateNtLogger {
       m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
     }
 
-    drivePose.set(
-        new double[] {state.Pose.getX(), state.Pose.getY(), state.Pose.getRotation().getRadians()});
-
-    driveSpeeds.set(
-        new double[] {
-          state.Speeds.vxMetersPerSecond,
-          state.Speeds.vyMetersPerSecond,
-          state.Speeds.omegaRadiansPerSecond
-        });
-
-    double[] moduleStates = new double[8];
-    double[] moduleTargets = new double[8];
-    double[] modulePositions = new double[8];
-    for (int i = 0; i < 4; ++i) {
-      moduleStates[i * 2] = state.ModuleStates[i].angle.getRadians();
-      moduleStates[i * 2 + 1] = state.ModuleStates[i].speedMetersPerSecond;
-      moduleTargets[i * 2] = state.ModuleTargets[i].angle.getRadians();
-      moduleTargets[i * 2 + 1] = state.ModuleTargets[i].speedMetersPerSecond;
-      modulePositions[i * 2] = state.ModulePositions[i].angle.getRadians();
-      modulePositions[i * 2 + 1] = state.ModulePositions[i].distanceMeters;
-    }
-    driveModuleStates.set(moduleStates);
-    driveModuleTargets.set(moduleTargets);
-    driveModulePositions.set(modulePositions);
-
+    /* Telemeterize the swerve drive state */
+    drivePose.set(state.Pose);
+    driveSpeeds.set(state.Speeds);
+    driveModuleStates.set(state.ModuleStates);
+    driveModuleTargets.set(state.ModuleTargets);
+    driveModulePositions.set(state.ModulePositions);
     driveTimestamp.set(state.Timestamp);
     driveOdometryFrequency.set(state.OdometryPeriod == 0 ? 0 : 1.0 / state.OdometryPeriod);
   }

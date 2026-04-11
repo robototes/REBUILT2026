@@ -15,9 +15,9 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanSubscriber;
-import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -45,9 +45,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   private Matrix<N3, N1> stdDevs = null;
 
-  private static double A_XY_MT2 = 0.07;
-  private static double A_XY_MT1 = 0.09;
-  private static double P_XY = 1.4;
+  private static NtTunableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
+  private static NtTunableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
+  private static NtTunableDouble P_XY = new NtTunableDouble("/vision/P_XY", 1.4);
 
   // How much to reduce std devs when defense slip is detected.
   // <1.0 = trust vision more (0.5 = half the std dev = 4x the filter weight).
@@ -128,21 +128,29 @@ public class VisionSubsystem extends SubsystemBase {
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
-  private final DoubleArrayPublisher fieldPose3dEntry =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("vision/fieldPose3d").publish();
-  private final DoubleArrayPublisher rawFieldPose3dEntryA =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("vision/rawFieldPose3dA").publish();
-  private final DoubleArrayPublisher rawFieldPose3dEntryB =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("vision/rawFieldPose3dB").publish();
-  private final DoubleArrayPublisher rawFieldPose3dEntryC =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("vision/rawFieldPose3dC").publish();
-  private final DoubleArrayPublisher compBotLeftCameraViewEntry =
+  private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()
-          .getDoubleArrayTopic("vision/compBotLeftCameraView")
+          .getStructTopic("vision/fieldPose3d", Pose3d.struct)
           .publish();
-  private final DoubleArrayPublisher compBotFrontCameraViewEntry =
+  private final StructPublisher<Pose3d> rawFieldPose3dEntryA =
       NetworkTableInstance.getDefault()
-          .getDoubleArrayTopic("vision/compBotFrontCameraView")
+          .getStructTopic("vision/rawFieldPose3dA", Pose3d.struct)
+          .publish();
+  private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/rawFieldPose3dB", Pose3d.struct)
+          .publish();
+  private final StructPublisher<Pose3d> rawFieldPose3dEntryC =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/rawFieldPose3dC", Pose3d.struct)
+          .publish();
+  private final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/compBotLeftCameraView", Pose3d.struct)
+          .publish();
+  private final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
           .publish();
 
   private double lastTimestampSeconds = 0;
@@ -215,7 +223,7 @@ public class VisionSubsystem extends SubsystemBase {
   private void processCamera(
       LLCamera camera,
       boolean cameraOnline,
-      DoubleArrayPublisher rawFieldPose3dEntry,
+      StructPublisher<Pose3d> rawFieldPose3dEntry,
       VisionPoseTracking visionPoseTracking,
       boolean underDefense) {
     if (!cameraOnline) return;
@@ -246,7 +254,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   private void processLimelight(
       BetterPoseEstimate estimate,
-      DoubleArrayPublisher rawFieldPoseEntry,
+      StructPublisher<Pose3d> rawFieldPoseEntry,
       double maxAmbiguity,
       VisionPoseTracking visionPoseTracking,
       RawFiducial[] rawFiducials,
@@ -261,7 +269,7 @@ public class VisionSubsystem extends SubsystemBase {
       return;
     }
 
-    rawFieldPoseEntry.set(pose3dToArray(estimate.pose3d));
+    rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
         && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
@@ -358,7 +366,7 @@ public class VisionSubsystem extends SubsystemBase {
     camera.setLastTimestampSeconds(estimate.timestampSeconds);
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      fieldPose3dEntry.set(pose3dToArray(estimate.pose3d));
+      fieldPose3dEntry.set(estimate.pose3d);
       lastFieldPose = visionPose2d;
       rawVisionFieldObject.setPose(lastFieldPose);
       lastTimestampSeconds = estimate.timestampSeconds;
@@ -500,7 +508,11 @@ public class VisionSubsystem extends SubsystemBase {
     double harmonicSum = computeHarmonicSum(rawFiducials);
     if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
-    double xy = A_XY_MT1 * Math.pow(avgTagDist, P_XY) / Math.sqrt(harmonicSum) * ambiguityInflation;
+    double xy =
+        A_XY_MT1.get()
+            * Math.pow(avgTagDist, P_XY.get())
+            / Math.sqrt(harmonicSum)
+            * ambiguityInflation;
     double theta =
         (numOfTags == 1)
             ? Double.MAX_VALUE
@@ -530,7 +542,11 @@ public class VisionSubsystem extends SubsystemBase {
     double harmonicSum = computeHarmonicSum(rawFiducials);
     if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
-    double xy = A_XY_MT2 * Math.pow(avgTagDist, P_XY) / Math.sqrt(harmonicSum) * ambiguityInflation;
+    double xy =
+        A_XY_MT2.get()
+            * Math.pow(avgTagDist, P_XY.get())
+            / Math.sqrt(harmonicSum)
+            * ambiguityInflation;
 
     SmartDashboard.putNumber("/vision/" + cameraName + " Mt2 STD xy", xy);
     // θ = MAX_VALUE: heading comes from gyro, not vision
@@ -621,21 +637,10 @@ public class VisionSubsystem extends SubsystemBase {
   private void updateCameraView(VisionPoseTracking visionPoseTracking) {
     if (visionPoseTracking != null && visionPoseTracking.drivePose3d != null) {
       compBotLeftCameraViewEntry.set(
-          pose3dToArray(visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA)));
+          visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA));
       compBotFrontCameraViewEntry.set(
-          pose3dToArray(visionPoseTracking.drivePose3d.transformBy(COMP_BOT_FRONT_CAMERA)));
+          visionPoseTracking.drivePose3d.transformBy(COMP_BOT_FRONT_CAMERA));
     }
-  }
-
-  private double[] pose3dToArray(Pose3d pose) {
-    return new double[] {
-      pose.getX(),
-      pose.getY(),
-      pose.getZ(),
-      pose.getRotation().getX(),
-      pose.getRotation().getY(),
-      pose.getRotation().getZ()
-    };
   }
 
   public boolean isLimeLightOnline(String name) {
