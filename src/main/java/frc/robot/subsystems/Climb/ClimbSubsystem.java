@@ -35,6 +35,9 @@ import frc.robot.util.AllianceUtils;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
 
+// TODO: Control scheme where all drivebse input will be ignored if climbed. Y axis of left joystick
+// will select the robot climb level with debounce. Change climb achetype to magnetic climb with
+// roller
 /**
  * This class is designed to handle all things related to Climbing, including auto aligning with the
  * clibing structure and climbing itself.
