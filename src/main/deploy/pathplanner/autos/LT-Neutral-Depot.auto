@@ -5,21 +5,35 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "LT-Intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.0
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-Intake"
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 1.0
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "intake"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           }
         },
         {
@@ -41,21 +55,28 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "LT-DepotFull"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "launch"
           }
         },
         {
-          "type": "named",
+          "type": "deadline",
           "data": {
-            "name": "stow"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-DepotFull"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "launch"
+                }
+              }
+            ]
           }
         },
         {
@@ -65,21 +86,21 @@
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "launch"
+            "pathName": "Depot-Center-Launch"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "stow"
+            "name": "launch"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "COMP",
   "choreoAuto": false
 }

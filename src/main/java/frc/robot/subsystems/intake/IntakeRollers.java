@@ -39,8 +39,7 @@ public class IntakeRollers extends SubsystemBase {
       new NtTunableBoolean("SmartDashboard/Tunables/TuneIntakeRollers", false);
   private final NtTunableDouble NT_TARGET_RPS =
       new NtTunableDouble("SmartDashboard/intake/TargetVelocityRPS", TARGET_RPS);
-  private final VelocityVoltage velocityRequest =
-      new VelocityVoltage(TARGET_RPS).withEnableFOC(false); // Rotations/s
+  private final VelocityVoltage velocityRequest = new VelocityVoltage(TARGET_RPS); // Rotations/s
 
   public IntakeRollers() {
     // define motors and configs
@@ -64,9 +63,8 @@ public class IntakeRollers extends SubsystemBase {
     talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
     talonFXConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-    // motor limits idk if i need to add anymore
-    talonFXConfigs.CurrentLimits.StatorCurrentLimit = 60;
-    talonFXConfigs.CurrentLimits.SupplyCurrentLimit = 30;
+    talonFXConfigs.CurrentLimits.StatorCurrentLimit = 80;
+    talonFXConfigs.CurrentLimits.SupplyCurrentLimit = 40;
     talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 

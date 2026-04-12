@@ -28,17 +28,11 @@
           "data": {
             "name": "launch"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "COMP",
   "choreoAuto": false
 }

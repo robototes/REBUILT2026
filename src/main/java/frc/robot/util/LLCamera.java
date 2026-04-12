@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.TimestampedDoubleArray;
@@ -10,6 +11,11 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class LLCamera {
 
   private final String name;
+  private double lastTimestampSeconds = 0;
+  private Pose2d lastPose2dMT1 = null;
+  private Pose2d lastPose2dMT2 = null;
+  private double[] lastRawBotposeMT1 = null;
+  private double[] lastRawBotposeMT2 = null;
 
   public LLCamera(String name) {
     this.name = name;
@@ -75,6 +81,32 @@ public class LLCamera {
     return name;
   }
 
+  public Pose2d getlastPoseMT1() {
+    if (lastPose2dMT1 == null) lastPose2dMT1 = new Pose2d();
+    return lastPose2dMT1;
+  }
+
+  public void setlastPoseMT1(Pose2d newPose2d) {
+    lastPose2dMT1 = newPose2d;
+  }
+
+  public Pose2d getlastPoseMT2() {
+    if (lastPose2dMT2 == null) lastPose2dMT2 = new Pose2d();
+    return lastPose2dMT2;
+  }
+
+  public void setlastPoseMT2(Pose2d newPose2d) {
+    lastPose2dMT2 = newPose2d;
+  }
+
+  public void setLastTimestampSeconds(double timestampSeconds) {
+    lastTimestampSeconds = timestampSeconds;
+  }
+
+  public double getLastTimestampSeconds() {
+    return lastTimestampSeconds;
+  }
+
   public BetterPoseEstimate getPoseEstimateMegatag2() {
     return getBetterBotPoseEstimate_wpiBlue_Megatag2();
   }
@@ -87,7 +119,7 @@ public class LLCamera {
     return getBetterBotPoseEstimate(name, "botpose_orb_wpiblue", true);
   }
 
-  private static BetterPoseEstimate getBetterBotPoseEstimate(
+  private BetterPoseEstimate getBetterBotPoseEstimate(
       String limelightName, String entryName, boolean isMegaTag2) {
     DoubleArrayEntry poseEntry =
         LimelightHelpers.getLimelightDoubleArrayEntry(limelightName, entryName);
@@ -102,6 +134,15 @@ public class LLCamera {
     if (poseArray == null || poseArray.length < 11) {
       // Handle the case where no data is available
       return null; // or some default PoseEstimate
+    }
+    double[] lastRaw = isMegaTag2 ? lastRawBotposeMT2 : lastRawBotposeMT1;
+    if (lastRaw != null && java.util.Arrays.equals(poseArray, lastRaw)) {
+      return null; // stale data — skip
+    }
+    if (isMegaTag2) {
+      lastRawBotposeMT2 = poseArray.clone();
+    } else {
+      lastRawBotposeMT1 = poseArray.clone();
     }
 
     var pose = LimelightHelpers.toPose3D(poseArray);

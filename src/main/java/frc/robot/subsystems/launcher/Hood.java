@@ -46,20 +46,18 @@ public class Hood extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   // mechanism gear ratio = 104.65278
-  private static final double TARGET_TOLERANCE = 0.05; // tolerance in motor rotations
+  private static final double TARGET_TOLERANCE = 0.23; // tolerance in motor rotations
   public static final double VOLTAGE_MANUAL_CONTROL =
       1; // voltage/speed to control the motor for manual control
-  private static final double STATOR_CURRENT_LIMIT = 60; // stator limit in amps
+  private static final double STATOR_CURRENT_LIMIT = 30; // stator limit in amps
   // both forward and backward soft limits are in Rotor rotations
-  private static final double FORWARD_SOFT_LIMIT =
-      11.628; // LIMITED TO 19 - March 14th Physical limit
+  private static final double FORWARD_SOFT_LIMIT = 9;
   private static final double BACKWARD_SOFT_LIMIT = -0.01224; // -0.02 rotations, past zeroing point
 
   public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/SmartDashBoard/Tunables/Hood", false);
+      new NtTunableBoolean("/SmartDashboard/Tunables/Hood", false);
 
-  // Mechanism tuning required !! TODO: TUNE
-  private static final double AUTO_ZERO_VOLTAGE = -0.5;
+  private static final double AUTO_ZERO_VOLTAGE = -3;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -88,7 +86,7 @@ public class Hood extends SubsystemBase {
     TalonFXConfigurator hood_Configurator = hood.getConfigurator();
 
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 40;
+    config.CurrentLimits.SupplyCurrentLimit = 20;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     config.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -104,9 +102,9 @@ public class Hood extends SubsystemBase {
 
     // IRL PID gains
     var irlPID = new Slot0Configs();
-    irlPID.kP = 45;
+    irlPID.kP = 40;
     irlPID.kI = 0.0;
-    irlPID.kD = 0.0;
+    irlPID.kD = 0;
     irlPID.kA = 0.0;
     irlPID.kV = 0;
     irlPID.kS = 0.155;
@@ -122,8 +120,9 @@ public class Hood extends SubsystemBase {
     simPID.kS = 0;
     simPID.kG = 0.0;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 130;
-    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 3500;
+    config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 60;
+    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 600;
+    config.MotionMagic.MotionMagicJerk = RobotType.isAlpha() ? 0 : 6000;
 
     config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 
@@ -194,11 +193,18 @@ public class Hood extends SubsystemBase {
     if (Robot.isSimulation()) {
       return zeroHoodCommand();
     }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
-        .until(() -> hood.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
-        .andThen(zeroHoodCommand())
+    return Commands.sequence(
+            voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
+                .withDeadline(
+                    Commands.waitSeconds(0.5)
+                        .andThen(
+                            Commands.waitUntil(
+                                () ->
+                                    hood.getStatorCurrent().getValueAsDouble()
+                                        >= (STATOR_CURRENT_LIMIT - 1)))),
+            zeroHoodCommand())
         .withTimeout(3)
-        .withName("Automatic Zero hood");
+        .withName("Automatic Zero Hood");
   }
 
   @Override
