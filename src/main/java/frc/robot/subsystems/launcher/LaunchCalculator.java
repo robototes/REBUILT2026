@@ -29,14 +29,15 @@ public class LaunchCalculator {
 
   // Cached variables (mostly for throttling method)
   private LaunchingParameters cachedParams;
-  private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private Pose2d lastPose = new Pose2d();
   private boolean hasMovedAtLeastOnce = false;
+  private double lastTurretOmega = 0;
 
   // Throttling Magic numbers
-  private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(3); // Meters
-  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(1); // Radians
-  private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(2); // M/s
+  private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
+  private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(0.5); // Radians
+  private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(0.5); // M/s
+  private static final double MIN_OMEGA_TOLERANCE = 0.05; // Radians/s
 
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
@@ -57,6 +58,10 @@ public class LaunchCalculator {
   private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
   private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
+  private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_X = Units.inchesToMeters(47.0 / 2);
+  private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
+  private static final List<Pose2d> underclimbTags = new ArrayList<>();
+  private static final int[] underclimbTagIds = {15, 31};
 
   // dont move launch param
   private static final LaunchingParameters defaultParam =
@@ -79,6 +84,15 @@ public class LaunchCalculator {
             "Tag " + tag + " not found in launch calculator", false);
       }
     }
+    for (int tag : underclimbTagIds) {
+      Optional<Pose3d> t = field.getTagPose(tag);
+      if (t.isPresent()) {
+        underclimbTags.add(t.get().toPose2d());
+      } else {
+        edu.wpi.first.wpilibj.DriverStation.reportWarning(
+            "Tag " + tag + " not found in launch calculator", false);
+      }
+    }
   }
 
   // ------ MAIN LOGIC ------ //
@@ -96,8 +110,9 @@ public class LaunchCalculator {
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
     SwerveDriveState driveState = drivetrain.getState();
-    Pose2d currentPose = drivetrain.getState().Pose;
+    Pose2d currentPose = driveState.Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
+    double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
@@ -106,12 +121,12 @@ public class LaunchCalculator {
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
-        Math.abs(currentSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond)
-                <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.omegaRadiansPerSecond - lastSpeeds.omegaRadiansPerSecond)
-                <= MIN_ROTATION_TOLERANCE;
+        Math.abs(currentSpeeds.vxMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.vyMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_ROTATION_TOLERANCE;
+    // Has turretSubsystem.getOmega() not changed much
+    boolean isTurretOmegaStable =
+        Math.abs(currentTurretOmega - lastTurretOmega) <= MIN_OMEGA_TOLERANCE;
 
     // On robot startup / entering enabled, check to see if it has moved at least once
     if (!hasMovedAtLeastOnce) {
@@ -126,15 +141,16 @@ public class LaunchCalculator {
     if (hasNotMovedSignificantly
         && hasNotRotatedSignificantly
         && isNotMovingFastEnough
+        && isTurretOmegaStable
         && cachedParams != null) {
       return cachedParams;
     }
     // cache the pose and chassis speeds
     lastPose = currentPose;
-    lastSpeeds = currentSpeeds;
+    lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
-    cachedParams = calculate(drivetrain, turretSubsystem);
+    cachedParams = calculate(driveState, turretSubsystem);
     return cachedParams;
   }
 
@@ -144,20 +160,21 @@ public class LaunchCalculator {
    * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
    * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
-   * @param drivetrain the drivebase's CommandSwerveDrivetrain object
+   * @param SwerveDriveState the drivebase's swervedrivestate. It's only called in getParameters()
+   *     and should not use any other drive state
    * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
    *     the entirety of run time
    * @return LaunchingParameters record holding all the target values. Record is defined in the
    *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
-      CommandSwerveDrivetrain driveTrain, TurretSubsystem turretSubsystem) {
+      SwerveDriveState driveState, TurretSubsystem turretSubsystem) {
 
     // Grab current pose
-    Pose2d estimatedPose = driveTrain.getState().Pose;
+    Pose2d estimatedPose = driveState.Pose;
 
     // Predicted robot pose after calculations have finished
-    ChassisSpeeds chassisSpeeds = driveTrain.getState().Speeds;
+    ChassisSpeeds chassisSpeeds = driveState.Speeds;
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
@@ -317,5 +334,12 @@ public class LaunchCalculator {
 
   public void robotDisable() {
     hasMovedAtLeastOnce = false;
+  }
+
+  public static boolean isUnderClimb(Pose2d turretPose) {
+    Pose2d nearestTag = turretPose.nearest(underclimbTags);
+    double dx = Math.abs(turretPose.getX() - nearestTag.getX());
+    double dy = Math.abs(turretPose.getY() - nearestTag.getY());
+    return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;
   }
 }

@@ -77,7 +77,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 270; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 360; // degrees
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
@@ -242,49 +242,36 @@ public class TurretSubsystem extends SubsystemBase {
     return Units.rotationsToRadians(velocitySignal.getValueAsDouble());
   }
 
-  // Experimental IF WITHIN BOUNDS go to it instead of clamping
   public Command rotateToTargetWithCalc() {
     return runEnd(
             () -> {
+              double currentDegrees = Units.rotationsToDegrees(getTurretPosition());
 
-              // This represents where the turret is within a single circle (-180 to 180)
-              double wrappedCurrent =
-                  MathUtil.inputModulus(
-                      Units.rotationsToDegrees(getTurretPosition()), TURRET_MIN, TURRET_MIN + 360);
-
-              // Get the target from the calculator
               LaunchingParameters params =
                   LaunchCalculator.getInstance().getParameters(driveTrain, this);
               double targetDegrees = -params.targetTurret().getDegrees();
-
               double FFV = params.targetTurretFeedforward();
 
-              // Find the shortest distance to that target from our "wrapped" position
-              double shortestDelta =
-                  MathUtil.inputModulus(targetDegrees - wrappedCurrent, -180, 180);
+              double normalizedTarget =
+                  MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
 
-              // This is the "ideal" target in the range closest to our current wrapped pos
-              double baseTarget = wrappedCurrent + shortestDelta;
+              double[] candidates = {
+                normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
+              };
 
-              // Check multiple rotations to see which one fits in the hardware limits
-              // We check: baseTarget, baseTarget + 360, and baseTarget - 360
-              double finalTarget = baseTarget;
+              double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
+              double bestDist = Double.MAX_VALUE;
 
-              if (baseTarget < TURRET_MIN) {
-                if (baseTarget + 360 <= TURRET_MAX) {
-                  finalTarget = baseTarget + 360;
-                } else {
-                  finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
-                }
-              } else if (baseTarget > TURRET_MAX) {
-                if (baseTarget - 360 >= TURRET_MIN) {
-                  finalTarget = baseTarget - 360;
-                } else {
-                  finalTarget = MathUtil.clamp(baseTarget, TURRET_MIN, TURRET_MAX);
+              for (double candidate : candidates) {
+                if (candidate >= TURRET_MIN && candidate <= TURRET_MAX) {
+                  double dist = Math.abs(candidate - currentDegrees);
+                  if (dist < bestDist) {
+                    bestDist = dist;
+                    finalTarget = candidate;
+                  }
                 }
               }
 
-              // Set position (Note: This assumes your PID/Controller uses these degrees)
               // System.out.println(Units.degreesToRotations(finalTarget));
               setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
               targetPos = Units.degreesToRotations(finalTarget);

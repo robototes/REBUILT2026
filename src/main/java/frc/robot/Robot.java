@@ -57,7 +57,7 @@ public class Robot extends TimedRobot {
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
-  private final double BROWNOUT_VOLTAGE = 6.4; // Limelight's minimum operating voltage is 3.3volts
+  private static final double BROWNOUT_VOLTAGE = 7.0;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
@@ -214,6 +214,7 @@ public class Robot extends TimedRobot {
 
     // Tell launch calculator to start a new cycle for "hasMovedAtLeastOnce" boolean
     LaunchCalculator.getInstance().robotDisable();
+    Controls.turretKillActive = false;
   }
 
   @Override
@@ -241,7 +242,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    // subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
@@ -251,15 +252,12 @@ public class Robot extends TimedRobot {
       double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightcOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
         }
       }
@@ -279,6 +277,10 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+
+    if (subsystems.visionSubsystem != null) {
+      subsystems.visionSubsystem.update();
+    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
@@ -339,7 +341,7 @@ public class Robot extends TimedRobot {
   }
 
   private void supplyYawToAllLimelights() {
-    if (subsystems.visionSubsystem != null) {
+    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       double heading = subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees();
       if (subsystems.visionSubsystem.limelightaOnline) {
         supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, heading);
