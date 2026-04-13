@@ -62,6 +62,8 @@ public class LaunchCalculator {
   private static final List<Pose2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
 
+  // Network table
+
   public record LaunchingParameters(
       double targetHood,
       Rotation2d targetTurret,
