@@ -22,16 +22,22 @@ public class VisionSimConstants {
   public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
   public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
 
+  // High-fidelity vision simulation flag (set via -PhighFidelityVision=true in build.gradle)
+  private static final boolean kHighFidelityVision =
+      Boolean.parseBoolean(System.getProperty("highFidelityVision", "false"));
+  ;
+
   // Camera simulation properties (shared by all cameras — all cameras are identical)
-  public static final int kCameraResWidth = 320;
-  public static final int kCameraResHeight = 240;
+  // Low-fidelity (default): 320x240, high-fidelity (LimeLight-like): 1280x800
+  public static final int kCameraResWidth = kHighFidelityVision ? 1280 : 320;
+  public static final int kCameraResHeight = kHighFidelityVision ? 800 : 240;
   public static final double kCameraFOVDegrees = 90.0;
   public static final double kCalibErrorAvg = 0.12;
   public static final double kCalibErrorStdDev = 0.035;
   public static final double kCameraFPS = 15;
   public static final double kAvgLatencyMs = 50;
   public static final double kLatencyStdDevMs = 15;
-  public static final double kMinTargetAreaPixels = 10.0;
+  public static final double kMinTargetAreaPixels = kHighFidelityVision ? 100.0 : 10.0;
   public static final double kMaxSightRangeMeters = 3.0;
 
   /** Per-camera configuration for vision simulation. */
