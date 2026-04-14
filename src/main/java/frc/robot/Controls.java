@@ -228,13 +228,18 @@ public class Controls {
       // In simulation, inject drift with POV-right to test vision correction
       driverController
           .povRight()
-          .onTrue(s.drivebaseSubsystem.runOnce(() -> m_simWrapper.injectDrift(0.5, 15.0)));
+          .onTrue(
+              s.drivebaseSubsystem
+                  .runOnce(() -> m_simWrapper.injectDrift(0.5, 15.0))
+                  .withName("Inject Drift"));
 
       // POV-left resets robot to the starting pose of the selected auto
       driverController
           .povLeft()
           .onTrue(
-              s.drivebaseSubsystem.runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero)));
+              s.drivebaseSubsystem
+                  .runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero))
+                  .withName("Reset to Start Pose"));
     }
 
     // reset pose incase vision is bugging
@@ -505,16 +510,20 @@ public class Controls {
     connected(turretTestController)
         .and(turretTestController.leftStick())
         .whileTrue(
-            s.turretSubsystem.pointFacingJoystick(
-                () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
+            s.turretSubsystem
+                .pointFacingJoystick(
+                    () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY())
+                .withName("Turret Point Joystick"));
     connected(turretTestController)
         .and(turretTestController.rightTrigger())
         .whileTrue(s.turretSubsystem.rotateToTargetWithCalc());
     connected(turretTestController)
         .and(turretTestController.rightBumper())
         .onTrue(
-            s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+            s.drivebaseSubsystem
+                .runOnce(
+                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
+                .withName("Reset to Hub"));
     driverController
         .rightStick()
         .whileTrue(
