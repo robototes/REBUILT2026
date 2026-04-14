@@ -13,10 +13,9 @@ import frc.robot.Hardware;
 public class ClimbSubsystem extends SubsystemBase {
 
   public static final double SERVO_STOWED = 0.0;
-  public static final double SERVO_DEPLOYED = 1.0;
+  public static final double SERVO_DEPLOYED = 0.5;
 
   private static final double CLIMB_VOLTAGE = 8.0;
-  private static final double LOWER_VOLTAGE = -6.0;
 
   private final Servo pivotServo = new Servo(Hardware.CLIMB_PIVOT_SERVO_CHANNEL);
   private final TalonFX driveMotor = new TalonFX(Hardware.CLIMB_DRIVE_MOTOR_ID);
@@ -63,12 +62,16 @@ public class ClimbSubsystem extends SubsystemBase {
 
   public Command climbCommand() {
     return deployCommand()
-        .andThen(runEnd(() -> setDriveVoltage(CLIMB_VOLTAGE), () -> stopDrive()))
+        .andThen(upCommand())
         .withName("Climb");
   }
 
+  public Command upCommand() {
+    return runEnd(() -> setDriveVoltage(CLIMB_VOLTAGE), () -> stopDrive()).withName("Climb Up");
+  }
+
   public Command lowerCommand() {
-    return runEnd(() -> setDriveVoltage(LOWER_VOLTAGE), () -> stopDrive()).withName("Lower Climb");
+    return runEnd(() -> setDriveVoltage(-CLIMB_VOLTAGE), () -> stopDrive()).withName("Lower Climb");
   }
 
   @Override

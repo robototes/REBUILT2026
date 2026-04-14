@@ -18,7 +18,7 @@ public class Hardware {
 
   // Climb Motor (35-39)
   public static final int CLIMB_DRIVE_MOTOR_ID = 35;
-  public static final int CLIMB_PIVOT_SERVO_CHANNEL = 36; // TODO: Change to pmw port once known.
+  public static final int CLIMB_PIVOT_SERVO_CHANNEL = 0; // PMW port
 
   // CANdle
   public static final int CANDLE_ID = 40;

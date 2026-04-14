@@ -417,6 +417,11 @@ public class Controls {
     connected(intakeTestController)
         .and(intakeTestController.y())
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+
+    intakeTestController.povDown().onTrue(s.climbSubsystem.stowCommand());
+    intakeTestController.povUp().onTrue(s.climbSubsystem.deployCommand());
+    intakeTestController.povLeft().onTrue(s.climbSubsystem.lowerCommand());
+    intakeTestController.povRight().onTrue(s.climbSubsystem.upCommand());
   }
 
   /**
