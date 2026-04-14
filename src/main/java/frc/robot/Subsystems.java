@@ -160,8 +160,8 @@ public class Subsystems {
       ledSubsystem = null;
     }
 
-    if (VISION_ENABLED && DRIVEBASE_ENABLED && INTAKE_ARM_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem, intakePivot);
+    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
       SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;

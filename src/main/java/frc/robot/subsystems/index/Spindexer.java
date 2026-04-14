@@ -50,6 +50,7 @@ public class Spindexer extends SubsystemBase {
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
+    spindexerMotor.clearStickyFaults();
 
     if (RobotBase.isSimulation()) {
       LinearSystem spindexerMotorSystem =
@@ -104,6 +105,14 @@ public class Spindexer extends SubsystemBase {
     } else {
       spindexerMotor.setControl(
           TARGET_VELOCITY.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
+    }
+  }
+
+  public void setVelocity(double rps) {
+    if (TUNABLE_ENABLE.get()) {
+      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+    } else {
+      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
     }
   }
 

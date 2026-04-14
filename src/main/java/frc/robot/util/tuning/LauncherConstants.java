@@ -28,7 +28,6 @@ public class LauncherConstants {
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
-  private static double flywheelOffset = 0.65;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -60,17 +59,18 @@ public class LauncherConstants {
   };
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1, 1.5, 40, 1.333),
-    new LauncherDistanceDataPoint(1.5, 2, 41, 0.933),
-    new LauncherDistanceDataPoint(2, 3, 40, 0.9),
-    new LauncherDistanceDataPoint(2.55, 3, 46, 1.267),
-    new LauncherDistanceDataPoint(3.2, 4.5, 48, 1.133),
-    new LauncherDistanceDataPoint(3.75, 5, 50, 1.2),
-    new LauncherDistanceDataPoint(4.2, 5, 54.5, 1.233),
-    new LauncherDistanceDataPoint(4.5, 5.5, 55, 1.3),
-    new LauncherDistanceDataPoint(5, 6.5, 57.5, 1.267),
-    new LauncherDistanceDataPoint(5.5, 7, 62, 1.267),
-    new LauncherDistanceDataPoint(8, 8, 80, 1.53)
+    new LauncherDistanceDataPoint(1, 1.5, 38, 1.333),
+    new LauncherDistanceDataPoint(1.5, 2, 39, 0.933),
+    new LauncherDistanceDataPoint(2, 3, 36.5, 0.9),
+    new LauncherDistanceDataPoint(2.55, 3, 44, 1.121),
+    new LauncherDistanceDataPoint(3.2, 4.5, 44, 1.133),
+    new LauncherDistanceDataPoint(3.5, 4.8, 47, 1.2), // Accurate
+    new LauncherDistanceDataPoint(3.75, 5, 47.8, 1.151), // Accurate
+    new LauncherDistanceDataPoint(4.2, 5, 52, 1.23), // Accurate
+    new LauncherDistanceDataPoint(4.5, 5.5, 53, 1.23),
+    new LauncherDistanceDataPoint(5, 6.5, 53.1, 1.24),
+    new LauncherDistanceDataPoint(5.8, 6.8, 59, 1.25), // Accurate
+    new LauncherDistanceDataPoint(8, 8, 90, 1.53)
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
@@ -129,7 +129,7 @@ public class LauncherConstants {
   }
 
   public static double getHoodAngleFromDistance(double distance) {
-    return hoodMap.get(distance);
+    return hoodMap.get(distance /*+ distanceOffset*/);
   }
 
   public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot) {
@@ -138,7 +138,7 @@ public class LauncherConstants {
   }
 
   public static double getTimeFromDistance(double distance) {
-    return timeMap.get(distance);
+    return timeMap.get(distance /*+ distanceOffset*/);
   }
 
   public static double minTimeOfFlight() {

@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -35,13 +35,12 @@ import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
-  private final MotionMagicVoltage request = new MotionMagicVoltage(0);
+  private final PositionVoltage request = new PositionVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
   private static final double AUTO_ZERO_VOLTAGE = 0.5;
-  private static final double NOMINAL_BATTERY_VOLTAGE = 12;
 
   // The tolerance is this high because the turret position is always updating so it is not
   // always exactly where it should be, I am mainly using this to stop shooting when the
@@ -56,22 +55,17 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = RobotType.isAlpha() ? 2.97 : 500;
+  private static final double kP = RobotType.isAlpha() ? 2.97 : 150;
   private static final double kI = 0;
-  private static final double kD = 0;
+  private static final double kD = RobotType.isAlpha() ? 0 : 15;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.346;
-  private static final double kV = 0.884766 / 1.125;
+  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.36;
+  private static final double kV = 12 / 1.29; // volts per requested rps
   private static final double kA = 0.12;
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
-
-  // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 200;
-  private static final double ACCELERATION = 1200;
-  private static final double JERK = 6000;
+  private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
 
   // Gear Ratio
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
@@ -94,6 +88,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher targetPub;
   private final DoublePublisher velocityPub;
   private final DoublePublisher currentPub;
+  private final DoublePublisher ffPub;
 
   // Status signals
   private final StatusSignal<Angle> positionSignal;
@@ -108,6 +103,7 @@ public class TurretSubsystem extends SubsystemBase {
             RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     zeroPublisher.set(false);
     turretConfig();
+    turretMotor.clearStickyFaults();
     turretRotation.set(new Pose2d[2]);
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -123,6 +119,8 @@ public class TurretSubsystem extends SubsystemBase {
     currentPub = table.getDoubleTopic("/Turret/Current").publish();
 
     targetPub = table.getDoubleTopic("/Turret/Target").publish();
+
+    ffPub = table.getDoubleTopic("/Turret/FF Volts").publish();
   }
 
   public void turretConfig() {
@@ -142,10 +140,6 @@ public class TurretSubsystem extends SubsystemBase {
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = Units.degreesToRotations(TURRET_MIN);
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-    config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;
-    config.MotionMagic.MotionMagicAcceleration = ACCELERATION;
-    config.MotionMagic.MotionMagicJerk = JERK;
-
     config.Slot0.kP = kP;
     config.Slot0.kI = kI;
     config.Slot0.kD = kD;
@@ -160,7 +154,7 @@ public class TurretSubsystem extends SubsystemBase {
   public Command setTurretPosition(double pos) {
     return runOnce(
         () -> {
-          turretMotor.setControl(request.withPosition(pos));
+          turretMotor.setControl(request.withPosition(pos).withFeedForward(0));
           targetPos = pos;
         });
   }
@@ -169,13 +163,14 @@ public class TurretSubsystem extends SubsystemBase {
     // KV must be converted to volts. Right now it's only in
     // dutycycle per requested rotation per second, so multiply
     // 12 to get true voltage
-    double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV * NOMINAL_BATTERY_VOLTAGE;
+    double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV;
+    ffPub.set(feedforwardVolts);
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
   }
 
   public void setTurretRawPosition(double pos) {
-    turretMotor.setControl(request.withPosition(pos));
+    turretMotor.setControl(request.withPosition(pos).withFeedForward(0));
     targetPos = pos;
   }
 
@@ -220,7 +215,7 @@ public class TurretSubsystem extends SubsystemBase {
 
           double rotations = Units.degreesToRotations(degrees);
 
-          turretMotor.setControl(request.withPosition(rotations));
+          turretMotor.setControl(request.withPosition(rotations).withFeedForward(0));
           targetPos = rotations;
         })
         .withName("Set Turret Position: Joystick point");

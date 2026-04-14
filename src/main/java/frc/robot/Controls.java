@@ -3,11 +3,11 @@ package frc.robot;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -217,13 +217,17 @@ public class Controls {
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on back button press
+    // driverController
+    //     .back()
+    //     .onTrue(
+    //         s.drivebaseSubsystem
+    //             .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
+    //             .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
+    //             .withName("Reset gyro"));
+
     driverController
-        .back()
-        .onTrue(
-            s.drivebaseSubsystem
-                .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
-                .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
-                .withName("Reset gyro"));
+        .a()
+        .whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
 
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
@@ -241,7 +245,7 @@ public class Controls {
 
     // reset pose incase vision is bugging
     driverController
-        .rightBumper()
+        .back()
         .onTrue(
             s.drivebaseSubsystem
                 .runOnce(
@@ -259,8 +263,7 @@ public class Controls {
     driverController
         .rightTrigger()
         .or(readyToShoot)
-        .and(driverController.a().negate())
-        .and(new Trigger(() -> !s.drivebaseSubsystem.isBeached(10.0)))
+        .and(driverController.rightBumper().negate())
         .whileTrue(
             Commands.parallel(
                     Commands.either(
@@ -281,8 +284,8 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             Commands.parallel(
-                                    Commands.runOnce(() -> s.flywheels.switchSlot(true)),
-                                    s.indexerSubsystem.runIndexer(),
+                                    s.indexerSubsystem.runIndexer(
+                                        () -> s.flywheels.getTargetSpeed()),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
@@ -302,9 +305,9 @@ public class Controls {
                     Commands.runOnce(
                         () -> {
                           updateIntakeMode();
-                          s.flywheels.switchSlot(false);
                         }))
                 .withName("Launching Finished"));
+
     driverController
         .start()
         .onTrue(
@@ -336,13 +339,6 @@ public class Controls {
                 .withName("Disable Alliance Win Override")
                 .ignoringDisable(true));
 
-    if (s.flywheels.TUNER_CONTROLLED.get()) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.leftBumper())
-          .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
-      launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
-    }
-
     connected(launcherTuningController)
         .and(launcherTuningController.start())
         .onTrue(s.hood.autoZeroCommand());
@@ -358,7 +354,8 @@ public class Controls {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
       ledsMode = LEDMode.INTAKE;
-    } else if (driverController.rightTrigger().getAsBoolean() && s.launcherSubsystem.isAtTarget()) {
+    } else if ((driverController.rightTrigger().getAsBoolean() || readyToShoot.getAsBoolean())
+        && s.launcherSubsystem.isAtTarget()) {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
     } else {
