@@ -510,10 +510,8 @@ public class Controls {
     connected(turretTestController)
         .and(turretTestController.leftStick())
         .whileTrue(
-            s.turretSubsystem
-                .pointFacingJoystick(
-                    () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY())
-                .withName("Turret Point Joystick"));
+            s.turretSubsystem.pointFacingJoystick(
+                () -> turretTestController.getLeftX(), () -> turretTestController.getLeftY()));
     connected(turretTestController)
         .and(turretTestController.rightTrigger())
         .whileTrue(s.turretSubsystem.rotateToTargetWithCalc());
