@@ -1,7 +1,9 @@
 package frc.robot.subsystems.Climb;
 
+import static edu.wpi.first.units.Units.Rotations;
+
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -27,398 +29,325 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
 
-// TODO: Control scheme where all drivebse input will be ignored if climbed. Y axis of left joystick
-// will select the robot climb level with debounce. Change climb achetype to magnetic climb with
-// roller
 /**
  * This class is designed to handle all things related to Climbing, including auto aligning with the
- * clibing structure and climbing itself.
+ * climbing structure and climbing itself.
  *
  * @author Sean Le Nguyen
  */
 public class ClimbSubsystem extends SubsystemBase {
   // Climb states
   public enum ClimbLevel {
+    L0,
     L1,
     L2,
     L3
   }
 
   public enum ClimbState {
-    Climbing,
-    Idle
+    Attached,
+    Detached
   }
 
+  // Maps
+  private final HashMap<ClimbLevel, Double> climbLevels = new HashMap<>();
+
   private boolean isZeroed = false;
-  private ClimbState climbState = ClimbState.Idle;
+  private ClimbState climbState = ClimbState.Detached;
+  private double targetLevel = 0;
 
   // Motor requests
-  private final MotionMagicVoltage request;
-  private final VoltageOut volts;
-  private final double MAX_VOLTS = 3;
+  private final MotionMagicVoltage mmRequest;
+  private final VoltageOut voltageRequest;
+  private static final double MAX_VOLTS = 3;
 
-  // hardware and physical objects
+  // Hardware and physical objects
   private final CommandSwerveDrivetrain driveTrain;
   private final TalonFX climbMotor;
   private static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AllianceUtils.FIELD_LAYOUT;
   private static final int BLUE_CLIMB_TAG_ID = 31;
   private static final int RED_CLIMB_TAG_ID = 15;
 
-  // Magic Numbers
-  private static final double ROBOT_LENGTH = Units.inchesToMeters(35); // Inches
-  private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51); // Inches
+  // Physical Constants
+  private static final double ROBOT_WIDTH = Units.inchesToMeters(30);
   private static final double GEAR_RATIO = 15;
-  private static final double CLIMB_POSITION_TOLERANCE = 0.1;
 
-  // PID Controller magic numbers
+  // Position offsets and tolerances
+  private static final double CLIMB_POSITION_TOLERANCE = 0.1;
+  private static final double MIN_DIST = Units.feetToMeters(1.5);
+  private static final Rotation2d DETACH_ROTATION = Rotation2d.fromDegrees(40);
+
+  // Auto Align and Climb Constants
+  private static final double STAGE1_APPROACH_OFFSET = 0.1;
+  private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51);
+
+  // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
   private static final double MAX_TRANSLATIONAL_POWER = 2.0;
   private static final double MAX_ROTATIONAL_POWER = 4.0;
   private static final double TRANSLATION_TOLERANCE_METERS = 0.03;
-  private static final double ROTATION_TOLERANCE_DEGREES = 1.0;
-
-  // Auto Zero constants
-  private static final double STALL_CURRENT = 30; // Amps
-  private static final double MAX_HITS = 10;
-  private static final double MAX_OMEGA = 0.1;
+  private static final double ROTATION_TOLERANCE_RADIANS = Units.degreesToRadians(0.5);
 
   // Motor Tunables
-  private static final double k_P = 3;
-  private static final double k_I = 0;
-  private static final double k_D = 3;
-  private static final double k_S = 3;
-  private static final double k_V = 2;
-  private static final double k_A = 2;
+  private static final double KP = 3;
+  private static final double KI = 0;
+  private static final double KD = 3;
+  private static final double KS = 3;
+  private static final double KV = 2;
+  private static final double KA = 2;
   private static final double STATOR_CURRENT_LIMIT = 40;
   private static final double SUPPLY_CURRENT_LIMIT = 30;
-  private static final double FORWARD_SOFT_LIMIT = 20; // Rotations
-  private static final double REVERSE_SOFT_LIMIT = 0; // Rotations
   private static final double MM_CRUISE_VELOCITY = 1;
   private static final double MM_ACCEL = 1;
   private static final double MM_JERK = 5;
 
-  // Poses and trasnforms
-  private static final Transform2d frontBumperOffset =
-      new Transform2d(new Translation2d(ROBOT_LENGTH / 2, 0), Rotation2d.kZero);
-  private static final Transform2d climbOffSet =
+  // Poses and transforms
+  private static final Transform2d CLIMB_TRANSFORM =
+      new Transform2d(new Translation2d(ROBOT_WIDTH / 2, 0), Rotation2d.k180deg);
+  private static final Transform2d CLIMB_STRUCTURE_OFFSET =
       new Transform2d(new Translation2d(0, CLIMB_Y_OFFSET), Rotation2d.kZero);
 
-  // Climb level positions
-  private static final double L1 = 5; // rotations
-  private static final double L2 = 10; // rotations
-  private static final double L3 = 15; // rotations
-
   // Network Tables
-  private DoublePublisher ntMotorPos;
-  private DoublePublisher ntMotorCurrent;
-  private DoublePublisher ntVoltage;
+  private final DoublePublisher ntMotorPos;
+  private final DoublePublisher ntMotorCurrent;
+  private final DoublePublisher ntVoltage;
 
-  private StatusSignal<Voltage> SS_voltage;
-  private StatusSignal<Current> SS_current;
-  private StatusSignal<Angle> SS_MotorPos;
+  // Status signals
+  private final StatusSignal<Voltage> ssVoltage;
+  private final StatusSignal<Current> ssCurrent;
+  private final StatusSignal<Angle> ssMotorPos;
 
-  // Constructor
   public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
-    // Setup
     this.driveTrain = driveTrain;
     climbMotor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
     configureMotors();
-    // Initialize
-    request = new MotionMagicVoltage(0);
-    volts = new VoltageOut(0);
 
-    // Network tables
-    NetworkTableInstance inst = NetworkTableInstance.getDefault();
-    NetworkTable table = inst.getTable("Climb");
-    ntMotorPos = table.getDoubleTopic("Motor Pos (rotations): ").publish();
-    ntMotorCurrent = table.getDoubleTopic("Current (amps):").publish();
-    ntVoltage = table.getDoubleTopic("Voltage:").publish();
+    mmRequest = new MotionMagicVoltage(0);
+    voltageRequest = new VoltageOut(0);
 
-    // Status signals for logging
-    SS_voltage = climbMotor.getMotorVoltage();
-    SS_current = climbMotor.getStatorCurrent();
-    SS_MotorPos = climbMotor.getPosition();
+    NetworkTable table = NetworkTableInstance.getDefault().getTable("Climb");
+    ntMotorPos = table.getDoubleTopic("Motor Pos (rotations)").publish();
+    ntMotorCurrent = table.getDoubleTopic("Current (amps)").publish();
+    ntVoltage = table.getDoubleTopic("Voltage").publish();
+
+    ssVoltage = climbMotor.getMotorVoltage();
+    ssCurrent = climbMotor.getStatorCurrent();
+    ssMotorPos = climbMotor.getPosition();
+
+    climbLevels.put(ClimbLevel.L0, 0.0);
+    climbLevels.put(ClimbLevel.L1, 5.0);
+    climbLevels.put(ClimbLevel.L2, 10.0);
+    climbLevels.put(ClimbLevel.L3, 15.0);
   }
 
-  // Helper functions
-
-  /**
-   * sets the motor's position
-   *
-   * @param position A double representing the absolute target motor rotation, relative to the
-   *     motor's zero position
-   */
-  public void setMotorPosition(double position) {
-    climbMotor.setControl(request.withPosition(position));
+  // Pose helpers
+  private Pose2d getTagPose() {
+    return APRIL_TAG_FIELD_LAYOUT
+        .getTagPose(AllianceUtils.isBlue() ? BLUE_CLIMB_TAG_ID : RED_CLIMB_TAG_ID)
+        .orElseThrow(() -> new IllegalStateException("Climb AprilTag not found."))
+        .toPose2d();
   }
 
-  /**
-   * This method is meant to Manually move the climb subsystem up and down with a voltage output
-   *
-   * @param joystick A double supplier that supplies the method with the joystick's Y axis value. It
-   *     cannot exceed -1 and 1
-   */
-  public void manualMove(DoubleSupplier joystick) {
-    double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1) * MAX_VOLTS;
-    climbMotor.setControl(volts.withOutput(cmd));
+  private Pose2d getStage1Pose() {
+    return getTagPose()
+        .transformBy(
+            CLIMB_STRUCTURE_OFFSET.plus(
+                new Transform2d(STAGE1_APPROACH_OFFSET, 0, Rotation2d.kZero)));
   }
 
-  /** zeroes the motor */
+  private Pose2d getStage2Pose() {
+    return getTagPose().transformBy(CLIMB_STRUCTURE_OFFSET);
+  }
+
+  // Motor helpers
   public void zeroMotor() {
     isZeroed = true;
     climbMotor.setPosition(0);
   }
 
-  /** stops the motor completely by setting the output voltage to 0 */
   public void stop() {
-    climbMotor.setControl(volts.withOutput(0));
+    climbMotor.setControl(voltageRequest.withOutput(0));
+  }
+
+  public boolean isWithinTarget() {
+    return Math.abs(targetLevel - ssMotorPos.getValue().in(Rotations)) < CLIMB_POSITION_TOLERANCE;
+  }
+
+  // Position modifiers
+  public void setMotorPosition(double position) {
+    climbMotor.setControl(mmRequest.withPosition(position));
+  }
+
+  public void manualMove(DoubleSupplier joystick) {
+    double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1) * MAX_VOLTS;
+    climbMotor.setControl(voltageRequest.withOutput(cmd));
   }
 
   // ---------- COMMANDS ----------- //
-  /**
-   * This is meant to give the user the option to automatically zero the climb, providing
-   * contactless zeroeing.
-   *
-   * @param runAutoZero a boolean that determines whether to run the routine or not. If no, then
-   *     this will just zero the motor where the climb is at
-   * @return returns a Command that gives the instructions on how to run AutoZeroRoutine
-   */
-  public Command AutoZeroRoutine(boolean runAutoZero) {
-    final java.util.concurrent.atomic.AtomicInteger hits =
-        new java.util.concurrent.atomic.AtomicInteger(0);
-
-    if (!runAutoZero) {
-      return Commands.runOnce(
-              () -> {
-                zeroMotor();
-              },
-              this)
-          .withName("Manual Zero")
-          .onlyIf(() -> !isZeroed);
-    }
-    return Commands.run(
-            () -> {
-              climbMotor.setControl(
-                  volts.withOutput(-MAX_VOLTS).withIgnoreSoftwareLimits(true)); // Move down
-              // Until it has stalled
-              if (Math.abs(climbMotor.getStatorCurrent().getValueAsDouble()) >= STALL_CURRENT
-                  && Math.abs(climbMotor.getVelocity().getValueAsDouble()) <= MAX_OMEGA) {
-                hits.incrementAndGet();
-              } else {
-                hits.set(0);
-              }
-            },
-            this)
-        .until(() -> hits.get() >= MAX_HITS)
-        .finallyDo(
-            (interrupted) -> {
-              climbMotor.stopMotor();
-              if (!interrupted) {
-                zeroMotor();
-              }
-            })
-        .beforeStarting(
-            () -> {
-              hits.set(0);
-            })
-        .onlyIf(() -> !isZeroed)
-        .withTimeout(5);
+  public Command manualClimbCommand(DoubleSupplier joystickInput) {
+    return Commands.run(() -> manualMove(joystickInput), this).finallyDo(this::stop);
   }
 
-  // -- CLIMB -- //
-
-  /**
-   * This is the Climb routine that will automatically climb if the robot is close enough to the
-   * climb. It raises the climber, then moves to it, then climbss
-   *
-   * @param state an enum value that represents the desired climb level
-   * @return returns a Command that provides instructions on how to Climb
-   */
-  public Command climbRoutine(ClimbLevel state) {
-    Set<Subsystem> deferReqs = driveTrain != null ? Set.of(this, driveTrain) : Set.of(this);
+  public Command goToLevel(ClimbLevel state) {
     return Commands.defer(
             () -> {
-              final double targetPosition;
+              double targetPos = climbLevels.get(state);
+              Command moveCommand =
+                  Commands.runOnce(() -> setMotorPosition(targetPos), this)
+                      .beforeStarting(() -> targetLevel = targetPos)
+                      .until(this::isWithinTarget);
 
-              switch (state) {
-                case L1:
-                  targetPosition = L1;
-                  break;
-                case L2:
-                  targetPosition = L2;
-                  break;
-                case L3:
-                  targetPosition = L3;
-                  break;
-                default:
-                  throw new IllegalArgumentException("Unsupported ClimbLevel: " + state);
-              }
-
-              return Commands.run(() -> setMotorPosition(targetPosition), this)
-                  .until(
-                      () -> {
-                        return Math.abs(
-                                climbMotor.getPosition().getValueAsDouble() - targetPosition)
-                            < CLIMB_POSITION_TOLERANCE;
-                      })
-                  .andThen(
-                      // This pulls the aligns the robot, then pulls up. At this stage we're
-                      // assuming the climb subsystem is already hooked on
-                      new AutoAlignCommand(), Commands.runOnce(() -> setMotorPosition(0), this))
-                  .beforeStarting(() -> climbState = ClimbState.Climbing)
-                  .finallyDo((interrupted) -> climbState = ClimbState.Idle);
+              return (state == ClimbLevel.L0) ? moveCommand.andThen(detachClimb()) : moveCommand;
             },
-            deferReqs) // Requirements for the deferred command
-        .onlyIf(
-            () -> {
-              return isZeroed && climbState == ClimbState.Idle;
-            });
+            Set.of(this, driveTrain))
+        .onlyIf(() -> isZeroed && climbState == ClimbState.Attached);
+  }
+
+  public Command detachClimb() {
+    return new AutoAlignCommand(
+            getStage2Pose().rotateBy(DETACH_ROTATION), CLIMB_STRUCTURE_OFFSET.getTranslation())
+        .finallyDo(() -> climbState = ClimbState.Detached);
+  }
+
+  public Command attachToClimb() {
+    return Commands.sequence(
+            new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
+            new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
+            Commands.runOnce(
+                () -> {
+                  zeroMotor();
+                  climbState = ClimbState.Attached;
+                }))
+        .onlyIf(this::isNearEnoughToClimb);
+  }
+
+  public boolean isNearEnoughToClimb() {
+    return getStage1Pose()
+            .getTranslation()
+            .minus(driveTrain.getState().Pose.transformBy(CLIMB_TRANSFORM).getTranslation())
+            .getNorm()
+        < MIN_DIST;
   }
 
   // -------- AUTO ALIGN -------- //
-  /** AutoAlign command that auto aligns the bumper with the climb to the climb */
   public class AutoAlignCommand extends Command {
-    // Poses
-    private Pose2d climbBumper;
-    private Pose2d targetPose;
-    // PIDControllers
+    private Pose2d currentClimbPose;
+    private final Pose2d targetPose;
     private final PIDController pidX = new PIDController(4, 0, 0);
     private final PIDController pidY = new PIDController(4, 0, 0);
     private final PIDController pidRotate = new PIDController(8, 0, 0);
-    // Request
+
     private final SwerveRequest.FieldCentric driveRequest =
         new SwerveRequest.FieldCentric()
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-    private final SwerveRequest stop =
-        driveRequest.withVelocityX(0).withVelocityY(0).withRotationalRate(0);
 
-    // is null
-    private boolean m_isInvalid = false;
+    private final Translation2d centerOfRotation;
+    private final boolean isInvalid;
 
-    public AutoAlignCommand() {
+    public AutoAlignCommand(Pose2d target, Translation2d centerOfRotation) {
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
-      if (driveTrain != null) {
-        addRequirements(ClimbSubsystem.this, driveTrain);
-      } else {
-        m_isInvalid = true;
-      }
+      this.targetPose = target;
+      this.centerOfRotation = centerOfRotation;
+      this.isInvalid = (driveTrain == null);
+
+      if (!isInvalid) addRequirements(ClimbSubsystem.this, driveTrain);
       setName("Climb Align");
     }
 
     @Override
     public void initialize() {
-      int tagId = AllianceUtils.isBlue() ? BLUE_CLIMB_TAG_ID : RED_CLIMB_TAG_ID;
-      var tagPose = APRIL_TAG_FIELD_LAYOUT.getTagPose(tagId);
-      if (tagPose.isEmpty()) {
-        m_isInvalid = true;
-        return;
-      }
-      targetPose = tagPose.get().toPose2d().transformBy(climbOffSet);
+      pidX.reset();
+      pidY.reset();
+      pidRotate.reset();
 
       pidX.setSetpoint(targetPose.getX());
       pidY.setSetpoint(targetPose.getY());
-      // Robot bumper with the climb on it must face to the climb tower
       pidRotate.setSetpoint(targetPose.getRotation().getRadians());
+
+      pidX.setTolerance(TRANSLATION_TOLERANCE_METERS);
+      pidY.setTolerance(TRANSLATION_TOLERANCE_METERS);
+      pidRotate.setTolerance(ROTATION_TOLERANCE_RADIANS);
     }
 
     @Override
     public void execute() {
-      if (m_isInvalid) {
-        return;
-      }
-      climbBumper = driveTrain.getState().Pose.transformBy(frontBumperOffset);
-      // X and Y pid calculations
-      double powerX = pidX.calculate(climbBumper.getX());
-      double powerY = pidY.calculate(climbBumper.getY());
-      // Overcome static friction if PID outputs are small
+      if (isInvalid) return;
+
+      currentClimbPose = driveTrain.getState().Pose.transformBy(CLIMB_TRANSFORM);
+
+      double powerX = pidX.calculate(currentClimbPose.getX());
+      double powerY = pidY.calculate(currentClimbPose.getY());
+
+      // Friction compensation logic
       powerX =
           MathUtil.clamp(
-              MathUtil.applyDeadband(Math.abs(pidX.getError()), TRANSLATION_TOLERANCE_METERS) == 0
+              Math.abs(pidX.getError()) < TRANSLATION_TOLERANCE_METERS
                   ? 0
                   : powerX + POWER_COEFFICIENT * Math.signum(powerX),
               -MAX_TRANSLATIONAL_POWER,
               MAX_TRANSLATIONAL_POWER);
+
       powerY =
           MathUtil.clamp(
-              MathUtil.applyDeadband(Math.abs(pidY.getError()), TRANSLATION_TOLERANCE_METERS) == 0
+              Math.abs(pidY.getError()) < TRANSLATION_TOLERANCE_METERS
                   ? 0
                   : powerY + POWER_COEFFICIENT * Math.signum(powerY),
               -MAX_TRANSLATIONAL_POWER,
               MAX_TRANSLATIONAL_POWER);
-      // Rotational pid calculation
+
       double powerRotate =
           MathUtil.clamp(
-              pidRotate.calculate(climbBumper.getRotation().getRadians()),
+              pidRotate.calculate(currentClimbPose.getRotation().getRadians()),
               -MAX_ROTATIONAL_POWER,
               MAX_ROTATIONAL_POWER);
 
-      // Apply request
-      SwerveRequest request =
-          driveRequest.withVelocityX(powerX).withVelocityY(powerY).withRotationalRate(powerRotate);
-      driveTrain.setControl(request);
+      driveTrain.setControl(
+          driveRequest
+              .withVelocityX(powerX)
+              .withVelocityY(powerY)
+              .withRotationalRate(powerRotate)
+              .withCenterOfRotation(centerOfRotation));
     }
 
     @Override
     public boolean isFinished() {
-      if (m_isInvalid) {
-        return true;
-      }
-      if (climbBumper == null) {
-        return false;
-      }
-      Transform2d robotToClimb = climbBumper.minus(targetPose);
-      return robotToClimb.getTranslation().getNorm() < TRANSLATION_TOLERANCE_METERS
-          && Math.abs(robotToClimb.getRotation().getDegrees()) < ROTATION_TOLERANCE_DEGREES;
+      return pidX.atSetpoint() && pidY.atSetpoint() && pidRotate.atSetpoint();
     }
 
     @Override
     public void end(boolean interrupted) {
-      if (driveTrain != null) {
-        driveTrain.setControl(stop);
-      }
+      if (!isInvalid) driveTrain.setControl(new SwerveRequest.Idle());
     }
   }
 
-  // ------ Motor configuration ------ //
   private void configureMotors() {
     TalonFXConfiguration configs = new TalonFXConfiguration();
-    Slot0Configs slot0 = configs.Slot0;
 
-    slot0.kP = k_P;
-    slot0.kI = k_I;
-    slot0.kD = k_D;
-    slot0.kS = k_S;
-    slot0.kV = k_V;
-    slot0.kA = k_A;
+    configs.Slot0.kP = KP;
+    configs.Slot0.kI = KI;
+    configs.Slot0.kD = KD;
+    configs.Slot0.kS = KS;
+    configs.Slot0.kV = KV;
+    configs.Slot0.kA = KA;
 
-    // CURRENT LIMITS
     configs.CurrentLimits.StatorCurrentLimit = STATOR_CURRENT_LIMIT;
     configs.CurrentLimits.SupplyCurrentLimit = SUPPLY_CURRENT_LIMIT;
     configs.CurrentLimits.StatorCurrentLimitEnable = true;
     configs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    // SOFT LIMITS
-    configs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = FORWARD_SOFT_LIMIT;
-    configs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = REVERSE_SOFT_LIMIT;
-    configs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    configs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    configs.MotionMagic.MotionMagicCruiseVelocity = MM_CRUISE_VELOCITY;
+    configs.MotionMagic.MotionMagicAcceleration = MM_ACCEL;
+    configs.MotionMagic.MotionMagicJerk = MM_JERK;
 
-    // Motion magic
-    var mm = configs.MotionMagic;
-    mm.MotionMagicCruiseVelocity = MM_CRUISE_VELOCITY;
-    mm.MotionMagicAcceleration = MM_ACCEL;
-    mm.MotionMagicJerk = MM_JERK;
-
-    // Feedback / output
     configs.Feedback.SensorToMechanismRatio = GEAR_RATIO;
     configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     configs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -426,12 +355,12 @@ public class ClimbSubsystem extends SubsystemBase {
     climbMotor.getConfigurator().apply(configs);
   }
 
-  // Periodic
   @Override
   public void periodic() {
-    // set motor position in network tables
-    ntVoltage.set(SS_voltage.refresh().getValueAsDouble());
-    ntMotorPos.set(SS_MotorPos.refresh().getValueAsDouble());
-    ntMotorCurrent.set(SS_current.refresh().getValueAsDouble());
+    BaseStatusSignal.refreshAll(ssVoltage, ssMotorPos, ssCurrent);
+
+    ntVoltage.set(ssVoltage.getValueAsDouble());
+    ntMotorPos.set(ssMotorPos.getValueAsDouble());
+    ntMotorCurrent.set(ssCurrent.getValueAsDouble());
   }
 }
