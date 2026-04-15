@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Climb;
 
+import static edu.wpi.first.units.Units.Amp;
 import static edu.wpi.first.units.Units.Gs;
 import static edu.wpi.first.units.Units.Rotations;
 
@@ -18,6 +19,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -96,6 +99,8 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51);
   private static final double MIN_Gs = 1;
   private static final double ATTACH_TIMEOUT = 2; // Seconds
+  private static final Debouncer has_maintained_current = new Debouncer(0.2, DebounceType.kRising);
+  private static final double MIN_ATTACHED_AMPS = 20;
 
   // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
@@ -183,8 +188,8 @@ public class ClimbSubsystem extends SubsystemBase {
     return getTagPose().transformBy(CLIMB_STRUCTURE_OFFSET);
   }
 
-  // Pigeon 2 helper
-  public boolean haSnappedToClimb() {
+  // Check to see if we're actually attached
+  public boolean PassedAccelerometerTest() {
     StatusSignal.refreshAll(ss_xAccel, ss_yAccel);
     double x = ss_xAccel.getValue().in(Gs);
     double y = ss_yAccel.getValue().in(Gs);
@@ -193,6 +198,12 @@ public class ClimbSubsystem extends SubsystemBase {
       return true;
     }
     return false;
+  }
+
+  public boolean PassedrollerTest() {
+    boolean aboveThreshold = false;
+    if (ssCurrent.getValue().in(Amp) > MIN_ATTACHED_AMPS) aboveThreshold = !aboveThreshold;
+    return has_maintained_current.calculate(aboveThreshold);
   }
 
   // Motor helpers
@@ -251,13 +262,13 @@ public class ClimbSubsystem extends SubsystemBase {
 
   public Command attachToClimb() {
     return Commands.sequence(
+            Commands.parallel(new AutoAlignCommand(getStage1Pose(), Translation2d.kZero)),
             climbPivotSubsystem.deployCommand().until(() -> climbPivotSubsystem.isDeployed()),
-            new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
             Commands.parallel(
                 new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
                 Commands.run(
                         () -> {
-                          if (haSnappedToClimb()) {
+                          if (PassedAccelerometerTest() && PassedAccelerometerTest()) {
                             climbState = ClimbState.Attached;
                           }
                         })
