@@ -101,7 +101,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double ATTACH_TIMEOUT = 2; // Seconds
   private final Debouncer hasMaintainedCurrent = new Debouncer(0.2, DebounceType.kRising);
   private static final double MIN_ATTACHED_AMPS = 20;
-  private static final double MAX_ATTACH_ATTEMPTS = 5;
+  private static final double MAX_ATTACH_ATTEMPTS = 3;
 
   // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
