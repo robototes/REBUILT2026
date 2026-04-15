@@ -274,7 +274,7 @@ public class ClimbSubsystem extends SubsystemBase {
                         Commands.runOnce(() -> setVoltage(MAX_VOLTS)),
                         Commands.run(
                             () -> {
-                              if (PassedAccelerometerTest() && PassedAccelerometerTest()) {
+                              if (PassedAccelerometerTest() && PassedrollerTest()) {
                                 climbState = ClimbState.Attached;
                               }
                             }))
