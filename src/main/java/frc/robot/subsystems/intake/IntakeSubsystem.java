@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.DoubleSupplier;
 
 public class IntakeSubsystem extends SubsystemBase {
   public enum IntakeMode {
@@ -25,6 +26,11 @@ public class IntakeSubsystem extends SubsystemBase {
     intakePivot.setPivotPosition(intakePivot.getPivotTargetPosition());
   }
 
+  public void runRollers(DoubleSupplier rps) {
+    intakeRollers.runRollers(rps.getAsDouble());
+    intakePivot.setPivotPosition(intakePivot.getPivotTargetPosition());
+  }
+
   public void deployPivot() {
     intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
     intakeRollers.stopMotor();
@@ -41,12 +47,17 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void smartIntake() {
-    if (intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
-      runRollers();
-    } else {
+    if (!intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
       deployPivot();
-      runRollers();
     }
+    runRollers();
+  }
+
+  public void smartIntake(DoubleSupplier rps) {
+    if (!intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
+      deployPivot();
+    }
+    runRollers(rps);
   }
 
   public void extakeIntake() {
