@@ -96,11 +96,12 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Auto Align and Climb Constants
   private static final double STAGE1_APPROACH_OFFSET = 0.1; // Meters
-  private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51);
+  private static final double CLIMB_X_OFFSET = Units.inchesToMeters(43.51);
   private static final double MIN_G_FORCE = 1;
   private static final double ATTACH_TIMEOUT = 2; // Seconds
   private final Debouncer hasMaintainedCurrent = new Debouncer(0.2, DebounceType.kRising);
   private static final double MIN_ATTACHED_AMPS = 20;
+  private static final double MAX_ATTACH_ATTEMPTS = 5;
 
   // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
@@ -123,10 +124,14 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double MM_JERK = 5;
 
   // Poses and transforms
+
+  // This transform should represent the dy dx value from robot center to climb
   private static final Transform2d CLIMB_TRANSFORM =
-      new Transform2d(new Translation2d(ROBOT_WIDTH / 2, 0), Rotation2d.k180deg);
+      new Transform2d(new Translation2d(ROBOT_WIDTH / 2, 0), Rotation2d.kZero);
+  // with blue alliance left and red alliance right, the offset is protruding
+  // right.
   private static final Transform2d CLIMB_STRUCTURE_OFFSET =
-      new Transform2d(new Translation2d(0, CLIMB_Y_OFFSET), Rotation2d.kZero);
+      new Transform2d(new Translation2d(CLIMB_X_OFFSET, 0), Rotation2d.kZero);
 
   // Network Tables
   private final DoublePublisher ntMotorPos;
@@ -270,25 +275,33 @@ public class ClimbSubsystem extends SubsystemBase {
 
   public Command attachToClimb() {
     return Commands.defer(
-            () ->
-                Commands.sequence(
-                    Commands.parallel(
-                        new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
-                        climbPivotSubsystem
-                            .deployCommand()
-                            .until(() -> climbPivotSubsystem.isDeployed())),
-                    Commands.parallel(
-                        new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
-                        Commands.sequence(
-                                Commands.runOnce(() -> setVoltage(MAX_VOLTS)),
-                                Commands.run(
-                                    () -> {
-                                      if (passedAccelerometerTest() && passedRollerTest()) {
-                                        climbState = ClimbState.Attached;
-                                      }
-                                    }))
-                            .onlyWhile(() -> climbState == ClimbState.Detached)
-                            .withTimeout(ATTACH_TIMEOUT))),
+            () -> {
+              int[] attempts = {0};
+              return Commands.sequence(
+                  Commands.parallel(
+                      new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
+                      climbPivotSubsystem
+                          .deployCommand()
+                          .until(() -> climbPivotSubsystem.isDeployed())),
+                  Commands.parallel(
+                          new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
+                          Commands.sequence(
+                                  Commands.runOnce(() -> setVoltage(MAX_VOLTS)),
+                                  Commands.run(
+                                      () -> {
+                                        if (passedAccelerometerTest() && passedRollerTest()) {
+                                          climbState = ClimbState.Attached;
+                                        }
+                                      }))
+                              .onlyWhile(() -> climbState == ClimbState.Detached)
+                              .withTimeout(ATTACH_TIMEOUT))
+                      .andThen(Commands.runOnce(() -> attempts[0]++))
+                      .repeatedly()
+                      .until(
+                          () ->
+                              climbState == ClimbState.Attached
+                                  || attempts[0] >= MAX_ATTACH_ATTEMPTS));
+            },
             Set.of(this, driveTrain))
         .onlyIf(this::isNearEnoughToClimb)
         .finallyDo(this::stop);
@@ -303,6 +316,9 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   // -------- AUTO ALIGN -------- //
+
+  // This is designed to align the center of the climb with the desired target. Do not use this if
+  // you intend to move the center of the drivebase
   public class AutoAlignCommand extends Command {
     private Pose2d currentClimbPose;
     private final Pose2d targetPose;
