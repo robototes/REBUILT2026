@@ -194,15 +194,11 @@ public class ClimbSubsystem extends SubsystemBase {
     double x = ss_xAccel.getValue().in(Gs);
     double y = ss_yAccel.getValue().in(Gs);
     double totalAccel = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-    if (totalAccel >= MIN_Gs) {
-      return true;
-    }
-    return false;
+    return totalAccel >= MIN_Gs;
   }
 
   public boolean PassedrollerTest() {
-    boolean aboveThreshold = false;
-    if (ssCurrent.getValue().in(Amp) > MIN_ATTACHED_AMPS) aboveThreshold = !aboveThreshold;
+    boolean aboveThreshold = ssCurrent.getValue().in(Amp) > MIN_ATTACHED_AMPS;
     return has_maintained_current.calculate(aboveThreshold);
   }
 
