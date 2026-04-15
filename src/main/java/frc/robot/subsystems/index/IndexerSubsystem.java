@@ -29,7 +29,7 @@ public class IndexerSubsystem extends SubsystemBase {
   public Command runIndexer(DoubleSupplier flywheelRPS) {
     return Commands.runEnd(
         () -> {
-          double fRPS = flywheelRPS.getAsDouble() * 0.83 + 15;
+          double fRPS = flywheelRPS.getAsDouble() * 1.12 + 15;
           double sRPS = Math.min(fRPS * 1.5, 70);
           feeder.setVelocity(fRPS);
           spindexerSubsystem.setVelocity(sRPS);

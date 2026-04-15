@@ -34,7 +34,6 @@ import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
@@ -186,7 +185,7 @@ public class Controls {
       return;
     }
 
-    readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
+    // readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
 
     connected(launcherTuningController)
         .and(launcherTuningController.y())
@@ -377,13 +376,23 @@ public class Controls {
                     case RETRACTED -> s.intakeSubsystem.retractPivot();
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
-                    case INTAKE -> s.intakeSubsystem.smartIntake();
+                    case INTAKE ->
+                        s.intakeSubsystem.smartIntake(
+                            () ->
+                                Math.hypot(
+                                            s.drivebaseSubsystem.getState()
+                                                .Speeds
+                                                .vxMetersPerSecond,
+                                            s.drivebaseSubsystem.getState()
+                                                .Speeds
+                                                .vyMetersPerSecond)
+                                        * 6
+                                    + 40);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },
                 s.intakeSubsystem)
             .withName("Intake Default Command"));
-
     driverController
         .leftTrigger()
         .whileTrue(
@@ -408,7 +417,7 @@ public class Controls {
 
     connected(intakeTestController)
         .and(intakeTestController.a())
-        .onTrue(Commands.runOnce(() -> s.intakeSubsystem.runRollers()));
+        .whileTrue(Commands.run(() -> s.intakeSubsystem.runRollers()));
     connected(intakeTestController)
         .and(intakeTestController.x())
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
