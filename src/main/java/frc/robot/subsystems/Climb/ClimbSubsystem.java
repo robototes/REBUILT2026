@@ -21,6 +21,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -33,6 +34,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -97,10 +99,21 @@ public class ClimbSubsystem extends SubsystemBase {
   // Auto Align and Climb Constants
   private static final double STAGE1_APPROACH_OFFSET = 0.1; // Meters
   private static final double CLIMB_X_OFFSET = Units.inchesToMeters(43.51);
-  private static final double MIN_G_FORCE = 1;
+  private static final double MIN_JERK = 1;
   private static final double ATTACH_TIMEOUT = 2; // Seconds
   private static final double MIN_ATTACHED_AMPS = 20;
   private static final double MAX_ATTACH_ATTEMPTS = 3;
+
+  // Jerk check
+  private double last_Time = 0;
+  private double MIN_JERK_DT = 20;
+
+  private final double TIME_CONSTANT = 0.1;
+  private final double PERIOD = 0.02;
+  private LinearFilter xLinearFilter = LinearFilter.singlePoleIIR(TIME_CONSTANT, PERIOD);
+  private LinearFilter yLinearFilter = LinearFilter.singlePoleIIR(TIME_CONSTANT, PERIOD);
+  private double last_X_Accel = 0;
+  private double last_Y_Accel = 0;
   // Debouncer
   private static final double DEBOUNCE_TIME = 0.2;
   private static final DebounceType DEBOUNCE_TYPE = DebounceType.kRising;
@@ -140,6 +153,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private final DoublePublisher ntMotorPos;
   private final DoublePublisher ntMotorCurrent;
   private final DoublePublisher ntVoltage;
+  private final DoublePublisher ntIMUJerk;
 
   // Status signals
   private final StatusSignal<Voltage> ssVoltage;
@@ -163,6 +177,7 @@ public class ClimbSubsystem extends SubsystemBase {
     ntMotorPos = table.getDoubleTopic("Motor Pos (rotations)").publish();
     ntMotorCurrent = table.getDoubleTopic("Current (amps)").publish();
     ntVoltage = table.getDoubleTopic("Voltage").publish();
+    ntIMUJerk = table.getDoubleTopic("Jerk").publish();
 
     ssVoltage = climbMotor.getMotorVoltage();
     ssCurrent = climbMotor.getStatorCurrent();
@@ -197,11 +212,33 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   public boolean passedAccelerometerTest() {
+    double jerk = getJerk();
+    return jerk >= MIN_JERK;
+  }
+
+  public double getJerk() {
+    double currentTime = Timer.getFPGATimestamp();
+    double current_Dt = currentTime - last_Time;
+
     StatusSignal.refreshAll(ssXAccel, ssYAccel);
-    double x = ssXAccel.getValue().in(Gs);
-    double y = ssYAccel.getValue().in(Gs);
-    double totalAccel = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-    return totalAccel >= MIN_G_FORCE;
+    double x = xLinearFilter.calculate(ssXAccel.getValue().in(Gs));
+    double y = yLinearFilter.calculate(ssYAccel.getValue().in(Gs));
+
+    double jerkMagnitude = 0;
+
+    if (last_Time != 0 && current_Dt >= MIN_JERK_DT) {
+      double jerkX = (x - last_X_Accel) / current_Dt;
+      double jerkY = (y - last_Y_Accel) / current_Dt;
+
+      jerkMagnitude = Math.sqrt(jerkX * jerkX + jerkY * jerkY);
+    }
+
+    last_X_Accel = x;
+    last_Y_Accel = y;
+    last_Time = currentTime;
+
+    ntIMUJerk.set(jerkMagnitude);
+    return jerkMagnitude;
   }
 
   public boolean passedRollerTest() {
@@ -449,6 +486,8 @@ public class ClimbSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     BaseStatusSignal.refreshAll(ssVoltage, ssMotorPos, ssCurrent);
+    // Remove once we test the tuned jerk value
+    getJerk();
 
     ntVoltage.set(ssVoltage.getValueAsDouble());
     ntMotorPos.set(ssMotorPos.getValueAsDouble());
