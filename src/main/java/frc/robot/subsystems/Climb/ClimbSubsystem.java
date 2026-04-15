@@ -106,7 +106,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Jerk check
   private double last_Time = 0;
-  private double MIN_JERK_DT = 20;
+  private double MIN_JERK_DT = 0.02;
 
   private final double TIME_CONSTANT = 0.1;
   private final double PERIOD = 0.02;
@@ -320,9 +320,7 @@ public class ClimbSubsystem extends SubsystemBase {
               return Commands.sequence(
                   Commands.parallel(
                       new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
-                      climbPivotSubsystem
-                          .deployCommand()
-                          .until(() -> climbPivotSubsystem.isDeployed())),
+                      climbPivotSubsystem.deployCommand()),
                   Commands.parallel(
                           new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
                           Commands.sequence(
