@@ -101,10 +101,16 @@ public class Flywheels extends SubsystemBase {
     config.Slot0.kS = 0.3;
     config.Slot0.kG = 0.0;
 
-    config.MotorOutput.Inverted = RobotType.isAlpha() ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.Inverted =
+        RobotType.isAlpha()
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
     applyConfig(flywheelOne, config);
 
-    config.MotorOutput.Inverted = RobotType.isAlpha() ? InvertedValue.CounterClockwise_Positive : InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted =
+        RobotType.isAlpha()
+            ? InvertedValue.CounterClockwise_Positive
+            : InvertedValue.Clockwise_Positive;
     applyConfig(flywheelTwo, config);
 
     // flywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
