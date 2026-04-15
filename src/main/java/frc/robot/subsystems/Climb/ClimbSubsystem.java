@@ -117,7 +117,7 @@ public class ClimbSubsystem extends SubsystemBase {
   // Debouncer
   private static final double DEBOUNCE_TIME = 0.2;
   private static final DebounceType DEBOUNCE_TYPE = DebounceType.kRising;
-  private Debouncer hasMaintainedCurrent;
+  private Debouncer hasMaintainedCurrent = new Debouncer(DEBOUNCE_TIME, DEBOUNCE_TYPE);
 
   // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
