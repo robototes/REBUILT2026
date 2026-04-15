@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import java.util.HashMap;
@@ -71,6 +72,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
   // Hardware and physical objects
   private final CommandSwerveDrivetrain driveTrain;
+  private final ClimbPivot climbPivotSubsystem;
   private final TalonFX climbMotor;
   private static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AllianceUtils.FIELD_LAYOUT;
   private static final int BLUE_CLIMB_TAG_ID = 31;
@@ -125,8 +127,9 @@ public class ClimbSubsystem extends SubsystemBase {
   private final StatusSignal<Current> ssCurrent;
   private final StatusSignal<Angle> ssMotorPos;
 
-  public ClimbSubsystem(CommandSwerveDrivetrain driveTrain) {
-    this.driveTrain = driveTrain;
+  public ClimbSubsystem(Subsystems s) {
+    this.driveTrain = s.drivebaseSubsystem;
+    this.climbPivotSubsystem = s.climbPivotSubsystem;
     climbMotor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
     configureMotors();
 
@@ -214,11 +217,16 @@ public class ClimbSubsystem extends SubsystemBase {
   public Command detachClimb() {
     return new AutoAlignCommand(
             getStage2Pose().rotateBy(DETACH_ROTATION), CLIMB_STRUCTURE_OFFSET.getTranslation())
-        .finallyDo(() -> climbState = ClimbState.Detached);
+        .finallyDo(
+            () -> {
+              climbPivotSubsystem.stow();
+              climbState = ClimbState.Detached;
+            });
   }
 
   public Command attachToClimb() {
     return Commands.sequence(
+            climbPivotSubsystem.deployCommand().until(() -> climbPivotSubsystem.isDeployed()),
             new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
             new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
             Commands.runOnce(
