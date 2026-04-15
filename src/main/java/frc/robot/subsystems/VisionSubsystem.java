@@ -33,6 +33,8 @@ import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
 import frc.robot.util.vision.LLCamera;
 import frc.robot.util.vision.LimelightHelpers.RawFiducial;
+import frc.robot.util.vision.VisionStdDevMap;
+import frc.robot.util.vision.VisionStdDevs;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -45,10 +47,6 @@ public class VisionSubsystem extends SubsystemBase {
 
   private Matrix<N3, N1> stdDevs = null;
 
-  private static NtTunableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
-  private static NtTunableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
-  private static NtTunableDouble P_XY = new NtTunableDouble("/vision/P_XY", 1.4);
-
   // How much to reduce std devs when defense slip is detected.
   // <1.0 = trust vision more (0.5 = half the std dev = 4x the filter weight).
   // Tune this at practice with someone actively defending.
@@ -56,7 +54,6 @@ public class VisionSubsystem extends SubsystemBase {
       new NtTunableDouble("/vision/defenseStdDevScale", 0.5);
 
   private static class VisionConstants {
-    private static final double STD_DEVS_MT1_THETA = Math.PI / 60;
 
     // Ambiguity gating
     private static final double MAX_AMBIGUITY = 0.4;
@@ -128,6 +125,11 @@ public class VisionSubsystem extends SubsystemBase {
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
+  // Per-camera IDW interpolation maps — keyed on (avgTagDistance, maxAmbiguity)
+  private final VisionStdDevMap aMap = new VisionStdDevMap();
+  private final VisionStdDevMap bMap = new VisionStdDevMap();
+  private final VisionStdDevMap cMap = new VisionStdDevMap();
+
   private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/fieldPose3d", Pose3d.struct)
@@ -183,6 +185,27 @@ public class VisionSubsystem extends SubsystemBase {
 
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
+
+    // Camera B — columns: avgTagDist, maxAmbiguity, mt1x, mt1y, mt1theta, mt2x, mt2y
+    bMap.addData(2.8, 0.2, 0.9, 1.1, 38, 0.51, 0.49);
+    bMap.addData(0.4, 0.4, 0.65, 1.4, 123, 0.74, 0.77);
+    bMap.addData(3.4, 0.3, 0.67, 1.54, 117, 0.9, 1.04);
+    bMap.addData(3.0, 0.2, 0.85, 1.86, 94, 0.78, 1.57);
+    bMap.addData(3.7, 0.5, 0.95, 1.47, 40, 0.77, 1.2);
+
+    // Camera A — columns: avgTagDist, maxAmbiguity, mt1x, mt1y, mt1theta, mt2x, mt2y
+    aMap.addData(4.4, 0.2, 0.47, 1.3, 35, 0.2, 1.27);
+    aMap.addData(3.9, 0.4, 4.22, 0.96, 141, 4.0, 0.66);
+    aMap.addData(2.6, 0.3, 3.2, 0.99, 101, 2.65, 0.57);
+    aMap.addData(3.6, 0.2, 0.8, 1.68, 44.68, 1.03, 1.02);
+    aMap.addData(3.3, 0.8, 1.55, 2.75, 76.9, 0.78, 2.15);
+
+    // Camera C — columns: avgTagDist, maxAmbiguity, mt1x, mt1y, mt1theta, mt2x, mt2y
+    cMap.addData(2.4, 0.018, 0.43, 1.26, 48, 0.38, 0.73);
+    cMap.addData(2.0, 0.15, 1.1, 1.9, 104, 0.93, 1.9);
+    cMap.addData(4.8, 0.089, 0.88, 3.0, 38, 0.8, 2.9);
+    cMap.addData(1.3, 0.036, 0.9, 0.73, 39, 0.4, 0.56);
+    cMap.addData(2.7, 0.21, 3.63, 0.6, 57.9, 3.7, 0.48);
   }
 
   public void update() {
@@ -209,13 +232,13 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putBoolean("/vision/underDefense", underDefense);
 
     processCamera(
-        ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
+        ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense, aMap);
     processCamera(
-        BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking, underDefense);
+        BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking, underDefense, bMap);
     // uncomment if when using intake pose
     // if (intakePivot.isAtTarget(2, IntakePivot.DEPLOYED_POS)) {
     processCamera(
-        CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking, underDefense);
+        CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking, underDefense, cMap);
     // }
     updateCameraView(visionPoseTracking);
   }
@@ -225,7 +248,8 @@ public class VisionSubsystem extends SubsystemBase {
       boolean cameraOnline,
       StructPublisher<Pose3d> rawFieldPose3dEntry,
       VisionPoseTracking visionPoseTracking,
-      boolean underDefense) {
+      boolean underDefense,
+      VisionStdDevMap stdDevMap) {
     if (!cameraOnline) return;
     RawFiducial[] rawFiducials = camera.getRawFiducials();
     if (rawFiducials == null) return;
@@ -241,7 +265,8 @@ public class VisionSubsystem extends SubsystemBase {
         visionPoseTracking,
         rawFiducials,
         camera,
-        underDefense);
+        underDefense,
+        stdDevMap);
     processLimelight(
         mt2Estimate,
         rawFieldPose3dEntry,
@@ -249,7 +274,8 @@ public class VisionSubsystem extends SubsystemBase {
         visionPoseTracking,
         rawFiducials,
         camera,
-        underDefense);
+        underDefense,
+        stdDevMap);
   }
 
   private void processLimelight(
@@ -259,7 +285,8 @@ public class VisionSubsystem extends SubsystemBase {
       VisionPoseTracking visionPoseTracking,
       RawFiducial[] rawFiducials,
       LLCamera camera,
-      boolean underDefense) {
+      boolean underDefense,
+      VisionStdDevMap stdDevMap) {
 
     if (estimate == null || estimate.tagCount <= 0) return;
 
@@ -320,15 +347,14 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     double avgTagDist = estimate.avgTagDist;
-    if (estimate.isMegaTag2) {
-      stdDevs =
-          getEstimationStdDevsLimelightMT2(
-              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, camera.getName());
-    } else {
-      stdDevs =
-          getEstimationStdDevsLimelightMT1(
-              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, camera.getName());
-    }
+    stdDevs =
+        getEstimationStdDevs(
+            avgTagDist,
+            estimate.tagCount,
+            maxAmbiguity,
+            estimate.isMegaTag2,
+            stdDevMap,
+            camera.getName());
 
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
       publishDiagnostics(estimate, visionPose2d, camera, "ambiguity-or-range");
@@ -489,78 +515,42 @@ public class VisionSubsystem extends SubsystemBase {
     }
   }
 
-  // Std dev computation — MT1
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT1(
+  /**
+   * Returns interpolated standard deviations for the given measurement state using the per-camera
+   * VisionStdDevMap. Hard gates (ambiguity, distance) are applied before lookup. MT2 always returns
+   * MAX_VALUE for theta — heading comes from the gyro, not vision. MT1 returns MAX_VALUE for theta
+   * on single-tag observations.
+   */
+  private Matrix<N3, N1> getEstimationStdDevs(
       double avgTagDist,
       int numOfTags,
       double maxAmbiguity,
-      RawFiducial[] rawFiducials,
+      boolean isMegaTag2,
+      VisionStdDevMap stdDevMap,
       String cameraName) {
+
+    double maxDistGate =
+        isMegaTag2 ? VisionConstants.MAX_DISTANCE_MT2 : VisionConstants.MAX_DISTANCE_MT1;
 
     if (maxAmbiguity >= VisionConstants.MAX_AMBIGUITY) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     }
-    if (numOfTags == 1 && avgTagDist > VisionConstants.MAX_DISTANCE_MT1) {
+    if (numOfTags == 1 && avgTagDist > maxDistGate) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
-    double ambiguityInflation = 1.0 / Math.pow(1.0 - maxAmbiguity, 2.0);
-    double harmonicSum = computeHarmonicSum(rawFiducials);
-    if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
+    VisionStdDevs devs = stdDevMap.getInterpolated(avgTagDist, maxAmbiguity);
 
-    double xy =
-        A_XY_MT1.get()
-            * Math.pow(avgTagDist, P_XY.get())
-            / Math.sqrt(harmonicSum)
-            * ambiguityInflation;
-    double theta =
-        (numOfTags == 1)
-            ? Double.MAX_VALUE
-            : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
-
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
-    return VecBuilder.fill(xy, xy, theta);
-  }
-
-  // Std dev computation — MT2
-  private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(
-      double avgTagDist,
-      int numOfTags,
-      double maxAmbiguity,
-      RawFiducial[] rawFiducials,
-      String cameraName) {
-
-    if (maxAmbiguity >= VisionConstants.MAX_AMBIGUITY) {
-      return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+    if (isMegaTag2) {
+      SmartDashboard.putNumber("/vision/" + cameraName + " Mt2 STD xy", devs.mt2X);
+      // Heading from gyro on MT2 — never trust vision heading
+      return VecBuilder.fill(devs.mt2X, devs.mt2Y, Double.MAX_VALUE);
+    } else {
+      double theta = (numOfTags == 1) ? Double.MAX_VALUE : devs.mt1Theta;
+      SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", devs.mt1X);
+      SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
+      return VecBuilder.fill(devs.mt1X, devs.mt1Y, theta);
     }
-    if (numOfTags == 1 && avgTagDist > VisionConstants.MAX_DISTANCE_MT2) {
-      return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-    }
-
-    double ambiguityInflation = 1.0 / Math.pow(1.0 - maxAmbiguity, 2.0);
-    double harmonicSum = computeHarmonicSum(rawFiducials);
-    if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
-
-    double xy =
-        A_XY_MT2.get()
-            * Math.pow(avgTagDist, P_XY.get())
-            / Math.sqrt(harmonicSum)
-            * ambiguityInflation;
-
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt2 STD xy", xy);
-    // θ = MAX_VALUE: heading comes from gyro, not vision
-    return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
-  }
-
-  private double computeHarmonicSum(RawFiducial[] rawFiducials) {
-    if (rawFiducials == null || rawFiducials.length == 0) return 0.0;
-    double sum = 0.0;
-    for (RawFiducial rf : rawFiducials) {
-      double dist = rf.distToRobot > 0.01 ? rf.distToRobot : rf.distToCamera;
-      if (dist > 0.01) sum += 1.0 / (dist * dist);
-    }
-    return sum;
   }
 
   /**

@@ -1,9 +1,8 @@
 package frc.robot.util.vision;
 
+import edu.wpi.first.wpilibj.DataLogManager;
 import java.util.ArrayList;
 import java.util.List;
-
-import edu.wpi.first.wpilibj.DataLogManager;
 
 /**
  * Interpolates vision standard deviations from a sparse 2D dataset using Inverse Distance Weighting
