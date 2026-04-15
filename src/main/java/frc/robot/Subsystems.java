@@ -21,6 +21,7 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.Climb.ClimbPivot;
+import frc.robot.subsystems.Climb.ClimbSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
@@ -72,6 +73,7 @@ public class Subsystems {
   public final IndexerSubsystem indexerSubsystem;
   public final LEDSubsystem ledSubsystem;
   public final ClimbPivot climbPivotSubsystem;
+  public final ClimbSubsystem climbSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -161,6 +163,7 @@ public class Subsystems {
     }
     if (CLIMB_PIVOT_ENABLED) {
       climbPivotSubsystem = new ClimbPivot();
+      climbSubsystem = new ClimbSubsystem(this);
     } else {
       climbPivotSubsystem = null;
     }
