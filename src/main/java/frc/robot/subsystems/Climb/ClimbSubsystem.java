@@ -377,15 +377,12 @@ public class ClimbSubsystem extends SubsystemBase {
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
     private final Translation2d centerOfRotation;
-    private final boolean isInvalid;
 
     public AutoAlignCommand(Pose2d target, Translation2d centerOfRotation) {
       pidRotate.enableContinuousInput(-Math.PI, Math.PI);
       this.targetPose = target;
       this.centerOfRotation = centerOfRotation;
-      this.isInvalid = (driveTrain == null);
-
-      if (!isInvalid) addRequirements(driveTrain);
+      addRequirements(driveTrain);
       setName("Climb Align");
     }
 
@@ -406,7 +403,6 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public void execute() {
-      if (isInvalid) return;
 
       currentClimbPose = driveTrain.getState().Pose.transformBy(CLIMB_TRANSFORM);
 
@@ -451,7 +447,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
     @Override
     public void end(boolean interrupted) {
-      if (!isInvalid) driveTrain.setControl(new SwerveRequest.Idle());
+      driveTrain.setControl(new SwerveRequest.Idle());
     }
   }
 
