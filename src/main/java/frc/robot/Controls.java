@@ -279,7 +279,7 @@ public class Controls {
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                         .andThen(
                             Commands.parallel(
-                                    Commands.runOnce(() -> s.flywheels.switchSlot(true)),
+                                    Commands.runOnce(() -> s.flywheels.switchSlot(true, false)),
                                     s.indexerSubsystem.runIndexer(),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
                                     Commands.waitSeconds(1)
@@ -515,6 +515,7 @@ public class Controls {
         .onTrue(
             s.drivebaseSubsystem.runOnce(
                 () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+    connected(turretTestController).and(turretTestController.x()).onTrue(s.flywheels.powerSwitchCommand());
     driverController
         .rightStick()
         .whileTrue(

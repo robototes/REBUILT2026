@@ -63,6 +63,9 @@ public class Flywheels extends SubsystemBase {
   private StatusSignal<AngularVelocity> flywheelOneRPS;
   private StatusSignal<Current> flywheelOneSupplyCurrent;
 
+  // Power switch
+  public boolean passingPower = false;
+
   // Constructor
   public Flywheels() {
     FlywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
@@ -144,12 +147,23 @@ public class Flywheels extends SubsystemBase {
     }
   }
 
-  public void switchSlot(boolean isLaunching) {
+  public void switchSlot(boolean isLaunching, boolean passingPower) {
     if (isLaunching) {
       request = request.withSlot(1);
     } else {
       request = request.withSlot(0);
     }
+    if (passingPower) {
+      request = request.withSlot(2);
+    } else {
+      request = request.withSlot(0);
+    }
+  }
+  private void powerSwitch() {
+    passingPower = !passingPower;
+  }
+  public Command powerSwitchCommand() {
+    return runOnce(() -> powerSwitch()).withName("Passing Power Mode");
   }
 
   public Command setVelocityCommand(double rps) {
