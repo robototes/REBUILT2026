@@ -31,13 +31,18 @@ public class VisionSimConstants {
   public static final int kCameraResWidth = kHighFidelityVision ? 1280 : 320;
   public static final int kCameraResHeight = kHighFidelityVision ? 800 : 240;
   public static final double kCameraFOVDegrees = 90.0;
-  public static final double kCalibErrorAvg = 0.12;
-  public static final double kCalibErrorStdDev = 0.035;
+  // Since camera res width and height are not exactly scaled the same
+  // we take the geometric mean of the both of the scalars then multiply by the old numbers
+  public static final double kCalibErrorAvg = kHighFidelityVision ? 0.44 : 0.12;
+  public static final double kCalibErrorStdDev = kHighFidelityVision ? 0.13 : 0.035;
   public static final double kCameraFPS = 15;
   public static final double kAvgLatencyMs = 50;
   public static final double kLatencyStdDevMs = 15;
+  // except for this line below due to pixels being a square
   public static final double kMinTargetAreaPixels = kHighFidelityVision ? 133.0 : 10.0;
   public static final double kMaxSightRangeMeters = 3.0;
+  public static final double kAvgDistTolerance = kHighFidelityVision ? 4.78 : 1.3;
+  public static final double kAvgDistVarianceScale = kHighFidelityVision ? 12.2 : 3.33;
 
   /** Per-camera configuration for vision simulation. */
   public record VisionConfig(
