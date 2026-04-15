@@ -25,7 +25,6 @@ public class VisionSimConstants {
   // High-fidelity vision simulation flag (set via -PhighFidelityVision=true in build.gradle)
   private static final boolean kHighFidelityVision =
       Boolean.parseBoolean(System.getProperty("highFidelityVision", "false"));
-  ;
 
   // Camera simulation properties (shared by all cameras — all cameras are identical)
   // Low-fidelity (default): 320x240, high-fidelity (LimeLight-like): 1280x800
