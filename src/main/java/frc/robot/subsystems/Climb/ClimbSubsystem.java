@@ -225,6 +225,10 @@ public class ClimbSubsystem extends SubsystemBase {
     climbMotor.setControl(mmRequest.withPosition(position));
   }
 
+  public void setVoltage(double volts) {
+    climbMotor.setVoltage(volts);
+  }
+
   public void manualMove(DoubleSupplier joystick) {
     double cmd = MathUtil.applyDeadband(joystick.getAsDouble(), 0.1) * MAX_VOLTS;
     climbMotor.setControl(voltageRequest.withOutput(cmd));
@@ -266,12 +270,14 @@ public class ClimbSubsystem extends SubsystemBase {
             climbPivotSubsystem.deployCommand().until(() -> climbPivotSubsystem.isDeployed()),
             Commands.parallel(
                 new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
-                Commands.run(
-                        () -> {
-                          if (PassedAccelerometerTest() && PassedAccelerometerTest()) {
-                            climbState = ClimbState.Attached;
-                          }
-                        })
+                Commands.sequence(
+                        Commands.runOnce(() -> setVoltage(MAX_VOLTS)),
+                        Commands.run(
+                            () -> {
+                              if (PassedAccelerometerTest() && PassedAccelerometerTest()) {
+                                climbState = ClimbState.Attached;
+                              }
+                            }))
                     .onlyWhile(() -> climbState == ClimbState.Detached)
                     .withTimeout(ATTACH_TIMEOUT)))
         .onlyIf(this::isNearEnoughToClimb);
