@@ -1,12 +1,13 @@
-package frc.robot.util;
+package frc.robot.util.vision;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.TimestampedDoubleArray;
 import edu.wpi.first.wpilibj.DriverStation;
-import frc.robot.util.LimelightHelpers.RawDetection;
-import frc.robot.util.LimelightHelpers.RawFiducial;
+import frc.robot.util.BetterPoseEstimate;
+import frc.robot.util.vision.LimelightHelpers.RawDetection;
+import frc.robot.util.vision.LimelightHelpers.RawFiducial;
 
 public class LLCamera {
 

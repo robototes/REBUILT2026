@@ -29,10 +29,10 @@ import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
-import frc.robot.util.LLCamera;
-import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
+import frc.robot.util.vision.LLCamera;
+import frc.robot.util.vision.LimelightHelpers.RawFiducial;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
