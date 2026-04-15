@@ -53,6 +53,9 @@ import java.util.function.DoubleSupplier;
  * @author Sean Le Nguyen
  */
 public class ClimbSubsystem extends SubsystemBase {
+
+  // -------- ENUMS -------- //
+
   // Climb states
   public enum ClimbLevel {
     L0,
@@ -66,17 +69,25 @@ public class ClimbSubsystem extends SubsystemBase {
     Detached
   }
 
+  // -------- STATE -------- //
+
   private boolean isZeroed = false;
   private volatile ClimbState climbState = ClimbState.Detached;
   private double targetLevel = 0;
 
+  // -------- MAPS -------- //
+
   // Maps
   private final EnumMap<ClimbLevel, Double> climbLevels = new EnumMap<>(ClimbLevel.class);
+
+  // -------- MOTOR REQUESTS -------- //
 
   // Motor requests
   private final MotionMagicVoltage mmRequest;
   private final VoltageOut voltageRequest;
   private static final double MAX_VOLTS = 3;
+
+  // -------- HARDWARE -------- //
 
   // Hardware and physical objects
   private final CommandSwerveDrivetrain driveTrain;
@@ -87,14 +98,20 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final int BLUE_CLIMB_TAG_ID = 31;
   private static final int RED_CLIMB_TAG_ID = 15;
 
+  // -------- PHYSICAL CONSTANTS -------- //
+
   // Physical Constants
   private static final double ROBOT_WIDTH = Units.inchesToMeters(30);
   private static final double GEAR_RATIO = 15;
+
+  // -------- POSITION OFFSETS & TOLERANCES -------- //
 
   // Position offsets and tolerances
   private static final double CLIMB_POSITION_TOLERANCE_ROTATIONS = 0.1;
   private static final double MIN_DIST = Units.feetToMeters(1.5);
   private static final Rotation2d DETACH_ROTATION = Rotation2d.fromDegrees(40);
+
+  // -------- AUTO ALIGN & CLIMB CONSTANTS -------- //
 
   // Auto Align and Climb Constants
   private static final double STAGE1_APPROACH_OFFSET = 0.1; // Meters
@@ -104,20 +121,27 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double MIN_ATTACHED_AMPS = 20;
   private static final double MAX_ATTACH_ATTEMPTS = 3;
 
+  // -------- JERK CHECK -------- //
+
   // Jerk check
-  private double last_Time = 0;
-  private double MIN_JERK_DT = 0.02;
+  private double lastTime = 0;
+  private static final double MIN_JERK_DT = 0.02;
 
   private final double TIME_CONSTANT = 0.1;
   private final double PERIOD = 0.02;
   private LinearFilter xLinearFilter = LinearFilter.singlePoleIIR(TIME_CONSTANT, PERIOD);
   private LinearFilter yLinearFilter = LinearFilter.singlePoleIIR(TIME_CONSTANT, PERIOD);
-  private double last_X_Accel = 0;
-  private double last_Y_Accel = 0;
+  private double lastXAccel = 0;
+  private double lastYAccel = 0;
+
+  // -------- DEBOUNCER -------- //
+
   // Debouncer
   private static final double DEBOUNCE_TIME = 0.2;
   private static final DebounceType DEBOUNCE_TYPE = DebounceType.kRising;
   private Debouncer hasMaintainedCurrent = new Debouncer(DEBOUNCE_TIME, DEBOUNCE_TYPE);
+
+  // -------- PID CONTROLLER CONSTANTS -------- //
 
   // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
@@ -125,6 +149,8 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double MAX_ROTATIONAL_POWER = 4.0;
   private static final double TRANSLATION_TOLERANCE_METERS = 0.03;
   private static final double ROTATION_TOLERANCE_RADIANS = Units.degreesToRadians(0.5);
+
+  // -------- MOTOR TUNABLES -------- //
 
   // Motor Tunables
   private static final double KP = 3;
@@ -139,6 +165,8 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double MM_ACCEL = 1;
   private static final double MM_JERK = 5;
 
+  // -------- POSES & TRANSFORMS -------- //
+
   // Poses and transforms
 
   // This transform should represent the dy dx value from robot center to climb
@@ -149,11 +177,15 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final Transform2d CLIMB_STRUCTURE_OFFSET =
       new Transform2d(new Translation2d(CLIMB_X_OFFSET, 0), Rotation2d.kZero);
 
+  // -------- NETWORK TABLES -------- //
+
   // Network Tables
   private final DoublePublisher ntMotorPos;
   private final DoublePublisher ntMotorCurrent;
   private final DoublePublisher ntVoltage;
   private final DoublePublisher ntIMUJerk;
+
+  // -------- STATUS SIGNALS -------- //
 
   // Status signals
   private final StatusSignal<Voltage> ssVoltage;
@@ -161,6 +193,8 @@ public class ClimbSubsystem extends SubsystemBase {
   private final StatusSignal<Angle> ssMotorPos;
   private final StatusSignal<LinearAcceleration> ssXAccel;
   private final StatusSignal<LinearAcceleration> ssYAccel;
+
+  // -------- CONSTRUCTOR -------- //
 
   public ClimbSubsystem(Subsystems s) {
     this.driveTrain = s.drivebaseSubsystem;
@@ -192,7 +226,8 @@ public class ClimbSubsystem extends SubsystemBase {
     ssYAccel = imu.getAccelerationY();
   }
 
-  // Pose helpers
+  // -------- POSE HELPERS -------- //
+
   private Pose2d getTagPose() {
     return APRIL_TAG_FIELD_LAYOUT
         .getTagPose(AllianceUtils.isBlue() ? BLUE_CLIMB_TAG_ID : RED_CLIMB_TAG_ID)
@@ -211,6 +246,8 @@ public class ClimbSubsystem extends SubsystemBase {
     return getTagPose().transformBy(CLIMB_STRUCTURE_OFFSET);
   }
 
+  // -------- SENSOR CHECKS -------- //
+
   public boolean passedAccelerometerTest() {
     double jerk = getJerk();
     return jerk >= MIN_JERK;
@@ -218,24 +255,24 @@ public class ClimbSubsystem extends SubsystemBase {
 
   public double getJerk() {
     double currentTime = Timer.getFPGATimestamp();
-    double current_Dt = currentTime - last_Time;
+    double currentDt = currentTime - lastTime;
 
     StatusSignal.refreshAll(ssXAccel, ssYAccel);
-    double x = xLinearFilter.calculate(ssXAccel.getValue().in(Gs));
-    double y = yLinearFilter.calculate(ssYAccel.getValue().in(Gs));
+    double filteredX = xLinearFilter.calculate(ssXAccel.getValue().in(Gs));
+    double filteredY = yLinearFilter.calculate(ssYAccel.getValue().in(Gs));
 
     double jerkMagnitude = 0;
 
-    if (last_Time != 0 && current_Dt >= MIN_JERK_DT) {
-      double jerkX = (x - last_X_Accel) / current_Dt;
-      double jerkY = (y - last_Y_Accel) / current_Dt;
+    if (lastTime != 0 && currentDt >= MIN_JERK_DT) {
+      double jerkX = (filteredX - lastXAccel) / currentDt;
+      double jerkY = (filteredY - lastYAccel) / currentDt;
 
       jerkMagnitude = Math.sqrt(jerkX * jerkX + jerkY * jerkY);
     }
 
-    last_X_Accel = x;
-    last_Y_Accel = y;
-    last_Time = currentTime;
+    lastXAccel = filteredX;
+    lastYAccel = filteredY;
+    lastTime = currentTime;
 
     ntIMUJerk.set(jerkMagnitude);
     return jerkMagnitude;
@@ -247,7 +284,8 @@ public class ClimbSubsystem extends SubsystemBase {
     return hasMaintainedCurrent.calculate(aboveThreshold);
   }
 
-  // Motor helpers
+  // -------- MOTOR HELPERS -------- //
+
   public void zeroMotor() {
     isZeroed = true;
     climbMotor.setPosition(0);
@@ -262,7 +300,8 @@ public class ClimbSubsystem extends SubsystemBase {
         < CLIMB_POSITION_TOLERANCE_ROTATIONS;
   }
 
-  // Position modifiers
+  // -------- POSITION MODIFIERS -------- //
+
   public void setMotorPosition(double position) {
     climbMotor.setControl(mmRequest.withPosition(position));
   }
@@ -276,7 +315,7 @@ public class ClimbSubsystem extends SubsystemBase {
     climbMotor.setControl(voltageRequest.withOutput(cmd));
   }
 
-  // State modifiers
+  // -------- STATE MODIFIERS -------- //
 
   public void setAttach() {
     climbState = ClimbState.Attached;
@@ -286,7 +325,8 @@ public class ClimbSubsystem extends SubsystemBase {
     climbState = ClimbState.Detached;
   }
 
-  // ---------- COMMANDS ----------- //
+  // -------- COMMANDS -------- //
+
   public Command manualClimbCommand(DoubleSupplier joystickInput) {
     return Commands.run(() -> manualMove(joystickInput), this).finallyDo(this::stop);
   }
@@ -463,6 +503,8 @@ public class ClimbSubsystem extends SubsystemBase {
     }
   }
 
+  // -------- MOTOR CONFIGURATION -------- //
+
   private void configureMotors() {
     TalonFXConfiguration configs = new TalonFXConfiguration();
 
@@ -488,6 +530,8 @@ public class ClimbSubsystem extends SubsystemBase {
 
     climbMotor.getConfigurator().apply(configs);
   }
+
+  // -------- PERIODIC -------- //
 
   @Override
   public void periodic() {
