@@ -68,7 +68,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private final HashMap<ClimbLevel, Double> climbLevels = new HashMap<>();
 
   private boolean isZeroed = false;
-  private ClimbState climbState = ClimbState.Detached;
+  private volatile ClimbState climbState = ClimbState.Detached;
   private double targetLevel = 0;
 
   // Motor requests
@@ -90,16 +90,16 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = 15;
 
   // Position offsets and tolerances
-  private static final double CLIMB_POSITION_TOLERANCE = 0.1;
+  private static final double CLIMB_POSITION_TOLERANCE_ROTATIONS = 0.1;
   private static final double MIN_DIST = Units.feetToMeters(1.5);
   private static final Rotation2d DETACH_ROTATION = Rotation2d.fromDegrees(40);
 
   // Auto Align and Climb Constants
   private static final double STAGE1_APPROACH_OFFSET = 0.1; // Meters
   private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51);
-  private static final double MIN_Gs = 1;
+  private static final double MIN_G_FORCE = 1;
   private static final double ATTACH_TIMEOUT = 2; // Seconds
-  private static final Debouncer has_maintained_current = new Debouncer(0.2, DebounceType.kRising);
+  private static final Debouncer hasMaintainedCurrent = new Debouncer(0.2, DebounceType.kRising);
   private static final double MIN_ATTACHED_AMPS = 20;
 
   // PID Controller Constants
@@ -137,8 +137,8 @@ public class ClimbSubsystem extends SubsystemBase {
   private final StatusSignal<Voltage> ssVoltage;
   private final StatusSignal<Current> ssCurrent;
   private final StatusSignal<Angle> ssMotorPos;
-  private final StatusSignal<LinearAcceleration> ss_xAccel;
-  private final StatusSignal<LinearAcceleration> ss_yAccel;
+  private final StatusSignal<LinearAcceleration> ssXAccel;
+  private final StatusSignal<LinearAcceleration> ssYAccel;
 
   public ClimbSubsystem(Subsystems s) {
     this.driveTrain = s.drivebaseSubsystem;
@@ -165,8 +165,8 @@ public class ClimbSubsystem extends SubsystemBase {
     climbLevels.put(ClimbLevel.L2, 10.0);
     climbLevels.put(ClimbLevel.L3, 15.0);
 
-    ss_xAccel = imu.getAccelerationY();
-    ss_yAccel = imu.getAccelerationX();
+    ssXAccel = imu.getAccelerationY();
+    ssYAccel = imu.getAccelerationX();
   }
 
   // Pose helpers
@@ -188,18 +188,18 @@ public class ClimbSubsystem extends SubsystemBase {
     return getTagPose().transformBy(CLIMB_STRUCTURE_OFFSET);
   }
 
-  // Check to see if we're actually attached
-  public boolean PassedAccelerometerTest() {
-    StatusSignal.refreshAll(ss_xAccel, ss_yAccel);
-    double x = ss_xAccel.getValue().in(Gs);
-    double y = ss_yAccel.getValue().in(Gs);
+  public boolean passedAccelerometerTest() {
+    StatusSignal.refreshAll(ssXAccel, ssYAccel);
+    double x = ssXAccel.getValue().in(Gs);
+    double y = ssYAccel.getValue().in(Gs);
     double totalAccel = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-    return totalAccel >= MIN_Gs;
+    return totalAccel >= MIN_G_FORCE;
   }
 
-  public boolean PassedrollerTest() {
+  public boolean passedRollerTest() {
+    ssCurrent.refresh();
     boolean aboveThreshold = ssCurrent.getValue().in(Amp) > MIN_ATTACHED_AMPS;
-    return has_maintained_current.calculate(aboveThreshold);
+    return hasMaintainedCurrent.calculate(aboveThreshold);
   }
 
   // Motor helpers
@@ -213,7 +213,8 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   public boolean isWithinTarget() {
-    return Math.abs(targetLevel - ssMotorPos.getValue().in(Rotations)) < CLIMB_POSITION_TOLERANCE;
+    return Math.abs(targetLevel - ssMotorPos.getValue().in(Rotations))
+        < CLIMB_POSITION_TOLERANCE_ROTATIONS;
   }
 
   // Position modifiers
@@ -251,31 +252,43 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   public Command detachClimb() {
-    return new AutoAlignCommand(
-            getStage2Pose().rotateBy(DETACH_ROTATION), CLIMB_STRUCTURE_OFFSET.getTranslation())
-        .finallyDo(
+    return Commands.defer(
             () -> {
-              climbPivotSubsystem.stow();
-              climbState = ClimbState.Detached;
-            });
+              Pose2d stage2 = getStage2Pose();
+              Pose2d detachPose =
+                  new Pose2d(stage2.getTranslation(), stage2.getRotation().plus(DETACH_ROTATION));
+              return new AutoAlignCommand(detachPose, CLIMB_STRUCTURE_OFFSET.getTranslation())
+                  .finallyDo(
+                      () -> {
+                        climbPivotSubsystem.stow();
+                        climbState = ClimbState.Detached;
+                      });
+            },
+            Set.of(this, driveTrain))
+        .onlyIf(() -> climbState == ClimbState.Attached);
   }
 
   public Command attachToClimb() {
-    return Commands.sequence(
-            Commands.parallel(new AutoAlignCommand(getStage1Pose(), Translation2d.kZero)),
-            climbPivotSubsystem.deployCommand().until(() -> climbPivotSubsystem.isDeployed()),
-            Commands.parallel(
-                new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
+    return Commands.defer(
+            () ->
                 Commands.sequence(
-                        Commands.runOnce(() -> setVoltage(MAX_VOLTS)),
-                        Commands.run(
-                            () -> {
-                              if (PassedAccelerometerTest() && PassedrollerTest()) {
-                                climbState = ClimbState.Attached;
-                              }
-                            }))
-                    .onlyWhile(() -> climbState == ClimbState.Detached)
-                    .withTimeout(ATTACH_TIMEOUT)))
+                    Commands.parallel(new AutoAlignCommand(getStage1Pose(), Translation2d.kZero)),
+                    climbPivotSubsystem
+                        .deployCommand()
+                        .until(() -> climbPivotSubsystem.isDeployed()),
+                    Commands.parallel(
+                        new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
+                        Commands.sequence(
+                                Commands.runOnce(() -> setVoltage(MAX_VOLTS)),
+                                Commands.run(
+                                    () -> {
+                                      if (passedAccelerometerTest() && passedRollerTest()) {
+                                        climbState = ClimbState.Attached;
+                                      }
+                                    }))
+                            .onlyWhile(() -> climbState == ClimbState.Detached)
+                            .withTimeout(ATTACH_TIMEOUT))),
+            Set.of(this, driveTrain))
         .onlyIf(this::isNearEnoughToClimb);
   }
 
@@ -309,7 +322,7 @@ public class ClimbSubsystem extends SubsystemBase {
       this.centerOfRotation = centerOfRotation;
       this.isInvalid = (driveTrain == null);
 
-      if (!isInvalid) addRequirements(ClimbSubsystem.this, driveTrain);
+      if (!isInvalid) addRequirements(driveTrain);
       setName("Climb Align");
     }
 
