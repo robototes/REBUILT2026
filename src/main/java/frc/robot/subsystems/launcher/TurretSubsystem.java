@@ -60,7 +60,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kD = RobotType.isAlpha() ? 0 : 15;
   private static final double kG = 0;
   private static final double kS = RobotType.isAlpha() ? 0.41 : 0.36;
-  private static final double kV = 12 / 1.29; // volts per requested rps
+  private static final double kV = RobotType.isAlpha() ? 0.884766 / 1.125 : 12 / 1.29; // volts per requested rps
   private static final double kA = 0.12;
 
   // Current limits
@@ -160,9 +160,6 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setTurretRawPosition(double pos, double FFVelocity) {
-    // KV must be converted to volts. Right now it's only in
-    // dutycycle per requested rotation per second, so multiply
-    // 12 to get true voltage
     double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV;
     ffPub.set(feedforwardVolts);
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
