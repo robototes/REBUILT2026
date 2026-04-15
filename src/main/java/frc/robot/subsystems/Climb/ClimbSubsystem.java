@@ -40,7 +40,7 @@ import frc.robot.Hardware;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
 
@@ -65,7 +65,7 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   // Maps
-  private final HashMap<ClimbLevel, Double> climbLevels = new HashMap<>();
+  private final EnumMap<ClimbLevel, Double> climbLevels = new EnumMap<>(ClimbLevel.class);
 
   private boolean isZeroed = false;
   private volatile ClimbState climbState = ClimbState.Detached;
