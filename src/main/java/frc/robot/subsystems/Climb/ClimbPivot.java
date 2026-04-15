@@ -3,15 +3,14 @@ package frc.robot.subsystems.Climb;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 
 public class ClimbPivot extends SubsystemBase {
   public static final double SERVO_STOWED = 0.0;
   public static final double SERVO_DEPLOYED = 0.5;
-  public static final double SERVO_DEPLOYED_TOLERANCE = 0.01;
-
+  public static final double PIVOT_DELAY_SECONDS = 0.5;
   private final Servo pivotServo = new Servo(Hardware.CLIMB_PIVOT_SERVO_CHANNEL);
 
   public ClimbPivot() {}
@@ -24,12 +23,8 @@ public class ClimbPivot extends SubsystemBase {
     pivotServo.set(SERVO_STOWED);
   }
 
-  public boolean isDeployed() {
-    return Math.abs(pivotServo.get() - SERVO_DEPLOYED) < SERVO_DEPLOYED_TOLERANCE;
-  }
-
   public Command deployCommand() {
-    return new InstantCommand(() -> deploy()).until(() -> isDeployed());
+    return Commands.runOnce(this::deploy).withName("Deploy pivot");
   }
 
   public Command stowCommand() {
@@ -39,6 +34,6 @@ public class ClimbPivot extends SubsystemBase {
   @Override
   public void periodic() {
     SmartDashboard.putNumber("Pivot/Servo Position", pivotServo.get());
-    SmartDashboard.putBoolean("Pivot/Deployed", isDeployed());
+    SmartDashboard.putBoolean("Pivot/Deployed", pivotServo.get() == SERVO_DEPLOYED);
   }
 }

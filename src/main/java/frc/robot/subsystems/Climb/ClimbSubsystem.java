@@ -320,7 +320,9 @@ public class ClimbSubsystem extends SubsystemBase {
               return Commands.sequence(
                   Commands.parallel(
                       new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
-                      climbPivotSubsystem.deployCommand()),
+                      climbPivotSubsystem
+                          .deployCommand()
+                          .andThen(Commands.waitSeconds(ClimbPivot.PIVOT_DELAY_SECONDS))),
                   Commands.parallel(
                           new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
                           Commands.sequence(
