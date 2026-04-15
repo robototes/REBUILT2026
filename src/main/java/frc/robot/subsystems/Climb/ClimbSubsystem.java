@@ -272,10 +272,11 @@ public class ClimbSubsystem extends SubsystemBase {
     return Commands.defer(
             () ->
                 Commands.sequence(
-                    Commands.parallel(new AutoAlignCommand(getStage1Pose(), Translation2d.kZero)),
-                    climbPivotSubsystem
-                        .deployCommand()
-                        .until(() -> climbPivotSubsystem.isDeployed()),
+                    Commands.parallel(
+                        new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
+                        climbPivotSubsystem
+                            .deployCommand()
+                            .until(() -> climbPivotSubsystem.isDeployed())),
                     Commands.parallel(
                         new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
                         Commands.sequence(
