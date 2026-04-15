@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Climb;
 
+import static edu.wpi.first.units.Units.Gs;
 import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -7,6 +8,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -26,6 +28,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -73,6 +76,7 @@ public class ClimbSubsystem extends SubsystemBase {
   // Hardware and physical objects
   private final CommandSwerveDrivetrain driveTrain;
   private final ClimbPivot climbPivotSubsystem;
+  private final Pigeon2 imu;
   private final TalonFX climbMotor;
   private static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT = AllianceUtils.FIELD_LAYOUT;
   private static final int BLUE_CLIMB_TAG_ID = 31;
@@ -88,8 +92,10 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final Rotation2d DETACH_ROTATION = Rotation2d.fromDegrees(40);
 
   // Auto Align and Climb Constants
-  private static final double STAGE1_APPROACH_OFFSET = 0.1;
+  private static final double STAGE1_APPROACH_OFFSET = 0.1; // Meters
   private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51);
+  private static final double MIN_Gs = 1;
+  private static final double ATTACH_TIMEOUT = 2; // Seconds
 
   // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
@@ -126,10 +132,14 @@ public class ClimbSubsystem extends SubsystemBase {
   private final StatusSignal<Voltage> ssVoltage;
   private final StatusSignal<Current> ssCurrent;
   private final StatusSignal<Angle> ssMotorPos;
+  private final StatusSignal<LinearAcceleration> ss_xAccel;
+  private final StatusSignal<LinearAcceleration> ss_yAccel;
 
   public ClimbSubsystem(Subsystems s) {
     this.driveTrain = s.drivebaseSubsystem;
+    imu = s.drivebaseSubsystem.getPigeon2();
     this.climbPivotSubsystem = s.climbPivotSubsystem;
+
     climbMotor = new TalonFX(Hardware.CLIMB_MOTOR_ID);
     configureMotors();
 
@@ -149,6 +159,9 @@ public class ClimbSubsystem extends SubsystemBase {
     climbLevels.put(ClimbLevel.L1, 5.0);
     climbLevels.put(ClimbLevel.L2, 10.0);
     climbLevels.put(ClimbLevel.L3, 15.0);
+
+    ss_xAccel = imu.getAccelerationY();
+    ss_yAccel = imu.getAccelerationX();
   }
 
   // Pose helpers
@@ -168,6 +181,18 @@ public class ClimbSubsystem extends SubsystemBase {
 
   private Pose2d getStage2Pose() {
     return getTagPose().transformBy(CLIMB_STRUCTURE_OFFSET);
+  }
+
+  // Pigeon 2 helper
+  public boolean haSnappedToClimb() {
+    StatusSignal.refreshAll(ss_xAccel, ss_yAccel);
+    double x = ss_xAccel.getValue().in(Gs);
+    double y = ss_yAccel.getValue().in(Gs);
+    double totalAccel = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    if (totalAccel >= MIN_Gs) {
+      return true;
+    }
+    return false;
   }
 
   // Motor helpers
@@ -228,12 +253,16 @@ public class ClimbSubsystem extends SubsystemBase {
     return Commands.sequence(
             climbPivotSubsystem.deployCommand().until(() -> climbPivotSubsystem.isDeployed()),
             new AutoAlignCommand(getStage1Pose(), Translation2d.kZero),
-            new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
-            Commands.runOnce(
-                () -> {
-                  zeroMotor();
-                  climbState = ClimbState.Attached;
-                }))
+            Commands.parallel(
+                new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
+                Commands.run(
+                        () -> {
+                          if (haSnappedToClimb()) {
+                            climbState = ClimbState.Attached;
+                          }
+                        })
+                    .onlyWhile(() -> climbState == ClimbState.Detached)
+                    .withTimeout(ATTACH_TIMEOUT)))
         .onlyIf(this::isNearEnoughToClimb);
   }
 
