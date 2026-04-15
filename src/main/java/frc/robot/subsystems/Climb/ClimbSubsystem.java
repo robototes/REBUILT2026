@@ -99,7 +99,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double CLIMB_Y_OFFSET = Units.inchesToMeters(43.51);
   private static final double MIN_G_FORCE = 1;
   private static final double ATTACH_TIMEOUT = 2; // Seconds
-  private static final Debouncer hasMaintainedCurrent = new Debouncer(0.2, DebounceType.kRising);
+  private final Debouncer hasMaintainedCurrent = new Debouncer(0.2, DebounceType.kRising);
   private static final double MIN_ATTACHED_AMPS = 20;
 
   // PID Controller Constants
@@ -165,8 +165,8 @@ public class ClimbSubsystem extends SubsystemBase {
     climbLevels.put(ClimbLevel.L2, 10.0);
     climbLevels.put(ClimbLevel.L3, 15.0);
 
-    ssXAccel = imu.getAccelerationY();
-    ssYAccel = imu.getAccelerationX();
+    ssXAccel = imu.getAccelerationX();
+    ssYAccel = imu.getAccelerationY();
   }
 
   // Pose helpers
@@ -289,7 +289,8 @@ public class ClimbSubsystem extends SubsystemBase {
                             .onlyWhile(() -> climbState == ClimbState.Detached)
                             .withTimeout(ATTACH_TIMEOUT))),
             Set.of(this, driveTrain))
-        .onlyIf(this::isNearEnoughToClimb);
+        .onlyIf(this::isNearEnoughToClimb)
+        .finallyDo(this::stop);
   }
 
   public boolean isNearEnoughToClimb() {

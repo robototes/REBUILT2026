@@ -9,6 +9,7 @@ import frc.robot.Hardware;
 public class ClimbPivot extends SubsystemBase {
   public static final double SERVO_STOWED = 0.0;
   public static final double SERVO_DEPLOYED = 0.5;
+  public static final double SERVO_DEPLOYED_TOLERANCE = 0.01;
 
   private final Servo pivotServo = new Servo(Hardware.CLIMB_PIVOT_SERVO_CHANNEL);
 
@@ -23,7 +24,7 @@ public class ClimbPivot extends SubsystemBase {
   }
 
   public boolean isDeployed() {
-    return pivotServo.get() == SERVO_DEPLOYED;
+    return Math.abs(pivotServo.get() - SERVO_DEPLOYED) < SERVO_DEPLOYED_TOLERANCE;
   }
 
   public Command deployCommand() {
