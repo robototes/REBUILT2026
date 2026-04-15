@@ -66,12 +66,12 @@ public class ClimbSubsystem extends SubsystemBase {
     Detached
   }
 
-  // Maps
-  private final EnumMap<ClimbLevel, Double> climbLevels = new EnumMap<>(ClimbLevel.class);
-
   private boolean isZeroed = false;
   private volatile ClimbState climbState = ClimbState.Detached;
   private double targetLevel = 0;
+
+  // Maps
+  private final EnumMap<ClimbLevel, Double> climbLevels = new EnumMap<>(ClimbLevel.class);
 
   // Motor requests
   private final MotionMagicVoltage mmRequest;
@@ -276,6 +276,16 @@ public class ClimbSubsystem extends SubsystemBase {
     climbMotor.setControl(voltageRequest.withOutput(cmd));
   }
 
+  // State modifiers
+
+  public void setAttach() {
+    climbState = ClimbState.Attached;
+  }
+
+  public void setDetach() {
+    climbState = ClimbState.Detached;
+  }
+
   // ---------- COMMANDS ----------- //
   public Command manualClimbCommand(DoubleSupplier joystickInput) {
     return Commands.run(() -> manualMove(joystickInput), this).finallyDo(this::stop);
@@ -306,7 +316,7 @@ public class ClimbSubsystem extends SubsystemBase {
                   .finallyDo(
                       () -> {
                         climbPivotSubsystem.stow();
-                        climbState = ClimbState.Detached;
+                        setDetach();
                       });
             },
             Set.of(this, driveTrain))
@@ -337,7 +347,7 @@ public class ClimbSubsystem extends SubsystemBase {
                                   Commands.run(
                                       () -> {
                                         if (passedAccelerometerTest() && passedRollerTest()) {
-                                          climbState = ClimbState.Attached;
+                                          setAttach();
                                         }
                                       }))
                               .onlyWhile(() -> climbState == ClimbState.Detached)
