@@ -99,9 +99,12 @@ public class ClimbSubsystem extends SubsystemBase {
   private static final double CLIMB_X_OFFSET = Units.inchesToMeters(43.51);
   private static final double MIN_G_FORCE = 1;
   private static final double ATTACH_TIMEOUT = 2; // Seconds
-  private final Debouncer hasMaintainedCurrent = new Debouncer(0.2, DebounceType.kRising);
   private static final double MIN_ATTACHED_AMPS = 20;
   private static final double MAX_ATTACH_ATTEMPTS = 3;
+  // Debouncer
+  private static final double DEBOUNCE_TIME = 0.2;
+  private static final DebounceType DEBOUNCE_TYPE = DebounceType.kRising;
+  private Debouncer hasMaintainedCurrent;
 
   // PID Controller Constants
   private static final double POWER_COEFFICIENT = .05;
@@ -286,7 +289,14 @@ public class ClimbSubsystem extends SubsystemBase {
                   Commands.parallel(
                           new AutoAlignCommand(getStage2Pose(), Translation2d.kZero),
                           Commands.sequence(
-                                  Commands.runOnce(() -> setVoltage(MAX_VOLTS)),
+                                  Commands.runOnce(
+                                      () -> {
+                                        // Reset any ongoing timers and use a new debouncer each
+                                        // attempt
+                                        hasMaintainedCurrent =
+                                            new Debouncer(DEBOUNCE_TIME, DEBOUNCE_TYPE);
+                                        setVoltage(MAX_VOLTS);
+                                      }),
                                   Commands.run(
                                       () -> {
                                         if (passedAccelerometerTest() && passedRollerTest()) {
