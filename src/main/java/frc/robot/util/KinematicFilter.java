@@ -27,7 +27,8 @@ public class KinematicFilter {
               0.0, 0.0, 0.0
             });
 
-    // 2. Matrix B: Control Input (Placeholder N3xN1 zero matrix)
+    // 2. Matrix B: Control Input (Placeholder N3xN1 zero matrix) because no input is involved here.
+    // If browning out occurs, user input post prediction will be false
     var matrixB = new Matrix<>(Nat.N3(), Nat.N1());
 
     // 3. Matrix C: Measurement Mapping (N2xN3)

@@ -62,6 +62,9 @@ public class LaunchCalculator {
   private static final List<Pose2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
 
+  private static final double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
+  private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
+
   public record LaunchingParameters(
       double targetHood,
       Rotation2d targetTurret,
@@ -164,39 +167,49 @@ public class LaunchCalculator {
       TurretSubsystem turretSubsystem,
       double ax,
       double ay,
-      double alpha) { // Pass in Kalman acceleration
+      double alpha) {
 
-    Pose2d currentPose = driveState.Pose;
     ChassisSpeeds chassisSpeeds = driveState.Speeds;
+    Pose2d currentPose = driveState.Pose;
 
-    // 1. Predict Pose using Acceleration (PHASE_DELAY)
-    double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
-    double dx = (chassisSpeeds.vxMetersPerSecond * PHASE_DELAY) + (0.5 * ax * PHASE_DELAY_SQUARED);
-    double dy = (chassisSpeeds.vyMetersPerSecond * PHASE_DELAY) + (0.5 * ay * PHASE_DELAY_SQUARED);
+    // 1. Convert current speeds to pure Field-Relative values
+    ChassisSpeeds fieldSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, currentPose.getRotation());
+
+    // 2. Predict Field-Relative Pose using Acceleration (PHASE_DELAY)
+
+    // Field-relative displacement
+    double dxField =
+        (fieldSpeeds.vxMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ax);
+    double dyField =
+        (fieldSpeeds.vyMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ay);
+
+    // Angular changes are frame-independent in 2D
     double dTheta =
-        (chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY) + (0.5 * alpha * PHASE_DELAY_SQUARED);
+        (chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * alpha);
+    Rotation2d predictedAngle = currentPose.getRotation().plus(new Rotation2d(dTheta));
 
-    Pose2d estimatedPose = currentPose.exp(new Twist2d(dx, dy, dTheta));
+    // Apply translation directly in the field frame (bypassing Twist2d's curved robot-frame path)
+    Pose2d estimatedPose =
+        new Pose2d(currentPose.getX() + dxField, currentPose.getY() + dyField, predictedAngle);
     Rotation2d robotAngle = estimatedPose.getRotation();
 
-    // 2. Predict Velocities at the moment of launch
-    double v_at_launch_x = chassisSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
-    double v_at_launch_y = chassisSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
+    // 3. Predict Field-Relative Velocities at the moment of launch
+    double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
+    double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
     double omega_at_launch = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
 
-    // 3. Update Turret relative speeds with predicted omega
-    double totalOmega = omega_at_launch + turretSubsystem.getOmega();
-    ChassisSpeeds turretRobotRelativeSpeeds =
-        new ChassisSpeeds(
-            v_at_launch_x - omega_at_launch * turretTransform.getY(),
-            v_at_launch_y + omega_at_launch * turretTransform.getX(),
-            totalOmega);
-    // Let chassisspeeds built in methods handle the conversion from robot relative to field
-    // relative
-    ChassisSpeeds turretFieldRelativeSpeeds =
-        ChassisSpeeds.fromRobotRelativeSpeeds(turretRobotRelativeSpeeds, robotAngle);
-    double turretVelocityX = turretFieldRelativeSpeeds.vxMetersPerSecond;
-    double turretVelocityY = turretFieldRelativeSpeeds.vyMetersPerSecond;
+    // 4. Calculate final Field-Relative Turret speeds
+    // Find the turret's translation vector rotated into the field frame
+    Translation2d turretOffsetField = turretTransform.getTranslation().rotateBy(predictedAngle);
+
+    // Cross product (omega x r) to find the tangential velocity of the turret in the field frame
+    double tangential_vx_field = -turretOffsetField.getY() * omega_at_launch;
+    double tangential_vy_field = turretOffsetField.getX() * omega_at_launch;
+
+    // Combine robot translational velocity with turret tangential velocity
+    double turretVelocityX = predicted_vx_field + tangential_vx_field;
+    double turretVelocityY = predicted_vy_field + tangential_vy_field;
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
