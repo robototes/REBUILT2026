@@ -101,13 +101,15 @@ public class Controls {
       RotationsPerSecond.of(0.75)
           .in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
-  private final double driveInputScale = 1;
+  private final double DRIVE_INPUT_SCALE = 1;
+  private final double JOYSTICK_DEADBAND = 0.02;
+  private final double SWERVE_DEADBAND = 0.01;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
-          .withDeadband(0.0001)
-          .withRotationalDeadband(0.0001)
+          .withDeadband(SWERVE_DEADBAND)
+          .withRotationalDeadband(SWERVE_DEADBAND)
           .withDriveRequestType(DriveRequestType.Velocity);
 
   private Trigger readyToShoot = new Trigger(() -> false);
@@ -160,24 +162,24 @@ public class Controls {
   private double getDriveX() {
     // Joystick +Y is back
     // Robot +X is forward
-    double input = MathUtil.applyDeadband(-driverController.getLeftY(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double input = MathUtil.applyDeadband(-driverController.getLeftY(), JOYSTICK_DEADBAND);
+    return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
   private double getDriveY() {
     // Joystick +X is right
     // Robot +Y is left
-    double input = MathUtil.applyDeadband(-driverController.getLeftX(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double input = MathUtil.applyDeadband(-driverController.getLeftX(), JOYSTICK_DEADBAND);
+    return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
   private double getDriveRotate() {
     // Joystick +X is right
     // Robot +angle is CCW (left)
-    double input = MathUtil.applyDeadband(-driverController.getRightX(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double input = MathUtil.applyDeadband(-driverController.getRightX(), JOYSTICK_DEADBAND);
+    return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
   private void configureDrivebaseBindings() {
