@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.KinematicFilter;
 import java.util.function.Supplier;
 
 /**
@@ -109,6 +110,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   /* The SysId routine to test */
   private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+
+  // State filters
+  private final KinematicFilter filterX = new KinematicFilter(0.01, 0.05, 0.5);
+  private final KinematicFilter filterY = new KinematicFilter(0.01, 0.05, 0.5);
+  private final KinematicFilter filterTheta = new KinematicFilter(0.01, 0.05, 0.2);
 
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -233,7 +239,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         : kRedAlliancePerspectiveRotation);
               });
     }
+    var pose = getState().Pose; // field relative
+    var speeds = getState().Speeds; // robot relative
+
+    ChassisSpeeds fieldSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(speeds, pose.getRotation()); // field relative
+
+    filterX.update(pose.getX(), fieldSpeeds.vxMetersPerSecond);
+    filterY.update(pose.getY(), fieldSpeeds.vyMetersPerSecond);
+    filterTheta.update(pose.getRotation().getRadians(), fieldSpeeds.omegaRadiansPerSecond);
+
     clampPoseToField();
+  }
+
+  public double getFieldRelativeXAccel() {
+    return filterX.getAccel();
+  }
+
+  public double getFieldRelativeYAccel() {
+    return filterY.getAccel();
+  }
+
+  public double getAngularAcceleration() {
+    return filterTheta.getAccel();
   }
 
   private void startSimThread() {

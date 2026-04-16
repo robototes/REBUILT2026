@@ -136,7 +136,13 @@ public class LaunchCalculator {
     lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
-    cachedParams = calculate(driveState, turretSubsystem);
+    cachedParams =
+        calculate(
+            driveState,
+            turretSubsystem,
+            drivetrain.getFieldRelativeXAccel(),
+            drivetrain.getFieldRelativeYAccel(),
+            drivetrain.getAngularAcceleration());
     return cachedParams;
   }
 
@@ -154,31 +160,36 @@ public class LaunchCalculator {
    *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
-      SwerveDriveState driveState, TurretSubsystem turretSubsystem) {
+      SwerveDriveState driveState,
+      TurretSubsystem turretSubsystem,
+      double ax,
+      double ay,
+      double alpha) { // Pass in Kalman acceleration
 
-    // Grab current pose
-    Pose2d estimatedPose = driveState.Pose;
-
-    // Predicted robot pose after calculations have finished
+    Pose2d currentPose = driveState.Pose;
     ChassisSpeeds chassisSpeeds = driveState.Speeds;
-    estimatedPose =
-        estimatedPose.exp(
-            new Twist2d(
-                chassisSpeeds.vxMetersPerSecond * PHASE_DELAY,
-                chassisSpeeds.vyMetersPerSecond * PHASE_DELAY,
-                chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY));
+
+    // 1. Predict Pose using Acceleration (PHASE_DELAY)
+    double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
+    double dx = (chassisSpeeds.vxMetersPerSecond * PHASE_DELAY) + (0.5 * ax * PHASE_DELAY_SQUARED);
+    double dy = (chassisSpeeds.vyMetersPerSecond * PHASE_DELAY) + (0.5 * ay * PHASE_DELAY_SQUARED);
+    double dTheta =
+        (chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY) + (0.5 * alpha * PHASE_DELAY_SQUARED);
+
+    Pose2d estimatedPose = currentPose.exp(new Twist2d(dx, dy, dTheta));
     Rotation2d robotAngle = estimatedPose.getRotation();
-    // Turret VX robot relative is calculated using this formula: V_x_point = V_x_center + (-omega *
-    // offset_y)
-    // Turret VY robot relative is calculated using this formula: V_y_point= V_y_center + (omega *
-    // offset_x)
-    double totalOmega = chassisSpeeds.omegaRadiansPerSecond + turretSubsystem.getOmega();
+
+    // 2. Predict Velocities at the moment of launch
+    double v_at_launch_x = chassisSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
+    double v_at_launch_y = chassisSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
+    double omega_at_launch = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
+
+    // 3. Update Turret relative speeds with predicted omega
+    double totalOmega = omega_at_launch + turretSubsystem.getOmega();
     ChassisSpeeds turretRobotRelativeSpeeds =
         new ChassisSpeeds(
-            chassisSpeeds.vxMetersPerSecond
-                - chassisSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
-            chassisSpeeds.vyMetersPerSecond
-                + chassisSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
+            v_at_launch_x - omega_at_launch * turretTransform.getY(),
+            v_at_launch_y + omega_at_launch * turretTransform.getX(),
             totalOmega);
     // Let chassisspeeds built in methods handle the conversion from robot relative to field
     // relative
