@@ -19,6 +19,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -116,6 +118,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private final KinematicFilter filterY = new KinematicFilter(0.01, 0.05, 0.5);
   private final KinematicFilter filterTheta = new KinematicFilter(0.01, 0.05, 0.2);
 
+  // NetworkTables publishers for filtered accelerations
+  private DoublePublisher filteredAccelXPub;
+  private DoublePublisher filteredAccelYPub;
+  private DoublePublisher filteredAccelOmegaPub;
+
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
    *
@@ -131,6 +138,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    initFilteredAccelPublishers();
   }
 
   /**
@@ -152,6 +160,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    initFilteredAccelPublishers();
   }
 
   /**
@@ -183,6 +192,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         modules);
     if (Utils.isSimulation()) {
       startSimThread();
+    }
+    initFilteredAccelPublishers();
+  }
+
+  private void initFilteredAccelPublishers() {
+    try {
+      var nt = NetworkTableInstance.getDefault();
+      filteredAccelXPub = nt.getDoubleTopic("/drivebase/filteredAccelX").publish();
+      filteredAccelYPub = nt.getDoubleTopic("/drivebase/filteredAccelY").publish();
+      filteredAccelOmegaPub = nt.getDoubleTopic("/drivebase/filteredAccelOmega").publish();
+      // initialize with zeros
+      filteredAccelXPub.set(0.0);
+      filteredAccelYPub.set(0.0);
+      filteredAccelOmegaPub.set(0.0);
+    } catch (Throwable t) {
+      filteredAccelXPub = null;
+      filteredAccelYPub = null;
+      filteredAccelOmegaPub = null;
     }
   }
 
@@ -250,6 +277,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     filterTheta.update(pose.getRotation().getRadians(), fieldSpeeds.omegaRadiansPerSecond);
 
     clampPoseToField();
+
+    // Publish filtered accelerations computed by KinematicFilter
+    try {
+      double ax = filterX.getAccel();
+      double ay = filterY.getAccel();
+      double aomega = filterTheta.getAccel();
+      if (filteredAccelXPub != null) filteredAccelXPub.set(ax);
+      if (filteredAccelYPub != null) filteredAccelYPub.set(ay);
+      if (filteredAccelOmegaPub != null) filteredAccelOmegaPub.set(aomega);
+    } catch (Throwable t) {
+      // protect periodic loop from NT failures
+    }
   }
 
   public double getFieldRelativeXAccel() {
