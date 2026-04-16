@@ -63,6 +63,8 @@ public class LaunchCalculator {
   private static final int[] underclimbTagIds = {15, 31};
 
   private static final double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
+
+  // Precalculated: PHASEDELAY ^ 2 * 0.5
   private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
 
   public record LaunchingParameters(
