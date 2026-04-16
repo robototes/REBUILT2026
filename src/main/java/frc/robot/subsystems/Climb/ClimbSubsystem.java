@@ -328,7 +328,7 @@ public class ClimbSubsystem extends SubsystemBase {
   // -------- COMMANDS -------- //
 
   public Command manualClimbCommand(DoubleSupplier joystickInput) {
-    return Commands.run(() -> manualMove(joystickInput), this).finallyDo(this::stop);
+    return Commands.run(() -> manualMove(joystickInput), this).finallyDo(this::stop).withName("Manual climb");
   }
 
   public Command goToLevel(ClimbLevel state) {
@@ -343,7 +343,7 @@ public class ClimbSubsystem extends SubsystemBase {
               return (state == ClimbLevel.L0) ? moveCommand.andThen(detachClimb()) : moveCommand;
             },
             Set.of(this, driveTrain))
-        .onlyIf(() -> isZeroed && climbState == ClimbState.Attached);
+        .onlyIf(() -> isZeroed && climbState == ClimbState.Attached).withName("Go to level climb command");
   }
 
   public Command detachClimb() {
@@ -360,7 +360,7 @@ public class ClimbSubsystem extends SubsystemBase {
                       });
             },
             Set.of(this, driveTrain))
-        .onlyIf(() -> climbState == ClimbState.Attached);
+        .onlyIf(() -> climbState == ClimbState.Attached).withName("detach climb command");
   }
 
   public Command attachToClimb() {
@@ -401,7 +401,7 @@ public class ClimbSubsystem extends SubsystemBase {
             },
             Set.of(this, driveTrain))
         .onlyIf(this::isNearEnoughToClimb)
-        .finallyDo(this::stop);
+        .finallyDo(this::stop).withName("Attach climb command");
   }
 
   public boolean isNearEnoughToClimb() {
