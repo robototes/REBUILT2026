@@ -121,6 +121,15 @@ public class Flywheels extends SubsystemBase {
     config.Slot1.kS = 0.3;
     config.Slot1.kG = 0.0;
 
+    // PIDs for passing, tune later
+    config.Slot2.kP = 2.0;
+    config.Slot2.kI = 0.0;
+    config.Slot2.kD = 0.0;
+    config.Slot2.kA = 0.0;
+    config.Slot2.kV = 6.0 / 45.0;
+    config.Slot2.kS = 0.3;
+    config.Slot2.kG = 0.0;
+
     applyConfig(FlywheelOne, config);
     applyConfig(FlywheelTwo, config);
   }

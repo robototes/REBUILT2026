@@ -300,7 +300,7 @@ public class Controls {
                     Commands.runOnce(
                         () -> {
                           updateIntakeMode();
-                          s.flywheels.switchSlot(false);
+                          s.flywheels.switchSlot(false, false);
                         }))
                 .withName("Launching Finished"));
     driverController
