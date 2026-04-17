@@ -79,7 +79,7 @@ public class Controls {
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
-      private final CommandXboxController climbTestController = new CommandXboxController(6);
+  private final CommandXboxController climbTestController = new CommandXboxController(6);
 
   AprilTagFieldLayout aprilTagFieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
@@ -558,6 +558,8 @@ public class Controls {
     climbTestController.x().onTrue(s.climbSubsystem.goToLevel(ClimbLevel.L2));
     climbTestController.y().onTrue(s.climbSubsystem.goToLevel(ClimbLevel.L0));
 
-    climbTestController.leftStick().whileTrue(s.climbSubsystem.manualClimbCommand(()->climbTestController.getLeftY()));
+    climbTestController
+        .leftStick()
+        .whileTrue(s.climbSubsystem.manualClimbCommand(() -> climbTestController.getLeftY()));
   }
 }
