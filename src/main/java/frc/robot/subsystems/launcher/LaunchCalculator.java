@@ -30,6 +30,7 @@ public class LaunchCalculator {
   // Cached variables (mostly for throttling method)
   private LaunchingParameters cachedParams;
   private Pose2d lastPose = new Pose2d();
+  private boolean hasMovedAtLeastOnce = false;
   private double lastTurretOmega = 0;
 
   // Throttling Magic numbers
@@ -61,6 +62,10 @@ public class LaunchCalculator {
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
   private static final List<Pose2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
+
+  // dont move launch param
+  private static final LaunchingParameters defaultParam =
+      new LaunchingParameters(0, Rotation2d.kZero, 0, 0, Pose2d.kZero);
 
   public record LaunchingParameters(
       double targetHood,
@@ -112,7 +117,7 @@ public class LaunchCalculator {
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
             <= MIN_DIST_TOLERANCE;
-    boolean hasNotRotatedSigificantly =
+    boolean hasNotRotatedSignificantly =
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
@@ -123,9 +128,18 @@ public class LaunchCalculator {
     boolean isTurretOmegaStable =
         Math.abs(currentTurretOmega - lastTurretOmega) <= MIN_OMEGA_TOLERANCE;
 
-    // Check to see if all conditions are met
+    // On robot startup / entering enabled, check to see if it has moved at least once
+    if (!hasMovedAtLeastOnce) {
+      // has moved enough?
+      if (!hasNotMovedSignificantly || !hasNotRotatedSignificantly || !isNotMovingFastEnough) {
+        hasMovedAtLeastOnce = true;
+      } else {
+        return defaultParam; // Still haven't moved, so return null
+      }
+    }
+    // Check to see if all conditions are met after it has moved at least once
     if (hasNotMovedSignificantly
-        && hasNotRotatedSigificantly
+        && hasNotRotatedSignificantly
         && isNotMovingFastEnough
         && isTurretOmegaStable
         && cachedParams != null) {
@@ -316,6 +330,10 @@ public class LaunchCalculator {
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
     return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
+  }
+
+  public void robotDisable() {
+    hasMovedAtLeastOnce = false;
   }
 
   public static boolean isUnderClimb(Pose2d turretPose) {
