@@ -395,7 +395,8 @@ public class ClimbSubsystem extends SubsystemBase {
                                           setAttach();
                                         }
                                       }))
-                              .onlyWhile(() -> climbState == ClimbState.Detached).finallyDo((interrupted) -> setVoltage(0))
+                              .onlyWhile(() -> climbState == ClimbState.Detached)
+                              .finallyDo((interrupted) -> setVoltage(0))
                               .withTimeout(ATTACH_TIMEOUT))
                       .andThen(Commands.runOnce(() -> attempts[0]++))
                       .repeatedly()
