@@ -134,6 +134,9 @@ public class ClimbSubsystem extends SubsystemBase {
   private double lastXAccel = 0;
   private double lastYAccel = 0;
 
+  // -- Jerk cache -- //
+  private volatile double jerkMagnitude;
+
   // -------- DEBOUNCER -------- //
 
   // Debouncer
@@ -249,15 +252,13 @@ public class ClimbSubsystem extends SubsystemBase {
   // -------- SENSOR CHECKS -------- //
 
   public boolean passedAccelerometerTest() {
-    double jerk = getJerk();
-    return jerk >= MIN_JERK;
+    return this.jerkMagnitude >= MIN_JERK;
   }
 
-  public double getJerk() {
+  public void updateJerk() {
     double currentTime = Timer.getFPGATimestamp();
     double currentDt = currentTime - lastTime;
 
-    StatusSignal.refreshAll(ssXAccel, ssYAccel);
     double filteredX = xLinearFilter.calculate(ssXAccel.getValue().in(Gs));
     double filteredY = yLinearFilter.calculate(ssYAccel.getValue().in(Gs));
 
@@ -275,7 +276,7 @@ public class ClimbSubsystem extends SubsystemBase {
     lastTime = currentTime;
 
     ntIMUJerk.set(jerkMagnitude);
-    return jerkMagnitude;
+    this.jerkMagnitude = jerkMagnitude;
   }
 
   public boolean passedRollerTest() {
@@ -394,7 +395,7 @@ public class ClimbSubsystem extends SubsystemBase {
                                           setAttach();
                                         }
                                       }))
-                              .onlyWhile(() -> climbState == ClimbState.Detached)
+                              .onlyWhile(() -> climbState == ClimbState.Detached).finallyDo((interrupted) -> setVoltage(0))
                               .withTimeout(ATTACH_TIMEOUT))
                       .andThen(Commands.runOnce(() -> attempts[0]++))
                       .repeatedly()
@@ -540,9 +541,8 @@ public class ClimbSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    BaseStatusSignal.refreshAll(ssVoltage, ssMotorPos, ssCurrent);
-    // Remove once we test the tuned jerk value
-    getJerk();
+    BaseStatusSignal.refreshAll(ssVoltage, ssMotorPos, ssCurrent, ssXAccel, ssYAccel);
+    updateJerk();
 
     ntVoltage.set(ssVoltage.getValueAsDouble());
     ntMotorPos.set(ssMotorPos.getValueAsDouble());
