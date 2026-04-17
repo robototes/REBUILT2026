@@ -1,5 +1,6 @@
 package frc.robot;
 
+import static frc.robot.Subsystems.SubsystemConstants.CLIMB_PIVOT_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
@@ -19,6 +20,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
+import frc.robot.subsystems.Climb.ClimbPivot;
+import frc.robot.subsystems.Climb.ClimbSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
@@ -52,6 +55,7 @@ public class Subsystems {
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
     public static final boolean LEDS_ENABLED = true;
+    public static final boolean CLIMB_PIVOT_ENABLED = true;
   }
 
   // Subsystems go here
@@ -68,6 +72,8 @@ public class Subsystems {
   public final TurretSubsystem turretSubsystem;
   public final IndexerSubsystem indexerSubsystem;
   public final LEDSubsystem ledSubsystem;
+  public final ClimbPivot climbPivotSubsystem;
+  public final ClimbSubsystem climbSubsystem;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -154,6 +160,12 @@ public class Subsystems {
       ledSubsystem = new LEDSubsystem();
     } else {
       ledSubsystem = null;
+    }
+    if (CLIMB_PIVOT_ENABLED) {
+      climbPivotSubsystem = new ClimbPivot();
+      climbSubsystem = new ClimbSubsystem(this);
+    } else {
+      climbPivotSubsystem = null;
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED && INTAKE_ARM_ENABLED) {
