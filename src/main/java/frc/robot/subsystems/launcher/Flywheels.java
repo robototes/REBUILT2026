@@ -112,8 +112,6 @@ public class Flywheels extends SubsystemBase {
             ? InvertedValue.CounterClockwise_Positive
             : InvertedValue.Clockwise_Positive;
     applyConfig(flywheelTwo, config);
-
-    // flywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
   }
 
   private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
@@ -141,9 +139,7 @@ public class Flywheels extends SubsystemBase {
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
-              request.Velocity = rps;
-              flywheelOne.setControl(request);
-              flywheelTwo.setControl(request);
+              setVelocityRPS(rps);
             },
             () -> {
               flywheelOne.stopMotor();

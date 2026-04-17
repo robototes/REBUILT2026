@@ -377,17 +377,7 @@ public class Controls {
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
                     case INTAKE ->
-                        s.intakeSubsystem.smartIntake(
-                            () ->
-                                Math.hypot(
-                                            s.drivebaseSubsystem.getState()
-                                                .Speeds
-                                                .vxMetersPerSecond,
-                                            s.drivebaseSubsystem.getState()
-                                                .Speeds
-                                                .vyMetersPerSecond)
-                                        * 6
-                                    + 40);
+                        s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },

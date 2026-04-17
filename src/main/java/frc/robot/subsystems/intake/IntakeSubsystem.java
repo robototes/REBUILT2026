@@ -1,7 +1,9 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 public class IntakeSubsystem extends SubsystemBase {
   public enum IntakeMode {
@@ -53,11 +55,12 @@ public class IntakeSubsystem extends SubsystemBase {
     runRollers();
   }
 
-  public void smartIntake(DoubleSupplier rps) {
+  public void smartIntake(Supplier<ChassisSpeeds> speeds) {
     if (!intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
       deployPivot();
     }
-    runRollers(rps);
+    runRollers(
+        () -> Math.hypot(speeds.get().vxMetersPerSecond, speeds.get().vyMetersPerSecond) * 6 + 40);
   }
 
   public void extakeIntake() {
