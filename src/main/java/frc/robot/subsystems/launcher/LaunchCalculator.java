@@ -48,6 +48,8 @@ public class LaunchCalculator {
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
   private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
+  private static final double TURRET_TX;
+  private static final double TURRET_TY;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -75,6 +77,9 @@ public class LaunchCalculator {
       Pose2d turretPose) {}
 
   static {
+    TURRET_TX = LauncherConstants.turretTransform().getTranslation().getX();
+    TURRET_TY = LauncherConstants.turretTransform().getTranslation().getY();
+
     for (int tag : tags) {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
@@ -203,11 +208,13 @@ public class LaunchCalculator {
 
     // 4. Calculate final Field-Relative Turret speeds
     // Find the turret's translation vector rotated into the field frame
-    Translation2d turretOffsetField = turretTransform.getTranslation().rotateBy(predictedAngle);
+    double cos = predictedAngle.getCos(), sin = predictedAngle.getSin();
+    double turretOffsetFieldX = TURRET_TX * cos - TURRET_TY * sin;
+    double turretOffsetFieldY = TURRET_TX * sin + TURRET_TY * cos;
 
     // Cross product (omega x r) to find the tangential velocity of the turret in the field frame
-    double tangential_vx_field = -turretOffsetField.getY() * omega_at_launch;
-    double tangential_vy_field = turretOffsetField.getX() * omega_at_launch;
+    double tangential_vx_field = -turretOffsetFieldY * omega_at_launch;
+    double tangential_vy_field = turretOffsetFieldX * omega_at_launch;
 
     // Combine robot translational velocity with turret tangential velocity
     double turretVelocityX = predicted_vx_field + tangential_vx_field;
@@ -236,7 +243,7 @@ public class LaunchCalculator {
       // NOTE: Drag compensation removed as it is accounted for in the interpolating map.
       trueDistanceX = distanceX - turretVelocityX * t;
       trueDistanceY = distanceY - turretVelocityY * t;
-      trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
+      trueDistance = Math.sqrt(trueDistanceX * trueDistanceX + trueDistanceY * trueDistanceY);
 
       // begin newton raphson's method to find the converged time of flight
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
