@@ -30,6 +30,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.Climb.ClimbSubsystem.ClimbLevel;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
@@ -77,6 +78,8 @@ public class Controls {
 
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+
+      private final CommandXboxController climbTestController = new CommandXboxController(6);
 
   AprilTagFieldLayout aprilTagFieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
@@ -126,6 +129,7 @@ public class Controls {
     configureVisionBindings();
     configureTurretBindings();
     configureLedBindings();
+    configureClimbBindings();
   }
 
   private Trigger connected(CommandXboxController controller) {
@@ -546,5 +550,14 @@ public class Controls {
             .withName("LED Default Command"));
 
     readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
+  }
+
+  public void configureClimbBindings() {
+    climbTestController.a().onTrue(s.climbSubsystem.attachToClimb());
+    climbTestController.b().onTrue(s.climbSubsystem.detachClimb());
+    climbTestController.x().onTrue(s.climbSubsystem.goToLevel(ClimbLevel.L2));
+    climbTestController.y().onTrue(s.climbSubsystem.goToLevel(ClimbLevel.L0));
+
+    climbTestController.leftStick().whileTrue(s.climbSubsystem.manualClimbCommand(()->climbTestController.getLeftY()));
   }
 }
