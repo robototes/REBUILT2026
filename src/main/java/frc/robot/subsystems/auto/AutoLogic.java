@@ -208,7 +208,7 @@ public class AutoLogic {
   }
 
   public static final Command empty() {
-    return Commands.none();
+    return Commands.none().withName("Empty Command");
   }
 
   public static Command launcherCommand() {
@@ -224,29 +224,32 @@ public class AutoLogic {
         // .until(() -> s.flywheels.isOutOfFuel())
         .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
-        .andThen(Commands.runOnce(() -> s.flywheels.switchSlot(false)));
+        .andThen(Commands.runOnce(() -> s.flywheels.switchSlot(false)))
+        .withName("Auto Launcher Command");
   }
 
   public static Command launcherSimCommand() {
     return Commands.sequence(
-        AutoDriveRotate.autoRotate(
-            s.drivebaseSubsystem, () -> 0, () -> 0, () -> 0), // SIM PURPOSES ONLY
-        Commands.run(
-                () ->
-                    FuelSim.getInstance()
-                        .launchFuel(
-                            MetersPerSecond.of(6),
-                            Radians.of(s.hood.getHoodPosition()),
-                            Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
-                            Meters.of(1.45)))
-            .withTimeout(3));
+            AutoDriveRotate.autoRotate(
+                s.drivebaseSubsystem, () -> 0, () -> 0, () -> 0), // SIM PURPOSES ONLY
+            Commands.run(
+                    () ->
+                        FuelSim.getInstance()
+                            .launchFuel(
+                                MetersPerSecond.of(6),
+                                Radians.of(s.hood.getHoodPosition()),
+                                Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                                Meters.of(1.45)))
+                .withTimeout(3))
+        .withName("Auto Launcher Sim Command");
   }
 
   public static Command intakeCommand() {
-    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE);
+    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
+        .withName("Auto Intake Command");
   }
 
   public static Command climbCommand() {
-    return Commands.none();
+    return Commands.none().withName("Auto Climb Command");
   }
 }
