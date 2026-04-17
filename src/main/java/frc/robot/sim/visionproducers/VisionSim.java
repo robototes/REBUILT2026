@@ -25,6 +25,7 @@
 package frc.robot.sim.visionproducers;
 
 import static frc.robot.sim.visionproducers.VisionSimConstants.kAvgDistTolerance;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kAvgDistVarianceScale;
 import static frc.robot.sim.visionproducers.VisionSimConstants.kAvgLatencyMs;
 import static frc.robot.sim.visionproducers.VisionSimConstants.kCalibErrorAvg;
 import static frc.robot.sim.visionproducers.VisionSimConstants.kCalibErrorStdDev;
@@ -194,7 +195,7 @@ public class VisionSim implements VisionSimInterface {
         if (numTags == 1 && avgDist > kAvgDistTolerance) {
           estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         } else {
-          estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 3.33));
+          estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / kAvgDistVarianceScale));
         }
         m_curStdDevs = estStdDevs;
       }
