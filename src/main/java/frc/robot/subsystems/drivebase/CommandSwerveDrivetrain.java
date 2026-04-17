@@ -279,28 +279,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     clampPoseToField();
 
     // Publish filtered accelerations computed by KinematicFilter
-    try {
-      double ax = filterX.getAccel();
-      double ay = filterY.getAccel();
-      double aomega = filterTheta.getAccel();
-      if (filteredAccelXPub != null) filteredAccelXPub.set(ax);
-      if (filteredAccelYPub != null) filteredAccelYPub.set(ay);
-      if (filteredAccelOmegaPub != null) filteredAccelOmegaPub.set(aomega);
-    } catch (Exception t) {
-      // protect periodic loop from NT failures
-    }
+    double ax = filterX.getAccel();
+    double ay = filterY.getAccel();
+    double aomega = filterTheta.getAccel();
+    if (filteredAccelXPub != null) filteredAccelXPub.set(ax);
+    if (filteredAccelYPub != null) filteredAccelYPub.set(ay);
+    if (filteredAccelOmegaPub != null) filteredAccelOmegaPub.set(aomega);
   }
 
   public double getFieldRelativeXAccel() {
-    return filterX.getAccel();
+    return MathUtil.clamp(filterX.getAccel(), -15.0, 15.0);
   }
 
   public double getFieldRelativeYAccel() {
-    return filterY.getAccel();
+    return MathUtil.clamp(filterY.getAccel(), -15.0, 15.0);
   }
 
   public double getAngularAcceleration() {
-    return filterTheta.getAccel();
+    return MathUtil.clamp(filterTheta.getAccel(), -25.0, 25.0);
   }
 
   private void startSimThread() {
