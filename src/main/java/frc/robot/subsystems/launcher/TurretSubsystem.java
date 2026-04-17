@@ -154,10 +154,11 @@ public class TurretSubsystem extends SubsystemBase {
 
   public Command setTurretPosition(double pos) {
     return runOnce(
-        () -> {
-          turretMotor.setControl(request.withPosition(pos).withFeedForward(0));
-          targetPos = pos;
-        });
+            () -> {
+              turretMotor.setControl(request.withPosition(pos).withFeedForward(0));
+              targetPos = pos;
+            })
+        .withName("Set Turret Position");
   }
 
   public void setTurretRawPosition(double pos, double FFVelocity) {

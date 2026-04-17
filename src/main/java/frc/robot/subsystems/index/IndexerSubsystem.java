@@ -16,14 +16,15 @@ public class IndexerSubsystem extends SubsystemBase {
 
   public Command runIndexer() {
     return Commands.runEnd(
-        () -> {
-          feeder.runVelocity();
-          spindexerSubsystem.runVelocity();
-        },
-        () -> {
-          feeder.stopMotor();
-          spindexerSubsystem.stopMotor();
-        });
+            () -> {
+              feeder.runVelocity();
+              spindexerSubsystem.runVelocity();
+            },
+            () -> {
+              feeder.stopMotor();
+              spindexerSubsystem.stopMotor();
+            })
+        .withName("Run Indexer");
   }
 
   public Command runIndexer(DoubleSupplier flywheelRPS) {
