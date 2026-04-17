@@ -11,8 +11,7 @@ public class Hardware {
   public static final int FLYWHEEL_TWO_ID = 21;
   public static final int HOOD_MOTOR_ID = 22;
   public static final int TURRET_MOTOR_ID = 23;
-  public static final int HALL_EFFECT_SENSOR_ID =
-      24; // TODO: Change this to the actual ID once it's decided where the sensor will be placed.
+  public static final int HALL_EFFECT_SENSOR_ID = 0; // Analog input
 
   // Indexing Motors (30-34)
   public static final int FEEDER_MOTOR_ID = 30;
