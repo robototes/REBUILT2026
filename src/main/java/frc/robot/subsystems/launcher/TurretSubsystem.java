@@ -24,11 +24,8 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
-import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
@@ -114,8 +111,6 @@ public class TurretSubsystem extends SubsystemBase {
     zeroPublisher.set(false);
     turretConfig();
     turretRotation.set(new Pose2d[2]);
-
-    new Trigger(() -> atLimitSwitch()).onTrue(Commands.runOnce(() -> turretMotor.setPosition(0)));
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
     NetworkTable table = inst.getTable("SmartDashboard");
@@ -314,18 +309,6 @@ public class TurretSubsystem extends SubsystemBase {
               turretMotor.stopMotor();
             })
         .withName("Voltage Control");
-  }
-
-  // We cant use a limit switch for zeroing
-  public Command autoZeroCommand() {
-    if (Robot.isSimulation()) {
-      return zeroTurret();
-    }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
-        .until(() -> atLimitSwitch())
-        .andThen(zeroTurret())
-        .withTimeout(3)
-        .withName("Automatic Zero turret");
   }
 
   public boolean atLimitSwitch() {
