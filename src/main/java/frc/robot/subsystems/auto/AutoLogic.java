@@ -68,7 +68,7 @@ public class AutoLogic {
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
           new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
           new AutoPath("RT-Neutral", "RT-Neutral"),
-          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
+          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
           new AutoPath("Sim Nudge Right", "Sim Nudge Right"),
           new AutoPath("Sim Nudge Rotate", "Sim Nudge Rotate"),
           new AutoPath("Sim Drive Accross Field Pull Right", "Sim Drive Accross Field Pull Right"),
