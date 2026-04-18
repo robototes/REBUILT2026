@@ -474,10 +474,9 @@ public class Controls {
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
-    turretAtZero
-        .onTrue(
-            Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
-                .withName("Zero Turret on Limit Switch"));
+    turretAtZero.onTrue(
+        Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
+            .withName("Zero Turret on Limit Switch"));
 
     driverController
         .y()
