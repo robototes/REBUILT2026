@@ -221,7 +221,8 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
-    if (AutoLogic.getSelectedAuto() != null) {
+    Command selectedAuto = AutoLogic.getSelectedAuto();
+    if (selectedAuto != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
       }

@@ -175,7 +175,7 @@ public class VisionSubsystem extends SubsystemBase {
         }
       }
     }
-    return COMP_BOT_FRONT_CAMERA_REAL;
+    return COMP_BOT_FRONT_CAMERA;
   }
 
   private static Transform3d getCompBotLeftCameraTransform() {
@@ -186,7 +186,7 @@ public class VisionSubsystem extends SubsystemBase {
         }
       }
     }
-    return COMP_BOT_LEFT_CAMERA_REAL;
+    return COMP_BOT_LEFT_CAMERA;
   }
 
   public VisionSubsystem(
