@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.util.AllianceUtils;
@@ -161,7 +160,6 @@ public class VisionSubsystem extends SubsystemBase {
       SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
-  private ShowVisionOnField m_showVisionOnField;
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot) {
     this.drivetrain = drivetrain;
@@ -342,14 +340,6 @@ public class VisionSubsystem extends SubsystemBase {
     if (spread > VisionConstants.SPREAD_INFLATE_START) {
       double spreadInflation = Math.pow(spread / VisionConstants.SPREAD_INFLATE_START, 2.0);
       stdDevs = stdDevs.times(spreadInflation);
-    }
-
-    if (m_showVisionOnField != null) {
-      m_showVisionOnField.showPointInTimeVisionEstimate(
-          ShowVisionOnField.FieldType.SIMULATION_FIELD,
-          camera.getName(),
-          estimate.isMegaTag2,
-          java.util.Optional.of(estimate.pose3d.toPose2d()));
     }
 
     maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, camera.getName());
@@ -658,9 +648,5 @@ public class VisionSubsystem extends SubsystemBase {
     return historicPose
         .map(pose2d -> getDistanceToTargetViaPoseEstimation(pose2d, visionPose2d))
         .orElse(0.0);
-  }
-
-  public void setShowVisionOnField(ShowVisionOnField m_showVisionOnField) {
-    this.m_showVisionOnField = m_showVisionOnField;
   }
 }

@@ -24,8 +24,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
-import frc.robot.sim.ShowVisionOnField;
-import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
@@ -55,7 +53,6 @@ public class Robot extends TimedRobot {
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
   private final Mechanism2d mechanismRobot;
-  private final SimWrapper m_simWrapper;
   private static final double BROWNOUT_VOLTAGE = 7.0;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
@@ -92,23 +89,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
 
-    // $VISIONSIM - Wrapper for sim features
-    if (Robot.isSimulation()) {
-      m_simWrapper = new SimWrapper(subsystems.drivebaseSubsystem, this::resetRobotPose);
-    } else {
-      m_simWrapper = null;
-    }
-
-    // $VISIONSIM - Wrapper for sim features
-    if (Robot.isSimulation() && m_simWrapper != null) {
-      ShowVisionOnField showVisionOnField =
-          new ShowVisionOnField(null, m_simWrapper.getSimDebugField());
-      if (subsystems.visionSubsystem != null) {
-        subsystems.visionSubsystem.setShowVisionOnField(showVisionOnField);
-      }
-    }
-
-    controls = new Controls(subsystems, m_simWrapper);
+    controls = new Controls(subsystems);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
@@ -163,14 +144,6 @@ public class Robot extends TimedRobot {
     if (time - LAST_TIME >= 1) {
       LAST_TIME = time;
       DataLogManager.getLog().resume();
-    }
-
-    // $VISIONSIM - Wrapper for sim features
-    if (Robot.isSimulation() && m_simWrapper != null) {
-      // NOTE: We run the vision period FIRST in robotPeriodic, since it updates
-      // NetworkTables with the limelight data, in-case any code in this loop
-      // needs that info and doesnt want it delayed 20ms.
-      m_simWrapper.robotPeriodic();
     }
 
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
@@ -311,11 +284,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    // $VISIONSIM - Wrapper for sim features
-    if (m_simWrapper != null) {
-      m_simWrapper.simulationPeriodic();
-    }
-
     robotSim.updateFuelSim();
   }
 
@@ -375,9 +343,6 @@ public class Robot extends TimedRobot {
       System.out.println("Robot pose reset to: " + pose);
 
       subsystems.drivebaseSubsystem.resetPose(pose);
-
-      // $VISIONSIM - Clean reset
-      m_simWrapper.resetSimPose(pose);
     }
   }
 }
