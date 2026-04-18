@@ -112,6 +112,7 @@ public class Controls {
           .withDriveRequestType(DriveRequestType.Velocity);
 
   private Trigger readyToShoot = new Trigger(() -> false);
+  private Trigger turretAtZero = new Trigger(() -> false);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public Controls(Subsystems subsystems, SimWrapper simWrapper) {
@@ -468,12 +469,13 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
+    turretAtZero = new Trigger( () -> s.turretSubsystem.atLimitSwitch());
 
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
-    new Trigger(() -> s.turretSubsystem.atLimitSwitch())
+    turretAtZero
         .onTrue(
-            Commands.runOnce(() -> s.turretSubsystem.zeroTurret())
+            Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
                 .withName("Zero Turret on Limit Switch"));
 
     driverController

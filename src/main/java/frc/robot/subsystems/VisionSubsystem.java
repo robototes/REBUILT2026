@@ -117,7 +117,11 @@ public class VisionSubsystem extends SubsystemBase {
   public static final Transform3d COMP_BOT_FRONT_CAMERA =
       new Transform3d(0.295, -0.288, 0.273, new Rotation3d(0, Units.degreesToRadians(-20), 0));
   public static final Transform3d COMP_BOT_RIGHT_CAMERA =
-      new Transform3d(0.212, -0.371, 0.273, new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90)));
+      new Transform3d(
+          0.212,
+          -0.371,
+          0.273,
+          new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90)));
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
   private BooleanSubscriber disableVision;
@@ -150,7 +154,7 @@ public class VisionSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
           .publish();
-   private final StructPublisher<Pose3d> compBotRightCameraViewEntry =
+  private final StructPublisher<Pose3d> compBotRightCameraViewEntry =
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/compBotRightCameraView", Pose3d.struct)
           .publish();
@@ -626,8 +630,8 @@ public class VisionSubsystem extends SubsystemBase {
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA));
       compBotFrontCameraViewEntry.set(
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_FRONT_CAMERA));
-      compBotRightCameraViewEntry.set(visionPoseTracking.drivePose3d.transformBy(COMP_BOT_RIGHT_CAMERA));
-
+      compBotRightCameraViewEntry.set(
+          visionPoseTracking.drivePose3d.transformBy(COMP_BOT_RIGHT_CAMERA));
     }
   }
 

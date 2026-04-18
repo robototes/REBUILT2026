@@ -90,6 +90,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final DoublePublisher velocityPub;
   private final DoublePublisher currentPub;
   private final DoublePublisher ffPub;
+  private final DoublePublisher limitSwitchPub;
 
   // Status signals
   private final StatusSignal<Angle> positionSignal;
@@ -123,6 +124,8 @@ public class TurretSubsystem extends SubsystemBase {
     targetPub = table.getDoubleTopic("/Turret/Target").publish();
 
     ffPub = table.getDoubleTopic("/Turret/FF Volts").publish();
+
+    limitSwitchPub = table.getDoubleTopic("/Turret/LimitSwitchCurrent").publish();
   }
 
   public void turretConfig() {
@@ -182,6 +185,10 @@ public class TurretSubsystem extends SubsystemBase {
               zeroPublisher.set(true);
             })
         .withName("zeroed turret");
+  }
+
+  public void zeroTurretPosistion() {
+    turretMotor.setPosition(0);
   }
 
   public Command manualMovingVoltage(Supplier<Voltage> speed) {
@@ -282,6 +289,7 @@ public class TurretSubsystem extends SubsystemBase {
     velocityPub.set(velocitySignal.getValueAsDouble()); // RPS
     currentPub.set(statorCurrentSignal.getValueAsDouble()); // Amps
     targetPub.set(targetPos);
+    limitSwitchPub.set(limitSwitch.getVoltage());
   }
 
   public void brakeTurret() {

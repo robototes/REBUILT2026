@@ -360,14 +360,14 @@ public class Robot extends TimedRobot {
     if (isEnteringDisabled) {
       LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
       // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(limelightName, 1);
+      LimelightHelpers.SetIMUMode(limelightName, 0);
       LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
 
     } else {
       // get rid of throttle to get rid of throttle "glazing"
       LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
       // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(limelightName, 4);
+      LimelightHelpers.SetIMUMode(limelightName, 0);
     }
   }
 
