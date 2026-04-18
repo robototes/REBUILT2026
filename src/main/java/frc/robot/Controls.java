@@ -179,7 +179,7 @@ public class Controls {
 
     // Joystick +Y is back
     // Robot +X is forward
-    double input = MathUtil.applyDeadband(-driverController.getLeftY(), JOYSTICK_DEADBAND);
+    double input = MathUtil.applyDeadband(x, JOYSTICK_DEADBAND);
     return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
@@ -195,7 +195,7 @@ public class Controls {
 
     // Joystick +X is right
     // Robot +Y is left
-    double input = MathUtil.applyDeadband(-driverController.getLeftX(), JOYSTICK_DEADBAND);
+    double input = MathUtil.applyDeadband(y, JOYSTICK_DEADBAND);
     return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
@@ -211,7 +211,7 @@ public class Controls {
 
     // Joystick +X is right
     // Robot +angle is CCW (left)
-    double input = MathUtil.applyDeadband(-driverController.getRightX(), JOYSTICK_DEADBAND);
+    double input = MathUtil.applyDeadband(rotate, JOYSTICK_DEADBAND);
     return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
