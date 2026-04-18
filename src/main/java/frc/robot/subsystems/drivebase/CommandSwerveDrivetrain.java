@@ -199,9 +199,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private void initFilteredAccelPublishers() {
     try {
       var nt = NetworkTableInstance.getDefault();
-      filteredAccelXPub = nt.getDoubleTopic("/drivebase/filteredAccelX").publish();
-      filteredAccelYPub = nt.getDoubleTopic("/drivebase/filteredAccelY").publish();
-      filteredAccelOmegaPub = nt.getDoubleTopic("/drivebase/filteredAccelOmega").publish();
+      filteredAccelXPub = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
+      filteredAccelYPub = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelY").publish();
+      filteredAccelOmegaPub =
+          nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
       // initialize with zeros
       filteredAccelXPub.set(0.0);
       filteredAccelYPub.set(0.0);
