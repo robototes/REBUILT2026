@@ -10,34 +10,19 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import robotutils.dashboard.DashboardManager;
-import robotutils.drivesmooth.DriveSmooth;
 import robotutils.faultydrivemanager.FaultyDriveManager;
 import robotutils.groundtruthsim.GroundTruthSim;
 import robotutils.groundtruthsim.GroundTruthSimDashboardProvider;
 import robotutils.groundtruthsim.GroundTruthSimDashboardSettings;
 import robotutils.joystickinput.JoystickInput;
-import robotutils.perrobotconfig.PerRobotConfig;
-import robotutils.perrobotconfig.PerRobotConfigDashboardProvider;
-import robotutils.perrobotconfig.PerRobotConfigDashboardSettings;
 import robotutils.pub.interfaces.CameraInfoList;
-import robotutils.pub.interfaces.DriveSmoothInterface;
 import robotutils.pub.interfaces.FaultyDriveManagerInterface;
 import robotutils.pub.interfaces.GroundTruthSimInterface;
 import robotutils.pub.interfaces.JoystickInputInterface;
-import robotutils.pub.interfaces.MacKey;
-import robotutils.pub.interfaces.PerRobotConfigInterface;
 import robotutils.pub.interfaces.SimLimelightProducerInterface;
 import robotutils.pub.interfaces.dashboard.DashboardManagerInterface;
 import robotutils.pub.interfaces.dashboard.DashboardConstants;
 import robotutils.pub.interfaces.dashboard.DashboardProviderInterface;
-import robotutils.pub.interfaces.simio.ArmIoInterface;
-import robotutils.pub.interfaces.simio.ElevatorIoInterface;
-import robotutils.pub.interfaces.simio.RollerIoInterface;
-import robotutils.pub.interfaces.simio.TwoMotorRollerIoInterface;
-import robotutils.sim.armsim.ArmIoSim;
-import robotutils.sim.elevatorssim.ElevatorIoSim;
-import robotutils.sim.rollerssim.RollerIoSim;
-import robotutils.sim.rollerssim.TwoMotorRollerIoSim;
 import robotutils.simlimelightproducer.SimLimelightProducer;
 
 
@@ -47,41 +32,6 @@ public class RobotUtilsFactory {
     /** Creates a dashboard manager. */
     public DashboardManagerInterface createDashboardManager() {
         return new DashboardManager();
-    }
-
-    /** Creates a default drive smoothing pipeline. */
-    public DriveSmoothInterface createDriveSmooth() {
-        return new DriveSmooth();
-    }
-
-    /**
-     * Creates a drive smoothing pipeline with explicit configuration.
-     *
-     * @param translationSlewRate max translation change per second
-     * @param rotationSlewRate max rotation change per second
-     * @param joystickDeadband deadband threshold in [0, 1)
-     * @param translationExponent response exponent for translation
-     * @param rotationExponent response exponent for rotation
-     * @return configured drive smoothing pipeline
-     */
-    public DriveSmoothInterface createDriveSmooth(
-        double translationSlewRate,
-        double rotationSlewRate,
-        double joystickDeadband,
-        double translationExponent,
-        double rotationExponent) {
-
-        return new DriveSmooth(
-            translationSlewRate,
-            rotationSlewRate,
-            joystickDeadband,
-            translationExponent,
-            rotationExponent);
-    }
-
-    /** Create using default params. */
-    public DriveSmoothInterface createDefaultDriveSmooth() {
-        return createDriveSmooth();
     }
 
     /**
@@ -107,140 +57,6 @@ public class RobotUtilsFactory {
             rawRotateSupplier,
             isSimulation,
             operatorForwardDegreesSupplier);
-    }
-
-    /**
-     * Creates a per-robot configuration selector.
-     *
-     * @param optionalDashboardManager optional dashboard manager for reporting per-robot config settings
-     * @param macToRobotNameDict maps MAC key suffixes to robot names
-     * @param robotNameToConfigNameDict maps robot names to config names
-     * @param configNameToConfigObjDict maps config names to config objects
-     * @param defaultConfigName config name used when no MAC address matches
-     * @param simulationConfigName config name used in simulation
-     * @return configured per-robot config selector
-     */
-    public <T> PerRobotConfigInterface<T> createPerRobotConfig(
-        Optional<DashboardManagerInterface> optionalDashboardManager,
-        Map<MacKey, String> macToRobotNameDict,
-        Map<String, String> robotNameToConfigNameDict,
-        Map<String, T> configNameToConfigObjDict,
-        String defaultConfigName,
-        String simulationConfigName) {
-
-        Optional<DashboardProviderInterface<PerRobotConfigDashboardSettings>> optionalDashboardProvider;
-        if (optionalDashboardManager.isPresent()) {
-            PerRobotConfigDashboardProvider provider = new PerRobotConfigDashboardProvider();
-            provider.init();
-            optionalDashboardManager.get().registerProvider(DashboardConstants.kPerRobotConfigProviderName, provider);
-
-            optionalDashboardProvider = Optional.of(provider);
-        }
-        else {
-            optionalDashboardProvider = Optional.empty();
-        }
-
-        return new PerRobotConfig<T>(
-            optionalDashboardProvider,
-            macToRobotNameDict,
-            robotNameToConfigNameDict,
-            configNameToConfigObjDict,
-            defaultConfigName,
-            simulationConfigName);
-    }
-
-    /**
-     * Creates a simulated arm IO implementation.
-     *
-     * @param deviceName simulation device name
-     * @param minArmAngleDegrees minimum arm angle in degrees
-     * @param maxArmAngleDegrees maximum arm angle in degrees
-     * @param momentOfInertia arm moment of inertia
-     * @param armLengthMeters arm length in meters
-     * @param gearRatio arm gear ratio
-     * @return configured arm IO simulation
-     */
-    public ArmIoInterface createArmIoSim(
-        String deviceName,
-        double minArmAngleDegrees,
-        double maxArmAngleDegrees,
-        double momentOfInertia,
-        double armLengthMeters,
-        double gearRatio) {
-
-        return new ArmIoSim(
-            deviceName,
-            minArmAngleDegrees,
-            maxArmAngleDegrees,
-            momentOfInertia,
-            armLengthMeters,
-            gearRatio);
-    }
-
-    /**
-     * Creates a simulated elevator IO implementation.
-     *
-     * @param deviceName simulation device name
-     * @param gearRatio elevator gear ratio
-     * @param carriageMassKg carriage mass in kilograms
-     * @param drumRadiusMeters drum radius in meters
-     * @param minHeightMeters minimum height in meters
-     * @param maxHeightMeters maximum height in meters
-     * @return configured elevator IO simulation
-     */
-    public ElevatorIoInterface createElevatorIoSim(
-        String deviceName,
-        double gearRatio,
-        double carriageMassKg,
-        double drumRadiusMeters,
-        double minHeightMeters,
-        double maxHeightMeters) {
-
-        return new ElevatorIoSim(
-            deviceName,
-            gearRatio,
-            carriageMassKg,
-            drumRadiusMeters,
-            minHeightMeters,
-            maxHeightMeters);
-    }
-
-    /**
-     * Creates a simulated single-motor roller IO implementation.
-     *
-     * @param deviceName simulation device name
-     * @param momentOfInertia roller moment of inertia
-     * @param gearRatio roller gear ratio
-     * @return configured roller IO simulation
-     */
-    public RollerIoInterface createRollerIoSim(
-        String deviceName,
-        double momentOfInertia,
-        double gearRatio) {
-
-        return new RollerIoSim(
-            deviceName,
-            momentOfInertia,
-            gearRatio);
-    }
-
-    /**
-     * Creates a simulated two-motor roller IO implementation.
-     *
-     * @param deviceName simulation device name
-     * @param momentOfInertia roller moment of inertia
-     * @param gearRatio roller gear ratio
-     * @return configured two-motor roller IO simulation
-     */
-    public TwoMotorRollerIoInterface createTwoMotorRollerIoSim(
-        String deviceName,
-        double momentOfInertia,
-        double gearRatio) {
-
-        return new TwoMotorRollerIoSim(
-            deviceName,
-            momentOfInertia,
-            gearRatio);
     }
 
     /**
