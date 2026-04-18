@@ -9,29 +9,28 @@
 // can also do vision simulation.
 //
 
-package frc.robot.sim.visionproducers;
+package frc.robot.util.simulation.visionsim.simlimelightproducer;
 
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 
 /**
  * Publishes LimelightData to NetworkTables. This is the only class with NetworkTables dependency.
  */
 public class LimelightTablePublisher {
   private final NetworkTable table;
-  private final StructPublisher<Pose3d> botpose3dPublisher;
-  private double heartbeat = 0;
+  private long m_heartbeat = 1;
 
+  /** Constructor. */
   public LimelightTablePublisher(String limelightName) {
-    String tableName =
-        (limelightName == null || limelightName.isEmpty()) ? "limelight" : limelightName;
-    this.table = NetworkTableInstance.getDefault().getTable(tableName);
-    this.botpose3dPublisher =
-        this.table.getStructTopic("botpose_wpiblue_pose3d", Pose3d.struct).publish();
+    if (limelightName == null || limelightName.isEmpty()) {
+      throw new IllegalArgumentException("Limelight name cannot be null or empty");
+    }
+
+    this.table = NetworkTableInstance.getDefault().getTable(limelightName);
   }
 
+  /** Publishes the given LimelightData to NetworkTables. */
   public void publish(LimelightData data) {
     // Basic targeting
     table.getEntry("tv").setDouble(data.targetValid ? 1 : 0);
@@ -41,10 +40,6 @@ public class LimelightTablePublisher {
     table.getEntry("tync").setDouble(data.tync);
     table.getEntry("ta").setDouble(data.ta);
     table.getEntry("tid").setDouble(data.tid);
-
-    // Heartbeat (increases once per frame, resets at 2 billion)
-    heartbeat = (heartbeat >= 2_000_000_000) ? 0 : heartbeat + 1;
-    table.getEntry("hb").setDouble(heartbeat);
 
     // Latency
     table.getEntry("tl").setDouble(data.pipelineLatencyMs);
@@ -63,14 +58,15 @@ public class LimelightTablePublisher {
     // Bot pose arrays for pose estimation
     table.getEntry("botpose_wpiblue").setDoubleArray(data.botposeWpiBlue);
     table.getEntry("botpose_wpired").setDoubleArray(data.botposeWpiRed);
-    // Also publish as MegaTag2 format (same data for simulation purposes)
-    table.getEntry("botpose_orb_wpiblue").setDoubleArray(data.botposeWpiBlue);
-    table.getEntry("botpose_orb_wpired").setDoubleArray(data.botposeWpiRed);
 
-    // Note an actual limelight doesn't publish 3D pose as a Pose3d object, but we can add this for
-    // convenience in simulation
-    if (data.botpose3dWpiBlue != null) {
-      botpose3dPublisher.set(data.botpose3dWpiBlue);
+    // Also publish as MegaTag2 format (same data for simulation purposes)
+    if (VisionSimConstants.Vision.kPublishMt2Poses) {
+      table.getEntry("botpose_orb_wpiblue").setDoubleArray(data.botposeWpiBlue);
+      table.getEntry("botpose_orb_wpired").setDoubleArray(data.botposeWpiRed);
     }
+    ;
+
+    // Heartbeat — increments forever so VisionHeartBeat can detect the camera is alive
+    table.getEntry("hb").setDouble(m_heartbeat++);
   }
 }

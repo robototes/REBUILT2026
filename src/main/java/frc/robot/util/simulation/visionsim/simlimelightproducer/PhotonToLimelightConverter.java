@@ -9,9 +9,8 @@
 // can also do vision simulation.
 //
 
-package frc.robot.sim.visionproducers;
+package frc.robot.util.simulation.visionsim.simlimelightproducer;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
@@ -166,11 +165,8 @@ public class PhotonToLimelightConverter {
     if (robotPose == null || targets.isEmpty()) {
       data.botposeWpiBlue = new double[0];
       data.botposeWpiRed = new double[0];
-      data.botpose3dWpiBlue = null;
       return;
     }
-
-    data.botpose3dWpiBlue = robotPose;
 
     int tagCount = targets.size();
     int arrayLength = 11 + (7 * tagCount);
@@ -245,15 +241,14 @@ public class PhotonToLimelightConverter {
 
     data.botposeWpiBlue = botpose;
 
-    // For WPI Red, the coordinate system is a 180° rotation of Blue around the field center.
-    // Both X and Y are mirrored, and yaw is rotated by 180°.
-    double fieldLength = VisionSimConstants.kTagLayout.getFieldLength();
-    double fieldWidth = VisionSimConstants.kTagLayout.getFieldWidth();
+    // For WPI Red, mirror the pose (field is 16.54m x 8.21m for 2024 field)
+    // Red origin is at opposite corner, so x' = fieldLength - x, y' = fieldWidth - y,
+    // yaw' = yaw + 180
     double[] botposeRed = botpose.clone();
-    botposeRed[0] = fieldLength - robotPose.getX();
-    botposeRed[1] = fieldWidth - robotPose.getY();
+    botposeRed[0] = 16.54 - robotPose.getX();
+    botposeRed[1] = 8.21 - robotPose.getY();
     double yawDeg = Units.radiansToDegrees(robotPose.getRotation().getZ());
-    botposeRed[5] = MathUtil.inputModulus(yawDeg - 180, -180, 180);
+    botposeRed[5] = ((yawDeg + 180) % 360) - 180; // Normalize to [-180, 180]
     data.botposeWpiRed = botposeRed;
   }
 

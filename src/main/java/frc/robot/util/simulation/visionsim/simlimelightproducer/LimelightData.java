@@ -9,9 +9,7 @@
 // can also do vision simulation.
 //
 
-package frc.robot.sim.visionproducers;
-
-import edu.wpi.first.math.geometry.Pose3d;
+package frc.robot.util.simulation.visionsim.simlimelightproducer;
 
 /**
  * Pure data container representing Limelight NetworkTables data format. No WPILib/NetworkTables
@@ -47,6 +45,4 @@ public class LimelightData {
   // avgArea, [rawFiducials...]
   public double[] botposeWpiBlue = new double[0];
   public double[] botposeWpiRed = new double[0];
-
-  public Pose3d botpose3dWpiBlue;
 }
