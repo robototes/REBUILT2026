@@ -73,6 +73,7 @@ public class IntakePivot extends SubsystemBase {
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     pivotConfig();
+    pivotMotor.clearStickyFaults();
     networktables();
     if (Robot.isSimulation()) {
       pivotSim = new PivotSim(pivotMotor);

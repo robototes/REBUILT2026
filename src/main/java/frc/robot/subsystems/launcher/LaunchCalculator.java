@@ -41,7 +41,7 @@ public class LaunchCalculator {
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
-  private static final double PHASE_DELAY = 0.03;
+  private static final double PHASE_DELAY = 0.15;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
@@ -139,6 +139,15 @@ public class LaunchCalculator {
         && isNotMovingFastEnough
         && isTurretOmegaStable
         && cachedParams != null) {
+      if (cachedParams.targetTurretFeedforward != 0) {
+        cachedParams =
+            new LaunchingParameters(
+                cachedParams.targetHood,
+                cachedParams.targetTurret,
+                cachedParams.targetFlywheels,
+                0,
+                cachedParams.turretPose);
+      }
       return cachedParams;
     }
     // cache the pose and chassis speeds
