@@ -469,10 +469,11 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
-    turretAtZero = new Trigger( () -> s.turretSubsystem.atLimitSwitch());
+    // turretAtZero = new Trigger( () -> s.turretSubsystem.atLimitSwitch());
 
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
+
     turretAtZero
         .onTrue(
             Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
