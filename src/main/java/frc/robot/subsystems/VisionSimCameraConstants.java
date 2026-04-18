@@ -13,7 +13,8 @@ import java.util.List;
 public final class VisionSimCameraConstants {
   private VisionSimCameraConstants() {}
 
-  // $TODO4 - Do we really still need separate simulated camera positions?  Why not use the real camera positions?
+  // $TODO4 - Do we really still need separate simulated camera positions?  Why not use the real
+  // camera positions?
   public static final CameraInfoList kSimCameras =
       new CameraInfoList(
           List.of(

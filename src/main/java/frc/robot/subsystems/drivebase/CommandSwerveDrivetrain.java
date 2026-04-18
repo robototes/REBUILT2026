@@ -28,7 +28,6 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
-import java.util.Objects;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -40,6 +39,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
+
+  /**
+   * Tracks the accumulated simulated gyro angle (degrees) across high-freq notifier ticks. Using a
+   * field avoids reading back the stale Java StatusSignal cache (refreshed at 50 Hz) on every 250
+   * Hz notifier tick.
+   */
+  private double m_simGyroAngleDeg = 0.0;
+
+  /**
+   * True after the first setRawYaw write; ensures the very first write seeds from the actual
+   * Pigeon2 value rather than 0.0.
+   */
+  private boolean m_simGyroInitialized = false;
+
   private DoubleSupplier m_highFreqSimCallback = () -> 0.0;
 
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
@@ -250,9 +263,26 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               double deltaTime = currentTime - m_lastSimTime;
               m_lastSimTime = currentTime;
 
+              // Seed BEFORE updateSimState so we capture the clean initial Pigeon2 angle.
+              // If we seeded after, updateSimState would have already moved the gyro by
+              // one delta and the callback would add that same delta again (double-count).
+              if (m_highFreqSimCallback != null && !m_simGyroInitialized) {
+                // Seed before updateSimState so the first callback delta isn't double-counted.
+                m_simGyroAngleDeg = getPigeon2().getYaw().getValueAsDouble();
+                m_simGyroInitialized = true;
+              }
+
               /* use the measured time delta, get battery voltage from WPILib */
               updateSimState(deltaTime, RobotController.getBatteryVoltage());
-              m_highFreqSimCallback.getAsDouble();
+
+              if (m_highFreqSimCallback != null) {
+                // Accumulate the ground-truth dtheta into our own field so we never read
+                // back through the Java StatusSignal cache (which is only refreshed at 50 Hz
+                // and would return a stale value on ticks 2-5 between robot loop updates).
+                double dthetaRadians = m_highFreqSimCallback.getAsDouble();
+                m_simGyroAngleDeg += Math.toDegrees(dthetaRadians);
+                getPigeon2().getSimState().setRawYaw(m_simGyroAngleDeg);
+              }
             });
     m_simNotifier.startPeriodic(kSimLoopPeriod);
   }
@@ -266,7 +296,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    * @param highFreqSimCallback callback to invoke from the sim thread
    */
   public void setHighFreqSimCallback(DoubleSupplier highFreqSimCallback) {
-    m_highFreqSimCallback = Objects.requireNonNull(highFreqSimCallback);
+    m_highFreqSimCallback = highFreqSimCallback;
+  }
+
+  @Override
+  public void resetPose(Pose2d pose) {
+    if (RobotBase.isSimulation()) {
+      // After a pose reset, let the notifier re-seed m_simGyroAngleDeg from the
+      // Pigeon2 yaw that super.resetPose will have just written, rather than
+      // maintaining a parallel copy here.
+      m_simGyroInitialized = false;
+    }
+
+    super.resetPose(pose);
   }
 
   // returns the speeds for logging purposes
