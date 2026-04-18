@@ -15,60 +15,58 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
- * Publishes LimelightData to NetworkTables.
- * This is the only class with NetworkTables dependency.
+ * Publishes LimelightData to NetworkTables. This is the only class with NetworkTables dependency.
  */
 public class LimelightTablePublisher {
-    private final NetworkTable table;
-    private long m_heartbeat = 1;
+  private final NetworkTable table;
+  private long m_heartbeat = 1;
 
-    /** Constructor. */
-    public LimelightTablePublisher(String limelightName) {
-        if (limelightName == null || limelightName.isEmpty()) {
-            throw new IllegalArgumentException("Limelight name cannot be null or empty");
-        }
-
-        this.table = NetworkTableInstance.getDefault().getTable(limelightName);
+  /** Constructor. */
+  public LimelightTablePublisher(String limelightName) {
+    if (limelightName == null || limelightName.isEmpty()) {
+      throw new IllegalArgumentException("Limelight name cannot be null or empty");
     }
 
-    /**
-     * Publishes the given LimelightData to NetworkTables.
-     */
-    public void publish(LimelightData data) {
-        // Basic targeting
-        table.getEntry("tv").setDouble(data.targetValid ? 1 : 0);
-        table.getEntry("tx").setDouble(data.tx);
-        table.getEntry("ty").setDouble(data.ty);
-        table.getEntry("txnc").setDouble(data.txnc);
-        table.getEntry("tync").setDouble(data.tync);
-        table.getEntry("ta").setDouble(data.ta);
-        table.getEntry("tid").setDouble(data.tid);
+    this.table = NetworkTableInstance.getDefault().getTable(limelightName);
+  }
 
-        // Latency
-        table.getEntry("tl").setDouble(data.pipelineLatencyMs);
-        table.getEntry("cl").setDouble(data.captureLatencyMs);
+  /** Publishes the given LimelightData to NetworkTables. */
+  public void publish(LimelightData data) {
+    // Basic targeting
+    table.getEntry("tv").setDouble(data.targetValid ? 1 : 0);
+    table.getEntry("tx").setDouble(data.tx);
+    table.getEntry("ty").setDouble(data.ty);
+    table.getEntry("txnc").setDouble(data.txnc);
+    table.getEntry("tync").setDouble(data.tync);
+    table.getEntry("ta").setDouble(data.ta);
+    table.getEntry("tid").setDouble(data.tid);
 
-        // 3D poses
-        table.getEntry("targetpose_cameraspace").setDoubleArray(data.targetPoseCameraSpace);
-        table.getEntry("camerapose_targetspace").setDoubleArray(data.cameraPoseTargetSpace);
+    // Latency
+    table.getEntry("tl").setDouble(data.pipelineLatencyMs);
+    table.getEntry("cl").setDouble(data.captureLatencyMs);
 
-        // Raw fiducials
-        table.getEntry("rawfiducials").setDoubleArray(data.rawFiducials);
+    // 3D poses
+    table.getEntry("targetpose_cameraspace").setDoubleArray(data.targetPoseCameraSpace);
+    table.getEntry("camerapose_targetspace").setDoubleArray(data.cameraPoseTargetSpace);
 
-        // t2d array
-        table.getEntry("t2d").setDoubleArray(data.t2d);
+    // Raw fiducials
+    table.getEntry("rawfiducials").setDoubleArray(data.rawFiducials);
 
-        // Bot pose arrays for pose estimation
-        table.getEntry("botpose_wpiblue").setDoubleArray(data.botposeWpiBlue);
-        table.getEntry("botpose_wpired").setDoubleArray(data.botposeWpiRed);
+    // t2d array
+    table.getEntry("t2d").setDoubleArray(data.t2d);
 
-        // Also publish as MegaTag2 format (same data for simulation purposes)
-        if (VisionSimConstants.Vision.kPublishMt2Poses) {
-            table.getEntry("botpose_orb_wpiblue").setDoubleArray(data.botposeWpiBlue);
-            table.getEntry("botpose_orb_wpired").setDoubleArray(data.botposeWpiRed);
-        };
+    // Bot pose arrays for pose estimation
+    table.getEntry("botpose_wpiblue").setDoubleArray(data.botposeWpiBlue);
+    table.getEntry("botpose_wpired").setDoubleArray(data.botposeWpiRed);
 
-        // Heartbeat — increments forever so VisionHeartBeat can detect the camera is alive
-        table.getEntry("hb").setDouble(m_heartbeat++);
+    // Also publish as MegaTag2 format (same data for simulation purposes)
+    if (VisionSimConstants.Vision.kPublishMt2Poses) {
+      table.getEntry("botpose_orb_wpiblue").setDoubleArray(data.botposeWpiBlue);
+      table.getEntry("botpose_orb_wpired").setDoubleArray(data.botposeWpiRed);
     }
+    ;
+
+    // Heartbeat — increments forever so VisionHeartBeat can detect the camera is alive
+    table.getEntry("hb").setDouble(m_heartbeat++);
+  }
 }
