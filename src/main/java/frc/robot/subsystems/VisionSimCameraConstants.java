@@ -5,9 +5,9 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Hardware;
+import frc.robot.util.simulation.visionsim.pub.interfaces.CameraInfo;
+import frc.robot.util.simulation.visionsim.pub.interfaces.CameraInfoList;
 import java.util.List;
-import robotutils.pub.interfaces.CameraInfo;
-import robotutils.pub.interfaces.CameraInfoList;
 
 /** Robot-specific simulated camera mounts used by Photon/Limelight simulation. */
 public final class VisionSimCameraConstants {

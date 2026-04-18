@@ -1,8 +1,8 @@
-package robotutils.joystickinput;
+package frc.robot.util.simulation.visionsim.joystickinput;
 
+import frc.robot.util.simulation.visionsim.pub.interfaces.JoystickInputInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.JoystickInputsRecord;
 import java.util.function.DoubleSupplier;
-import robotutils.pub.interfaces.JoystickInputInterface;
-import robotutils.pub.interfaces.JoystickInputsRecord;
 
 /**
  * Reads joystick inputs and applies simulation orientation transforms.

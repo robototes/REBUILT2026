@@ -1,4 +1,4 @@
-package robotutils.pub.interfaces.dashboard;
+package frc.robot.util.simulation.visionsim.pub.interfaces.dashboard;
 
 /**
  * Interface for a component to provide data to dashboard/networktables. Basic model we use here:

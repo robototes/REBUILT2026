@@ -1,6 +1,6 @@
-package robotutils.simlimelightproducer;
+package frc.robot.util.simulation.visionsim.simlimelightproducer;
 
-import static robotutils.simlimelightproducer.VisionSimConstants.Vision.*;
+import static frc.robot.util.simulation.visionsim.simlimelightproducer.VisionSimConstants.Vision.*;
 
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.RobotBase;

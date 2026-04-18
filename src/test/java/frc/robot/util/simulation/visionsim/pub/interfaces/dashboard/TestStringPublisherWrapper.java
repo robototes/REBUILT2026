@@ -1,4 +1,4 @@
-package robotutils.dashboard;
+package frc.robot.util.simulation.visionsim.pub.interfaces.dashboard;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 
 import edu.wpi.first.networktables.StringPublisher;
 import org.junit.jupiter.api.Test;
-import robotutils.pub.interfaces.dashboard.StringPublisherWrapper;
 
 class TestStringPublisherWrapper {
 

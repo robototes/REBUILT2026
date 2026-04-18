@@ -1,4 +1,4 @@
-package robotutils.groundtruthsim;
+package frc.robot.util.simulation.visionsim.groundtruthsim;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.util.simulation.visionsim.pub.utils.AllianceCalc;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -27,7 +28,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
-import robotutils.pub.utils.AllianceCalc;
 
 class TestGroundTruthSim {
 

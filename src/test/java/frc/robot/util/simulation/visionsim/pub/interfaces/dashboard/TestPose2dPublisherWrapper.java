@@ -1,4 +1,4 @@
-package robotutils.dashboard;
+package frc.robot.util.simulation.visionsim.pub.interfaces.dashboard;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.StructPublisher;
 import org.junit.jupiter.api.Test;
-import robotutils.pub.interfaces.dashboard.Pose2dPublisherWrapper;
 
 class TestPose2dPublisherWrapper {
 

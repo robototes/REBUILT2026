@@ -1,28 +1,28 @@
-package robotutils.pub;
+package frc.robot.util.simulation.visionsim.pub;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.util.simulation.visionsim.dashboard.DashboardManager;
+import frc.robot.util.simulation.visionsim.faultydrivemanager.FaultyDriveManager;
+import frc.robot.util.simulation.visionsim.groundtruthsim.GroundTruthSim;
+import frc.robot.util.simulation.visionsim.groundtruthsim.GroundTruthSimDashboardProvider;
+import frc.robot.util.simulation.visionsim.groundtruthsim.GroundTruthSimDashboardSettings;
+import frc.robot.util.simulation.visionsim.joystickinput.JoystickInput;
+import frc.robot.util.simulation.visionsim.pub.interfaces.CameraInfoList;
+import frc.robot.util.simulation.visionsim.pub.interfaces.FaultyDriveManagerInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.GroundTruthSimInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.JoystickInputInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.SimLimelightProducerInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardConstants;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardManagerInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardProviderInterface;
+import frc.robot.util.simulation.visionsim.simlimelightproducer.SimLimelightProducer;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
-import robotutils.dashboard.DashboardManager;
-import robotutils.faultydrivemanager.FaultyDriveManager;
-import robotutils.groundtruthsim.GroundTruthSim;
-import robotutils.groundtruthsim.GroundTruthSimDashboardProvider;
-import robotutils.groundtruthsim.GroundTruthSimDashboardSettings;
-import robotutils.joystickinput.JoystickInput;
-import robotutils.pub.interfaces.CameraInfoList;
-import robotutils.pub.interfaces.FaultyDriveManagerInterface;
-import robotutils.pub.interfaces.GroundTruthSimInterface;
-import robotutils.pub.interfaces.JoystickInputInterface;
-import robotutils.pub.interfaces.SimLimelightProducerInterface;
-import robotutils.pub.interfaces.dashboard.DashboardConstants;
-import robotutils.pub.interfaces.dashboard.DashboardManagerInterface;
-import robotutils.pub.interfaces.dashboard.DashboardProviderInterface;
-import robotutils.simlimelightproducer.SimLimelightProducer;
 
 /** Factory for robot utility objects. */
 public class RobotUtilsFactory {

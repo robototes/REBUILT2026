@@ -1,16 +1,16 @@
-package robotutils.groundtruthsim;
+package frc.robot.util.simulation.visionsim.groundtruthsim;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardConstants;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardProviderInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DoublePublisherWrapper;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.Field2dMultipleObjectRenderer;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.Field2dObjectRenderer;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.Pose2dPublisherWrapper;
 import java.util.ArrayList;
 import java.util.List;
-import robotutils.pub.interfaces.dashboard.DashboardConstants;
-import robotutils.pub.interfaces.dashboard.DashboardProviderInterface;
-import robotutils.pub.interfaces.dashboard.DoublePublisherWrapper;
-import robotutils.pub.interfaces.dashboard.Field2dMultipleObjectRenderer;
-import robotutils.pub.interfaces.dashboard.Field2dObjectRenderer;
-import robotutils.pub.interfaces.dashboard.Pose2dPublisherWrapper;
 
 /** Dashboard provider for ground truth simulation pose. */
 public class GroundTruthSimDashboardProvider

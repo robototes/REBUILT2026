@@ -1,7 +1,7 @@
-package robotutils.joystickinput;
+package frc.robot.util.simulation.visionsim.joystickinput;
 
 import edu.wpi.first.wpilibj.RobotBase;
-import robotutils.pub.interfaces.JoystickInputsRecord;
+import frc.robot.util.simulation.visionsim.pub.interfaces.JoystickInputsRecord;
 
 /**
  * Helper class for handling joystick orientation in simulation. In simulation, we ensure that

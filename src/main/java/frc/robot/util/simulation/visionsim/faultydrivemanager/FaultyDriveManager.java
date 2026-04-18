@@ -1,9 +1,9 @@
-package robotutils.faultydrivemanager;
+package frc.robot.util.simulation.visionsim.faultydrivemanager;
 
 import edu.wpi.first.math.geometry.Transform3d;
-import robotutils.pub.interfaces.FaultyDriveManagerInterface;
-import robotutils.pub.interfaces.GroundTruthSimInterface;
-import robotutils.pub.interfaces.SimLimelightProducerInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.FaultyDriveManagerInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.GroundTruthSimInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.SimLimelightProducerInterface;
 
 /**
  * Manages simulated hardware faults for autonomous testing. Use this to enable/disable specific

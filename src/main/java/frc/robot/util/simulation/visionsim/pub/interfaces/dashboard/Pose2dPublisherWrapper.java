@@ -1,4 +1,4 @@
-package robotutils.pub.interfaces.dashboard;
+package frc.robot.util.simulation.visionsim.pub.interfaces.dashboard;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.StructPublisher;

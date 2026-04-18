@@ -9,7 +9,7 @@
 // can also do vision simulation.
 //
 
-package robotutils.simlimelightproducer;
+package frc.robot.util.simulation.visionsim.simlimelightproducer;
 
 /**
  * Pure data container representing Limelight NetworkTables data format. No WPILib/NetworkTables

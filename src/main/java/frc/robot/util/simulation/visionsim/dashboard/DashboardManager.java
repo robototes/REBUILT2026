@@ -1,11 +1,11 @@
-package robotutils.dashboard;
+package frc.robot.util.simulation.visionsim.dashboard;
 
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardManagerInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardProviderInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.Field2dMultipleObjectRenderer;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.Field2dObjectRenderer;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import robotutils.pub.interfaces.dashboard.DashboardManagerInterface;
-import robotutils.pub.interfaces.dashboard.DashboardProviderInterface;
-import robotutils.pub.interfaces.dashboard.Field2dMultipleObjectRenderer;
-import robotutils.pub.interfaces.dashboard.Field2dObjectRenderer;
 
 /** Holds all the Dashboard Providers, and calls update() on them every periodic. */
 public class DashboardManager implements DashboardManagerInterface {

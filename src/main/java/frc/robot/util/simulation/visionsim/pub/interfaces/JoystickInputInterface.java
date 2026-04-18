@@ -1,4 +1,4 @@
-package robotutils.pub.interfaces;
+package frc.robot.util.simulation.visionsim.pub.interfaces;
 
 /** Interface for joystick input processing pipelines. */
 public interface JoystickInputInterface {

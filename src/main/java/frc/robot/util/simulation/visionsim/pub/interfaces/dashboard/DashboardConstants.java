@@ -1,4 +1,4 @@
-package robotutils.pub.interfaces.dashboard;
+package frc.robot.util.simulation.visionsim.pub.interfaces.dashboard;
 
 public class DashboardConstants {
 

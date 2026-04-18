@@ -10,7 +10,7 @@
 // robot code corrects it.
 //
 
-package robotutils.groundtruthsim;
+package frc.robot.util.simulation.visionsim.groundtruthsim;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
@@ -29,12 +29,12 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.util.simulation.visionsim.pub.interfaces.GroundTruthSimInterface;
+import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardProviderInterface;
+import frc.robot.util.simulation.visionsim.pub.utils.AllianceCalc;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import robotutils.pub.interfaces.GroundTruthSimInterface;
-import robotutils.pub.interfaces.dashboard.DashboardProviderInterface;
-import robotutils.pub.utils.AllianceCalc;
 
 /**
  * Simulation helper that tracks the ground truth robot pose independently of odometry drift. This

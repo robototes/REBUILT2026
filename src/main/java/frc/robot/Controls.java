@@ -39,10 +39,10 @@ import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import frc.robot.util.simulation.visionsim.joystickinput.JoystickInput;
+import frc.robot.util.simulation.visionsim.pub.interfaces.JoystickInputInterface;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
 import java.util.Optional;
-import robotutils.joystickinput.JoystickInput;
-import robotutils.pub.interfaces.JoystickInputInterface;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a

@@ -1,12 +1,12 @@
-package robotutils.joystickinput;
+package frc.robot.util.simulation.visionsim.joystickinput;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.wpi.first.hal.HAL;
+import frc.robot.util.simulation.visionsim.pub.interfaces.JoystickInputsRecord;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import robotutils.pub.interfaces.JoystickInputsRecord;
 
 /** Unit tests for {@link JoystickInput}. */
 class TestJoystickInput {

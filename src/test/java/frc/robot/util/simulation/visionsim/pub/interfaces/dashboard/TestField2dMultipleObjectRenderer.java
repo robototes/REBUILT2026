@@ -1,4 +1,4 @@
-package robotutils.dashboard;
+package frc.robot.util.simulation.visionsim.pub.interfaces.dashboard;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,7 +13,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import org.junit.jupiter.api.Test;
-import robotutils.pub.interfaces.dashboard.Field2dMultipleObjectRenderer;
 
 class TestField2dMultipleObjectRenderer {
   private static final String FIELD_OBJECT_NAME = "TestObject";

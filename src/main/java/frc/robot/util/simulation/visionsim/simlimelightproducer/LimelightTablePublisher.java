@@ -9,7 +9,7 @@
 // can also do vision simulation.
 //
 
-package robotutils.simlimelightproducer;
+package frc.robot.util.simulation.visionsim.simlimelightproducer;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
