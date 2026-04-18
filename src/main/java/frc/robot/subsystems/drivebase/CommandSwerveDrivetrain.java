@@ -28,6 +28,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
+import java.util.Objects;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -38,6 +40,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
+  private DoubleSupplier m_highFreqSimCallback = () -> 0.0;
 
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
   private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -249,8 +252,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
               /* use the measured time delta, get battery voltage from WPILib */
               updateSimState(deltaTime, RobotController.getBatteryVoltage());
+              m_highFreqSimCallback.getAsDouble();
             });
     m_simNotifier.startPeriodic(kSimLoopPeriod);
+  }
+
+  /**
+   * Registers a high-frequency callback that runs on the simulation thread.
+   *
+   * <p>This is useful for simulation-only integrations that need to stay close to drivetrain
+   * physics timing (for example ground-truth integration).
+   *
+   * @param highFreqSimCallback callback to invoke from the sim thread
+   */
+  public void setHighFreqSimCallback(DoubleSupplier highFreqSimCallback) {
+    m_highFreqSimCallback = Objects.requireNonNull(highFreqSimCallback);
   }
 
   // returns the speeds for logging purposes

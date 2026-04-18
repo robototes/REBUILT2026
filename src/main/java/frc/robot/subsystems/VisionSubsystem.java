@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import static frc.robot.subsystems.VisionSimCameraConstants.kSimCameras;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -18,19 +20,21 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
+import frc.robot.util.simulation.visionsim.pub.interfaces.CameraInfo;
+import frc.robot.util.simulation.visionsim.pub.utils.ShowTempPose;
 import frc.robot.util.tuning.NtTunableDouble;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -124,6 +128,7 @@ public class VisionSubsystem extends SubsystemBase {
           new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90)));
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
+  private final ShowTempPose simVisionTempPose;
   private BooleanSubscriber disableVision;
 
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
@@ -167,9 +172,32 @@ public class VisionSubsystem extends SubsystemBase {
       SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
-  private ShowVisionOnField m_showVisionOnField;
 
-  public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
+  private static Transform3d getCompBotFrontCameraTransform() {
+    if (RobotBase.isSimulation()) {
+      for (CameraInfo cameraInfo : kSimCameras) {
+        if (Hardware.LIMELIGHT_A.equals(cameraInfo.cameraName)) {
+          return cameraInfo.robotToCam;
+        }
+      }
+    }
+    return COMP_BOT_FRONT_CAMERA;
+  }
+
+  private static Transform3d getCompBotLeftCameraTransform() {
+    if (RobotBase.isSimulation()) {
+      for (CameraInfo cameraInfo : kSimCameras) {
+        if (Hardware.LIMELIGHT_B.equals(cameraInfo.cameraName)) {
+          return cameraInfo.robotToCam;
+        }
+      }
+    }
+    return COMP_BOT_LEFT_CAMERA;
+  }
+
+  public VisionSubsystem(
+      // $TODO4 - Can I change how we pass in ShowTempPose?
+      CommandSwerveDrivetrain drivetrain, ShowTempPose simVisionTempPose) {
     this.drivetrain = drivetrain;
 
     robotField = new Field2d();
@@ -186,11 +214,15 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("/vision/limelight-b_time since last reading", 0);
     SmartDashboard.putNumber("/vision/limelight-c_time since last reading", 0);
 
+    this.simVisionTempPose = simVisionTempPose;
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
   }
 
   public void update() {
+    if (simVisionTempPose != null) {
+      simVisionTempPose.resetCycle();
+    }
     if (getDisableVision()) {
       SmartDashboard.putString("/vision/limelight-a_rejectReason", "vision-disabled");
       SmartDashboard.putString("/vision/limelight-b_rejectReason", "vision-disabled");
@@ -223,6 +255,9 @@ public class VisionSubsystem extends SubsystemBase {
         CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking, underDefense);
     // }
     updateCameraView(visionPoseTracking);
+    if (simVisionTempPose != null) {
+      simVisionTempPose.updatePose();
+    }
   }
 
   private void processCamera(
@@ -348,19 +383,14 @@ public class VisionSubsystem extends SubsystemBase {
       stdDevs = stdDevs.times(spreadInflation);
     }
 
-    if (m_showVisionOnField != null) {
-      m_showVisionOnField.showPointInTimeVisionEstimate(
-          ShowVisionOnField.FieldType.SIMULATION_FIELD,
-          camera.getName(),
-          estimate.isMegaTag2,
-          java.util.Optional.of(estimate.pose3d.toPose2d()));
-    }
-
     maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, camera.getName());
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
     robotField.setRobotPose(drivetrain.getState().Pose);
+    if (simVisionTempPose != null) {
+      simVisionTempPose.recordInjectedVisionPose(visionPose2d, estimate.timestampSeconds);
+    }
 
     if (estimate.isMegaTag2) {
       camera.setlastPoseMT2(visionPose2d);
@@ -650,9 +680,5 @@ public class VisionSubsystem extends SubsystemBase {
     return historicPose
         .map(pose2d -> getDistanceToTargetViaPoseEstimation(pose2d, visionPose2d))
         .orElse(0.0);
-  }
-
-  public void setShowVisionOnField(ShowVisionOnField m_showVisionOnField) {
-    this.m_showVisionOnField = m_showVisionOnField;
   }
 }

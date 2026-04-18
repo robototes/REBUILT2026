@@ -172,6 +172,9 @@ out/
 networktables.json
 /simgui-ds.json
 /simgui*.json
+/swerve_module.png
+/tag-blue.png
+/tag-green.png
 
 # Simulation data log directory
 logs/

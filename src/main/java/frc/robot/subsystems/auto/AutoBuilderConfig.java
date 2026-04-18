@@ -5,6 +5,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.ConfigShift;
@@ -15,6 +16,11 @@ import org.json.simple.parser.ParseException;
 public class AutoBuilderConfig {
 
   public static void buildAuto(CommandSwerveDrivetrain drivebase, boolean unitTest) {
+    buildAuto(drivebase, null, unitTest);
+  }
+
+  public static void buildAuto(
+      CommandSwerveDrivetrain drivebase, Subsystems subsystems, boolean unitTest) {
 
     try {
       AutoBuilder.configure(
@@ -22,7 +28,11 @@ public class AutoBuilderConfig {
             return drivebase.getState().Pose;
           }, // Robot pose supplier
           (pose) -> {
-            drivebase.resetPose(pose);
+            if (subsystems != null) {
+              subsystems.resetRobotPoseExceptGroundTruth(pose);
+            } else {
+              drivebase.resetPose(pose);
+            }
           }, // Method to reset odometry (will be called if your auto has a starting
           // pose)
           () -> {

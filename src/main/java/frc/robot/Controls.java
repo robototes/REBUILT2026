@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -29,14 +30,16 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
-import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoDriveRotate;
+import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import frc.robot.util.simulation.visionsim.joystickinput.JoystickInput;
+import frc.robot.util.simulation.visionsim.pub.interfaces.JoystickInputInterface;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
 import java.util.Optional;
 
@@ -49,7 +52,6 @@ import java.util.Optional;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
-  private final SimWrapper m_simWrapper;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
@@ -104,6 +106,14 @@ public class Controls {
   private static final double JOYSTICK_DEADBAND = 0.1;
   private static final double SWERVE_DEADBAND = 0.001;
 
+  private final JoystickInputInterface simJoystickInput =
+      new JoystickInput(
+          () -> -driverController.getLeftY(),
+          () -> -driverController.getLeftX(),
+          () -> -driverController.getRightX(),
+          RobotBase.isSimulation(),
+          () -> AllianceUtils.isRed() ? 180.0 : 0.0);
+
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
@@ -115,10 +125,9 @@ public class Controls {
   private Trigger turretAtZero = new Trigger(() -> false);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls(Subsystems subsystems, SimWrapper simWrapper) {
+  public Controls(Subsystems subsystems) {
     // Configure the trigger bindings
     s = subsystems;
-    m_simWrapper = simWrapper;
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
@@ -160,6 +169,14 @@ public class Controls {
 
   // takes the X value from the joystick, and applies a deadband and input scaling
   private double getDriveX() {
+    double x;
+
+    if (RobotBase.isSimulation()) {
+      x = simJoystickInput.getJoystickInputs().driveX();
+    } else {
+      x = -driverController.getLeftY();
+    }
+
     // Joystick +Y is back
     // Robot +X is forward
     double input = MathUtil.applyDeadband(-driverController.getLeftY(), JOYSTICK_DEADBAND);
@@ -168,6 +185,14 @@ public class Controls {
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
   private double getDriveY() {
+    double y;
+
+    if (RobotBase.isSimulation()) {
+      y = simJoystickInput.getJoystickInputs().driveY();
+    } else {
+      y = -driverController.getLeftX();
+    }
+
     // Joystick +X is right
     // Robot +Y is left
     double input = MathUtil.applyDeadband(-driverController.getLeftX(), JOYSTICK_DEADBAND);
@@ -176,6 +201,14 @@ public class Controls {
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
   private double getDriveRotate() {
+    double rotate;
+
+    if (RobotBase.isSimulation()) {
+      rotate = simJoystickInput.getJoystickInputs().rotatetX();
+    } else {
+      rotate = -driverController.getRightX();
+    }
+
     // Joystick +X is right
     // Robot +angle is CCW (left)
     double input = MathUtil.applyDeadband(-driverController.getRightX(), JOYSTICK_DEADBAND);
@@ -228,25 +261,6 @@ public class Controls {
     driverController
         .a()
         .whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
-
-    // $VISIONSIM - Bumper buttons
-    if (Robot.isSimulation()) {
-      // In simulation, inject drift with POV-right to test vision correction
-      driverController
-          .povRight()
-          .onTrue(
-              s.drivebaseSubsystem
-                  .runOnce(() -> m_simWrapper.injectDrift(0.5, 15.0))
-                  .withName("Inject Drift"));
-
-      // POV-left resets robot to the starting pose of the selected auto
-      driverController
-          .povLeft()
-          .onTrue(
-              s.drivebaseSubsystem
-                  .runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero))
-                  .withName("Reset to Start Pose"));
-    }
 
     // reset pose incase vision is bugging
     driverController
@@ -399,6 +413,36 @@ public class Controls {
                     })
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));
+
+    if (RobotBase.isSimulation()) {
+      // povRight - Offsets physical robot from robot estimate pose
+      driverController
+          .povRight()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      // Random translation up to 0.5 m in a random direction, random rotation sign
+                      double angle = Math.random() * 2 * Math.PI;
+                      double xFrontBack = 0.5 * Math.cos(angle);
+                      double yLeftRight = 0.5 * Math.sin(angle);
+                      double dtheta = 15.0 * (Math.random() > 0.5 ? 1 : -1);
+                      s.groundTruthSim.injectDriftToGroundTruth(xFrontBack, yLeftRight, dtheta);
+                    }
+                  }));
+
+      // povLeft - Resets the robot pose to auto start location
+      driverController
+          .povLeft()
+          .onTrue(
+              Commands.runOnce(
+                  () -> {
+                    if (s.groundTruthSim != null) {
+                      s.groundTruthSim.cycleResetPosition(AutoLogic.getSelectedAutoStartingPose());
+                    }
+                  }));
+    }
+
     driverController
         .povUp()
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
@@ -458,7 +502,7 @@ public class Controls {
                       () -> {
                         Pose2d referenceVisionPose = s.visionSubsystem.getLastVisionPose2d();
                         if (referenceVisionPose != null) {
-                          s.drivebaseSubsystem.resetPose(referenceVisionPose);
+                          s.resetRobotPose(referenceVisionPose);
                         }
                       })
                   .withName("Now Drive Pose is Vision Pose"));
