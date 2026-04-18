@@ -101,8 +101,8 @@ public class Controls {
           .in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
   private static final double DRIVE_INPUT_SCALE = 1;
-  private static final double JOYSTICK_DEADBAND = 0.02;
-  private static final double SWERVE_DEADBAND = 0.01;
+  private static final double JOYSTICK_DEADBAND = 0.1;
+  private static final double SWERVE_DEADBAND = 0.001;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
@@ -317,14 +317,13 @@ public class Controls {
         .onTrue(
             Commands.parallel(
                     Commands.either(
-                        s.hood.autoZeroCommand(),
-                        s.launcherSubsystem.zeroSubsystemCommand(),
+                        Commands.parallel(
+                            s.hood.autoZeroCommand(), s.intakePivot.autoZeroCommand()),
+                        Commands.parallel(
+                            s.launcherSubsystem.zeroSubsystemCommand(),
+                            s.intakePivot.zeroPivot(),
+                            s.turretSubsystem.zeroTurret()),
                         () -> DriverStation.isEnabled()),
-                    Commands.either(
-                        s.intakePivot.autoZeroCommand(),
-                        s.intakePivot.zeroPivot(),
-                        () -> DriverStation.isEnabled()),
-                    s.turretSubsystem.zeroTurret(),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
@@ -470,7 +469,13 @@ public class Controls {
       return;
     }
 
-    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
+    s.turretSubsystem.setDefaultCommand(
+        s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
+    new Trigger(() -> s.turretSubsystem.atLimitSwitch())
+        .onTrue(
+            Commands.runOnce(() -> s.turretSubsystem.zeroTurret())
+                .withName("Zero Turret on Limit Switch"));
+
     driverController
         .y()
         .toggleOnTrue(

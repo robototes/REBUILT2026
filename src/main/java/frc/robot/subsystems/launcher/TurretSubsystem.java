@@ -22,11 +22,10 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
@@ -36,16 +35,17 @@ import java.util.function.Supplier;
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
   private final PositionVoltage request = new PositionVoltage(0);
+  private final AnalogInput limitSwitch;
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
-  private static final double AUTO_ZERO_VOLTAGE = 0.5;
 
   // The tolerance is this high because the turret position is always updating so it is not
   // always exactly where it should be, I am mainly using this to stop shooting when the
   // turret hits its wraparound point
-  public static final double TURRET_DEGREE_TOLERANCE = 20;
+  public static final double TURRET_DEGREE_TOLERANCE = 10;
+  private static final double HALL_EFFECT_THRESHOLD_VOLTS = 0.5;
 
   // Positions
   private double targetPos;
@@ -72,7 +72,7 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 360; // degrees
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 350; // degrees
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
@@ -102,6 +102,7 @@ public class TurretSubsystem extends SubsystemBase {
         new TalonFX(
             Hardware.TURRET_MOTOR_ID,
             RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+    limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
     zeroPublisher.set(false);
     turretConfig();
     turretMotor.clearStickyFaults();
@@ -302,15 +303,7 @@ public class TurretSubsystem extends SubsystemBase {
         .withName("Voltage Control");
   }
 
-  public Command autoZeroCommand() {
-    if (Robot.isSimulation()) {
-      return zeroTurret();
-    }
-    return Commands.parallel(voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE)))
-        .until(
-            () -> turretMotor.getStatorCurrent().getValueAsDouble() >= (STATOR_CURRENT_LIMIT - 1))
-        .andThen(zeroTurret())
-        .withTimeout(3)
-        .withName("Automatic Zero turret");
+  public boolean atLimitSwitch() {
+    return limitSwitch.getAverageVoltage() > HALL_EFFECT_THRESHOLD_VOLTS;
   }
 }
