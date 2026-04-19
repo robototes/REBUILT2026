@@ -190,13 +190,16 @@ public class AutoLogic {
       if (Robot.isSimulation()) {
         NamedCommands.registerCommand(
             "launch", launcherSimCommand().andThen(Commands.print("launch(SIM)")));
-            NamedCommands.registerCommand(
+        NamedCommands.registerCommand(
             "SOTM", launcherNoEndSimCommand().andThen(Commands.print("SOTM(SIM)")));
       } else {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
-            NamedCommands.registerCommand(
-            "SOTM", launcherNoEndCommand().andThen(s.launcherSubsystem.rawStowCommand()).andThen(Commands.print("launch")));
+        NamedCommands.registerCommand(
+            "SOTM",
+            launcherNoEndCommand()
+                .andThen(s.launcherSubsystem.rawStowCommand())
+                .andThen(Commands.print("launch")));
       }
 
       NamedCommands.registerCommand("intake", intakeCommand());
@@ -208,7 +211,7 @@ public class AutoLogic {
       NamedCommands.registerCommand("launch", empty());
       NamedCommands.registerCommand("intake", empty());
       NamedCommands.registerCommand("climb", empty());
-       NamedCommands.registerCommand("SOTM", empty());
+      NamedCommands.registerCommand("SOTM", empty());
     }
   }
 
@@ -230,7 +233,8 @@ public class AutoLogic {
         .andThen(s.launcherSubsystem.rawStowCommand())
         .withName("Auto Launcher Command");
   }
-   public static Command launcherNoEndCommand() {
+
+  public static Command launcherNoEndCommand() {
     return Commands.parallel(
             Commands.runOnce(
                 () -> {
@@ -241,13 +245,11 @@ public class AutoLogic {
                 .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
         // .until(() -> s.flywheels.isOutOfFuel())
 
-
         .withName("Auto Launcher Command");
   }
 
   public static Command launcherSimCommand() {
     return Commands.sequence(
-
             Commands.run(
                     () ->
                         FuelSim.getInstance()
@@ -259,18 +261,17 @@ public class AutoLogic {
                 .withTimeout(3))
         .withName("Auto Launcher Sim Command");
   }
+
   public static Command launcherNoEndSimCommand() {
     return Commands.sequence(
-
             Commands.run(
-                    () ->
-                        FuelSim.getInstance()
-                            .launchFuel(
-                                MetersPerSecond.of(6),
-                                Radians.of(s.hood.getHoodPosition()),
-                                Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
-                                Meters.of(1.45))))
-
+                () ->
+                    FuelSim.getInstance()
+                        .launchFuel(
+                            MetersPerSecond.of(6),
+                            Radians.of(s.hood.getHoodPosition()),
+                            Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                            Meters.of(1.45))))
         .withName("Auto Launcher Sim Command");
   }
 
