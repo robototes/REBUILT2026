@@ -23,11 +23,11 @@ public class VisionSimConstants {
   public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
 
   // Camera simulation properties (shared by all cameras — all cameras are identical)
-  public static final int kCameraResWidth = 960;
-  public static final int kCameraResHeight = 720;
+  public static final int kCameraResWidth = 320;
+  public static final int kCameraResHeight = 240;
   public static final double kCameraFOVDegrees = 90.0;
-  public static final double kCalibErrorAvg = 0.35;
-  public static final double kCalibErrorStdDev = 0.10;
+  public static final double kCalibErrorAvg = 0.12;
+  public static final double kCalibErrorStdDev = 0.035;
   public static final double kCameraFPS = 15;
   public static final double kAvgLatencyMs = 50;
   public static final double kLatencyStdDevMs = 15;

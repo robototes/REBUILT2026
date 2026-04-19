@@ -12,7 +12,9 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -25,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.AllianceUtils;
 import java.util.function.Supplier;
 
 /**
@@ -42,6 +45,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   /* Keep track if we've ever applied the operator perspective before or not */
   private boolean m_hasAppliedOperatorPerspective = false;
+
+  // Field dimensions from the layout
+  private static final double FIELD_X_MAX = AllianceUtils.FIELD_LAYOUT.getFieldLength();
+  private static final double FIELD_Y_MAX = AllianceUtils.FIELD_LAYOUT.getFieldWidth();
 
   /* Swerve requests to apply during SysId characterization */
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -226,6 +233,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         : kRedAlliancePerspectiveRotation);
               });
     }
+    clampPoseToField();
   }
 
   private void startSimThread() {
@@ -286,5 +294,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   public static double tau(double value) {
     return value * 2 * Math.PI;
+  }
+
+  /** Clamps the pose estimator to the field boundary. Does not affect driving. */
+  private void clampPoseToField() {
+    Pose2d current = getState().Pose;
+    double clampedX = MathUtil.clamp(current.getX(), 0.0, FIELD_X_MAX);
+    double clampedY = MathUtil.clamp(current.getY(), 0.0, FIELD_Y_MAX);
+
+    if (clampedX != current.getX() || clampedY != current.getY()) {
+      resetPose(new Pose2d(new Translation2d(clampedX, clampedY), current.getRotation()));
+    }
+  }
+
+  public boolean isBeached(double pitchThreshold) {
+    double pitch = Math.abs(getPigeon2().getPitch().getValueAsDouble());
+    double roll = Math.abs(getPigeon2().getRoll().getValueAsDouble());
+    return pitch > pitchThreshold || roll > pitchThreshold;
   }
 }

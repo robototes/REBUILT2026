@@ -63,6 +63,7 @@ public class Hood extends SubsystemBase {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
 
     configureMotor();
+    hood.clearStickyFaults();
     initializeNT();
     if (RobotBase.isSimulation()) {
       hoodSim = new HoodSim(hood);

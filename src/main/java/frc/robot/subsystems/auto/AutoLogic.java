@@ -60,10 +60,15 @@ public class AutoLogic {
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
           new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
           new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
+          new AutoPath("LT-Neutral", "LT-Neutral"),
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
+          new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
+          new AutoPath("RT-Neutral", "RT-Neutral"),
+          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
+          new AutoPath("RT-BLOCK", "RT-BLOCK"),
+          new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
@@ -193,7 +198,7 @@ public class AutoLogic {
       }
 
       NamedCommands.registerCommand("intake", intakeCommand());
-      NamedCommands.registerCommand("stow", autoStowCommand());
+
       NamedCommands.registerCommand("climb", climbCommand());
 
     } else {
@@ -205,42 +210,46 @@ public class AutoLogic {
   }
 
   public static final Command empty() {
-    return Commands.none();
+    return Commands.none().withName("Empty Command");
   }
 
   public static Command launcherCommand() {
     return Commands.parallel(
+            Commands.runOnce(
+                () -> {
+                  s.flywheels.resetFuelCheck();
+                }),
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
-        .withTimeout(6.5);
-  }
-
-  public static Command autoStowCommand() {
-    return s.launcherSubsystem
-        .rawStowCommand()
-        .alongWith(Commands.waitUntil(() -> s.launcherSubsystem.isHoodAtTarget()));
+                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
+        // .until(() -> s.flywheels.isOutOfFuel())
+        .withTimeout(4.5)
+        .andThen(s.launcherSubsystem.rawStowCommand())
+        .withName("Auto Launcher Command");
   }
 
   public static Command launcherSimCommand() {
     return Commands.sequence(
-        AutoDriveRotate.autoRotate(s.drivebaseSubsystem, () -> 0, () -> 0), // SIM PURPOSES ONLY
-        Commands.run(
-                () ->
-                    FuelSim.getInstance()
-                        .launchFuel(
-                            MetersPerSecond.of(6),
-                            Radians.of(s.hood.getHoodPosition()),
-                            Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
-                            Meters.of(1.45)))
-            .withTimeout(3));
+            AutoDriveRotate.autoRotate(
+                s.drivebaseSubsystem, () -> 0, () -> 0, () -> 0), // SIM PURPOSES ONLY
+            Commands.run(
+                    () ->
+                        FuelSim.getInstance()
+                            .launchFuel(
+                                MetersPerSecond.of(6),
+                                Radians.of(s.hood.getHoodPosition()),
+                                Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                                Meters.of(1.45)))
+                .withTimeout(3))
+        .withName("Auto Launcher Sim Command");
   }
 
   public static Command intakeCommand() {
-    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE);
+    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
+        .withName("Auto Intake Command");
   }
 
   public static Command climbCommand() {
-    return Commands.none();
+    return Commands.none().withName("Auto Climb Command");
   }
 }

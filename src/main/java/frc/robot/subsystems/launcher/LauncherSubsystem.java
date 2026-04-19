@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -7,6 +8,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
+import frc.robot.util.tuning.LauncherConstants;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected double flywheelsGoal;
@@ -48,11 +50,13 @@ public class LauncherSubsystem extends SubsystemBase {
     if (launchParameters == null) {
       return false;
     }
+    SwerveDriveState driveState = s.drivebaseSubsystem.getState();
     return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
         && s.hood.atTargetPosition()
         && s.turretSubsystem.atTarget()
-        && !LaunchCalculator.isApproachingTrench(
-            s.drivebaseSubsystem.getState().Pose, s.drivebaseSubsystem.getState().Speeds);
+        && !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds)
+        && !LaunchCalculator.isUnderClimb(
+            driveState.Pose.transformBy(LauncherConstants.turretTransform()));
   }
 
   public boolean isHoodAtTarget() {
@@ -63,17 +67,12 @@ public class LauncherSubsystem extends SubsystemBase {
     return s.hood.zeroHoodCommand();
   }
 
-  public Command stowCommand() {
-    return Commands.parallel(s.hood.hoodPositionCommand(0.0), s.flywheels.stopCommand())
-        .withName("Stow Launcher Command");
-  }
-
   public Command rawStowCommand() {
     hoodGoal = 0;
     flywheelsGoal = 0;
     return Commands.parallel(
             Commands.runOnce(() -> s.hood.setHoodPosition(0)),
-            Commands.runOnce(() -> s.flywheels.stopVoid()))
+            Commands.runOnce(() -> s.flywheels.stop()))
         .withName("Raw Stow Command");
   }
 }

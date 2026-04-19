@@ -26,7 +26,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
@@ -71,7 +70,6 @@ public class VisionSubsystem extends SubsystemBase {
 
     // Pose 3D sanity
     private static final double STALENESS_THRESHOLD = 1.0;
-    private static final double HEIGHT_TOLERANCE = 0.15;
     private static final double ROTATION_TOLERANCE = 12.0;
 
     // Field boundary
@@ -115,14 +113,18 @@ public class VisionSubsystem extends SubsystemBase {
           -0.076,
           0.311,
           0.274,
-          new Rotation3d(0, Units.degreesToRadians(-8), Units.degreesToRadians(90)));
+          new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(90)));
   public static final Transform3d COMP_BOT_FRONT_CAMERA =
-      new Transform3d(0.267, -0.111, 0.471, new Rotation3d(0, Units.degreesToRadians(-15), 0));
-
+      new Transform3d(0.295, -0.288, 0.273, new Rotation3d(0, Units.degreesToRadians(-20), 0));
+  public static final Transform3d COMP_BOT_RIGHT_CAMERA =
+      new Transform3d(
+          0.212,
+          -0.371,
+          0.273,
+          new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90)));
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
   private BooleanSubscriber disableVision;
-  private IntakePivot intakePivot;
 
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
@@ -152,6 +154,10 @@ public class VisionSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
           .publish();
+  private final StructPublisher<Pose3d> compBotRightCameraViewEntry =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("vision/compBotRightCameraView", Pose3d.struct)
+          .publish();
 
   private double lastTimestampSeconds = 0;
   private Pose2d lastFieldPose = null;
@@ -163,9 +169,8 @@ public class VisionSubsystem extends SubsystemBase {
   private VisionPoseTracking visionPoseTracking;
   private ShowVisionOnField m_showVisionOnField;
 
-  public VisionSubsystem(CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot) {
+  public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
-    this.intakePivot = intakePivot;
 
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
@@ -263,8 +268,13 @@ public class VisionSubsystem extends SubsystemBase {
 
     if (estimate == null || estimate.tagCount <= 0) return;
 
-    rawFieldPoseEntry.set(estimate.pose3d);
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
+    if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
+      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp");
+      return;
+    }
+
+    rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
         && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
@@ -277,8 +287,7 @@ public class VisionSubsystem extends SubsystemBase {
       return;
     }
 
-    if (!MathUtil.isNear(0, estimate.pose3d.getZ(), VisionConstants.HEIGHT_TOLERANCE)
-        || !MathUtil.isNear(
+    if (!MathUtil.isNear(
             0,
             estimate.pose3d.getRotation().getX(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
@@ -508,7 +517,10 @@ public class VisionSubsystem extends SubsystemBase {
             * Math.pow(avgTagDist, P_XY.get())
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
-    double theta = VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
+    double theta =
+        (numOfTags == 1)
+            ? Double.MAX_VALUE
+            : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
 
     SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
     SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
@@ -578,21 +590,7 @@ public class VisionSubsystem extends SubsystemBase {
           "/vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
       SmartDashboard.putNumber(
           "/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
-      SmartDashboard.putNumber(
-          "/vision/visionError", getVisionPoseError(visionPose2d, estimate.timestampSeconds));
-      SmartDashboard.putNumber("/vision/Last timestamp", getLastTimestampSeconds());
-      SmartDashboard.putNumber("/vision/Num targets", getNumTargets());
-      SmartDashboard.putNumber("/vision/time since last reading", getTimeSinceLastReading());
     }
-  }
-
-  private boolean isVelocityPlausible(
-      Pose2d newPose, double newTimestamp, Pose2d lastPose2d, double lastTimestampSeconds) {
-    if (lastPose2d == null) return true;
-    double dt = newTimestamp - lastTimestampSeconds;
-    if (dt <= 0 || dt > 1.0) return true;
-    double dist = newPose.getTranslation().getDistance(lastPose2d.getTranslation());
-    return (dist / dt) < VisionConstants.MAX_VISION_IMPLIED_SPEED;
   }
 
   public int getNumTargets() {
@@ -632,6 +630,8 @@ public class VisionSubsystem extends SubsystemBase {
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA));
       compBotFrontCameraViewEntry.set(
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_FRONT_CAMERA));
+      compBotRightCameraViewEntry.set(
+          visionPoseTracking.drivePose3d.transformBy(COMP_BOT_RIGHT_CAMERA));
     }
   }
 

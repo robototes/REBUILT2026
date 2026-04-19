@@ -1,14 +1,13 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.IntegerPublisher;
@@ -16,28 +15,36 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
+import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
-import java.util.function.DoubleSupplier;
 
 public class Flywheels extends SubsystemBase {
-  private final TalonFX FlywheelOne; // left
-  private final TalonFX FlywheelTwo; // right
+  private final TalonFX flywheelOne; // left spins clockwise
+  private final TalonFX flywheelTwo; // right spins counterclockwise
   private final DoubleTopic currentTopic; // supply current in amps
   private final DoubleTopic velocityTopic; // velocity in rps
   private final DoublePublisher currentPub;
   private final DoublePublisher velocityPub;
 
-  private FlywheelsSim flywheelSim;
-  private final MotionMagicVelocityVoltage motionMagicRequest = new MotionMagicVelocityVoltage(0);
-  private final Follower follow =
-      new Follower(Hardware.FLYWHEEL_TWO_ID, MotorAlignmentValue.Opposed);
+  // Debounce stuff
+  private static final double DURATION = 1; // second
+  private final Debouncer m_dippedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kFalling);
+  private final Debouncer m_recoveredDebouncer =
+      new Debouncer(DURATION, Debouncer.DebounceType.kRising);
+  private boolean hasDipped = false;
+
+  // Config apply
+  private static final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
+  private static final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
+
+  private VelocityTorqueCurrentFOC request = new VelocityTorqueCurrentFOC(0);
 
   public NtTunableDouble targetVelocity;
   private double lastRPS = 0;
@@ -56,15 +63,10 @@ public class Flywheels extends SubsystemBase {
   private StatusSignal<AngularVelocity> flywheelOneRPS;
   private StatusSignal<Current> flywheelOneSupplyCurrent;
 
-  // Cache
-  private double timeEnteredTargetZone = -1;
-  private double lastTime;
-  private boolean hasBall = false;
-
   // Constructor
   public Flywheels() {
-    FlywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
-    FlywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
+    flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
+    flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
     targetVelocity = new NtTunableDouble("/launcher/flywheelTuner", 0.0);
     configureMotors();
@@ -77,22 +79,18 @@ public class Flywheels extends SubsystemBase {
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
     currentPub.set(0.0);
-    lastTime = Timer.getFPGATimestamp();
-    if (RobotBase.isSimulation()) {
-      flywheelSim = new FlywheelsSim(FlywheelOne, FlywheelTwo);
-    }
 
-    flywheelOneRPS = FlywheelOne.getVelocity();
-    flywheelOneSupplyCurrent = FlywheelOne.getSupplyCurrent();
-    lastRPS = flywheelOneRPS.getValueAsDouble();
+    flywheelOneRPS = flywheelOne.getVelocity();
+    flywheelOneSupplyCurrent = flywheelOne.getSupplyCurrent();
+
+    flywheelOne.clearStickyFaults();
+    flywheelTwo.clearStickyFaults();
   }
 
   private void configureMotors() {
     TalonFXConfiguration config = new TalonFXConfiguration();
-    TalonFXConfigurator flConfigurator = FlywheelOne.getConfigurator();
-    TalonFXConfigurator frConfigurator = FlywheelTwo.getConfigurator();
     // set current limits
-    config.CurrentLimits.SupplyCurrentLimit = 60;
+    config.CurrentLimits.SupplyCurrentLimit = 80;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.CurrentLimits.SupplyCurrentLowerLimit = 0;
     config.CurrentLimits.StatorCurrentLimit = 80;
@@ -100,74 +98,81 @@ public class Flywheels extends SubsystemBase {
 
     // create coast mode for motors
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // create PID gains
-    config.Slot0.kP = 1;
-    config.Slot0.kI = 0.0;
-    config.Slot0.kD = 0.0;
-    config.Slot0.kA = 0.0;
-    config.Slot0.kV = 8.73 / 74;
-    config.Slot0.kS = 0.0;
-    config.Slot0.kG = 0.0;
+    config.Slot0.kP = RobotType.isAlpha() ? 5 : 10;
+    config.Slot0.kS = 5.0;
+    config.Slot0.kA = 0.5;
 
-    config.MotionMagic.MotionMagicAcceleration = 1000; // RPS^2
+    config.MotorOutput.Inverted =
+        RobotType.isAlpha()
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
+    applyConfig(flywheelOne, config);
 
-    flConfigurator.apply(config);
-    frConfigurator.apply(config);
+    config.MotorOutput.Inverted =
+        RobotType.isAlpha()
+            ? InvertedValue.CounterClockwise_Positive
+            : InvertedValue.Clockwise_Positive;
+    applyConfig(flywheelTwo, config);
+  }
+
+  private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
+    int id = motor.getDeviceID();
+    StatusCode status = StatusCode.StatusCodeNotInitialized;
+    for (int i = 0; i < MAX_APPLY_CONFIG_ATTEMPTS; i++) {
+      status = motor.getConfigurator().apply(config, MAX_APPLY_CONFIG_TIMEOUT);
+      if (status.isOK()) {
+        DataLogManager.log("Successfully applied configuration to motor ID " + id);
+        break; // Success, exit the loop
+      }
+    }
+    if (!status.isOK()) {
+      DriverStation.reportError(
+          "CRITICAL: Failed to configure Talon ID "
+              + id
+              + " after "
+              + MAX_APPLY_CONFIG_ATTEMPTS
+              + " attempts: "
+              + status.getDescription(),
+          true);
+    }
   }
 
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
-              motionMagicRequest.Velocity = rps;
-              FlywheelTwo.setControl(motionMagicRequest);
-              FlywheelOne.setControl(follow);
+              setVelocityRPS(rps);
             },
             () -> {
-              FlywheelOne.stopMotor();
-              FlywheelTwo.stopMotor();
+              flywheelOne.stopMotor();
+              flywheelTwo.stopMotor();
             })
         .withName("Set Flywheel Velocity");
   }
 
-  public Command suppliedSetVelocityCommand(DoubleSupplier rps) {
-    return runEnd(
-            () -> {
-              motionMagicRequest.Velocity = rps.getAsDouble();
-              FlywheelTwo.setControl(motionMagicRequest);
-              FlywheelOne.setControl(follow);
-            },
-            () -> {
-              FlywheelOne.stopMotor();
-              FlywheelTwo.stopMotor();
-            })
-        .withName("Set Flywheel Supplied Velocity");
-  }
-
   public void setVelocityRPS(double rps) {
-    motionMagicRequest.Velocity = rps;
-    FlywheelTwo.setControl(motionMagicRequest);
-    FlywheelOne.setControl(follow);
+    request.Velocity = rps;
+    flywheelOne.setControl(request);
+    flywheelTwo.setControl(request);
   }
 
   public Command stopCommand() {
     return runOnce(
             () -> {
-              FlywheelOne.stopMotor();
-              FlywheelTwo.stopMotor();
+              flywheelOne.stopMotor();
+              flywheelTwo.stopMotor();
             })
         .withName("Stop Flywheels");
   }
 
-  public void stopVoid() {
-    FlywheelOne.stopMotor();
-    FlywheelTwo.stopMotor();
+  public void stop() {
+    flywheelOne.stopMotor();
+    flywheelTwo.stopMotor();
   }
 
   public boolean atTargetVelocity(double targetRPS, double toleranceRPS) {
-    double velocity = (FlywheelOne.getVelocity().getValueAsDouble());
-
+    double velocity = (flywheelOneRPS.getValueAsDouble());
     boolean atTarget = Math.abs(velocity - targetRPS) <= toleranceRPS;
     return atTarget;
   }
@@ -176,53 +181,31 @@ public class Flywheels extends SubsystemBase {
     return new Trigger(() -> atTargetVelocity(targetRPS, toleranceRPS));
   }
 
-  public boolean hasBeenAtTargetFor(double durationSeconds) {
-    boolean atTarget = atTargetVelocity(targetVelocity.get(), FLYWHEEL_TOLERANCE);
-
-    if (!atTarget) {
-      timeEnteredTargetZone = -1;
-      return false;
-    }
-
-    if (timeEnteredTargetZone < 0) {
-      timeEnteredTargetZone = Timer.getFPGATimestamp();
-    }
-
-    return (Timer.getFPGATimestamp() - timeEnteredTargetZone) >= durationSeconds;
+  public double getTargetSpeed() {
+    return request.Velocity;
   }
 
-  public void resetCachedValues() {
-    timeEnteredTargetZone = -1;
+  public void resetFuelCheck() {
+    hasDipped = false;
   }
 
-  @Override
-  public void simulationPeriodic() {
-    if (flywheelSim != null) {
-      flywheelSim.update();
+  public boolean isOutOfFuel() {
+    boolean atTarget = atTargetVelocity(request.Velocity, FLYWHEEL_TOLERANCE);
+
+    boolean stillAtTarget = m_dippedDebouncer.calculate(atTarget);
+    if (!stillAtTarget) {
+      hasDipped = true;
     }
+
+    if (!hasDipped) return false;
+
+    return m_recoveredDebouncer.calculate(atTarget);
   }
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(flywheelOneSupplyCurrent, flywheelOneRPS);
-    double currentRPS = flywheelOneRPS.getValueAsDouble();
-    double now = Timer.getFPGATimestamp();
-    double dt = now - lastTime;
-
-    if (dt >= 0.02) {
-      double slope = (currentRPS - lastRPS) / dt;
-      if (slope < minDerivative && !hasBall) {
-        hasBall = true;
-      } else if (slope > maxDerivative && hasBall) {
-        hasBall = false;
-        ballCount++;
-      }
-      lastRPS = currentRPS;
-      lastTime = now;
-    }
-
+    StatusSignal.refreshAll(flywheelOneRPS, flywheelOneSupplyCurrent);
     velocityPub.set(flywheelOneRPS.getValueAsDouble());
-    ballPub.set(ballCount);
     currentPub.set(flywheelOneSupplyCurrent.getValueAsDouble());
     if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
