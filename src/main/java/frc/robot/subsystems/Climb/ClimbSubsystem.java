@@ -371,16 +371,19 @@ public class ClimbSubsystem extends SubsystemBase {
   public Command attachToClimb() {
     return Commands.defer(
             () -> {
-              Pose2d stage1Pose = getStage1Pose(), stage2Pose = getStage2Pose(), currentClimbPose = driveTrain.getState().Pose.transformBy(CLIMB_TRANSFORM);
+              Pose2d stage1Pose = getStage1Pose(),
+                  stage2Pose = getStage2Pose(),
+                  currentClimbPose = driveTrain.getState().Pose.transformBy(CLIMB_TRANSFORM);
               int[] attempts = {0};
               boolean[] skipStageOne = {false};
               if (currentClimbPose.nearest(Set.of(stage1Pose, stage2Pose)).equals(stage2Pose)) {
                 skipStageOne[0] = true;
               }
-              
+
               return Commands.sequence(
                   Commands.parallel(
-                      new AutoAlignCommand(getStage1Pose(), Translation2d.kZero).onlyIf(() -> !skipStageOne[0]),
+                      new AutoAlignCommand(getStage1Pose(), Translation2d.kZero)
+                          .onlyIf(() -> !skipStageOne[0]),
                       climbPivotSubsystem
                           .deployCommand()
                           .andThen(Commands.waitSeconds(ClimbPivot.PIVOT_DELAY_SECONDS))),
