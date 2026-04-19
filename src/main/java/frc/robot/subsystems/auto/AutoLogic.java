@@ -66,7 +66,9 @@ public class AutoLogic {
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
           new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
           new AutoPath("RT-Neutral", "RT-Neutral"),
-          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"));
+          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
+          new AutoPath("RT-BLOCK", "RT-BLOCK"),
+          new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
@@ -215,16 +217,14 @@ public class AutoLogic {
     return Commands.parallel(
             Commands.runOnce(
                 () -> {
-                  s.flywheels.switchSlot(true);
                   s.flywheels.resetFuelCheck();
                 }),
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(Commands.parallel(s.indexerSubsystem.runIndexer())))
+                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
         // .until(() -> s.flywheels.isOutOfFuel())
         .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
-        .andThen(Commands.runOnce(() -> s.flywheels.switchSlot(false)))
         .withName("Auto Launcher Command");
   }
 
