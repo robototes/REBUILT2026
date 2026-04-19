@@ -42,6 +42,7 @@ import frc.robot.util.simulation.visionsim.pub.interfaces.FaultyDriveManagerInte
 import frc.robot.util.simulation.visionsim.pub.interfaces.GroundTruthSimInterface;
 import frc.robot.util.simulation.visionsim.pub.interfaces.SimLimelightProducerInterface;
 import frc.robot.util.simulation.visionsim.pub.utils.ShowTempPose;
+import java.util.List;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -122,7 +123,10 @@ public class Subsystems {
       }
       if (RobotBase.isSimulation() && simLimelightProducer != null && groundTruthSim != null) {
         Field2d simDebugField = simLimelightProducer.getSimDebugField();
-        groundTruthSim.setDashboardField2d(simDebugField);
+        groundTruthSim.setDashboardField2d(
+            null, // Draw Ground Truth pose on these Field2ds
+            List.of(simDebugField), // Draw Estimated Pose on these Field2ds
+            List.of(simDebugField)); // Draw Estimated Module Poses on these Field2ds
       }
     } else {
       groundTruthSim = null;

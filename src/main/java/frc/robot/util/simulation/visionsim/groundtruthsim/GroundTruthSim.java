@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.util.simulation.visionsim.pub.interfaces.GroundTruthSimInterface;
 import frc.robot.util.simulation.visionsim.pub.utils.AllianceCalc;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -62,8 +63,11 @@ public class GroundTruthSim implements GroundTruthSimInterface {
   private StructArrayPublisher<Pose2d> m_estimatedModulePosesPublisher;
   private DoublePublisher m_estimateToGroundTruthPublisher;
 
-  /** Optional debug field for drawing estimated and ground-truth poses. */
-  private Field2d m_dashboardField2d = null;
+  /** Optional debug fields for drawing simulation poses. */
+  private List<Field2d> m_fieldListForGroundTruthPose = null;
+
+  private List<Field2d> m_fieldListForEstimatedPose = null;
+  private List<Field2d> m_fieldListForEstimatedModulePoses = null;
 
   /** The ground truth pose tracks where the robot actually is in simulation physics. */
   private Pose2d m_groundTruthPose = new Pose2d();
@@ -245,16 +249,42 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     m_estimatedModulePosesPublisher.set(estimatedModulePoses);
     m_estimateToGroundTruthPublisher.set(poseEstimateToGroundTruthDistance);
 
-    if (m_dashboardField2d != null) {
-      // $TODO4 - m_dashboardField2d.getObject(kGroundTruthPoseTopic).setPose(m_groundTruthPose);
-      m_dashboardField2d.getObject(kEstimatedPoseTopic).setPose(estimatedPose);
-      m_dashboardField2d.getObject(kEstimatedModulePosesTopic).setPoses(estimatedModulePoses);
-    }
+    setPoseOnFields(m_fieldListForGroundTruthPose, kGroundTruthPoseTopic, m_groundTruthPose);
+    setPoseOnFields(m_fieldListForEstimatedPose, kEstimatedPoseTopic, estimatedPose);
+    setPosesOnFields(
+        m_fieldListForEstimatedModulePoses, kEstimatedModulePosesTopic, estimatedModulePoses);
   }
 
   @Override
-  public void setDashboardField2d(Field2d field2d) {
-    m_dashboardField2d = field2d;
+  public void setDashboardField2d(
+      List<Field2d> fieldListForGroundTruthPose,
+      List<Field2d> fieldListForEstimatedPose,
+      List<Field2d> fieldListForEstimatedModulePoses) {
+    m_fieldListForGroundTruthPose = fieldListForGroundTruthPose;
+    m_fieldListForEstimatedPose = fieldListForEstimatedPose;
+    m_fieldListForEstimatedModulePoses = fieldListForEstimatedModulePoses;
+  }
+
+  private void setPoseOnFields(List<Field2d> fieldList, String objectName, Pose2d pose) {
+    if (fieldList == null || fieldList.isEmpty()) {
+      return;
+    }
+    for (Field2d field2d : fieldList) {
+      if (field2d != null) {
+        field2d.getObject(objectName).setPose(pose);
+      }
+    }
+  }
+
+  private void setPosesOnFields(List<Field2d> fieldList, String objectName, Pose2d[] poses) {
+    if (fieldList == null || fieldList.isEmpty()) {
+      return;
+    }
+    for (Field2d field2d : fieldList) {
+      if (field2d != null) {
+        field2d.getObject(objectName).setPoses(poses);
+      }
+    }
   }
 
   /**
