@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
@@ -57,7 +59,7 @@ public class AutoLogic {
 
   private static final AutoPath defaultPath = new AutoPath("Default", "Default");
 
-  private static final List<AutoPath> rebuiltPaths =
+  private static final List<AutoPath> physicalRebuiltPaths =
       List.of(
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
           new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
@@ -70,8 +72,10 @@ public class AutoLogic {
           new AutoPath("RT-Neutral", "RT-Neutral"),
           new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
           new AutoPath("RT-BLOCK", "RT-BLOCK"),
-          new AutoPath("LT-BLOCK", "LT-BLOCK"),
-          // $TODO4 - It would be nice to combine two lists
+          new AutoPath("LT-BLOCK", "LT-BLOCK"));
+
+  private static final List<AutoPath> simRebuiltPaths =
+      List.of(
           new AutoPath("Sim Nudge Right", "Sim Nudge Right"),
           new AutoPath("Sim Nudge Rotate", "Sim Nudge Rotate"),
           new AutoPath("Sim Drive Accross Field Pull Right", "Sim Drive Accross Field Pull Right"),
@@ -81,6 +85,12 @@ public class AutoLogic {
           new AutoPath(
               "Sim Drive Accross Field Camera Misplaced",
               "Sim Drive Accross Field Camera Misplaced"));
+
+  private static final List<AutoPath> rebuiltPaths =
+      Robot.isSimulation()
+          ? Stream.concat(physicalRebuiltPaths.stream(), simRebuiltPaths.stream())
+              .collect(Collectors.toList())
+          : physicalRebuiltPaths;
 
   private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
 
