@@ -58,13 +58,11 @@ public class AutoLogic {
   private static final List<AutoPath> rebuiltPaths =
       List.of(
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-          new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
           new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
           new AutoPath("LT-Neutral", "LT-Neutral"),
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-          new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
           new AutoPath("RT-Neutral", "RT-Neutral"),
           new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
           new AutoPath("RT-BLOCK", "RT-BLOCK"),
@@ -191,7 +189,9 @@ public class AutoLogic {
 
       if (Robot.isSimulation()) {
         NamedCommands.registerCommand(
-            "launch", launcherSimCommand().andThen(Commands.print("launch")));
+            "launch", launcherSimCommand().andThen(Commands.print("launch(SIM)")));
+            NamedCommands.registerCommand(
+            "SOTM", launcherNoEndSimCommand().andThen(Commands.print("SOTM(SIM)")));
       } else {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
@@ -208,6 +208,7 @@ public class AutoLogic {
       NamedCommands.registerCommand("launch", empty());
       NamedCommands.registerCommand("intake", empty());
       NamedCommands.registerCommand("climb", empty());
+       NamedCommands.registerCommand("SOTM", empty());
     }
   }
 
@@ -246,8 +247,7 @@ public class AutoLogic {
 
   public static Command launcherSimCommand() {
     return Commands.sequence(
-            AutoDriveRotate.autoRotate(
-                s.drivebaseSubsystem, () -> 0, () -> 0, () -> 0), // SIM PURPOSES ONLY
+
             Commands.run(
                     () ->
                         FuelSim.getInstance()
@@ -257,6 +257,20 @@ public class AutoLogic {
                                 Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
                                 Meters.of(1.45)))
                 .withTimeout(3))
+        .withName("Auto Launcher Sim Command");
+  }
+  public static Command launcherNoEndSimCommand() {
+    return Commands.sequence(
+
+            Commands.run(
+                    () ->
+                        FuelSim.getInstance()
+                            .launchFuel(
+                                MetersPerSecond.of(6),
+                                Radians.of(s.hood.getHoodPosition()),
+                                Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                                Meters.of(1.45))))
+
         .withName("Auto Launcher Sim Command");
   }
 
