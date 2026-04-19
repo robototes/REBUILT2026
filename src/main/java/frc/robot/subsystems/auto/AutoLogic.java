@@ -195,6 +195,8 @@ public class AutoLogic {
       } else {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
+            NamedCommands.registerCommand(
+            "SOTM", launcherNoEndCommand().andThen(s.launcherSubsystem.rawStowCommand()).andThen(Commands.print("launch")));
       }
 
       NamedCommands.registerCommand("intake", intakeCommand());
@@ -225,6 +227,20 @@ public class AutoLogic {
         // .until(() -> s.flywheels.isOutOfFuel())
         .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
+        .withName("Auto Launcher Command");
+  }
+   public static Command launcherNoEndCommand() {
+    return Commands.parallel(
+            Commands.runOnce(
+                () -> {
+                  s.flywheels.resetFuelCheck();
+                }),
+            s.launcherSubsystem.launcherAimCommand(),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
+        // .until(() -> s.flywheels.isOutOfFuel())
+
+
         .withName("Auto Launcher Command");
   }
 

@@ -45,19 +45,32 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BackFromIntakeLeft"
+            "pathName": "PreDepot-BackFromIntakeLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Back-LeftTrench"
+            "pathName": "PreDepot-Back-LeftTrench"
           }
         },
         {
-          "type": "path",
+          "type": "deadline",
           "data": {
-            "pathName": "LT-DepotFull"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-DepotFull"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "SOTM"
+                }
+              }
+            ]
           }
         },
         {
@@ -75,7 +88,7 @@
         {
           "type": "named",
           "data": {
-            "name": "launch"
+            "name": "SOTM"
           }
         }
       ]

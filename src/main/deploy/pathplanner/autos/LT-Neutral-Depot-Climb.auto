@@ -45,13 +45,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Preclimb-BackFromIntakeLeft"
+            "pathName": "PreDepot-BackFromIntakeLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Preclimb-Back-LeftTrench"
+            "pathName": "PreDepot-Back-LeftTrench"
           }
         },
         {
@@ -61,7 +61,38 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "LT-Climb"
+                  "pathName": "LT-DepotFull"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "SOTM"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DepotFull-DepotIntake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Depot-Center-Launch"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Depot-Center-Climb"
                 }
               },
               {
