@@ -156,7 +156,8 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     this.m_lastUpdateTime = Utils.getCurrentTimeSeconds();
 
     // Set wheel positions relative to robot center
-    // $TODO4 - Hardcoded
+    // $TODO4 - Hardcoded - To ensure odometry matches physical robot, these values should
+    // be passed-in to match the wheel radius and positions that are used in driveTrain.
     m_moduleLocations =
         new Translation2d[] {
           new Translation2d(0.26035, 0.26670),
