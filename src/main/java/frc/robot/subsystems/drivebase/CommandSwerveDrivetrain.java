@@ -19,6 +19,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -28,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.KinematicFilter;
 import java.util.function.Supplier;
 
 /**
@@ -110,6 +113,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   /* The SysId routine to test */
   private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
+  // State filters
+  private final KinematicFilter filterX = new KinematicFilter(0.005, 0.05, 0.5, 0.02, false);
+  private final KinematicFilter filterY = new KinematicFilter(0.005, 0.05, 0.5, 0.02, false);
+  private final KinematicFilter filterTheta = new KinematicFilter(0.005, 0.05, 0.2, 0.02, true);
+
+  // NetworkTables publishers for filtered accelerations
+  private DoublePublisher filteredAccelXPub;
+  private DoublePublisher filteredAccelYPub;
+  private DoublePublisher filteredAccelOmegaPub;
+
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
    *
@@ -125,6 +138,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    initFilteredAccelPublishers();
   }
 
   /**
@@ -146,6 +160,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    initFilteredAccelPublishers();
   }
 
   /**
@@ -177,6 +192,25 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         modules);
     if (Utils.isSimulation()) {
       startSimThread();
+    }
+    initFilteredAccelPublishers();
+  }
+
+  private void initFilteredAccelPublishers() {
+    try {
+      var nt = NetworkTableInstance.getDefault();
+      filteredAccelXPub = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
+      filteredAccelYPub = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelY").publish();
+      filteredAccelOmegaPub =
+          nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
+      // initialize with zeros
+      filteredAccelXPub.set(0.0);
+      filteredAccelYPub.set(0.0);
+      filteredAccelOmegaPub.set(0.0);
+    } catch (Exception t) {
+      filteredAccelXPub = null;
+      filteredAccelYPub = null;
+      filteredAccelOmegaPub = null;
     }
   }
 
@@ -233,7 +267,37 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         : kRedAlliancePerspectiveRotation);
               });
     }
+    var pose = getState().Pose; // field relative
+    var speeds = getState().Speeds; // robot relative
+
+    ChassisSpeeds fieldSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(speeds, pose.getRotation()); // field relative
+
+    filterX.update(pose.getX(), fieldSpeeds.vxMetersPerSecond);
+    filterY.update(pose.getY(), fieldSpeeds.vyMetersPerSecond);
+    filterTheta.update(pose.getRotation().getRadians(), fieldSpeeds.omegaRadiansPerSecond);
+
     clampPoseToField();
+
+    // Publish filtered accelerations computed by KinematicFilter
+    double ax = filterX.getAccel();
+    double ay = filterY.getAccel();
+    double aomega = filterTheta.getAccel();
+    if (filteredAccelXPub != null) filteredAccelXPub.set(ax);
+    if (filteredAccelYPub != null) filteredAccelYPub.set(ay);
+    if (filteredAccelOmegaPub != null) filteredAccelOmegaPub.set(aomega);
+  }
+
+  public double getFieldRelativeXAccel() {
+    return MathUtil.clamp(filterX.getAccel(), -15.0, 15.0);
+  }
+
+  public double getFieldRelativeYAccel() {
+    return MathUtil.clamp(filterY.getAccel(), -15.0, 15.0);
+  }
+
+  public double getAngularAcceleration() {
+    return MathUtil.clamp(filterTheta.getAccel(), -25.0, 25.0);
   }
 
   private void startSimThread() {

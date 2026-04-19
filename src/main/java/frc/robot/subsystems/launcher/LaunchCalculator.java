@@ -48,6 +48,8 @@ public class LaunchCalculator {
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
   private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
+  private static final double TURRET_TX;
+  private static final double TURRET_TY;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -62,7 +64,10 @@ public class LaunchCalculator {
   private static final List<Pose2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
 
-  // Network table
+  private static final double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
+
+  // Precalculated: PHASEDELAY ^ 2 * 0.5
+  private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
 
   public record LaunchingParameters(
       double targetHood,
@@ -72,6 +77,9 @@ public class LaunchCalculator {
       Pose2d turretPose) {}
 
   static {
+    TURRET_TX = LauncherConstants.turretTransform().getTranslation().getX();
+    TURRET_TY = LauncherConstants.turretTransform().getTranslation().getY();
+
     for (int tag : tags) {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
@@ -147,7 +155,13 @@ public class LaunchCalculator {
     lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
-    cachedParams = calculate(driveState, turretSubsystem);
+    cachedParams =
+        calculate(
+            driveState,
+            turretSubsystem,
+            drivetrain.getFieldRelativeXAccel(),
+            drivetrain.getFieldRelativeYAccel(),
+            drivetrain.getAngularAcceleration());
     return cachedParams;
   }
 
@@ -165,38 +179,55 @@ public class LaunchCalculator {
    *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
-      SwerveDriveState driveState, TurretSubsystem turretSubsystem) {
+      SwerveDriveState driveState,
+      TurretSubsystem turretSubsystem,
+      double ax,
+      double ay,
+      double alpha) {
 
-    // Grab current pose
-    Pose2d estimatedPose = driveState.Pose;
-
-    // Predicted robot pose after calculations have finished
     ChassisSpeeds chassisSpeeds = driveState.Speeds;
-    estimatedPose =
-        estimatedPose.exp(
-            new Twist2d(
-                chassisSpeeds.vxMetersPerSecond * PHASE_DELAY,
-                chassisSpeeds.vyMetersPerSecond * PHASE_DELAY,
-                chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY));
+    Pose2d currentPose = driveState.Pose;
+
+    // 1. Convert current speeds to pure Field-Relative values
+    ChassisSpeeds fieldSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, currentPose.getRotation());
+
+    // 2. Predict Field-Relative Pose using Acceleration (PHASE_DELAY)
+
+    // Field-relative displacement
+    double dxField =
+        (fieldSpeeds.vxMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ax);
+    double dyField =
+        (fieldSpeeds.vyMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ay);
+
+    // Angular changes are frame-independent in 2D
+    double dTheta =
+        (chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * alpha);
+    Rotation2d predictedAngle = currentPose.getRotation().plus(new Rotation2d(dTheta));
+
+    // Apply translation directly in the field frame (bypassing Twist2d's curved robot-frame path)
+    Pose2d estimatedPose =
+        new Pose2d(currentPose.getX() + dxField, currentPose.getY() + dyField, predictedAngle);
     Rotation2d robotAngle = estimatedPose.getRotation();
-    // Turret VX robot relative is calculated using this formula: V_x_point = V_x_center + (-omega *
-    // offset_y)
-    // Turret VY robot relative is calculated using this formula: V_y_point= V_y_center + (omega *
-    // offset_x)
-    double totalOmega = chassisSpeeds.omegaRadiansPerSecond + turretSubsystem.getOmega();
-    ChassisSpeeds turretRobotRelativeSpeeds =
-        new ChassisSpeeds(
-            chassisSpeeds.vxMetersPerSecond
-                - chassisSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
-            chassisSpeeds.vyMetersPerSecond
-                + chassisSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
-            totalOmega);
-    // Let chassisspeeds built in methods handle the conversion from robot relative to field
-    // relative
-    ChassisSpeeds turretFieldRelativeSpeeds =
-        ChassisSpeeds.fromRobotRelativeSpeeds(turretRobotRelativeSpeeds, robotAngle);
-    double turretVelocityX = turretFieldRelativeSpeeds.vxMetersPerSecond;
-    double turretVelocityY = turretFieldRelativeSpeeds.vyMetersPerSecond;
+
+    // 3. Predict Field-Relative Velocities at the moment of launch
+    double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
+    double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
+    double omega_at_launch = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
+
+    // 4. Calculate final Field-Relative Turret speeds
+    // Find the turret's translation vector rotated into the field frame
+    double cos = predictedAngle.getCos(), sin = predictedAngle.getSin();
+    double turretOffsetFieldX = TURRET_TX * cos - TURRET_TY * sin;
+    double turretOffsetFieldY = TURRET_TX * sin + TURRET_TY * cos;
+
+    // Cross product (omega x r) to find the tangential velocity of the turret in the field frame
+    double tangential_vx_field = -turretOffsetFieldY * omega_at_launch;
+    double tangential_vy_field = turretOffsetFieldX * omega_at_launch;
+
+    // Combine robot translational velocity with turret tangential velocity
+    double turretVelocityX = predicted_vx_field + tangential_vx_field;
+    double turretVelocityY = predicted_vy_field + tangential_vy_field;
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
@@ -221,7 +252,7 @@ public class LaunchCalculator {
       // NOTE: Drag compensation removed as it is accounted for in the interpolating map.
       trueDistanceX = distanceX - turretVelocityX * t;
       trueDistanceY = distanceY - turretVelocityY * t;
-      trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
+      trueDistance = Math.sqrt(trueDistanceX * trueDistanceX + trueDistanceY * trueDistanceY);
 
       // begin newton raphson's method to find the converged time of flight
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
