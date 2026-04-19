@@ -20,7 +20,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.util.simulation.visionsim.pub.utils.AllianceCalc;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -93,10 +92,7 @@ class TestGroundTruthSim {
   /** Creates a GroundTruthSim with default randomness. */
   private GroundTruthSim createSim() {
     return new GroundTruthSim(
-        this::buildDriveState,
-        m_mockDrivetrainResetPose,
-        m_mockPoseResetConsumer,
-        Optional.empty());
+        this::buildDriveState, m_mockDrivetrainResetPose, m_mockPoseResetConsumer);
   }
 
   // ── Constructor tests ────────────────────────────────────────────

@@ -179,9 +179,6 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
-    if (subsystems.dashboardManager != null) {
-      subsystems.dashboardManager.update();
-    }
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

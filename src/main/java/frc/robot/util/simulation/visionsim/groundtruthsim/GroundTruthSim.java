@@ -28,11 +28,15 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.util.simulation.visionsim.pub.interfaces.GroundTruthSimInterface;
-import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardProviderInterface;
 import frc.robot.util.simulation.visionsim.pub.utils.AllianceCalc;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -51,9 +55,15 @@ public class GroundTruthSim implements GroundTruthSimInterface {
   /** Consumer to notify RobotContainer when pose is reset. */
   private final Consumer<Pose2d> m_poseResetConsumer;
 
-  /** Optional dashboard provider to report the ground truth pose. */
-  private final Optional<DashboardProviderInterface<GroundTruthSimDashboardSettings>>
-      m_optionalDashboardProvider;
+  /** Dashboard publishers. */
+  private StructPublisher<Pose2d> m_groundTruthPosePublisher;
+
+  private StructPublisher<Pose2d> m_estimatedPosePublisher;
+  private StructArrayPublisher<Pose2d> m_estimatedModulePosesPublisher;
+  private DoublePublisher m_estimateToGroundTruthPublisher;
+
+  /** Optional debug field for drawing estimated and ground-truth poses. */
+  private Field2d m_dashboardField2d = null;
 
   /** The ground truth pose tracks where the robot actually is in simulation physics. */
   private Pose2d m_groundTruthPose = new Pose2d();
@@ -97,6 +107,14 @@ public class GroundTruthSim implements GroundTruthSimInterface {
   /** Current position in the reset cycle (0-N). */
   private int m_currrentCycleState = 0;
 
+  /** Dashboard topic names. */
+  private static final String kDashboardTableRoot = "RobotUtils";
+
+  private static final String kGroundTruthPoseTopic = "GroundTruthPose";
+  private static final String kEstimatedPoseTopic = "EstimatedRobot";
+  private static final String kEstimatedModulePosesTopic = "EstimatedRobotModules";
+  private static final String kEstimateToGroundTruthDistanceTopic = "EstimateToGroundTruth";
+
   /**
    * Constructs a GroundTruthSim instance. This class is only intended for use in simulation.
    *
@@ -106,12 +124,9 @@ public class GroundTruthSim implements GroundTruthSimInterface {
    * @throws IllegalStateException if called outside of simulation mode
    */
   public GroundTruthSim(
-      SwerveDrivetrain<TalonFX, TalonFX, CANcoder> drivetrain,
-      Consumer<Pose2d> poseResetConsumer,
-      Optional<DashboardProviderInterface<GroundTruthSimDashboardSettings>>
-          optionalDashboardProvider) {
+      SwerveDrivetrain<TalonFX, TalonFX, CANcoder> drivetrain, Consumer<Pose2d> poseResetConsumer) {
 
-    this(drivetrain::getState, drivetrain::resetPose, poseResetConsumer, optionalDashboardProvider);
+    this(drivetrain::getState, drivetrain::resetPose, poseResetConsumer);
   }
 
   /**
@@ -126,9 +141,7 @@ public class GroundTruthSim implements GroundTruthSimInterface {
   GroundTruthSim(
       Supplier<SwerveDriveState> driveStateSupplier,
       Consumer<Pose2d> drivetrainResetPose,
-      Consumer<Pose2d> poseResetConsumer,
-      Optional<DashboardProviderInterface<GroundTruthSimDashboardSettings>>
-          optionalDashboardProvider) {
+      Consumer<Pose2d> poseResetConsumer) {
 
     if (!RobotBase.isSimulation()) {
       throw new IllegalStateException("GroundTruthSim only instantiated in simulation mode");
@@ -136,7 +149,6 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     this.m_driveStateSupplier = driveStateSupplier;
     this.m_drivetrainResetPose = drivetrainResetPose;
     this.m_poseResetConsumer = poseResetConsumer;
-    this.m_optionalDashboardProvider = optionalDashboardProvider;
     this.m_lastUpdateTime = Utils.getCurrentTimeSeconds();
 
     // Set wheel positions relative to robot center
@@ -148,6 +160,8 @@ public class GroundTruthSim implements GroundTruthSimInterface {
           new Translation2d(-0.26035, 0.26670),
           new Translation2d(-0.26035, -0.26670)
         };
+
+    initDashboard();
   }
 
   /**
@@ -188,11 +202,6 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     // integration, which stays accurate while translating and rotating together.
     m_groundTruthPose = m_groundTruthPose.exp(new Twist2d(dx, dy, dtheta));
 
-    // Update the settings with latest values we cache
-    if (m_optionalDashboardProvider.isPresent()) {
-      m_optionalDashboardProvider.get().setLatestSettings(buildDashboardSettings());
-    }
-
     // Return the radians rotate this step
     return dtheta;
   }
@@ -208,17 +217,44 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     return modulePoses;
   }
 
-  private GroundTruthSimDashboardSettings buildDashboardSettings() {
+  private void initDashboard() {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(kDashboardTableRoot);
+    m_groundTruthPosePublisher =
+        table.getStructTopic(kGroundTruthPoseTopic, Pose2d.struct).publish();
+    m_estimatedPosePublisher = table.getStructTopic(kEstimatedPoseTopic, Pose2d.struct).publish();
+    m_estimatedModulePosesPublisher =
+        table.getStructArrayTopic(kEstimatedModulePosesTopic, Pose2d.struct).publish();
+    m_estimateToGroundTruthPublisher =
+        table.getDoubleTopic(kEstimateToGroundTruthDistanceTopic).publish();
+  }
+
+  private void updateDashboard() {
     SwerveDriveState driveState = m_driveStateSupplier.get();
     Pose2d estimatedPose = driveState != null ? driveState.Pose : Pose2d.kZero;
     Pose2d[] estimatedModulePoses =
-        (driveState != null) ? getModulePoses(driveState) : new Pose2d[4];
+        (driveState != null
+                && driveState.ModuleStates != null
+                && driveState.ModuleStates.length >= 4)
+            ? getModulePoses(driveState)
+            : new Pose2d[4];
+    double poseEstimateToGroundTruthDistance =
+        estimatedPose.getTranslation().getDistance(m_groundTruthPose.getTranslation());
 
-    return new GroundTruthSimDashboardSettings(
-        m_groundTruthPose,
-        estimatedPose,
-        estimatedModulePoses,
-        estimatedPose.getTranslation().getDistance(m_groundTruthPose.getTranslation()));
+    m_groundTruthPosePublisher.set(m_groundTruthPose);
+    m_estimatedPosePublisher.set(estimatedPose);
+    m_estimatedModulePosesPublisher.set(estimatedModulePoses);
+    m_estimateToGroundTruthPublisher.set(poseEstimateToGroundTruthDistance);
+
+    if (m_dashboardField2d != null) {
+      // $TODO4 - m_dashboardField2d.getObject(kGroundTruthPoseTopic).setPose(m_groundTruthPose);
+      m_dashboardField2d.getObject(kEstimatedPoseTopic).setPose(estimatedPose);
+      m_dashboardField2d.getObject(kEstimatedModulePosesTopic).setPoses(estimatedModulePoses);
+    }
+  }
+
+  @Override
+  public void setDashboardField2d(Field2d field2d) {
+    m_dashboardField2d = field2d;
   }
 
   /**
@@ -373,6 +409,6 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     // Ground truth pose is integrated at high frequency via updateGroundTruthPose()
     // (registered as setHighFreqSimCallback on CommandSwerveDrivetrain).
     // Here we only publish telemetry at the standard 50 Hz robot loop rate.
-    // publishTelemetry();
+    updateDashboard();
   }
 }

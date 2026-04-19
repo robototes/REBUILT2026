@@ -1,6 +1,7 @@
 package frc.robot.util.simulation.visionsim.pub.interfaces;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 
 /**
  * Interface for ground truth simulation functionality. Provides methods to track and manipulate the
@@ -21,6 +22,12 @@ public interface GroundTruthSimInterface {
    * {@link #updateGroundTruthPose()}.
    */
   void simulationPeriodic();
+
+  /**
+   * Sets the Field2d used to render simulation poses. Pass null to disable Field2d drawing while
+   * keeping NetworkTables publishing active.
+   */
+  void setDashboardField2d(Field2d field2d);
 
   /**
    * Gets the ground truth simulated pose (where the robot actually is based on physics).

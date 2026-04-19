@@ -41,12 +41,7 @@ import frc.robot.util.simulation.visionsim.pub.RobotUtilsFactory;
 import frc.robot.util.simulation.visionsim.pub.interfaces.FaultyDriveManagerInterface;
 import frc.robot.util.simulation.visionsim.pub.interfaces.GroundTruthSimInterface;
 import frc.robot.util.simulation.visionsim.pub.interfaces.SimLimelightProducerInterface;
-import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardConstants;
-import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.DashboardManagerInterface;
-import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.Field2dMultipleObjectRenderer;
-import frc.robot.util.simulation.visionsim.pub.interfaces.dashboard.Field2dObjectRenderer;
 import frc.robot.util.simulation.visionsim.pub.utils.ShowTempPose;
-import java.util.Optional;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -68,9 +63,10 @@ public class Subsystems {
     public static final boolean LEDS_ENABLED = true;
   }
 
+  private static final String kPointInTimeVisionPose = "VisionEstimation";
+
   // Subsystems go here
   private final RobotUtilsFactory robotUtilsFactory = new RobotUtilsFactory();
-  public final DashboardManagerInterface dashboardManager;
   public final GroundTruthSimInterface groundTruthSim;
   public final SimLimelightProducerInterface simLimelightProducer;
   public final FaultyDriveManagerInterface faultyDriveManager;
@@ -109,12 +105,9 @@ public class Subsystems {
       drivebaseSubsystem = null;
     }
 
-    dashboardManager = robotUtilsFactory.createDashboardManager();
-
     if (DRIVEBASE_ENABLED) {
       groundTruthSim =
-          robotUtilsFactory.createGroundTruthSim(
-              Optional.of(dashboardManager), drivebaseSubsystem, this::resetRobotPose);
+          robotUtilsFactory.createGroundTruthSim(drivebaseSubsystem, this::resetRobotPose);
       if (groundTruthSim != null) {
         groundTruthSim.resetGroundTruthPoseForSim(drivebaseSubsystem.getState().Pose);
         drivebaseSubsystem.setHighFreqSimCallback(groundTruthSim::updateGroundTruthPose);
@@ -127,17 +120,9 @@ public class Subsystems {
       } else {
         faultyDriveManager = null;
       }
-      if (RobotBase.isSimulation() && simLimelightProducer != null) {
+      if (RobotBase.isSimulation() && simLimelightProducer != null && groundTruthSim != null) {
         Field2d simDebugField = simLimelightProducer.getSimDebugField();
-        dashboardManager.addCustomRenderer(
-            new Field2dObjectRenderer(simDebugField, DashboardConstants.kEstimatedPoseItemName),
-            DashboardConstants.kGroundTruthProviderName,
-            DashboardConstants.kEstimatedPoseItemName);
-        dashboardManager.addCustomRenderer(
-            new Field2dMultipleObjectRenderer(
-                simDebugField, DashboardConstants.kEstimatedPoseModules, 4),
-            DashboardConstants.kGroundTruthProviderName,
-            DashboardConstants.kEstimatedPoseModules);
+        groundTruthSim.setDashboardField2d(simDebugField);
       }
     } else {
       groundTruthSim = null;
@@ -215,9 +200,7 @@ public class Subsystems {
       ShowTempPose simVisionTempPose =
           RobotBase.isSimulation() && simLimelightProducer != null
               ? new ShowTempPose(
-                  simLimelightProducer.getSimDebugField(),
-                  DashboardConstants.kPointInTimeVisionPose,
-                  0.2)
+                  simLimelightProducer.getSimDebugField(), kPointInTimeVisionPose, 0.2)
               : null;
       visionSubsystem = new VisionSubsystem(drivebaseSubsystem, simVisionTempPose);
       SmartDashboard.putData(visionSubsystem);
