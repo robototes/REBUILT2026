@@ -166,6 +166,7 @@ public class Subsystems {
       climbSubsystem = new ClimbSubsystem(this);
     } else {
       climbPivotSubsystem = null;
+      climbSubsystem = null;
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {

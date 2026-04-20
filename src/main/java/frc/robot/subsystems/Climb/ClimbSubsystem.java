@@ -402,6 +402,7 @@ public class ClimbSubsystem extends SubsystemBase {
                                       () -> {
                                         if (passedAccelerometerTest() && passedRollerTest()) {
                                           setAttach();
+                                          zeroMotor();
                                         }
                                       }))
                               .onlyWhile(() -> climbState == ClimbState.Detached)
