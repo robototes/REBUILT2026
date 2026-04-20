@@ -20,6 +20,7 @@ def getProjectBooleanProperty(String name, boolean defaultValue = false) {
 }
 
 def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
+def HIGH_FIDELITY_VISION = getProjectBooleanProperty('highFidelityVision')
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -131,6 +132,7 @@ tasks.withType(JavaCompile) {
 tasks.withType(JavaExec).configureEach {
     if (name.toLowerCase().contains("simulate")) {
         jvmArgs "-Xmx2G", "-Xms2G"
+        systemProperty 'highFidelityVision', HIGH_FIDELITY_VISION
     }
 }
 
