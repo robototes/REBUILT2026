@@ -1,5 +1,7 @@
 package frc.robot.subsystems.launcher;
 
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -10,8 +12,10 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
+import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -34,7 +38,6 @@ public class Flywheels extends SubsystemBase {
 
   // Debounce stuff
   private static final double DURATION = 1; // second
-  private final Debouncer m_dippedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kFalling);
   private final Debouncer m_recoveredDebouncer =
       new Debouncer(DURATION, Debouncer.DebounceType.kRising);
   private boolean hasDipped = false;
@@ -48,6 +51,13 @@ public class Flywheels extends SubsystemBase {
   public NtTunableDouble targetVelocity;
   private long lastPositionUpdateTime = 0;
 
+  // Ball counter
+  private final double minAccel = -21;
+  private IntegerPublisher ballPub;
+  private boolean inDip = false;
+  private int ballCount = 0;
+  private boolean isShooting = false;
+
   public final double FLYWHEEL_TOLERANCE =
       15; // RPS // increased on drive practice 3/18 from 5 -> 10 //Increased to 15 by TD 3/18
   public final NtTunableBoolean TUNER_CONTROLLED =
@@ -56,6 +66,7 @@ public class Flywheels extends SubsystemBase {
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
   private StatusSignal<Current> flywheelOneSupplyCurrent;
+  private StatusSignal<AngularAcceleration> flywheelOneAccel;
 
   // Constructor
   public Flywheels() {
@@ -66,15 +77,18 @@ public class Flywheels extends SubsystemBase {
     configureMotors();
 
     var nt = NetworkTableInstance.getDefault();
+    ballPub = nt.getIntegerTopic("flywheels/ballsShot").publish();
     velocityTopic = nt.getDoubleTopic("/launcher/velocity");
     currentTopic = nt.getDoubleTopic("/launcher/current");
     velocityPub = velocityTopic.publish();
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
     currentPub.set(0.0);
+    ballPub.set(0);
 
     flywheelOneRPS = flywheelOne.getVelocity();
     flywheelOneSupplyCurrent = flywheelOne.getSupplyCurrent();
+    flywheelOneAccel = flywheelOne.getAcceleration();
 
     flywheelOne.clearStickyFaults();
     flywheelTwo.clearStickyFaults();
@@ -135,6 +149,7 @@ public class Flywheels extends SubsystemBase {
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
+              isShooting = true;
               setVelocityRPS(rps);
             },
             () -> {
@@ -145,6 +160,7 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void setVelocityRPS(double rps) {
+    isShooting = true;
     request.Velocity = rps;
     flywheelOne.setControl(request);
     flywheelTwo.setControl(request);
@@ -153,6 +169,7 @@ public class Flywheels extends SubsystemBase {
   public Command stopCommand() {
     return runOnce(
             () -> {
+              isShooting = false;
               flywheelOne.stopMotor();
               flywheelTwo.stopMotor();
             })
@@ -160,6 +177,7 @@ public class Flywheels extends SubsystemBase {
   }
 
   public void stop() {
+    isShooting = false;
     flywheelOne.stopMotor();
     flywheelTwo.stopMotor();
   }
@@ -185,8 +203,7 @@ public class Flywheels extends SubsystemBase {
   public boolean isOutOfFuel() {
     boolean atTarget = atTargetVelocity(request.Velocity, FLYWHEEL_TOLERANCE);
 
-    boolean stillAtTarget = m_dippedDebouncer.calculate(atTarget);
-    if (!stillAtTarget) {
+    if (!atTarget && !hasDipped) {
       hasDipped = true;
     }
 
@@ -197,7 +214,17 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(flywheelOneRPS, flywheelOneSupplyCurrent);
+    StatusSignal.refreshAll(flywheelOneRPS, flywheelOneSupplyCurrent, flywheelOneAccel);
+
+    if (isShooting) {
+      double currentAccel = flywheelOneAccel.getValue().in(RotationsPerSecondPerSecond);
+      if (currentAccel <= minAccel) {
+        ballCount++;
+        inDip = true;
+        ballPub.set(ballCount);
+      }
+    }
+
     velocityPub.set(flywheelOneRPS.getValueAsDouble());
     currentPub.set(flywheelOneSupplyCurrent.getValueAsDouble());
     if (TUNER_CONTROLLED.get()) {
