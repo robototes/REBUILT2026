@@ -60,10 +60,13 @@ public class AutoLogic {
           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
           new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
           new AutoPath("LT-Neutral", "LT-Neutral"),
+          new AutoPath("LT-Neutral-Depot-Climb", "LT-Neutral-Depot-Climb"),
+          new AutoPath("LT-Neutral-Climb", "LT-Neutral-Climb"),
           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
           new AutoPath("RT-Neutral", "RT-Neutral"),
+          new AutoPath("RT-Neutral-Climb", "RT-Neutral-Climb"),
           new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
           new AutoPath("RT-BLOCK", "RT-BLOCK"),
           new AutoPath("LT-BLOCK", "LT-BLOCK"));
