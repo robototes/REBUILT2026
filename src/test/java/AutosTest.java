@@ -34,7 +34,8 @@ class AutosTest {
     // We expect >= 1 paths, otherwise its possible we forgot to call
     // AutoLogic::initCommandsAndPaths().
     if (pathDictionary.size() == 0) {
-      throw new IllegalStateException("No auto paths found. Did you forget to call AutoLogic::initCommandsAndPaths()?");
+      throw new IllegalStateException(
+          "No auto paths found. Did you forget to call AutoLogic::initCommandsAndPaths()?");
     }
 
     Enumeration<String> k = pathDictionary.keys();

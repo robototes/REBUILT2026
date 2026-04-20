@@ -130,24 +130,7 @@ public class AutoLogic {
             new AutoPath("RT-BLOCK", "RT-BLOCK"),
             new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
-    if (Robot.isSimulation()) {
-      simRebuiltPaths =
-          List.of(
-              new AutoPath("Sim Nudge Right", "Sim Nudge Right"),
-              new AutoPath("Sim Nudge Rotate", "Sim Nudge Rotate"),
-              new AutoPath("Sim Drive Accross Field Pull Right", "Sim Drive Accross Field Pull Right"),
-              new AutoPath(
-                  "Sim Drive Accross Field Rotate Clockwise",
-                  "Sim Drive Accross Field Rotate Clockwise"),
-              new AutoPath(
-                  "Sim Drive Accross Field Camera Misplaced",
-                  "Sim Drive Accross Field Camera Misplaced"));
-
-      rebuiltPaths = Stream.concat(physicalRebuiltPaths.stream(), simRebuiltPaths.stream())
-                .collect(Collectors.toList());
-    } else {
-      rebuiltPaths = physicalRebuiltPaths;
-    }
+    rebuiltPaths = physicalRebuiltPaths;
 
     commandsMap = Map.of(0, rebuiltPaths);
     namesToAuto.clear();
@@ -162,7 +145,8 @@ public class AutoLogic {
 
   private static void requirePathsInitialized() {
     if (!pathsInitialized) {
-      throw new IllegalStateException("Auto paths are not initialized. Call AutoLogic.initPaths().");
+      throw new IllegalStateException(
+          "Auto paths are not initialized. Call AutoLogic.initPaths().");
     }
   }
 
@@ -239,7 +223,6 @@ public class AutoLogic {
     return Pose2d.kZero;
   }
 
->>>>>>> a34c749 (Fix bug where Paths cant use commands or triggers)
   public static Command getSelectedAuto() {
     requirePathsInitialized();
 
