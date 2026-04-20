@@ -52,7 +52,7 @@ public class Flywheels extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   // Ball counter
-  private final double minAccel = -100;
+  private final double minAccel = -21;
   private IntegerPublisher ballPub;
   private boolean inDip = false;
   private int ballCount = 0;
@@ -84,6 +84,7 @@ public class Flywheels extends SubsystemBase {
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
     currentPub.set(0.0);
+    ballPub.set(0);
 
     flywheelOneRPS = flywheelOne.getVelocity();
     flywheelOneSupplyCurrent = flywheelOne.getSupplyCurrent();
@@ -216,14 +217,11 @@ public class Flywheels extends SubsystemBase {
     StatusSignal.refreshAll(flywheelOneRPS, flywheelOneSupplyCurrent, flywheelOneAccel);
 
     if (isShooting) {
-      boolean atTarget = atTargetVelocity(request.Velocity, FLYWHEEL_TOLERANCE);
       double currentAccel = flywheelOneAccel.getValue().in(RotationsPerSecondPerSecond);
-      if (currentAccel <= minAccel && !atTarget && !inDip) {
+      if (currentAccel <= minAccel) {
         ballCount++;
         inDip = true;
         ballPub.set(ballCount);
-      } else if (atTarget && inDip) {
-        inDip = false;
       }
     }
 
