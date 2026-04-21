@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
@@ -53,34 +54,14 @@ public class AutoLogic {
 
   /* ---------------- Paths ---------------- */
 
-  private static final AutoPath defaultPath = new AutoPath("Default", "Default");
+  private static AutoPath defaultPath;
 
-  private static final List<AutoPath> rebuiltPaths =
-      List.of(
-          new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-          new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
-          new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
-          new AutoPath("LT-Neutral", "LT-Neutral"),
-          new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
-          new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
-          new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-          new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
-          new AutoPath("RT-Neutral", "RT-Neutral"),
-          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
-          new AutoPath("RT-BLOCK", "RT-BLOCK"),
-          new AutoPath("LT-BLOCK", "LT-BLOCK"));
+  private static List<AutoPath> rebuiltPaths = List.of();
 
-  private static final Map<Integer, List<AutoPath>> commandsMap = Map.of(0, rebuiltPaths);
+  private static Map<Integer, List<AutoPath>> commandsMap = Map.of();
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
-
-  static {
-    for (List<AutoPath> autos : commandsMap.values()) {
-      for (AutoPath auto : autos) {
-        namesToAuto.put(auto.getDisplayName(), auto);
-      }
-    }
-  }
+  private static boolean pathsInitialized = false;
 
   /* ---------------- Choosers ---------------- */
 
@@ -110,7 +91,67 @@ public class AutoLogic {
     s = subsystems;
   }
 
+  // We always need to register commands BEFORE we initialize paths.  This is
+  // because paths may reference commands or triggers that need to be registered first.
+  // This helper-method insures caller initializes these in the correct order.
+  public static void initCommandsAndPaths(Optional<Boolean> testMode) {
+    if (testMode != null && !testMode.orElse(false)) {
+      registerCommands();
+    }
+
+    initPaths();
+  }
+
+  public static void initCommandsAndPaths() {
+    initCommandsAndPaths(Optional.of(true));
+  }
+
+  private static void initPaths() {
+    List<AutoPath> physicalRebuiltPaths;
+
+    if (pathsInitialized) {
+      return;
+    }
+
+    defaultPath = new AutoPath("Default", "Default");
+
+    physicalRebuiltPaths =
+        List.of(
+            new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
+            new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
+            new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
+            new AutoPath("LT-Neutral", "LT-Neutral"),
+            new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
+            new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
+            new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
+            new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
+            new AutoPath("RT-Neutral", "RT-Neutral"),
+            new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
+            new AutoPath("RT-BLOCK", "RT-BLOCK"),
+            new AutoPath("LT-BLOCK", "LT-BLOCK"));
+
+    rebuiltPaths = physicalRebuiltPaths;
+
+    commandsMap = Map.of(0, rebuiltPaths);
+    namesToAuto.clear();
+    for (List<AutoPath> autos : commandsMap.values()) {
+      for (AutoPath auto : autos) {
+        namesToAuto.put(auto.getDisplayName(), auto);
+      }
+    }
+
+    pathsInitialized = true;
+  }
+
+  private static void requirePathsInitialized() {
+    if (!pathsInitialized) {
+      throw new IllegalStateException(
+          "Auto paths are not initialized. Call AutoLogic.initCommandsAndPaths().");
+    }
+  }
+
   public static void initSmartDashBoard() {
+    requirePathsInitialized();
 
     startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
 
@@ -139,6 +180,7 @@ public class AutoLogic {
   /* ---------------- Filtering ---------------- */
 
   public static void filterAutos(int numGameObjects) {
+    requirePathsInitialized();
 
     availableAutos.clearOptions();
     availableAutos.setDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
@@ -163,7 +205,27 @@ public class AutoLogic {
     return availableAutos.getSelected() != null;
   }
 
+  public static Pose2d getSelectedAutoStartingPose() {
+    requirePathsInitialized();
+
+    String selectedAutoName = getSelectedAutoName();
+    AutoPath selectedPath = namesToAuto.get(selectedAutoName);
+
+    if (selectedPath != null && selectedPath.getStartPose2d() != null) {
+      return selectedPath.getStartPose2d();
+    }
+
+    if (defaultPath.getDisplayName().equals(selectedAutoName)
+        && defaultPath.getStartPose2d() != null) {
+      return defaultPath.getStartPose2d();
+    }
+
+    return Pose2d.kZero;
+  }
+
   public static Command getSelectedAuto() {
+    requirePathsInitialized();
+
     double delay = autoDelayEntry.getDouble(0.0);
 
     AutoPath path = namesToAuto.get(getSelectedAutoName());
@@ -185,10 +247,8 @@ public class AutoLogic {
     return AutoBuilder.followPath(path);
   }
 
-  public static void registerCommands(boolean enabled) {
-
-    if (enabled) {
-
+  private static void registerCommands() {
+    if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
       if (Robot.isSimulation()) {
         NamedCommands.registerCommand(
             "launch", launcherSimCommand().andThen(Commands.print("launch")));
@@ -196,21 +256,11 @@ public class AutoLogic {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
       }
-
-      NamedCommands.registerCommand("intake", intakeCommand());
-
-      NamedCommands.registerCommand("climb", climbCommand());
-
-    } else {
-
-      NamedCommands.registerCommand("launch", empty());
-      NamedCommands.registerCommand("intake", empty());
-      NamedCommands.registerCommand("climb", empty());
     }
-  }
-
-  public static final Command empty() {
-    return Commands.none().withName("Empty Command");
+    if (s.indexerSubsystem != null) {
+      NamedCommands.registerCommand("intake", intakeCommand());
+    }
+    NamedCommands.registerCommand("climb", climbCommand());
   }
 
   public static Command launcherCommand() {

@@ -24,7 +24,21 @@
 
 package frc.robot.sim.visionproducers;
 
-import static frc.robot.sim.visionproducers.VisionSimConstants.*;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kAvgDistTolerance;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kAvgDistVarianceScale;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kAvgLatencyMs;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kCalibErrorAvg;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kCalibErrorStdDev;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kCameraFOVDegrees;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kCameraFPS;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kCameraResHeight;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kCameraResWidth;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kLatencyStdDevMs;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kMaxSightRangeMeters;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kMinTargetAreaPixels;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kMultiTagStdDevs;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kSingleTagStdDevs;
+import static frc.robot.sim.visionproducers.VisionSimConstants.kTagLayout;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -178,10 +192,10 @@ public class VisionSim implements VisionSimInterface {
         }
 
         // Increase std devs based on (average) distance
-        if (numTags == 1 && avgDist > 1.3) {
+        if (numTags == 1 && avgDist > kAvgDistTolerance) {
           estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         } else {
-          estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 3.33));
+          estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / kAvgDistVarianceScale));
         }
         m_curStdDevs = estStdDevs;
       }
