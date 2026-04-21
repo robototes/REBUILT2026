@@ -94,6 +94,10 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double RESET_MAX_AMBIGUITY = 0.15;
     private static final int RESET_MIN_TAGS = 2;
 
+    // Shared cooldown between all translation resets (off-field and defense).
+    // Prevents thrashing when vision and odometry disagree rapidly.
+    private static final double RESET_COOLDOWN = 0.5; // seconds
+
     // DEFENSE_SPIN_OMEGA: high rotational speed with low translation suggests
     // being spun by an opponent rather than self-powered turning.
     // DEFENSE_SPIN_MAX_TRANSLATION: upper bound on translation speed to
@@ -106,6 +110,15 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double DEFENSE_SPIN_MAX_TRANSLATION = 1.0; // m/s
     private static final double DEFENSE_DIVERGE_BASE = 0.30; // meters
     private static final double DEFENSE_DRIFT_RATE = 0.02; // meters per second
+
+    // Defense hard-reset thresholds. Stricter than the normal reset bar because
+    // a hard snap to a bad vision reading is worse than drifted odometry.
+    // Only fires when odometry disagrees with high-confidence vision by more
+    // than DEFENSE_RESET_DISAGREEMENT meters while underDefense is true.
+    private static final double DEFENSE_RESET_DISAGREEMENT = 0.4; // meters
+    private static final double DEFENSE_RESET_MAX_AMBIGUITY = 0.15;
+    private static final int DEFENSE_RESET_MIN_TAGS = 2;
+    private static final double DEFENSE_RESET_MAX_SPREAD = 0.10; // meters RMS
   }
 
   public static final Transform3d COMP_BOT_LEFT_CAMERA =
@@ -162,6 +175,12 @@ public class VisionSubsystem extends SubsystemBase {
   private double lastTimestampSeconds = 0;
   private Pose2d lastFieldPose = null;
   private CommandSwerveDrivetrain drivetrain;
+
+  // Shared cooldown timestamp for all translation resets (off-field and defense).
+  // Using a single timestamp prevents multiple cameras from both firing a reset
+  // in the same loop cycle, and closes the latent bug where maybeResetToVision
+  // could fire on every loop iteration when conditions were persistently met.
+  private double lastResetTimestamp = 0;
 
   private record VisionPoseTracking(
       SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
@@ -356,7 +375,8 @@ public class VisionSubsystem extends SubsystemBase {
           java.util.Optional.of(estimate.pose3d.toPose2d()));
     }
 
-    maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, camera.getName());
+    maybeResetToVision(
+        visionPose2d, maxAmbiguity, estimate.tagCount, spread, camera.getName(), underDefense);
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
@@ -475,21 +495,63 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   /**
-   * Resets translation only when odometry has walked off the field (unambiguous divergence) and
-   * vision simultaneously passes a high-confidence bar. Heading is preserved — resetTranslation
-   * avoids fighting the gyro.
+   * Resets translation when either: (a) odometry has walked off the field and vision passes a basic
+   * trust bar, or (b) the robot is under defense, vision is high-confidence, and odometry has
+   * drifted beyond DEFENSE_RESET_DISAGREEMENT meters.
+   *
+   * <p>A shared cooldown (RESET_COOLDOWN) prevents both paths from firing more than once per 0.5 s,
+   * closing the latent bug where this could trigger every loop cycle and preventing multi-camera
+   * thrashing under defense contact.
+   *
+   * <p>Heading is always preserved — resetTranslation avoids fighting the gyro.
    */
   private void maybeResetToVision(
-      Pose2d visionPose, double maxAmbiguity, int tagCount, String cameraName) {
+      Pose2d visionPose,
+      double maxAmbiguity,
+      int tagCount,
+      double spread,
+      String cameraName,
+      boolean underDefense) {
+
+    double now = Timer.getFPGATimestamp();
+    if (now - lastResetTimestamp < VisionConstants.RESET_COOLDOWN) return;
+
     Pose2d odomPose = drivetrain.getState().Pose;
-    boolean odomOffField = !isPoseOnField(odomPose);
     boolean visionTrusted =
         maxAmbiguity < VisionConstants.RESET_MAX_AMBIGUITY
             && tagCount >= VisionConstants.RESET_MIN_TAGS
             && isPoseOnField(visionPose);
-    if (odomOffField && visionTrusted) {
+
+    // (a) Original behavior — odometry walked off field
+    if (!isPoseOnField(odomPose) && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
-      SmartDashboard.putString("/vision/" + cameraName + "_rejectReason", "odometry-reset");
+      lastResetTimestamp = now;
+      SmartDashboard.putString(
+          "/vision/" + cameraName + "_rejectReason", "odometry-reset-offfield");
+      return;
+    }
+
+    // (b) Defense behavior — high-confidence vision disagrees with drifted odometry.
+    // Thresholds are intentionally tighter than the normal bar: a hard snap to a
+    // bad reading mid-match is worse than temporarily drifted odometry.
+    if (underDefense) {
+      boolean visionHighConfidence =
+          maxAmbiguity < VisionConstants.DEFENSE_RESET_MAX_AMBIGUITY
+              && tagCount >= VisionConstants.DEFENSE_RESET_MIN_TAGS
+              && spread < VisionConstants.DEFENSE_RESET_MAX_SPREAD
+              && isPoseOnField(visionPose);
+
+      if (visionHighConfidence) {
+        double disagreement = odomPose.getTranslation().getDistance(visionPose.getTranslation());
+        if (disagreement > VisionConstants.DEFENSE_RESET_DISAGREEMENT) {
+          drivetrain.resetTranslation(visionPose.getTranslation());
+          lastResetTimestamp = now;
+          SmartDashboard.putString(
+              "/vision/" + cameraName + "_rejectReason", "odometry-reset-defense");
+          SmartDashboard.putNumber(
+              "/vision/" + cameraName + "_defenseResetDisagreement", disagreement);
+        }
+      }
     }
   }
 
