@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -519,39 +520,45 @@ public class VisionSubsystem extends SubsystemBase {
    * @return maximum angular baseline in radians, floored at MIN_ANGULAR_BASELINE
    */
   private double computeAngularBaseline(
-      RawFiducial[] fiducials, Pose3d robotPose, AprilTagFieldLayout layout) {
+      RawFiducial[] fiducials, Pose3d robotPose, AprilTagFieldLayout layout, String cameraName) {
     if (fiducials == null || fiducials.length < 2 || layout == null) {
       return MIN_ANGULAR_BASELINE;
     }
 
+    // Pre-fetch valid tag poses to avoid redundant lookups and handle potential nulls
+    Pose3d[] validPoses = new Pose3d[fiducials.length];
+    int validCount = 0;
+    for (RawFiducial rf : fiducials) {
+      if (rf == null) continue;
+      var opt = layout.getTagPose(rf.id);
+      if (opt.isPresent()) validPoses[validCount++] = opt.get();
+    }
+
+    if (validCount < 2) {
+      return MIN_ANGULAR_BASELINE;
+    }
+
     double maxAngularSep = 0.0;
-    for (int i = 0; i < fiducials.length; i++) {
-      var tagI = layout.getTagPose(fiducials[i].id);
-      if (tagI.isEmpty()) continue;
+    for (int i = 0; i < validCount; i++) {
+      double dix = validPoses[i].getX() - robotPose.getX();
+      double diy = validPoses[i].getY() - robotPose.getY();
+      double magI = Math.hypot(dix, diy);
+      if (magI < 0.01) continue;
 
-      for (int j = i + 1; j < fiducials.length; j++) {
-        var tagJ = layout.getTagPose(fiducials[j].id);
-        if (tagJ.isEmpty()) continue;
-
-        // Vectors from robot to each tag in the field frame (XY plane only —
-        // tags are close to floor height relative to field distances, so Z is minor).
-        double dix = tagI.get().getX() - robotPose.getX();
-        double diy = tagI.get().getY() - robotPose.getY();
-        double djx = tagJ.get().getX() - robotPose.getX();
-        double djy = tagJ.get().getY() - robotPose.getY();
-
-        double magI = Math.hypot(dix, diy);
+      for (int j = i + 1; j < validCount; j++) {
+        double djx = validPoses[j].getX() - robotPose.getX();
+        double djy = validPoses[j].getY() - robotPose.getY();
         double magJ = Math.hypot(djx, djy);
-        if (magI < 0.01 || magJ < 0.01) continue;
+        if (magJ < 0.01) continue;
 
         // Dot product gives cos(angle between vectors).
         double cosTheta = (dix * djx + diy * djy) / (magI * magJ);
-        double angularSep = Math.acos(MathUtil.clamp(cosTheta, -1.0, 1.0));
+        double angularSep = Math.acos(Math.max(-1.0, Math.min(1.0, cosTheta)));
         maxAngularSep = Math.max(maxAngularSep, angularSep);
       }
     }
 
-    SmartDashboard.putNumber("/vision/angularBaselineRad", maxAngularSep);
+    SmartDashboard.putNumber("/vision/angularBaselineRad_" + cameraName, maxAngularSep);
     return Math.max(maxAngularSep, MIN_ANGULAR_BASELINE);
   }
 
@@ -596,7 +603,7 @@ public class VisionSubsystem extends SubsystemBase {
     // is no baseline to compute, so the floor (MIN_ANGULAR_BASELINE) applies and
     // the formula degrades gracefully to a pure distance model.
     double angularBaseline =
-        computeAngularBaseline(rawFiducials, robotPose, AllianceUtils.FIELD_LAYOUT);
+        computeAngularBaseline(rawFiducials, robotPose, AllianceUtils.FIELD_LAYOUT, cameraName);
 
     // dist / angularBaseline is the PnP condition number proxy.
     // A_XY_MT1 is the pixel noise scale factor (tunable per camera quality).
