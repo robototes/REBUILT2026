@@ -59,6 +59,12 @@
           "data": {
             "pathName": "LT-Climb"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "climb"
+          }
         }
       ]
     }

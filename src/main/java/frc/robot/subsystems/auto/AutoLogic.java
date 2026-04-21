@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
@@ -118,6 +117,7 @@ public class AutoLogic {
             new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
             new AutoPath("LT-Neutral", "LT-Neutral"),
             new AutoPath("LT-Neutral-Climb", "LT-Neutral-Climb"),
+            new AutoPath("LT-Neutral-Depot-Climb", "LT-Neutral-Depot-Climb"),
             new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
             new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
             new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
@@ -249,9 +249,16 @@ public class AutoLogic {
       if (Robot.isSimulation()) {
         NamedCommands.registerCommand(
             "launch", launcherSimCommand().andThen(Commands.print("launch")));
+        NamedCommands.registerCommand(
+            "SOTM", launcherNoEndSimCommand().andThen(Commands.print("SOTM")));
       } else {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
+        NamedCommands.registerCommand(
+            "SOTM",
+            launcherNoEndCommand()
+                .andThen(
+                    s.launcherSubsystem.rawStowCommand().andThen(Commands.print("SOTM Command"))));
       }
     }
     if (s.indexerSubsystem != null) {
@@ -265,7 +272,6 @@ public class AutoLogic {
               System.out.println("TestMe");
               throw new RuntimeException("TestMe");
             }));
-
   }
 
   public static Command launcherCommand() {
@@ -283,6 +289,20 @@ public class AutoLogic {
         .withName("Auto Launcher Command");
   }
 
+  public static Command launcherNoEndCommand() {
+    return Commands.parallel(
+            Commands.runOnce(
+                () -> {
+                  s.flywheels.resetFuelCheck();
+                }),
+            s.launcherSubsystem.launcherAimCommand(),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
+        // .until(() -> s.flywheels.isOutOfFuel())
+
+        .withName("Auto Full Launcher Command");
+  }
+
   public static Command launcherSimCommand() {
     return Commands.sequence(
             Commands.run(
@@ -294,6 +314,19 @@ public class AutoLogic {
                                 Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
                                 Meters.of(1.45)))
                 .withTimeout(3))
+        .withName("Auto Launcher Sim Command");
+  }
+
+  public static Command launcherNoEndSimCommand() {
+    return Commands.sequence(
+            Commands.run(
+                () ->
+                    FuelSim.getInstance()
+                        .launchFuel(
+                            MetersPerSecond.of(6),
+                            Radians.of(s.hood.getHoodPosition()),
+                            Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                            Meters.of(1.45))))
         .withName("Auto Launcher Sim Command");
   }
 
