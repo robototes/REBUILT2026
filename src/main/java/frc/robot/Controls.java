@@ -523,10 +523,9 @@ public class Controls {
     connected(turretTestController)
         .and(turretTestController.rightBumper())
         .onTrue(
-            s.drivebaseSubsystem
-                .runOnce(
-                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
-                .withName("Reset to Hub"));
+            s.drivebaseSubsystem.runOnce(
+                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+    connected(turretTestController).and(turretTestController.x()).onTrue(s.flywheels.powerSwitchCommand().withName("Pass fuel mode"));
     driverController
         .rightStick()
         .whileTrue(
