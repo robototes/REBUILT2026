@@ -213,9 +213,7 @@ public class LaunchCalculator {
     // 3. Predict Field-Relative Velocities at the moment of launch
     double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
     double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
-    // Turret is clockwise positive, chassisSpeeds.omegaradiansPerSecond is ccw positive
-    double omega_at_launch =
-        chassisSpeeds.omegaRadiansPerSecond - turretSubsystem.getOmega() + (alpha * PHASE_DELAY);
+    double omega_at_launch = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
 
     // 4. Calculate final Field-Relative Turret speeds
     // Find the turret's translation vector rotated into the field frame
