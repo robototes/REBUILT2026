@@ -16,28 +16,12 @@
     },
     {
       "anchor": {
-        "x": 2.4126296958855096,
-        "y": 4.383846153846154
+        "x": 2.3779691569010417,
+        "y": 4.012428951687283
       },
       "prevControl": {
-        "x": 2.4126296958855096,
-        "y": 4.133846153846154
-      },
-      "nextControl": {
-        "x": 2.4126296958855096,
-        "y": 4.633846153846154
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 4.749087656529517,
-        "y": 4.124239713774597
-      },
-      "prevControl": {
-        "x": 4.79757602862254,
-        "y": 2.9647495527728083
+        "x": 2.37198391414134,
+        "y": 4.262357295156181
       },
       "nextControl": null,
       "isLocked": false,
@@ -63,13 +47,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "testme",
-      "waypointRelativePos": 0.3090087890625001,
-      "endWaypointRelativePos": null,
+      "name": "launch",
+      "waypointRelativePos": 0.0,
+      "endWaypointRelativePos": 2.0,
       "command": {
         "type": "named",
         "data": {
-          "name": "testme"
+          "name": "launch"
         }
       }
     }
@@ -84,12 +68,12 @@
   },
   "goalEndState": {
     "velocity": 0.0,
-    "rotation": 90.0
+    "rotation": 180.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
-    "velocity": 0,
+    "velocity": 1.1,
     "rotation": 90.0
   },
   "useDefaultConstraints": true

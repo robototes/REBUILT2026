@@ -51,13 +51,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Back-RightTrench"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
+            "pathName": "Preclimb-Back-RightTrench"
           }
         },
         {
