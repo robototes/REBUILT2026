@@ -316,6 +316,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
     filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
     filteredAlpha.update(currentOmega, dt);
+    pub_XAccel.set(filteredVX.getAccel());
+    pub_YAccel.set(filteredVY.getAccel());
+    pub_Alpha.set(Units.radiansToDegrees(filteredAlpha.getAccel()));
   }
 
   public Translation2d getAccel() {
@@ -328,9 +331,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   public double getRobotRelativeAcceleration() {
-    double alpha = filteredAlpha.getAccel();
-    pub_Alpha.set(Units.radiansToDegrees(alpha));
-    return alpha;
+    return filteredAlpha.getAccel();
   }
 
   private void startSimThread() {
