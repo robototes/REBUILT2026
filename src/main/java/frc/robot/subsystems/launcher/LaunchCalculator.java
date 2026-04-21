@@ -155,13 +155,14 @@ public class LaunchCalculator {
     lastTurretOmega = currentTurretOmega;
 
     // Recalcualate
+    Translation2d accel = drivetrain.getAccel();
     cachedParams =
         calculate(
             driveState,
             turretSubsystem,
-            drivetrain.getFieldRelativeXAccel(),
-            drivetrain.getFieldRelativeYAccel(),
-            drivetrain.getAngularAcceleration());
+            accel.getX(),
+            accel.getY(),
+            drivetrain.getRobotRelativeAcceleration());
     return cachedParams;
   }
 
