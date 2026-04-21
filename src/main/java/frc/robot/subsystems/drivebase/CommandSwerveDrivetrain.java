@@ -114,9 +114,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
   // State filters
-  private final KinematicFilter filterX = new KinematicFilter(0.001, 0.005, 0.5, 0.02, false);
-  private final KinematicFilter filterY = new KinematicFilter(0.001, 0.005, 0.5, 0.02, false);
-  private final KinematicFilter filterTheta = new KinematicFilter(0.001, 0.005, 0.2, 0.02, true);
+  private final KinematicFilter filterX = new KinematicFilter(0.01, 0.1, 0.006, 0.02);
+  private final KinematicFilter filterY = new KinematicFilter(0.01, 0.1, 0.006, 0.02);
+  private final KinematicFilter filterTheta = new KinematicFilter(0.005, 0.1, 0.001, 0.02);
 
   // NetworkTables publishers for filtered accelerations
   private DoublePublisher filteredAccelXPub;
@@ -272,32 +272,34 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     ChassisSpeeds fieldSpeeds =
         ChassisSpeeds.fromRobotRelativeSpeeds(speeds, pose.getRotation()); // field relative
-
-    filterX.update(pose.getX(), fieldSpeeds.vxMetersPerSecond);
-    filterY.update(pose.getY(), fieldSpeeds.vyMetersPerSecond);
-    filterTheta.update(pose.getRotation().getRadians(), fieldSpeeds.omegaRadiansPerSecond);
+    filterX.update(fieldSpeeds.vxMetersPerSecond);
+    filterY.update(fieldSpeeds.vyMetersPerSecond);
+    filterTheta.update(fieldSpeeds.omegaRadiansPerSecond);
 
     clampPoseToField();
 
     // Publish filtered accelerations computed by KinematicFilter
-    double ax = filterX.getAccel();
-    double ay = filterY.getAccel();
-    double aomega = filterTheta.getAccel();
+    double ax = getFieldRelativeXAccel();
+    double ay = getFieldRelativeYAccel();
+    double aomega = getAngularAcceleration();
     if (filteredAccelXPub != null) filteredAccelXPub.set(ax);
     if (filteredAccelYPub != null) filteredAccelYPub.set(ay);
     if (filteredAccelOmegaPub != null) filteredAccelOmegaPub.set(aomega);
   }
 
   public double getFieldRelativeXAccel() {
+    if (isStationary()) return 0.0;
     return MathUtil.clamp(filterX.getAccel(), -15.0, 15.0);
   }
 
   public double getFieldRelativeYAccel() {
+    if (isStationary()) return 0.0;
     return MathUtil.clamp(filterY.getAccel(), -15.0, 15.0);
   }
 
   public double getAngularAcceleration() {
-    return MathUtil.clamp(filterTheta.getAccel(), -25.0, 25.0);
+    if (isStationary()) return 0.0;
+    return MathUtil.clamp(filterTheta.getAccel(), -15.0, 15.0);
   }
 
   private void startSimThread() {

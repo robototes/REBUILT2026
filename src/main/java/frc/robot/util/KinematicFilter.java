@@ -1,124 +1,107 @@
 package frc.robot.util;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.KalmanFilter;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.LinearSystem;
-import edu.wpi.first.math.util.Units;
 
+/**
+ * A 2-state Kalman Filter (Velocity, Acceleration) designed to derive smooth acceleration from
+ * noisy velocity measurements, completely isolated from position data and vision snaps.
+ */
 public class KinematicFilter {
-  private final KalmanFilter<N3, N1, N2> filter;
-  private final double dt;
-  private final boolean isAngle;
-  private double lastValue;
-  private double accumulatedValue;
+  // States: [Velocity, Acceleration] (N2)
+  // Measurements: [Velocity] (N1)
+  // Inputs: None (N1, passed as zero)
+  private final KalmanFilter<N2, N1, N1> filter;
+  private final double nominalDt;
   private boolean initialized = false;
 
-  private final double MIN_JUMP_DEGREES = 10;
-  private final double MIN_JUMP_METERS = 0.5;
-
   private static final Matrix<N1, N1> EMPTY_INPUT = new Matrix<>(Nat.N1(), Nat.N1());
-  private final Matrix<N2, N1> measurementVector = new Matrix<>(Nat.N2(), Nat.N1());
+  private final Matrix<N1, N1> measurementVector = new Matrix<>(Nat.N1(), Nat.N1());
 
+  /**
+   * Constructs a velocity-only kinematic filter. * @param velProcessStdDev Trust in the model's
+   * velocity tracking
+   *
+   * @param accelProcessStdDev Trust in the model's acceleration tracking (higher = faster response,
+   *     more noise)
+   * @param velMeasurementStdDev Trust in the incoming velocity measurement (higher = smoother, more
+   *     lag)
+   * @param dt The nominal loop time in seconds
+   */
   public KinematicFilter(
-      double posStdDev, double velStdDev, double accelModelStdDev, double dt, boolean isAngle) {
-    this.dt = dt;
-    this.isAngle = isAngle;
+      double velProcessStdDev, double accelProcessStdDev, double velMeasurementStdDev, double dt) {
+    this.nominalDt = dt;
 
+    // State Transition Matrix (A)
+    // dv/dt = a  -> A[0, 1] = 1.0
+    // da/dt = 0  -> (constant acceleration model)
     var matrixA =
         new Matrix<>(
-            Nat.N3(),
-            Nat.N3(),
-            new double[] {
-              0.0, 1.0, 0.0,
-              0.0, 0.0, 1.0,
-              0.0, 0.0, 0.0
-            });
-
-    var matrixB = new Matrix<>(Nat.N3(), Nat.N1());
-
-    var matrixC =
-        new Matrix<>(
             Nat.N2(),
-            Nat.N3(),
+            Nat.N2(),
             new double[] {
-              1.0, 0.0, 0.0,
-              0.0, 1.0, 0.0
+              0.0, 1.0,
+              0.0, 0.0
             });
 
-    var matrixD = new Matrix<>(Nat.N2(), Nat.N1());
+    // Input Matrix (B) - No control inputs
+    var matrixB = new Matrix<>(Nat.N2(), Nat.N1());
 
-    LinearSystem<N3, N1, N2> system = new LinearSystem<>(matrixA, matrixB, matrixC, matrixD);
+    // Measurement Matrix (C) - We only measure velocity (State 0)
+    var matrixC = new Matrix<>(Nat.N1(), Nat.N2(), new double[] {1.0, 0.0});
+
+    // Feedforward Matrix (D) - Zero
+    var matrixD = new Matrix<>(Nat.N1(), Nat.N1());
+
+    LinearSystem<N2, N1, N1> system = new LinearSystem<>(matrixA, matrixB, matrixC, matrixD);
 
     this.filter =
         new KalmanFilter<>(
-            Nat.N3(),
             Nat.N2(),
+            Nat.N1(),
             system,
-            VecBuilder.fill(0.01, 0.1, accelModelStdDev),
-            VecBuilder.fill(posStdDev, velStdDev),
+            VecBuilder.fill(velProcessStdDev, accelProcessStdDev),
+            VecBuilder.fill(velMeasurementStdDev),
             dt);
   }
 
-  /**
-   * Hard resets the filter's internal state to a new position, zeroing out velocity and
-   * acceleration.
-   */
-  public void reset(double currentPos) {
-    lastValue = currentPos;
-    accumulatedValue = currentPos;
+  /** Hard resets the filter's internal state to a new velocity, zeroing out acceleration. */
+  public void reset(double currentVel) {
     initialized = true;
-
-    // Wipe the internal state matrix to prevent acceleration spikes
-    filter.setXhat(0, currentPos);
+    filter.setXhat(0, currentVel);
     filter.setXhat(1, 0.0);
-    filter.setXhat(2, 0.0);
   }
 
-  public void update(double measuredPos, double measuredVel) {
+  /** Updates the filter with a new velocity measurement and a dynamic timestep. */
+  public void update(double measuredVel, double dt) {
     if (!initialized) {
-      reset(measuredPos);
+      reset(measuredVel);
       return;
     }
 
-    // 1. Detect Massive Position Jumps (Vision Snaps or Pose Resets)
-    double delta =
-        isAngle
-            ? Math.abs(MathUtil.angleModulus(measuredPos - lastValue))
-            : Math.abs(measuredPos - lastValue);
-
-    // Mentor's recommended thresholds: 10 degrees (in radians) for angles, 0.5 meters for linear
-    double jumpThreshold = isAngle ? Units.degreesToRadians(MIN_JUMP_DEGREES) : MIN_JUMP_METERS;
-
-    if (delta > jumpThreshold) {
-      reset(measuredPos);
-      // Skip the predict/correct step this loop to let the state settle
-      return;
-    }
-
-    // 2. Standard Accumulation and Updating
-    double pos = measuredPos;
-    if (isAngle) {
-      accumulatedValue += MathUtil.angleModulus(measuredPos - lastValue);
-      pos = accumulatedValue;
-    }
-
-    // Track lastValue for both linear and angular (required for jump detection)
-    lastValue = measuredPos;
-
-    // 3. Kalman Filter Math
+    // 1. Predict next state
     filter.predict(EMPTY_INPUT, dt);
-    measurementVector.set(0, 0, pos);
-    measurementVector.set(1, 0, measuredVel);
+
+    // 2. Update with measurement
+    measurementVector.set(0, 0, measuredVel);
     filter.correct(EMPTY_INPUT, measurementVector);
   }
 
+  /** Updates the filter with a new velocity measurement using the nominal dt. */
+  public void update(double measuredVel) {
+    update(measuredVel, nominalDt);
+  }
+
+  public double getVelocity() {
+    return filter.getXhat(0);
+  }
+
   public double getAccel() {
-    return filter.getXhat(2);
+    return filter.getXhat(1);
   }
 }
