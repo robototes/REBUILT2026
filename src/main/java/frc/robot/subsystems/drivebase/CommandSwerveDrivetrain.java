@@ -114,9 +114,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
   // State filters
-  private final KinematicFilter filterX = new KinematicFilter(0.005, 0.05, 0.5, 0.02, false);
-  private final KinematicFilter filterY = new KinematicFilter(0.005, 0.05, 0.5, 0.02, false);
-  private final KinematicFilter filterTheta = new KinematicFilter(0.005, 0.05, 0.2, 0.02, true);
+  private final KinematicFilter filterX = new KinematicFilter(0.001, 0.005, 0.5, 0.02, false);
+  private final KinematicFilter filterY = new KinematicFilter(0.001, 0.005, 0.5, 0.02, false);
+  private final KinematicFilter filterTheta = new KinematicFilter(0.001, 0.005, 0.2, 0.02, true);
 
   // NetworkTables publishers for filtered accelerations
   private DoublePublisher filteredAccelXPub;
