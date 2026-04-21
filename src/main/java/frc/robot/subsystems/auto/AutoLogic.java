@@ -258,6 +258,14 @@ public class AutoLogic {
       NamedCommands.registerCommand("intake", intakeCommand());
     }
     NamedCommands.registerCommand("climb", climbCommand());
+    NamedCommands.registerCommand(
+        "testme",
+        Commands.runOnce(
+            () -> {
+              System.out.println("TestMe");
+              throw new RuntimeException("TestMe");
+            }));
+
   }
 
   public static Command launcherCommand() {

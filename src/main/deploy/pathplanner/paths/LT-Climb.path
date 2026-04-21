@@ -63,13 +63,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "launch",
+      "name": "testme",
       "waypointRelativePos": 0.3090087890625001,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "launch"
+          "name": "testme"
         }
       }
     }
