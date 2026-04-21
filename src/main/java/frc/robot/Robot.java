@@ -87,8 +87,8 @@ public class Robot extends TimedRobot {
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
     BuildInfo.logBuildInfo();
-  // Start GC monitor to count garbage collections and publish to SmartDashboard
-  frc.robot.util.GCMonitor.start();
+    // Start GC monitor to count garbage collections and publish to SmartDashboard
+    frc.robot.util.GCMonitor.start();
 
     // Set brownout Voltage
     RobotController.setBrownoutVoltage(BROWNOUT_VOLTAGE);
