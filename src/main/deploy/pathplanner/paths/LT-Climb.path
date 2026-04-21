@@ -49,7 +49,7 @@
     {
       "name": "launch",
       "waypointRelativePos": 0.0,
-      "endWaypointRelativePos": 2.0,
+      "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
