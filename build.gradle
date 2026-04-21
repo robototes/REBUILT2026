@@ -106,6 +106,7 @@ test {
     useJUnitPlatform()
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
     if (profilingEnabled) {
+        doFirst { gcLogDir.mkdirs() }
         // Write GC logs and optionally start a short JFR for tests
         jvmArgs += [
             "-Xlog:gc*:file=${gcLogDir}/gc-test-%p.log:time,uptime,level,tags,filecount=5,filesize=10M",
@@ -145,6 +146,7 @@ tasks.withType(JavaExec).configureEach {
     if (name.toLowerCase().contains("simulate")) {
         jvmArgs "-Xmx2G", "-Xms2G"
         if (profilingEnabled) {
+            doFirst { gcLogDir.mkdirs() }
             // GC logging for simulator runs and start a continuous JFR recording (can be opened in Mission Control)
             jvmArgs += [
                 "-Xlog:gc*:file=${gcLogDir}/gc-sim-%p.log:time,uptime,level,tags,filecount=5,filesize=10M",
