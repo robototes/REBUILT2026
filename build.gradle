@@ -21,6 +21,12 @@ def getProjectBooleanProperty(String name, boolean defaultValue = false) {
 
 def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
 
+// Toggleable profiling/debugging options. Enable by passing -Pprofiling=true to Gradle.
+def profilingEnabled = getProjectBooleanProperty('profiling', false)
+def gcLogDir = file("${buildDir}/logs")
+gcLogDir.mkdirs()
+
+
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
 deploy {
@@ -99,6 +105,13 @@ dependencies {
 test {
     useJUnitPlatform()
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+    if (profilingEnabled) {
+        // Write GC logs and optionally start a short JFR for tests
+        jvmArgs += [
+            "-Xlog:gc*:file=${gcLogDir}/gc-test-%p.log:time,uptime,level,tags,filecount=5,filesize=10M",
+            "-XX:StartFlightRecording=filename=${gcLogDir}/test-recording.jfr,settings=profile,dumponexit=true,delay=0s"
+        ]
+    }
 }
 
 // Simulation configuration (e.g. environment variables).
@@ -131,6 +144,13 @@ tasks.withType(JavaCompile) {
 tasks.withType(JavaExec).configureEach {
     if (name.toLowerCase().contains("simulate")) {
         jvmArgs "-Xmx2G", "-Xms2G"
+        if (profilingEnabled) {
+            // GC logging for simulator runs and start a continuous JFR recording (can be opened in Mission Control)
+            jvmArgs += [
+                "-Xlog:gc*:file=${gcLogDir}/gc-sim-%p.log:time,uptime,level,tags,filecount=5,filesize=10M",
+                "-XX:StartFlightRecording=filename=${gcLogDir}/sim-recording.jfr,settings=profile,dumponexit=true"
+            ]
+        }
     }
 }
 
