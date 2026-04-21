@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
@@ -241,7 +242,7 @@ public class TurretSubsystem extends SubsystemBase {
    * @return the angular velocity of the turret in rad/s
    */
   public double getOmega() {
-    return Units.rotationsToRadians(velocitySignal.getValueAsDouble());
+    return velocitySignal.getValue().in(RadiansPerSecond);
   }
 
   public Command rotateToTargetWithCalc() {
