@@ -64,7 +64,7 @@
   "eventMarkers": [
     {
       "name": "launch",
-      "waypointRelativePos": 0.5,
+      "waypointRelativePos": 0.3090087890625001,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
