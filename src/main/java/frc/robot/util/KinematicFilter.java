@@ -24,9 +24,9 @@ public class KinematicFilter {
   private final Matrix<N1, N1> measurementVector = new Matrix<>(Nat.N1(), Nat.N1());
 
   /**
-   * Constructs a velocity-only kinematic filter. * @param velProcessStdDev Trust in the model's
-   * velocity tracking
+   * Constructs a velocity-only kinematic filter.
    *
+   * @param velProcessStdDev Trust in the model's velocity tracking
    * @param accelProcessStdDev Trust in the model's acceleration tracking (higher = faster response,
    *     more noise)
    * @param velMeasurementStdDev Trust in the incoming velocity measurement (higher = smoother, more

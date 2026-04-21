@@ -90,7 +90,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
   private KinematicFilterInfused filteredVY =
       new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
-  private KinematicFilter filteredAlpha = new KinematicFilter(0.01, 0.2, 0.001, 0.02);
+  private KinematicFilter filteredAlpha = new KinematicFilter(0.005, 0.5, 0.001, 0.02);
 
   private final double nominalDt = 0.02;
   private final Pigeon2 pigeon;
@@ -313,9 +313,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     double rawAY =
         RobotBase.isSimulation() ? simAccelY : ss_YAccel.getValue().in(MetersPerSecondPerSecond);
 
-    filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
-    filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
-    filteredAlpha.update(currentOmega, dt);
+    if (dt > 0) {
+      filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
+      filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
+      filteredAlpha.update(currentOmega, dt);
+    }
+
     pub_XAccel.set(filteredVX.getAccel());
     pub_YAccel.set(filteredVY.getAccel());
     pub_Alpha.set(Units.radiansToDegrees(filteredAlpha.getAccel()));
