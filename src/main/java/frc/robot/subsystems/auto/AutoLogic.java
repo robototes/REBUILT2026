@@ -95,7 +95,7 @@ public class AutoLogic {
   // because paths may reference commands or triggers that need to be registered first.
   // This helper-method insures caller initializes these in the correct order.
   public static void initCommandsAndPaths(Optional<Boolean> testMode) {
-    if (testMode == null || !testMode.orElse(false)) {
+    if (testMode != null && !testMode.orElse(false)) {
       registerCommands();
     }
 
