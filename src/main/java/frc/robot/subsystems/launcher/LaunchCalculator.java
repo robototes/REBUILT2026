@@ -214,7 +214,8 @@ public class LaunchCalculator {
     // 3. Predict Field-Relative Velocities at the moment of launch
     double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
     double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
-    double omega_at_launch = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
+    double total_omega =
+        (chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY)) + turretSubsystem.getOmega();
 
     // 4. Calculate final Field-Relative Turret speeds
     // Find the turret's translation vector rotated into the field frame
@@ -223,8 +224,8 @@ public class LaunchCalculator {
     double turretOffsetFieldY = TURRET_TX * sin + TURRET_TY * cos;
 
     // Cross product (omega x r) to find the tangential velocity of the turret in the field frame
-    double tangential_vx_field = -turretOffsetFieldY * omega_at_launch;
-    double tangential_vy_field = turretOffsetFieldX * omega_at_launch;
+    double tangential_vx_field = -turretOffsetFieldY * total_omega;
+    double tangential_vy_field = turretOffsetFieldX * total_omega;
 
     // Combine robot translational velocity with turret tangential velocity
     double turretVelocityX = predicted_vx_field + tangential_vx_field;
