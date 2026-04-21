@@ -20,6 +20,7 @@ def getProjectBooleanProperty(String name, boolean defaultValue = false) {
 }
 
 def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
+def HIGH_FIDELITY_VISION = getProjectBooleanProperty('highFidelityVision')
 
 // Toggleable profiling/debugging options. Enable by passing -Pprofiling=true to Gradle.
 def profilingEnabled = getProjectBooleanProperty('profiling', false)
@@ -151,6 +152,7 @@ tasks.withType(JavaExec).configureEach {
                 "-XX:StartFlightRecording=filename=${gcLogDir}/sim-recording.jfr,settings=profile,dumponexit=true"
             ]
         }
+        systemProperty 'highFidelityVision', HIGH_FIDELITY_VISION
     }
 }
 
