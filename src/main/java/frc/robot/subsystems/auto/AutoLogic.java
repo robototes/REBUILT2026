@@ -121,6 +121,7 @@ public class AutoLogic {
             new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
             new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
             new AutoPath("LT-Neutral", "LT-Neutral"),
+            new AutoPath("LT-Neutral-Climb", "LT-Neutral-Climb"),
             new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
             new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
             new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
