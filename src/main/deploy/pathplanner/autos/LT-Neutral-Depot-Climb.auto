@@ -55,22 +55,9 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "LT-DepotFull"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "SOTM"
-                }
-              }
-            ]
+            "pathName": "LT-DepotFull"
           }
         },
         {
@@ -86,22 +73,9 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Depot-Center-Climb"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "SOTM"
-                }
-              }
-            ]
+            "pathName": "Depot-Center-Climb"
           }
         },
         {

@@ -55,22 +55,9 @@
           }
         },
         {
-          "type": "parallel",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "RT-Climb"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "launch"
-                }
-              }
-            ]
+            "pathName": "RT-Climb"
           }
         },
         {
