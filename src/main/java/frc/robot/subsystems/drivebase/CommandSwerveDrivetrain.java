@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.KinematicFilter;
+import frc.robot.util.KinematicFilterInfused;
 import java.util.function.Supplier;
 
 /**
@@ -83,8 +84,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   // Pigeon Status Signals
   private StatusSignal<LinearAcceleration> ss_XAccel;
   private StatusSignal<LinearAcceleration> ss_YAccel;
-  private StatusSignal<AngularVelocity> ss_Alpha;
+  private StatusSignal<AngularVelocity> ss_Omega;
+
+  private KinematicFilterInfused filteredVX =
+      new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
+  private KinematicFilterInfused filteredVY =
+      new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
   private KinematicFilter filteredAlpha = new KinematicFilter(0.01, 0.2, 0.001, 0.02);
+
+  private final double nominalDt = 0.02;
   private final Pigeon2 pigeon;
   private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private double lastPeriodicTime = 0;
@@ -213,24 +221,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   private void initFilteredAccelPublishers() {
-    try {
-      ss_XAccel = pigeon.getAccelerationX();
-      ss_YAccel = pigeon.getAccelerationY();
-      ss_Alpha = pigeon.getAngularVelocityZWorld();
+    ss_XAccel = pigeon.getAccelerationX();
+    ss_YAccel = pigeon.getAccelerationY();
+    ss_Omega = pigeon.getAngularVelocityZWorld();
 
-      var nt = NetworkTableInstance.getDefault();
-      pub_XAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
-      pub_YAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelY").publish();
-      pub_Alpha = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
-      // initialize with zeros
-      pub_XAccel.set(0.0);
-      pub_YAccel.set(0.0);
-      pub_Alpha.set(0.0);
-    } catch (Exception t) {
-      pub_XAccel = null;
-      pub_YAccel = null;
-      pub_Alpha = null;
-    }
+    var nt = NetworkTableInstance.getDefault();
+    pub_XAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
+    pub_YAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelY").publish();
+    pub_Alpha = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
+    // initialize with zeros
+    pub_XAccel.set(0.0);
+    pub_YAccel.set(0.0);
+    pub_Alpha.set(0.0);
   }
 
   /**
@@ -288,37 +290,41 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
     clampPoseToField();
 
+    double now = Timer.getFPGATimestamp();
+    double dt = (lastPeriodicTime > 0) ? (now - lastPeriodicTime) : nominalDt;
+    lastPeriodicTime = now;
+
+    StatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
+
+    ChassisSpeeds robotSpeeds = getState().Speeds; // robot-relative
+
     if (RobotBase.isSimulation()) {
-      double now = Timer.getFPGATimestamp();
-      double dt = now - lastPeriodicTime;
-      lastPeriodicTime = now;
-      ChassisSpeeds current = getState().Speeds;
       if (dt > 0) {
-        simAccelX = (current.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond) / dt;
-        simAccelY = (current.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond) / dt;
-        pub_XAccel.set(simAccelX);
-        pub_YAccel.set(simAccelY);
+        simAccelX = (robotSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond) / dt;
+        simAccelY = (robotSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond) / dt;
       }
-      lastSpeeds = current;
+      lastSpeeds = robotSpeeds;
     }
-    StatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Alpha);
-    filteredAlpha.update(ss_Alpha.getValue().in(RadiansPerSecond));
+
+    double currentOmega = ss_Omega.getValue().in(RadiansPerSecond);
+
+    double rawAX =
+        RobotBase.isSimulation() ? simAccelX : ss_XAccel.getValue().in(MetersPerSecondPerSecond);
+    double rawAY =
+        RobotBase.isSimulation() ? simAccelY : ss_YAccel.getValue().in(MetersPerSecondPerSecond);
+
+    filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
+    filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
+    filteredAlpha.update(currentOmega, dt);
   }
 
   public Translation2d getAccel() {
-    Rotation2d currentRotation = pigeon.getRotation2d();
-
-    if (RobotBase.isSimulation()) {
-      return new Translation2d(simAccelX, simAccelY).rotateBy(currentRotation);
-    }
-    double robotX = ss_XAccel.getValue().in(MetersPerSecondPerSecond);
-    double robotY = ss_YAccel.getValue().in(MetersPerSecondPerSecond);
-
-    Translation2d fieldRelativeAccel = new Translation2d(robotX, robotY).rotateBy(currentRotation);
-    pub_XAccel.set(fieldRelativeAccel.getX());
-    pub_YAccel.set(fieldRelativeAccel.getY());
-
-    return fieldRelativeAccel;
+    // Rotate robot-relative filtered acceleration into the field frame.
+    // Using pose rotation (not raw pigeon) keeps this consistent with
+    // ChassisSpeeds.fromRobotRelative
+    // in LaunchCalculator, which also uses currentPose.getRotation().
+    Rotation2d poseRotation = getState().Pose.getRotation();
+    return new Translation2d(filteredVX.getAccel(), filteredVY.getAccel()).rotateBy(poseRotation);
   }
 
   public double getRobotRelativeAcceleration() {
