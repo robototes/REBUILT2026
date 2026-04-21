@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -47,6 +48,15 @@ public class VisionSubsystem extends SubsystemBase {
   private static NtTunableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
   private static NtTunableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
   private static NtTunableDouble P_XY = new NtTunableDouble("/vision/P_XY", 1.4);
+
+  // MT1 penalty multiplier for the full 6DOF solve bleeding rotation into translation.
+  // 1.3 is a reasonable starting point — increase if MT1 is overconfident vs MT2.
+  private static NtTunableDouble MT1_ROTATION_PENALTY =
+      new NtTunableDouble("/vision/mt1RotationPenalty", 1.3);
+
+  // Minimum angular baseline (radians) below which we treat the geometry as degenerate.
+  // Prevents division explosion for nearly-collinear tags or single-tag observations.
+  private static final double MIN_ANGULAR_BASELINE = 0.05;
 
   // How much to reduce std devs when defense slip is detected.
   // <1.0 = trust vision more (0.5 = half the std dev = 4x the filter weight).
@@ -94,6 +104,10 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double RESET_MAX_AMBIGUITY = 0.15;
     private static final int RESET_MIN_TAGS = 2;
 
+    // Shared cooldown between all translation resets (off-field and defense).
+    // Prevents thrashing when vision and odometry disagree rapidly.
+    private static final double RESET_COOLDOWN = 0.5; // seconds
+
     // DEFENSE_SPIN_OMEGA: high rotational speed with low translation suggests
     // being spun by an opponent rather than self-powered turning.
     // DEFENSE_SPIN_MAX_TRANSLATION: upper bound on translation speed to
@@ -106,6 +120,15 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double DEFENSE_SPIN_MAX_TRANSLATION = 1.0; // m/s
     private static final double DEFENSE_DIVERGE_BASE = 0.30; // meters
     private static final double DEFENSE_DRIFT_RATE = 0.02; // meters per second
+
+    // Defense hard-reset thresholds. Stricter than the normal reset bar because
+    // a hard snap to a bad vision reading is worse than drifted odometry.
+    // Only fires when odometry disagrees with high-confidence vision by more
+    // than DEFENSE_RESET_DISAGREEMENT meters while underDefense is true.
+    private static final double DEFENSE_RESET_DISAGREEMENT = 0.4; // meters
+    private static final double DEFENSE_RESET_MAX_AMBIGUITY = 0.15;
+    private static final int DEFENSE_RESET_MIN_TAGS = 2;
+    private static final double DEFENSE_RESET_MAX_SPREAD = 0.10; // meters RMS
   }
 
   public static final Transform3d COMP_BOT_LEFT_CAMERA =
@@ -217,11 +240,8 @@ public class VisionSubsystem extends SubsystemBase {
         ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
     processCamera(
         BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking, underDefense);
-    // uncomment if when using intake pose
-    // if (intakePivot.isAtTarget(2, IntakePivot.DEPLOYED_POS)) {
     processCamera(
         CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking, underDefense);
-    // }
     updateCameraView(visionPoseTracking);
   }
 
@@ -331,7 +351,12 @@ public class VisionSubsystem extends SubsystemBase {
     } else {
       stdDevs =
           getEstimationStdDevsLimelightMT1(
-              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, camera.getName());
+              avgTagDist,
+              estimate.tagCount,
+              maxAmbiguity,
+              rawFiducials,
+              camera.getName(),
+              visionPoseTracking.drivePose3d); // pass odometry pose for angular baseline
     }
 
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
@@ -475,6 +500,63 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   /**
+   * Computes the maximum pairwise angular separation (radians) between any two visible tags, as
+   * seen from the robot's current odometry pose in the field frame.
+   *
+   * <p>This is the geometric quantity that actually constrains the MT1 PnP solve. Two tags close
+   * together in field space subtend a small angle regardless of distance — the solver cannot
+   * distinguish X from Y error well in that configuration (ill-conditioned). Two tags with a wide
+   * angular baseline give the solver independent depth and lateral constraints.
+   *
+   * <p>We use max pairwise separation rather than RMS because the best-conditioned pair dominates
+   * solver quality — one well-separated pair makes the whole solve tractable.
+   *
+   * <p>Falls back gracefully: returns MIN_ANGULAR_BASELINE for single-tag or collinear observations
+   * rather than zero, so the std dev formula doesn't blow up.
+   *
+   * @param fiducials visible tags from Limelight
+   * @param robotPose current odometry pose (used as proxy for robot position)
+   * @param layout field layout for tag 3D positions
+   * @return maximum angular baseline in radians, floored at MIN_ANGULAR_BASELINE
+   */
+  private double computeAngularBaseline(
+      RawFiducial[] fiducials, Pose3d robotPose, AprilTagFieldLayout layout) {
+    if (fiducials == null || fiducials.length < 2 || layout == null) {
+      return MIN_ANGULAR_BASELINE;
+    }
+
+    double maxAngularSep = 0.0;
+    for (int i = 0; i < fiducials.length; i++) {
+      var tagI = layout.getTagPose(fiducials[i].id);
+      if (tagI.isEmpty()) continue;
+
+      for (int j = i + 1; j < fiducials.length; j++) {
+        var tagJ = layout.getTagPose(fiducials[j].id);
+        if (tagJ.isEmpty()) continue;
+
+        // Vectors from robot to each tag in the field frame (XY plane only —
+        // tags are close to floor height relative to field distances, so Z is minor).
+        double dix = tagI.get().getX() - robotPose.getX();
+        double diy = tagI.get().getY() - robotPose.getY();
+        double djx = tagJ.get().getX() - robotPose.getX();
+        double djy = tagJ.get().getY() - robotPose.getY();
+
+        double magI = Math.hypot(dix, diy);
+        double magJ = Math.hypot(djx, djy);
+        if (magI < 0.01 || magJ < 0.01) continue;
+
+        // Dot product gives cos(angle between vectors).
+        double cosTheta = (dix * djx + diy * djy) / (magI * magJ);
+        double angularSep = Math.acos(MathUtil.clamp(cosTheta, -1.0, 1.0));
+        maxAngularSep = Math.max(maxAngularSep, angularSep);
+      }
+    }
+
+    SmartDashboard.putNumber("/vision/angularBaselineRad", maxAngularSep);
+    return Math.max(maxAngularSep, MIN_ANGULAR_BASELINE);
+  }
+
+  /**
    * Resets translation only when odometry has walked off the field (unambiguous divergence) and
    * vision simultaneously passes a high-confidence bar. Heading is preserved — resetTranslation
    * avoids fighting the gyro.
@@ -499,7 +581,8 @@ public class VisionSubsystem extends SubsystemBase {
       int numOfTags,
       double maxAmbiguity,
       RawFiducial[] rawFiducials,
-      String cameraName) {
+      String cameraName,
+      Pose3d robotPose) {
 
     if (maxAmbiguity >= VisionConstants.MAX_AMBIGUITY) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
@@ -509,14 +592,23 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     double ambiguityInflation = 1.0 / Math.pow(1.0 - maxAmbiguity, 2.0);
-    double harmonicSum = computeHarmonicSum(rawFiducials);
-    if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
+    // Angular baseline replaces the harmonic distance sum. For a single tag there
+    // is no baseline to compute, so the floor (MIN_ANGULAR_BASELINE) applies and
+    // the formula degrades gracefully to a pure distance model.
+    double angularBaseline =
+        computeAngularBaseline(rawFiducials, robotPose, AllianceUtils.FIELD_LAYOUT);
+
+    // dist / angularBaseline is the PnP condition number proxy.
+    // A_XY_MT1 is the pixel noise scale factor (tunable per camera quality).
+    // MT1_ROTATION_PENALTY accounts for rotation uncertainty bleeding into translation
+    // in the full 6DOF solve (absent in MT2 since heading comes from the gyro).
     double xy =
         A_XY_MT1.get()
-            * Math.pow(avgTagDist, P_XY.get())
-            / Math.sqrt(harmonicSum)
-            * ambiguityInflation;
+            * (avgTagDist / angularBaseline)
+            * ambiguityInflation
+            * MT1_ROTATION_PENALTY.get();
+
     double theta =
         (numOfTags == 1)
             ? Double.MAX_VALUE
@@ -527,7 +619,14 @@ public class VisionSubsystem extends SubsystemBase {
     return VecBuilder.fill(xy, xy, theta);
   }
 
-  // Std dev computation — MT2
+  /**
+   * Std dev computation for MT2 (gyro-locked heading, translation-only solve).
+   *
+   * <p>Unchanged from original — the harmonic sum correctly encodes both tag count and per-tag
+   * distance, and the empirically tuned P_XY exponent was validated on real hardware. Angular
+   * baseline is not used here because the heading is pinned by the gyro, removing the rotation
+   * dimension from the solve.
+   */
   private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(
       double avgTagDist,
       int numOfTags,
