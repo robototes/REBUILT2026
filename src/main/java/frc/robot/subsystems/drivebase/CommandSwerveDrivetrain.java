@@ -323,7 +323,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   public double getRobotRelativeAcceleration() {
     double alpha = filteredAlpha.getAccel();
-    pub_Alpha.set(alpha);
+    pub_Alpha.set(Units.radiansToDegrees(alpha));
     return alpha;
   }
 
