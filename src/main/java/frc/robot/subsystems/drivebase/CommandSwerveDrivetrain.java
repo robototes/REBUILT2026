@@ -93,7 +93,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   private DoublePublisher pub_XAccel;
   private DoublePublisher pub_YAccel;
-  private DoublePublisher filteredAccelOmegaPub;
+  private DoublePublisher pub_Alpha;
 
   /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
   private final SysIdRoutine m_sysIdRoutineSteer =
@@ -221,16 +221,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       var nt = NetworkTableInstance.getDefault();
       pub_XAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
       pub_YAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelY").publish();
-      filteredAccelOmegaPub =
-          nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
+      pub_Alpha = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
       // initialize with zeros
       pub_XAccel.set(0.0);
       pub_YAccel.set(0.0);
-      filteredAccelOmegaPub.set(0.0);
+      pub_Alpha.set(0.0);
     } catch (Exception t) {
       pub_XAccel = null;
       pub_YAccel = null;
-      filteredAccelOmegaPub = null;
+      pub_Alpha = null;
     }
   }
 
@@ -308,6 +307,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   public Translation2d getAccel() {
     Rotation2d currentRotation = pigeon.getRotation2d();
+
     if (RobotBase.isSimulation()) {
       return new Translation2d(simAccelX, simAccelY).rotateBy(currentRotation);
     }
@@ -322,7 +322,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   public double getRobotRelativeAcceleration() {
-    return filteredAlpha.getAccel();
+    double alpha = filteredAlpha.getAccel();
+    pub_Alpha.set(alpha);
+    return alpha;
   }
 
   private void startSimThread() {
