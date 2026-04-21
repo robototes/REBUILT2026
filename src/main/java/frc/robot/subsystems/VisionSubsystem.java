@@ -1,7 +1,11 @@
 package frc.robot.subsystems;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -43,6 +47,8 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightcOnline = false;
 
   private Matrix<N3, N1> stdDevs = null;
+  private final int CLIMB_AVERAGE_WINDOW = 10;
+  private final List<Pose3d> climbPoseWindow = new ArrayList<>();
 
   private static NtTunableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
   private static NtTunableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
@@ -633,6 +639,28 @@ public class VisionSubsystem extends SubsystemBase {
       compBotRightCameraViewEntry.set(
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_RIGHT_CAMERA));
     }
+  }
+
+  public void addClimbPoseReading(Pose3d pose) {
+    climbPoseWindow.add(pose);
+    if (climbPoseWindow.size() > CLIMB_AVERAGE_WINDOW) {
+      climbPoseWindow.remove(0);
+    }
+  }
+
+  public Pose3d getAveragedClimbPose() {
+    if (climbPoseWindow.isEmpty()) return null;
+    double x = 0, y = 0, z = 0, roll = 0, pitch = 0, yaw = 0;
+    for (Pose3d p : climbPoseWindow) {
+      x += p.getX();
+      y += p.getY();
+      z += p.getZ();
+      roll += p.getRotation().getX();
+      pitch += p.getRotation().getY();
+      yaw += p.getRotation().getZ();
+    }
+    int n = climbPoseWindow.size();
+    return new Pose3d(x / n, y / n, z / n, new Rotation3d(roll / n, pitch / n, yaw / n));
   }
 
   public boolean isLimeLightOnline(String name) {
