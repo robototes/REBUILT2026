@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
@@ -93,21 +94,20 @@ public class AutoLogic {
   // We always need to register commands BEFORE we initialize paths.  This is
   // because paths may reference commands or triggers that need to be registered first.
   // This helper-method insures caller initializes these in the correct order.
-  public static void initCommandsAndPaths(boolean testMode) {
-    if (!testMode) {
-      registerCommands(true);
+  public static void initCommandsAndPaths(Optional<Boolean> testMode) {
+    if (testMode == null || !testMode.orElse(false)) {
+      registerCommands();
     }
 
     initPaths();
   }
 
   public static void initCommandsAndPaths() {
-    initCommandsAndPaths(false);
+    initCommandsAndPaths(Optional.of(true));
   }
 
   private static void initPaths() {
     List<AutoPath> physicalRebuiltPaths;
-    List<AutoPath> simRebuiltPaths;
 
     if (pathsInitialized) {
       return;
@@ -146,7 +146,7 @@ public class AutoLogic {
   private static void requirePathsInitialized() {
     if (!pathsInitialized) {
       throw new IllegalStateException(
-          "Auto paths are not initialized. Call AutoLogic.initPaths().");
+          "Auto paths are not initialized. Call AutoLogic.initCommandsAndPaths().");
     }
   }
 
@@ -247,10 +247,8 @@ public class AutoLogic {
     return AutoBuilder.followPath(path);
   }
 
-  private static void registerCommands(boolean enabled) {
-
-    if (enabled) {
-
+  private static void registerCommands() {
+    if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
       if (Robot.isSimulation()) {
         NamedCommands.registerCommand(
             "launch", launcherSimCommand().andThen(Commands.print("launch")));
@@ -258,21 +256,11 @@ public class AutoLogic {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
       }
-
-      NamedCommands.registerCommand("intake", intakeCommand());
-
-      NamedCommands.registerCommand("climb", climbCommand());
-
-    } else {
-
-      NamedCommands.registerCommand("launch", empty());
-      NamedCommands.registerCommand("intake", empty());
-      NamedCommands.registerCommand("climb", empty());
     }
-  }
-
-  public static final Command empty() {
-    return Commands.none().withName("Empty Command");
+    if (s.indexerSubsystem != null) {
+      NamedCommands.registerCommand("intake", intakeCommand());
+    }
+    NamedCommands.registerCommand("climb", climbCommand());
   }
 
   public static Command launcherCommand() {

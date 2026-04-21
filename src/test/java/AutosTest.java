@@ -23,7 +23,7 @@ class AutosTest {
 
   @Test
   void validateFileName() throws IOException, ParseException {
-    AutoLogic.initCommandsAndPaths(true);
+    AutoLogic.initCommandsAndPaths();
 
     Dictionary<String, Boolean> pathDictionary = new Hashtable<>();
     for (AutoPath path : AutoLogic.getAutos()) { // Every auto in the auto chooser
@@ -33,7 +33,7 @@ class AutosTest {
 
     // We expect >= 1 paths, otherwise its possible we forgot to call
     // AutoLogic::initCommandsAndPaths().
-    if (pathDictionary.size() == 0) {
+    if (pathDictionary.isEmpty()) {
       throw new IllegalStateException(
           "No auto paths found. Did you forget to call AutoLogic::initCommandsAndPaths()?");
     }
