@@ -45,13 +45,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "PreDepot-BackFromIntakeLeft"
+            "pathName": "BackFromIntakeLeft"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "PreDepot-Back-LeftTrench"
+            "pathName": "preclimb-Back-LeftTrench"
           }
         },
         {
@@ -75,7 +75,7 @@
         {
           "type": "named",
           "data": {
-            "name": "SOTM"
+            "name": "launch"
           }
         }
       ]
