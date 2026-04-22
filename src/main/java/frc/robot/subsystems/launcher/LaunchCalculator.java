@@ -167,6 +167,11 @@ public class LaunchCalculator {
                   + (1 - ACCEL_FILTER_ALPHA) * rawAY,
               ACCEL_FILTER_ALPHA * filteredAcceleration.omegaRadiansPerSecond
                   + (1 - ACCEL_FILTER_ALPHA) * rawAOmega);
+    } else {
+      // speedsDt outside valid range means the system was disabled, restarted, or had a
+      // significant loop overrun. Reset to zero so stale acceleration from before the gap
+      // doesn't corrupt the phase delay prediction on the first active cycle.
+      filteredAcceleration = new ChassisSpeeds(0, 0, 0);
     }
 
     double filteredAccelMagnitude =
