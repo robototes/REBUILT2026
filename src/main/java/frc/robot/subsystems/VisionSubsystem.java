@@ -182,14 +182,16 @@ public class VisionSubsystem extends SubsystemBase {
           .publish();
 
   private double lastTimestampSeconds = 0;
+  private boolean visionReset = false;
   private Pose2d lastFieldPose = null;
   private CommandSwerveDrivetrain drivetrain;
 
-  // Shared cooldown timestamp for all translation resets (off-field and defense).
+  // Shared cooldown timestamps for all translation resets (off-field and defense).
   // Using a single timestamp prevents multiple cameras from both firing a reset
   // in the same loop cycle, and closes the latent bug where maybeResetToVision
   // could fire on every loop iteration when conditions were persistently met.
-  private double lastResetTimestamp = 0;
+  private double lastResetTimestampMT1 = 0;
+  private double lastResetTimestampMT2 = 0;
 
   private record VisionPoseTracking(
       SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
@@ -242,11 +244,26 @@ public class VisionSubsystem extends SubsystemBase {
     SmartDashboard.putBoolean("/vision/underDefense", underDefense);
 
     processCamera(
-        ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
+        ACamera,
+        limelightaOnline,
+        rawFieldPose3dEntryA,
+        visionPoseTracking,
+        underDefense,
+        COMP_BOT_LEFT_CAMERA);
     processCamera(
-        BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking, underDefense);
+        BCamera,
+        limelightbOnline,
+        rawFieldPose3dEntryB,
+        visionPoseTracking,
+        underDefense,
+        COMP_BOT_FRONT_CAMERA);
     processCamera(
-        CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking, underDefense);
+        CCamera,
+        limelightcOnline,
+        rawFieldPose3dEntryC,
+        visionPoseTracking,
+        underDefense,
+        COMP_BOT_RIGHT_CAMERA);
     updateCameraView(visionPoseTracking);
   }
 
@@ -255,7 +272,8 @@ public class VisionSubsystem extends SubsystemBase {
       boolean cameraOnline,
       StructPublisher<Pose3d> rawFieldPose3dEntry,
       VisionPoseTracking visionPoseTracking,
-      boolean underDefense) {
+      boolean underDefense,
+      Transform3d cameraTransform3d) {
     if (!cameraOnline) return;
     RawFiducial[] rawFiducials = camera.getRawFiducials();
     if (rawFiducials == null) return;
@@ -263,7 +281,6 @@ public class VisionSubsystem extends SubsystemBase {
     double maxAmbiguity = getMaxAmbiguity(rawFiducials);
     BetterPoseEstimate mt1Estimate = camera.getBetterPoseEstimate();
     BetterPoseEstimate mt2Estimate = camera.getPoseEstimateMegatag2();
-
     processLimelight(
         mt1Estimate,
         rawFieldPose3dEntry,
@@ -271,7 +288,8 @@ public class VisionSubsystem extends SubsystemBase {
         visionPoseTracking,
         rawFiducials,
         camera,
-        underDefense);
+        underDefense,
+        cameraTransform3d);
     processLimelight(
         mt2Estimate,
         rawFieldPose3dEntry,
@@ -279,7 +297,8 @@ public class VisionSubsystem extends SubsystemBase {
         visionPoseTracking,
         rawFiducials,
         camera,
-        underDefense);
+        underDefense,
+        cameraTransform3d);
   }
 
   private void processLimelight(
@@ -289,9 +308,11 @@ public class VisionSubsystem extends SubsystemBase {
       VisionPoseTracking visionPoseTracking,
       RawFiducial[] rawFiducials,
       LLCamera camera,
-      boolean underDefense) {
+      boolean underDefense,
+      Transform3d cameraTransform3d) {
 
     if (estimate == null || estimate.tagCount <= 0) return;
+    visionReset = false;
 
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
     if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
@@ -361,7 +382,8 @@ public class VisionSubsystem extends SubsystemBase {
               maxAmbiguity,
               rawFiducials,
               camera.getName(),
-              visionPoseTracking.drivePose3d); // pass odometry pose for angular baseline
+              visionPoseTracking.drivePose3d,
+              cameraTransform3d); // pass odometry pose for angular baseline
     }
 
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
@@ -387,7 +409,13 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     maybeResetToVision(
-        visionPose2d, maxAmbiguity, estimate.tagCount, spread, camera.getName(), underDefense);
+        visionPose2d,
+        maxAmbiguity,
+        estimate.tagCount,
+        spread,
+        camera.getName(),
+        underDefense,
+        estimate.isMegaTag2);
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
@@ -408,7 +436,9 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
-    publishDiagnostics(estimate, visionPose2d, camera, "none");
+    if (!visionReset) {
+      publishDiagnostics(estimate, visionPose2d, camera, "none");
+    }
   }
 
   private boolean isUnderDefense(VisionPoseTracking visionPoseTracking) {
@@ -526,7 +556,11 @@ public class VisionSubsystem extends SubsystemBase {
    * @return maximum angular baseline in radians, floored at MIN_ANGULAR_BASELINE
    */
   private double computeAngularBaseline(
-      RawFiducial[] fiducials, Pose3d robotPose, AprilTagFieldLayout layout, String cameraName) {
+      RawFiducial[] fiducials,
+      Pose3d robotPose,
+      AprilTagFieldLayout layout,
+      String cameraName,
+      Transform3d cameraTransform3d) {
     if (fiducials == null || fiducials.length < 2 || layout == null) {
       return MIN_ANGULAR_BASELINE;
     }
@@ -545,15 +579,16 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     double maxAngularSep = 0.0;
+    Pose3d cameraPose = robotPose.transformBy(cameraTransform3d);
     for (int i = 0; i < validCount; i++) {
-      double dix = validPoses[i].getX() - robotPose.getX();
-      double diy = validPoses[i].getY() - robotPose.getY();
+      double dix = validPoses[i].getX() - cameraPose.getX();
+      double diy = validPoses[i].getY() - cameraPose.getY();
       double magI = Math.hypot(dix, diy);
       if (magI < 0.01) continue;
 
       for (int j = i + 1; j < validCount; j++) {
-        double djx = validPoses[j].getX() - robotPose.getX();
-        double djy = validPoses[j].getY() - robotPose.getY();
+        double djx = validPoses[j].getX() - cameraPose.getX();
+        double djy = validPoses[j].getY() - cameraPose.getY();
         double magJ = Math.hypot(djx, djy);
         if (magJ < 0.01) continue;
 
@@ -585,10 +620,12 @@ public class VisionSubsystem extends SubsystemBase {
       int tagCount,
       double spread,
       String cameraName,
-      boolean underDefense) {
+      boolean underDefense,
+      boolean isMegaTag2) {
 
     double now = Timer.getFPGATimestamp();
-    if (now - lastResetTimestamp < VisionConstants.RESET_COOLDOWN) return;
+    if (now - lastResetTimestampMT2 < VisionConstants.RESET_COOLDOWN && isMegaTag2
+        || now - lastResetTimestampMT1 < VisionConstants.RESET_COOLDOWN) return;
 
     Pose2d odomPose = drivetrain.getState().Pose;
     boolean visionTrusted =
@@ -599,7 +636,12 @@ public class VisionSubsystem extends SubsystemBase {
     // (a) Original behavior — odometry walked off field
     if (!isPoseOnField(odomPose) && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
-      lastResetTimestamp = now;
+      if (isMegaTag2) {
+        lastResetTimestampMT2 = now;
+      } else {
+        lastResetTimestampMT1 = now;
+      }
+      visionReset = true;
       SmartDashboard.putString(
           "/vision/" + cameraName + "_rejectReason", "odometry-reset-offfield");
       return;
@@ -619,11 +661,16 @@ public class VisionSubsystem extends SubsystemBase {
         double disagreement = odomPose.getTranslation().getDistance(visionPose.getTranslation());
         if (disagreement > VisionConstants.DEFENSE_RESET_DISAGREEMENT) {
           drivetrain.resetTranslation(visionPose.getTranslation());
-          lastResetTimestamp = now;
+          if (isMegaTag2) {
+            lastResetTimestampMT2 = now;
+          } else {
+            lastResetTimestampMT1 = now;
+          }
           SmartDashboard.putString(
               "/vision/" + cameraName + "_rejectReason", "odometry-reset-defense");
           SmartDashboard.putNumber(
               "/vision/" + cameraName + "_defenseResetDisagreement", disagreement);
+          visionReset = true;
         }
       }
     }
@@ -636,7 +683,8 @@ public class VisionSubsystem extends SubsystemBase {
       double maxAmbiguity,
       RawFiducial[] rawFiducials,
       String cameraName,
-      Pose3d robotPose) {
+      Pose3d robotPose,
+      Transform3d cameraTransform3d) {
 
     if (maxAmbiguity >= VisionConstants.MAX_AMBIGUITY) {
       return VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
@@ -651,7 +699,8 @@ public class VisionSubsystem extends SubsystemBase {
     // is no baseline to compute, so the floor (MIN_ANGULAR_BASELINE) applies and
     // the formula degrades gracefully to a pure distance model.
     double angularBaseline =
-        computeAngularBaseline(rawFiducials, robotPose, AllianceUtils.FIELD_LAYOUT, cameraName);
+        computeAngularBaseline(
+            rawFiducials, robotPose, AllianceUtils.FIELD_LAYOUT, cameraName, cameraTransform3d);
 
     // dist / angularBaseline is the PnP condition number proxy.
     // A_XY_MT1 is the pixel noise scale factor (tunable per camera quality).
