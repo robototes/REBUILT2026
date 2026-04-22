@@ -358,6 +358,8 @@ public class Controls {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
       ledsMode = LEDMode.INTAKE;
+    } else if (driverController.leftBumper().getAsBoolean()) {
+      intakeMode = IntakeMode.EXTAKE;
     } else if ((driverController.rightTrigger().getAsBoolean() || readyToShoot.getAsBoolean())
         && s.launcherSubsystem.isAtTarget()) {
       intakeMode = IntakeMode.LAUNCH;
