@@ -82,7 +82,7 @@ public class LaunchCalculator {
   // this smooths the raw derivative before it enters the Newton-Raphson loop.
   // 0 = no filtering, 1 = never updates. Tune up if jitter persists, down if
   // acceleration response feels sluggish during fast direction changes.
-  private static final double ACCEL_FILTER_ALPHA = 1;
+  private static final double ACCEL_FILTER_ALPHA = 0.9;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
