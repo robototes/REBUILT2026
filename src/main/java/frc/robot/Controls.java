@@ -362,6 +362,8 @@ public class Controls {
     if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
       ledsMode = LEDMode.INTAKE;
+    } else if (driverController.leftBumper().getAsBoolean()) {
+      intakeMode = IntakeMode.EXTAKE;
     } else if ((driverController.rightTrigger().getAsBoolean() || readyToShoot.getAsBoolean())
         && s.launcherSubsystem.isAtTarget()) {
       intakeMode = IntakeMode.LAUNCH;
@@ -473,7 +475,7 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
-    // turretAtZero = new Trigger( () -> s.turretSubsystem.atLimitSwitch());
+    turretAtZero = new Trigger(() -> s.turretSubsystem.atLimitSwitch());
 
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
