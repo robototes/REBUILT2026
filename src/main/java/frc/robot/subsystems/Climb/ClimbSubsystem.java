@@ -72,7 +72,7 @@ public class ClimbSubsystem extends SubsystemBase {
   // -------- STATE -------- //
 
   private boolean isZeroed = false;
-  private volatile ClimbState climbState = ClimbState.Detached;
+  private ClimbState climbState = ClimbState.Detached;
   private double targetLevel = 0;
 
   // -------- MAPS -------- //
@@ -135,7 +135,7 @@ public class ClimbSubsystem extends SubsystemBase {
   private double lastYAccel = 0;
 
   // -- Jerk cache -- //
-  private volatile double jerkMagnitude;
+  private double jerkMagnitude;
 
   // -------- DEBOUNCER -------- //
 
@@ -262,25 +262,24 @@ public class ClimbSubsystem extends SubsystemBase {
     double filteredX = xLinearFilter.calculate(ssXAccel.getValue().in(Gs));
     double filteredY = yLinearFilter.calculate(ssYAccel.getValue().in(Gs));
 
-    double jerkMagnitude = 0;
+    double computedJerk = 0;
 
     if (lastTime != 0 && currentDt >= MIN_JERK_DT) {
       double jerkX = (filteredX - lastXAccel) / currentDt;
       double jerkY = (filteredY - lastYAccel) / currentDt;
 
-      jerkMagnitude = Math.sqrt(jerkX * jerkX + jerkY * jerkY);
+      computedJerk = Math.sqrt(jerkX * jerkX + jerkY * jerkY);
     }
 
     lastXAccel = filteredX;
     lastYAccel = filteredY;
     lastTime = currentTime;
 
-    ntIMUJerk.set(jerkMagnitude);
-    this.jerkMagnitude = jerkMagnitude;
+    ntIMUJerk.set(computedJerk);
+    this.jerkMagnitude = computedJerk;
   }
 
   public boolean passedRollerTest() {
-    ssCurrent.refresh();
     boolean aboveThreshold = ssCurrent.getValue().in(Amp) > MIN_ATTACHED_AMPS;
     return hasMaintainedCurrent.calculate(aboveThreshold);
   }
@@ -363,7 +362,7 @@ public class ClimbSubsystem extends SubsystemBase {
                         setDetach();
                       });
             },
-            Set.of(this, driveTrain))
+            Set.of(this, driveTrain)).andThen(Commands.runOnce(() -> isZeroed = false))
         .onlyIf(() -> climbState == ClimbState.Attached)
         .withName("detach climb command");
   }
