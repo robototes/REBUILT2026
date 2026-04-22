@@ -148,6 +148,10 @@ public class LaunchCalculator {
     double currentTurretOmega = turretSubsystem.getOmega();
     double timestamp = driveState.Timestamp;
 
+    if (cachedParams != null && timestamp == prevTimestamp) {
+      return cachedParams;
+    }
+
     // Compute filtered acceleration for cache-bust check.
     // Uses filteredAcceleration (not raw delta) to avoid noise-driven unnecessary cache misses.
     // Includes angular acceleration so aggressive rotation also busts the cache.
