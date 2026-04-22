@@ -60,7 +60,7 @@ public class IntakeSubsystem extends SubsystemBase {
       deployPivot();
     }
     runRollers(
-        () -> Math.hypot(speeds.get().vxMetersPerSecond, speeds.get().vyMetersPerSecond) * 6 + 40);
+        () -> Math.hypot(speeds.get().vxMetersPerSecond, speeds.get().vyMetersPerSecond) * 6 + 50);
   }
 
   public void extakeIntake() {
