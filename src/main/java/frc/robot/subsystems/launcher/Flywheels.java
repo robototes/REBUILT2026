@@ -3,7 +3,7 @@ package frc.robot.subsystems.launcher;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
+import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 
@@ -42,7 +43,7 @@ public class Flywheels extends SubsystemBase {
   private static final int MAX_APPLY_CONFIG_ATTEMPTS = 5;
   private static final double MAX_APPLY_CONFIG_TIMEOUT = 0.1; // Default is 100 ms
 
-  private VelocityVoltage request = new VelocityVoltage(0).withEnableFOC(true);
+  private VelocityTorqueCurrentFOC request = new VelocityTorqueCurrentFOC(0);
 
   public NtTunableDouble targetVelocity;
   private long lastPositionUpdateTime = 0;
@@ -92,21 +93,21 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // create PID gains
-    config.Slot0.kP = 0.5;
-    config.Slot0.kI = 0.0;
-    config.Slot0.kD = 0.0;
-    config.Slot0.kA = 0.0;
-    config.Slot0.kV = ((6.0 / 46.4) + (10.0 / 79.0)) / 2.0;
-    config.Slot0.kS = 0.3;
-    config.Slot0.kG = 0.0;
+    config.Slot0.kP = RobotType.isAlpha() ? 5 : 10;
+    config.Slot0.kS = 5.0;
+    config.Slot0.kA = 0.5;
 
-    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.Inverted =
+        RobotType.isAlpha()
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
     applyConfig(flywheelOne, config);
 
-    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted =
+        RobotType.isAlpha()
+            ? InvertedValue.CounterClockwise_Positive
+            : InvertedValue.Clockwise_Positive;
     applyConfig(flywheelTwo, config);
-
-    // flywheelTwo.setControl(new Follower(Hardware.FLYWHEEL_ONE_ID, MotorAlignmentValue.Opposed));
   }
 
   private void applyConfig(TalonFX motor, TalonFXConfiguration config) {
@@ -134,9 +135,7 @@ public class Flywheels extends SubsystemBase {
   public Command setVelocityCommand(double rps) {
     return runEnd(
             () -> {
-              request.Velocity = rps;
-              flywheelOne.setControl(request);
-              flywheelTwo.setControl(request);
+              setVelocityRPS(rps);
             },
             () -> {
               flywheelOne.stopMotor();

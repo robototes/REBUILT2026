@@ -61,9 +61,7 @@ public class ClimbSubsystem extends SubsystemBase {
   }
 
   public Command climbCommand() {
-    return deployCommand()
-        .andThen(upCommand())
-        .withName("Climb");
+    return deployCommand().andThen(upCommand()).withName("Climb");
   }
 
   public Command upCommand() {

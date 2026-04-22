@@ -16,9 +16,26 @@ public class IndexerSubsystem extends SubsystemBase {
 
   public Command runIndexer() {
     return Commands.runEnd(
+            () -> {
+              feeder.runVelocity();
+              spindexerSubsystem.runVelocity();
+            },
+            () -> {
+              feeder.stopMotor();
+              spindexerSubsystem.stopMotor();
+            })
+        .withName("Run Indexer");
+  }
+
+  public Command runIndexer(DoubleSupplier flywheelRPS) {
+    return Commands.runEnd(
         () -> {
-          feeder.runVelocity();
-          spindexerSubsystem.runVelocity();
+          // Linear equation to determine the RPS of the feeder and spindexer based on the RPS of
+          // the flywheel to have a smooth handoff
+          double fRPS = flywheelRPS.getAsDouble() * 1.12 + 15;
+          double sRPS = Math.min(fRPS * 1.5, 70);
+          feeder.setVelocity(fRPS);
+          spindexerSubsystem.setVelocity(sRPS);
         },
         () -> {
           feeder.stopMotor();
