@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -676,10 +677,9 @@ public class VisionSubsystem extends SubsystemBase {
   /**
    * Std dev computation for MT2 (gyro-locked heading, translation-only solve).
    *
-   * <p>Unchanged from original — the harmonic sum correctly encodes both tag count and per-tag
-   * distance, and the empirically tuned P_XY exponent was validated on real hardware. Angular
-   * baseline is not used here because the heading is pinned by the gyro, removing the rotation
-   * dimension from the solve.
+   * <p>the harmonic sum correctly encodes both tag count and per-tag distance, and the empirically
+   * tuned P_XY exponent was validated on real hardware. Angular baseline is not used here because
+   * the heading is pinned by the gyro, removing the rotation dimension from the solve.
    */
   private Matrix<N3, N1> getEstimationStdDevsLimelightMT2(
       double avgTagDist,
