@@ -362,7 +362,8 @@ public class ClimbSubsystem extends SubsystemBase {
                         setDetach();
                       });
             },
-            Set.of(this, driveTrain)).andThen(Commands.runOnce(() -> isZeroed = false))
+            Set.of(this, driveTrain))
+        .andThen(Commands.runOnce(() -> isZeroed = false))
         .onlyIf(() -> climbState == ClimbState.Attached)
         .withName("detach climb command");
   }
