@@ -285,8 +285,7 @@ public class LaunchCalculator {
       // Calculated using the standard angular velocity formula (linear velocity / radius). We
       // offset it with the robot's field angular velocity to get the true angular velocity in
       // radians per second
-      feedforwardAngularVelocity =
-          (tangentialVel / trueDistance) - chassisSpeeds.omegaRadiansPerSecond; // RAD/S
+      feedforwardAngularVelocity = (tangentialVel / trueDistance) - predicted_omega_robot; // RAD/S
     }
 
     Rotation2d targetAngleFieldRelative;
