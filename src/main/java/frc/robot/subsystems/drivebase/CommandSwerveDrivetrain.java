@@ -221,6 +221,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   private void initFilteredAccelPublishers() {
+    ss_XAccel.setUpdateFrequency(100);
+    ss_YAccel.setUpdateFrequency(100);
+    ss_Omega.setUpdateFrequency(100);
     ss_XAccel = pigeon.getAccelerationX();
     ss_YAccel = pigeon.getAccelerationY();
     ss_Omega = pigeon.getAngularVelocityZWorld();
