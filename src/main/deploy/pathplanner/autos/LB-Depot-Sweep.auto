@@ -9,6 +9,7 @@
           "data": {
             "commands": [
               {
+
                 "type": "path",
                 "data": {
                   "pathName": "LB-Center-Depot"
