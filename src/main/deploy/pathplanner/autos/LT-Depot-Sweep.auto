@@ -1,0 +1,62 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "LT-Center-Depot"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DepotToLT"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LT-Intake-Short"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Mid-Intake-Left"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Back-LeftTrench-Backwards"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "launch"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "COMP",
+  "choreoAuto": false
+}
