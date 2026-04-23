@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.648716239250467,
-        "y": 7.575439099344598
+        "x": 6.514145982800747,
+        "y": 7.641702558951357
       },
       "isLocked": false,
       "linkedName": "BackToLT"
@@ -20,7 +20,7 @@
         "y": 7.597
       },
       "prevControl": {
-        "x": 3.253586580721064,
+        "x": 3.3,
         "y": 7.597
       },
       "nextControl": null,

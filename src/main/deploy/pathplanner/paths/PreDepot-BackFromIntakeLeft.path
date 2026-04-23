@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 7.248776670267798,
-        "y": 4.679998793563679
+        "x": 7.249242672428477,
+        "y": 4.829998069701887
       },
       "isLocked": false,
       "linkedName": "LeftIntake"
@@ -20,8 +20,8 @@
         "y": 7.465
       },
       "prevControl": {
-        "x": 7.331483011114584,
-        "y": 7.2392393357277465
+        "x": 7.321567521499068,
+        "y": 7.244121801310804
       },
       "nextControl": null,
       "isLocked": false,
