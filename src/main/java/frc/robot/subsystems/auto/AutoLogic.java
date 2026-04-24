@@ -125,7 +125,6 @@ public class AutoLogic {
             new AutoPath("RT-Neutral", "RT-Neutral"),
             new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
             new AutoPath("RT-BLOCK", "RT-BLOCK"),
-                new AutoPath("New Auto", "New Auto"),
             new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
     rebuiltPaths = physicalRebuiltPaths;
@@ -259,9 +258,8 @@ public class AutoLogic {
         NamedCommands.registerCommand("stow", stowCommand());
         NamedCommands.registerCommand(
             "SOTM",
-            flywheelNoEndCommandNoEndCommand();
-            //    .andThen(
-               //     s.launcherSubsystem.rawStowCommand().andThen(Commands.print("SOTM Command"))));
+          launcherNoEndCommand());
+
       }
     }
     if (s.indexerSubsystem != null) {
@@ -298,7 +296,7 @@ public class AutoLogic {
                 () -> {
                   s.flywheels.resetFuelCheck();
                 }),
-            s.launcherSubsystem.launcherAimCommand(), s.flywheels.s
+            s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
         // .until(() -> s.flywheels.isOutOfFuel())
