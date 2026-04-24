@@ -550,6 +550,7 @@ public class Controls {
                 s.ledSubsystem)
             .withName("LED Default Command"));
 
-    readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
+    //readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1)); // if the next line doesn't work uncomment this one
+    readyToShoot.onFalse(s.ledSubystem.flashWhileHeld(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
   }
 }
