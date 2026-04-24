@@ -250,7 +250,8 @@ public class AutoLogic {
         NamedCommands.registerCommand(
             "launch", launcherSimCommand().andThen(Commands.print("launch")));
         NamedCommands.registerCommand(
-            "SOTM", launcherNoEndSimCommand().alongWith(Commands.print("SOTM")));
+            "SOTM", launcherNoEndSimCommand());
+               NamedCommands.registerCommand("stow", Commands.print("SOTM testing"));
       } else {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
