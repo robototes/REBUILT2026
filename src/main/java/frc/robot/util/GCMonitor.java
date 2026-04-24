@@ -1,11 +1,11 @@
 package frc.robot.util;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Logger;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
@@ -20,7 +20,6 @@ import javax.management.openmbean.CompositeData;
  */
 public final class GCMonitor {
   private static final AtomicLong gcCount = new AtomicLong(0);
-  private static final Logger logger = Logger.getLogger(GCMonitor.class.getName());
   private static volatile boolean started = false;
 
   private GCMonitor() {}
@@ -46,7 +45,7 @@ public final class GCMonitor {
                       long current = gcCount.incrementAndGet();
                       // Log a concise message and publish to SmartDashboard for easy visibility in
                       // WPILib tools
-                      logger.info(
+                      DataLogManager.log(
                           String.format(
                               "GC #%d action=%s name=%s duration=%dms",
                               current,
@@ -59,7 +58,7 @@ public final class GCMonitor {
                         // ignore SmartDashboard errors (e.g., not initialized in some contexts)
                       }
                     } catch (Throwable t) {
-                      logger.warning("Error processing GC notification: " + t);
+                      DataLogManager.log("Error processing GC notification: " + t);
                     }
                   }
                 }
@@ -68,9 +67,9 @@ public final class GCMonitor {
         }
       }
       started = true;
-      logger.info("GCMonitor started");
+      DataLogManager.log("GCMonitor started");
     } catch (Throwable t) {
-      logger.warning("GCMonitor failed to start: " + t);
+      DataLogManager.log("GCMonitor failed to start: " + t);
     }
   }
 
