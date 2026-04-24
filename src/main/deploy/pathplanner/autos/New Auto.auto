@@ -1,0 +1,25 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "New Path"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Copy of New Path"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "WIP",
+  "choreoAuto": false
+}
