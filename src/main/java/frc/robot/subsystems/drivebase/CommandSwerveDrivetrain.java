@@ -93,7 +93,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private KinematicFilter filteredAlpha = new KinematicFilter(0.005, 0.5, 0.001, 0.02);
 
   private final double nominalDt = 0.02;
-  private final Pigeon2 pigeon;
+  private Pigeon2 pigeon;
   private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
   private double lastPeriodicTime = 0;
   private double simAccelX = 0;
@@ -155,11 +155,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   public CommandSwerveDrivetrain(
       SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules) {
     super(drivetrainConstants, modules);
-    if (Utils.isSimulation()) {
-      startSimThread();
-    }
-    this.pigeon = getPigeon2();
-    initFilteredAccelPublishers();
+    init();
   }
 
   /**
@@ -178,11 +174,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       double odometryUpdateFrequency,
       SwerveModuleConstants<?, ?, ?>... modules) {
     super(drivetrainConstants, odometryUpdateFrequency, modules);
-    if (Utils.isSimulation()) {
-      startSimThread();
-    }
-    this.pigeon = getPigeon2();
-    initFilteredAccelPublishers();
+    init();
   }
 
   /**
@@ -212,21 +204,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         odometryStandardDeviation,
         visionStandardDeviation,
         modules);
+    init();
+  }
+
+  private void init() {
     if (Utils.isSimulation()) {
       startSimThread();
     }
-
     this.pigeon = getPigeon2();
-    initFilteredAccelPublishers();
-  }
-
-  private void initFilteredAccelPublishers() {
-    ss_XAccel.setUpdateFrequency(100);
-    ss_YAccel.setUpdateFrequency(100);
-    ss_Omega.setUpdateFrequency(100);
     ss_XAccel = pigeon.getAccelerationX();
     ss_YAccel = pigeon.getAccelerationY();
     ss_Omega = pigeon.getAngularVelocityZWorld();
+    ss_XAccel.setUpdateFrequency(100);
+    ss_YAccel.setUpdateFrequency(100);
+    ss_Omega.setUpdateFrequency(100);
 
     var nt = NetworkTableInstance.getDefault();
     pub_XAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
@@ -302,10 +293,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     ChassisSpeeds robotSpeeds = getState().Speeds; // robot-relative
 
     if (RobotBase.isSimulation()) {
-      if (dt > 0) {
-        simAccelX = (robotSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond) / dt;
-        simAccelY = (robotSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond) / dt;
-      }
+      simAccelX = (robotSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond) / dt;
+      simAccelY = (robotSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond) / dt;
       lastSpeeds = robotSpeeds;
     }
 
@@ -316,11 +305,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     double rawAY =
         RobotBase.isSimulation() ? simAccelY : ss_YAccel.getValue().in(MetersPerSecondPerSecond);
 
-    if (dt > 0) {
-      filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
-      filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
-      filteredAlpha.update(currentOmega, dt);
-    }
+    filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
+    filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
+    filteredAlpha.update(currentOmega, dt);
 
     pub_XAccel.set(filteredVX.getAccel());
     pub_YAccel.set(filteredVY.getAccel());
