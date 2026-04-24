@@ -61,9 +61,22 @@
           }
         },
         {
-          "type": "named",
+          "type": "parallel",
           "data": {
-            "name": "climb"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "stow"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "climb"
+                }
+              }
+            ]
           }
         }
       ]

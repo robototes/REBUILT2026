@@ -47,7 +47,7 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "launch",
+      "name": "SOTM",
       "waypointRelativePos": 0,
       "endWaypointRelativePos": null,
       "command": {

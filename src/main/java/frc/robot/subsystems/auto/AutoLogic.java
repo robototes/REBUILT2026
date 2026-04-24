@@ -250,10 +250,11 @@ public class AutoLogic {
         NamedCommands.registerCommand(
             "launch", launcherSimCommand().andThen(Commands.print("launch")));
         NamedCommands.registerCommand(
-            "SOTM", launcherNoEndSimCommand().andThen(Commands.print("SOTM")));
+            "SOTM", launcherNoEndSimCommand().alongWith(Commands.print("SOTM")));
       } else {
         NamedCommands.registerCommand(
             "launch", launcherCommand().andThen(Commands.print("launch")));
+        NamedCommands.registerCommand("stow", stowCommand());
         NamedCommands.registerCommand(
             "SOTM",
             launcherNoEndCommand()
@@ -301,6 +302,10 @@ public class AutoLogic {
         // .until(() -> s.flywheels.isOutOfFuel())
 
         .withName("Auto Full Launcher Command");
+  }
+
+  public static Command stowCommand() {
+    return Commands.runOnce(() -> s.launcherSubsystem.rawStowCommand());
   }
 
   public static Command launcherSimCommand() {

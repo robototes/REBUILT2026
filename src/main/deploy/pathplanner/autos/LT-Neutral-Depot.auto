@@ -61,9 +61,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "DepotFull-DepotIntake"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "DepotFull-DepotIntake"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "stow"
+                }
+              }
+            ]
           }
         },
         {
