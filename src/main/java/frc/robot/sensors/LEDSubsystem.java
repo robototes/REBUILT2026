@@ -195,6 +195,24 @@ public class LEDSubsystem extends SubsystemBase {
                 }))
         .withName("Flash LEDs");
   }
+  public Command flashWhileHeld(RGBWColor color, double interval) {
+      return Commands.run(
+          () -> {
+            double time = Timer.getFPGATimestamp();
+            boolean on = ((int) (time / interval)) % 2 == 0;
+
+            setHardwareColor(on ? color : OFF);
+          },
+          this)
+      .finallyDo(
+          () -> {
+            // restore previous mode when button released
+            LEDMode saved = currentMode;
+            currentMode = null;
+            setMode(saved);
+          })
+      .withName("Flash While Held");
+}
 
   @Override
   public void periodic() {
