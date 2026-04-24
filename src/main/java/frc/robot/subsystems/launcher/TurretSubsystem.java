@@ -55,7 +55,7 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = RobotType.isAlpha() ? 2.97 : 200;
+  private static final double kP = RobotType.isAlpha() ? 25 : 200;
   private static final double kI = 0;
   private static final double kD = RobotType.isAlpha() ? 0 : 20;
   private static final double kG = 0;
