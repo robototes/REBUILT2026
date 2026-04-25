@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -39,7 +40,7 @@ public class Hood extends SubsystemBase {
 
   @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
-  private final MotionMagicVoltage request = new MotionMagicVoltage(0);
+  private final PositionVoltage request = new PositionVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
 
   public NtTunableDouble targetPosition;
@@ -103,11 +104,11 @@ public class Hood extends SubsystemBase {
 
     // IRL PID gains
     var irlPID = new Slot0Configs();
-    irlPID.kP = 40;
+    irlPID.kP = 10;
     irlPID.kI = 0.0;
-    irlPID.kD = 0;
+    irlPID.kD = 0.2;
     irlPID.kA = 0.0;
-    irlPID.kV = 0;
+    irlPID.kV = 0.0;
     irlPID.kS = 0.155;
     irlPID.kG = 0.0;
 
@@ -120,10 +121,6 @@ public class Hood extends SubsystemBase {
     simPID.kV = 0;
     simPID.kS = 0;
     simPID.kG = 0.0;
-
-    config.MotionMagic.MotionMagicCruiseVelocity = RobotType.isAlpha() ? 5 : 60;
-    config.MotionMagic.MotionMagicAcceleration = RobotType.isAlpha() ? 5 : 600;
-    config.MotionMagic.MotionMagicJerk = RobotType.isAlpha() ? 0 : 6000;
 
     config.Slot0 = (Robot.isSimulation()) ? simPID : irlPID;
 
