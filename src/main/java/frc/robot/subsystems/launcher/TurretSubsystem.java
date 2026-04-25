@@ -3,6 +3,7 @@ package frc.robot.subsystems.launcher;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -25,18 +26,26 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
   private final PositionVoltage request = new PositionVoltage(0);
   private final AnalogInput limitSwitch;
-  private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
+
+  // Dedicated VoltageOut for SysId — does NOT ignore soft limits during characterization.
+  // If you want SysId to respect soft limits (safer), use this. If you need full range,
+  // swap to voltageRequest (the one with withIgnoreSoftwareLimits(true)).
+  private final VoltageOut sysIdVoltageRequest = new VoltageOut(0);
+  private final SysIdRoutine sysIdRoutine;
+
   private final CommandSwerveDrivetrain driveTrain;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
@@ -57,19 +66,19 @@ public class TurretSubsystem extends SubsystemBase {
   // PID variables
   private static final double kP = RobotType.isAlpha() ? 25 : 200;
   private static final double kI = 0;
-  private static final double kD = RobotType.isAlpha() ? 0 : 20;
+  private static final double kD = RobotType.isAlpha() ? 0 : 2;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.36;
+  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.65;
   private static final double kV =
-      RobotType.isAlpha() ? 0.884766 / 1.125 : 12 / 1.29; // volts per requested rps
-  private static final double kA = 0.12;
+      ((8.57 / 1.511) + (5.63 / 0.898438)) / 2; // volts per requested rps
+  private static final double kA = 0;
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
   private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
 
   // Gear Ratio
-  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
+  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 40;
 
   // Soft Limits
   public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 350; // degrees
@@ -84,7 +93,6 @@ public class TurretSubsystem extends SubsystemBase {
           .publish();
 
   // Network tables
-
   private final DoublePublisher posPub;
   private final DoublePublisher targetPub;
   private final DoublePublisher velocityPub;
@@ -122,10 +130,23 @@ public class TurretSubsystem extends SubsystemBase {
     currentPub = table.getDoubleTopic("/Turret/Current").publish();
 
     targetPub = table.getDoubleTopic("/Turret/Target").publish();
-
     ffPub = table.getDoubleTopic("/Turret/FF Volts").publish();
-
     limitSwitchPub = table.getDoubleTopic("/Turret/LimitSwitchCurrent").publish();
+
+    sysIdRoutine =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null, // Default ramp rate: 1 V/s
+                Volts.of(4), // Dynamic step voltage: 4 V (safe for 40 A stator limit)
+                null, // Default timeout: 10 s
+                // Log the SysId state so the hoot log can be correctly parsed
+                (state) -> SignalLogger.writeString("sysid-state", state.toString())),
+            new SysIdRoutine.Mechanism(
+                // Apply voltage to the turret motor
+                (volts) -> turretMotor.setControl(sysIdVoltageRequest.withOutput(volts.in(Volts))),
+                // Phoenix logs position/velocity/voltage automatically — leave null
+                null,
+                this));
   }
 
   public void turretConfig() {
@@ -202,26 +223,14 @@ public class TurretSubsystem extends SubsystemBase {
           double x = xSupplier.get();
           double y = ySupplier.get();
 
-          // Joystick angle: 0° = forward, CCW positive
           double degrees = Math.toDegrees(Math.atan2(y, x));
-
-          // Rotate so 0° = robot forward
           degrees -= 90.0;
-
-          // Subtract robot angle
           degrees -= driveTrain.getState().Pose.getRotation().getDegrees();
-
-          // Shift so 0° = backward
           degrees += 180.0;
-
-          // Normalize to [-90, 270] (input modulus always need 360)
           degrees = MathUtil.inputModulus(degrees, TURRET_MIN, TURRET_MAX);
-
-          // Clamp to soft limits
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
           double rotations = Units.degreesToRotations(degrees);
-
           turretMotor.setControl(request.withPosition(rotations).withFeedForward(0));
           targetPos = rotations;
         })
@@ -235,6 +244,11 @@ public class TurretSubsystem extends SubsystemBase {
   public boolean atTarget() {
     return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
+  }
+
+  public boolean atTarget(DoubleSupplier turretTolerance) {
+    return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
+        < Units.radiansToRotations(turretTolerance.getAsDouble());
   }
 
   /**
@@ -252,7 +266,6 @@ public class TurretSubsystem extends SubsystemBase {
               LaunchingParameters params =
                   LaunchCalculator.getInstance().getParameters(driveTrain, this);
               double targetDegrees = -params.targetTurret().getDegrees();
-              double FFV = params.targetTurretFeedforward();
 
               double normalizedTarget =
                   MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
@@ -274,8 +287,8 @@ public class TurretSubsystem extends SubsystemBase {
                 }
               }
 
-              // System.out.println(Units.degreesToRotations(finalTarget));
-              setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
+              // Negate FFV: calculator outputs CCW-positive, motor is CW-positive.
+              setTurretRawPosition(Units.degreesToRotations(finalTarget));
               targetPos = Units.degreesToRotations(finalTarget);
             },
             () -> turretMotor.stopMotor())
@@ -284,10 +297,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
-    posPub.set(positionSignal.getValueAsDouble()); // Rotations
-    velocityPub.set(velocitySignal.getValueAsDouble()); // RPS
-    currentPub.set(statorCurrentSignal.getValueAsDouble()); // Amps
+    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal);
+    posPub.set(positionSignal.getValueAsDouble());
+    velocityPub.set(velocitySignal.getValueAsDouble());
+    currentPub.set(statorCurrentSignal.getValueAsDouble());
     targetPub.set(targetPos);
     limitSwitchPub.set(limitSwitch.getVoltage());
   }
@@ -300,19 +313,26 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor.setNeutralMode(NeutralModeValue.Coast);
   }
 
-  public Command voltageControl(Supplier<Voltage> voltageSupplier) {
-    return runEnd(
-            () -> {
-              turretMotor.setControl(voltageRequest.withOutput(voltageSupplier.get()));
-            },
-            () -> {
-              turretMotor.stopMotor();
-            })
-        .withName("Voltage Control");
+  public boolean atLimitSwitch() {
+    double velo = velocitySignal.getValueAsDouble();
+    return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
   }
 
-  public boolean atLimitSwitch() {
-    return limitSwitch.getAverageVoltage() > HALL_EFFECT_THRESHOLD_VOLTS
-        && velocitySignal.getValueAsDouble() < 0;
+  // ------ SYSID COMMANDS ------ //
+
+  /**
+   * Quasistatic SysId test — slowly ramps voltage to characterize kS and kV. Run forward then
+   * reverse. Start SignalLogger before calling these.
+   */
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return sysIdRoutine.quasistatic(direction).withName("Turret SysId Quasistatic " + direction);
+  }
+
+  /**
+   * Dynamic SysId test — applies a voltage step to characterize kA. Run forward then reverse. Start
+   * SignalLogger before calling these.
+   */
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return sysIdRoutine.dynamic(direction).withName("Turret SysId Dynamic " + direction);
   }
 }

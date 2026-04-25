@@ -1,11 +1,15 @@
 package frc.robot.subsystems.drivebase;
 
 import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -19,15 +23,22 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.KinematicFilter;
+import frc.robot.util.KinematicFilterInfused;
 import java.util.function.Supplier;
 
 /**
@@ -69,6 +80,28 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
           new SysIdRoutine.Mechanism(
               output -> setControl(m_translationCharacterization.withVolts(output)), null, this));
+
+  // Pigeon Status Signals
+  private StatusSignal<LinearAcceleration> ss_XAccel;
+  private StatusSignal<LinearAcceleration> ss_YAccel;
+  private StatusSignal<AngularVelocity> ss_Omega;
+
+  private KinematicFilterInfused filteredVX =
+      new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
+  private KinematicFilterInfused filteredVY =
+      new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
+  private KinematicFilter filteredAlpha = new KinematicFilter(0.005, 0.5, 0.001, 0.02);
+
+  private final double nominalDt = 0.02;
+  private Pigeon2 pigeon;
+  private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
+  private double lastPeriodicTime = 0;
+  private double simAccelX = 0;
+  private double simAccelY = 0;
+
+  private DoublePublisher pub_XAccel;
+  private DoublePublisher pub_YAccel;
+  private DoublePublisher pub_Alpha;
 
   /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
   private final SysIdRoutine m_sysIdRoutineSteer =
@@ -122,9 +155,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   public CommandSwerveDrivetrain(
       SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules) {
     super(drivetrainConstants, modules);
-    if (Utils.isSimulation()) {
-      startSimThread();
-    }
+    init();
   }
 
   /**
@@ -143,9 +174,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       double odometryUpdateFrequency,
       SwerveModuleConstants<?, ?, ?>... modules) {
     super(drivetrainConstants, odometryUpdateFrequency, modules);
-    if (Utils.isSimulation()) {
-      startSimThread();
-    }
+    init();
   }
 
   /**
@@ -175,9 +204,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         odometryStandardDeviation,
         visionStandardDeviation,
         modules);
+    init();
+  }
+
+  private void init() {
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    this.pigeon = getPigeon2();
+    ss_XAccel = pigeon.getAccelerationX();
+    ss_YAccel = pigeon.getAccelerationY();
+    ss_Omega = pigeon.getAngularVelocityZWorld();
+    ss_XAccel.setUpdateFrequency(100);
+    ss_YAccel.setUpdateFrequency(100);
+    ss_Omega.setUpdateFrequency(100);
+
+    var nt = NetworkTableInstance.getDefault();
+    pub_XAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
+    pub_YAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelY").publish();
+    pub_Alpha = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
+    // initialize with zeros
+    pub_XAccel.set(0.0);
+    pub_YAccel.set(0.0);
+    pub_Alpha.set(0.0);
   }
 
   /**
@@ -234,6 +283,48 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               });
     }
     clampPoseToField();
+
+    double now = Timer.getFPGATimestamp();
+    double dt = (lastPeriodicTime > 0) ? (now - lastPeriodicTime) : nominalDt;
+    lastPeriodicTime = now;
+
+    StatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
+
+    ChassisSpeeds robotSpeeds = getState().Speeds; // robot-relative
+
+    if (RobotBase.isSimulation()) {
+      simAccelX = (robotSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond) / dt;
+      simAccelY = (robotSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond) / dt;
+      lastSpeeds = robotSpeeds;
+    }
+
+    double currentOmega = ss_Omega.getValue().in(RadiansPerSecond);
+
+    double rawAX =
+        RobotBase.isSimulation() ? simAccelX : ss_XAccel.getValue().in(MetersPerSecondPerSecond);
+    double rawAY =
+        RobotBase.isSimulation() ? simAccelY : ss_YAccel.getValue().in(MetersPerSecondPerSecond);
+
+    filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
+    filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
+    filteredAlpha.update(currentOmega, dt);
+
+    pub_XAccel.set(filteredVX.getAccel());
+    pub_YAccel.set(filteredVY.getAccel());
+    pub_Alpha.set(Units.radiansToDegrees(filteredAlpha.getAccel()));
+  }
+
+  public Translation2d getAccel() {
+    // Rotate robot-relative filtered acceleration into the field frame.
+    // Using pose rotation (not raw pigeon) keeps this consistent with
+    // ChassisSpeeds.fromRobotRelative
+    // in LaunchCalculator, which also uses currentPose.getRotation().
+    Rotation2d poseRotation = getState().Pose.getRotation();
+    return new Translation2d(filteredVX.getAccel(), filteredVY.getAccel()).rotateBy(poseRotation);
+  }
+
+  public double getRobotRelativeAcceleration() {
+    return filteredAlpha.getAccel();
   }
 
   private void startSimThread() {
