@@ -56,9 +56,9 @@ public class LauncherSubsystem extends SubsystemBase {
         && s.hood.atTargetPosition()
         && s.turretSubsystem.atTarget(
             () ->
-                Math.max(
+                Math.min(
                     Units.degreesToRadians(20),
-                    Math.min(
+                    Math.max(
                         Units.degreesToRadians(4), Math.atan(0.3 / LauncherConstants.distToHub()))))
         && !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds)
         && !LaunchCalculator.isUnderClimb(
