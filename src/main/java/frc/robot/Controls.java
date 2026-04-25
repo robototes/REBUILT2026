@@ -37,7 +37,6 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
-import frc.robot.util.tuning.LauncherConstants;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
 import java.util.Optional;
 
@@ -472,13 +471,14 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
-    // turretAtZero = new Trigger(() -> s.turretSubsystem.atLimitSwitch());
+    turretAtZero = new Trigger(() -> s.turretSubsystem.atLimitSwitch());
 
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
     turretAtZero.onTrue(
-        Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
+        // Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
+        Commands.print("ZEROING!!!!!!!!!!!!!!!")
             .withName("Zero Turret on Limit Switch"));
 
     driverController

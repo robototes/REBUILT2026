@@ -30,7 +30,6 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
-
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -318,7 +317,9 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public boolean atLimitSwitch() {
-    return limitSwitch.getAverageVoltage() > HALL_EFFECT_THRESHOLD_VOLTS
-        && velocitySignal.getValueAsDouble() < 0;
+    double velo = velocitySignal.getValueAsDouble();
+    return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS
+        && velo < -0.01
+        && velo > -0.5;
   }
 }

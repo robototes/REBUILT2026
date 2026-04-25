@@ -117,8 +117,7 @@ public class LauncherConstants {
   public static void UpdateNT(Pose2d robot) {
     Pose2d result = robot.transformBy(LAUNCHER_OFFSET);
     turretPose.set(result);
-    distToHub =
-        AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm();
+    distToHub = AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm();
     turretToHubDistance.set(distToHub);
   }
 
@@ -132,7 +131,9 @@ public class LauncherConstants {
   }
 
   public static double distToHub() {
-    if (distToHub <= 0.1) { return 0.1;}
+    if (distToHub <= 0.1) {
+      return 0.1;
+    }
     return distToHub;
   }
 
