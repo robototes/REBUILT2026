@@ -98,6 +98,7 @@ public class LaunchCalculator {
       double targetHood,
       Rotation2d targetTurret,
       double targetFlywheels,
+      // Positive = CCW in field frame. Caller must negate if motor is CW-positive.
       double targetTurretFeedforward,
       Pose2d turretPose) {}
 
@@ -228,11 +229,17 @@ public class LaunchCalculator {
    * <p>2. DEFENSE/PUSH COMPENSATION: Pose-differentiated velocity blended with wheel speeds behind
    * a hysteresis gate. Requires MOVING_SPEED_THRESHOLD_ON to activate and drops off at
    * MOVING_SPEED_THRESHOLD_OFF. prevPose is reset on activation so the first diff frame computes
-   * over a fresh baseline rather than a stale stationary pose.
+   * over a fresh baseline rather than a stale stationary pose. Note: angular velocity from
+   * pose-diff is blended separately from linear velocity and is only used for robot rotation
+   * prediction — it does not feed into the turret velocity cross-product, which uses wheel omega
+   * for accuracy.
    *
-   * <p>3. TURRET VELOCITY: Computed explicitly in the field frame by rotating the turret offset
-   * vector by the predicted robot angle, then adding the tangential velocity from robot rotation.
-   * Uses the predicted angle (post-phase-delay) rather than the current angle for accuracy.
+   * <p>3. TURRET VELOCITY: The turret pivot moves with the robot. Its field-relative velocity has
+   * two components: (a) robot CoM velocity, and (b) tangential velocity from robot rotation about
+   * the CoM, computed as omega_robot × r_turretOffset. The turret's own spin (omega_turret)
+   * contributes to the ball's launch direction but does NOT add additional velocity to the pivot
+   * itself — only to the barrel tip. Since we aim to the turret pivot (not the barrel), only robot
+   * omega enters the cross-product here.
    *
    * @param driveState the drivebase's SwerveDriveState
    * @param turretSubsystem the turretSubsystem object
@@ -269,25 +276,34 @@ public class LaunchCalculator {
     // Convert wheel speeds to field-relative for blending with field-relative pose-diff velocity.
     ChassisSpeeds fieldWheelSpeeds =
         ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, currentPose.getRotation());
-    ChassisSpeeds effectiveFieldSpeeds = fieldWheelSpeeds;
+
+    // Linear and angular effective field speeds are tracked separately:
+    // - Linear blend uses pose-diff (handles defense pushes).
+    // - Angular blend also uses pose-diff omega, but is only used for robot rotation
+    //   prediction (dTheta), not for the turret cross-product velocity.
+    double effectiveVX = fieldWheelSpeeds.vxMetersPerSecond;
+    double effectiveVY = fieldWheelSpeeds.vyMetersPerSecond;
+    double effectiveOmega = fieldWheelSpeeds.omegaRadiansPerSecond;
 
     double poseDt = timestamp - prevTimestamp;
     if (poseBlendActive && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT) {
       Twist2d twist = prevPose.log(currentPose);
-      ChassisSpeeds poseDerivedSpeeds =
-          new ChassisSpeeds(twist.dx / poseDt, twist.dy / poseDt, twist.dtheta / poseDt);
-      // Scale blend: full weight at MIN_POSE_DT, 0 at MAX_POSE_DT.
-      // Sparse vision updates produce large poseDt and fade naturally to wheel speeds.
+      double poseDerivedVX = twist.dx / poseDt;
+      double poseDerivedVY = twist.dy / poseDt;
+      double poseDerivedOmega = twist.dtheta / poseDt;
+
+      // Scale blend weight: full at MIN_POSE_DT, fades to 0 at MAX_POSE_DT.
+      // Sparse vision updates produce large poseDt and naturally fall back to wheel speeds.
       double blendAlpha =
           POSE_VELOCITY_BLEND * (1.0 - (poseDt - MIN_POSE_DT) / (MAX_POSE_DT - MIN_POSE_DT));
-      effectiveFieldSpeeds =
-          new ChassisSpeeds(
-              blendAlpha * poseDerivedSpeeds.vxMetersPerSecond
-                  + (1.0 - blendAlpha) * fieldWheelSpeeds.vxMetersPerSecond,
-              blendAlpha * poseDerivedSpeeds.vyMetersPerSecond
-                  + (1.0 - blendAlpha) * fieldWheelSpeeds.vyMetersPerSecond,
-              blendAlpha * poseDerivedSpeeds.omegaRadiansPerSecond
-                  + (1.0 - blendAlpha) * fieldWheelSpeeds.omegaRadiansPerSecond);
+
+      effectiveVX =
+          blendAlpha * poseDerivedVX + (1.0 - blendAlpha) * fieldWheelSpeeds.vxMetersPerSecond;
+      effectiveVY =
+          blendAlpha * poseDerivedVY + (1.0 - blendAlpha) * fieldWheelSpeeds.vyMetersPerSecond;
+      effectiveOmega =
+          blendAlpha * poseDerivedOmega
+              + (1.0 - blendAlpha) * fieldWheelSpeeds.omegaRadiansPerSecond;
     }
 
     // --- PHASE DELAY PREDICTION (second-order, field frame) ---
@@ -295,13 +311,9 @@ public class LaunchCalculator {
     // This avoids Twist2d's robot-frame curved path integration, which is less accurate
     // when acceleration is known in the field frame.
     // ax/ay are already field-relative from drivetrain.getAccel().
-    double dxField =
-        effectiveFieldSpeeds.vxMetersPerSecond * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * ax;
-    double dyField =
-        effectiveFieldSpeeds.vyMetersPerSecond * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * ay;
-    double dTheta =
-        effectiveFieldSpeeds.omegaRadiansPerSecond * PHASE_DELAY
-            + ONE_HALF_PHASE_DELAY_SQUARED * alpha;
+    double dxField = effectiveVX * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * ax;
+    double dyField = effectiveVY * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * ay;
+    double dTheta = effectiveOmega * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * alpha;
 
     Rotation2d predictedAngle = currentPose.getRotation().plus(new Rotation2d(dTheta));
     Pose2d estimatedPose =
@@ -309,22 +321,24 @@ public class LaunchCalculator {
 
     // Predicted field-relative velocity at the moment of launch (end of phase delay).
     // This is what the ball actually inherits — treated as constant for the Newton loop.
-    double launchVX = effectiveFieldSpeeds.vxMetersPerSecond + ax * PHASE_DELAY;
-    double launchVY = effectiveFieldSpeeds.vyMetersPerSecond + ay * PHASE_DELAY;
-    double launchOmega = effectiveFieldSpeeds.omegaRadiansPerSecond + alpha * PHASE_DELAY;
+    double launchVX = effectiveVX + ax * PHASE_DELAY;
+    double launchVY = effectiveVY + ay * PHASE_DELAY;
+    // launchOmega is the robot's angular rate at launch time, used for turret pivot velocity.
+    double launchOmega = effectiveOmega + alpha * PHASE_DELAY;
 
-    // --- TURRET VELOCITY (field-relative, at launch time) ---
-    // Rotate the turret offset vector into the field frame using the predicted robot angle.
+    // --- TURRET PIVOT VELOCITY (field-relative, at launch time) ---
+    // The turret pivot's field-relative velocity = robot CoM velocity + omega_robot × r_turret.
+    // Only robot omega enters the cross-product — the turret's own spin (omega_turret) rotates
+    // the barrel tip around the pivot but does NOT move the pivot itself.
     // Using predictedAngle (not current) keeps this consistent with estimatedPose.
     double cos = predictedAngle.getCos();
     double sin = predictedAngle.getSin();
     double turretOffsetFieldX = TURRET_TX * cos - TURRET_TY * sin;
     double turretOffsetFieldY = TURRET_TX * sin + TURRET_TY * cos;
-    // Total angular rate at the turret pivot = robot omega + turret's own spin.
-    // Both contribute tangential velocity to the turret point: v = omega x r.
-    double totalOmega = launchOmega + turretSubsystem.getOmega();
-    double turretVelocityX = launchVX + (-turretOffsetFieldY * totalOmega);
-    double turretVelocityY = launchVY + (turretOffsetFieldX * totalOmega);
+    // v_pivot = v_robot + omega_robot × r_turret
+    // Cross product in 2D: omega × (rx, ry) = (-omega*ry, omega*rx)
+    double turretPivotVX = launchVX + (-turretOffsetFieldY * launchOmega);
+    double turretPivotVY = launchVY + (turretOffsetFieldX * launchOmega);
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
@@ -335,23 +349,30 @@ public class LaunchCalculator {
     double distance = Math.hypot(distanceX, distanceY);
 
     // Newton-Raphson TOF convergence.
-    // turretVelocityX/Y are constant — post-launch robot acceleration doesn't affect the ball.
+    // turretPivotVX/Y are constant — post-launch robot acceleration doesn't affect the ball.
+    // Seed t from the lookup table to start close to the solution.
     double trueDistance = distance;
     double trueDistanceX = distanceX;
     double trueDistanceY = distanceY;
     double t = LauncherConstants.getTimeFromDistance(distance);
+
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
-      trueDistanceX = distanceX - turretVelocityX * t;
-      trueDistanceY = distanceY - turretVelocityY * t;
+      trueDistanceX = distanceX - turretPivotVX * t;
+      trueDistanceY = distanceY - turretPivotVY * t;
       trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
+
+      // Guard against degenerate case where robot velocity exactly reaches the target.
+      if (trueDistance < MIN_DISTANCE_TO_TARGET) {
+        break;
+      }
 
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
       double f = lookupT - t;
 
       double dDist_Dt =
-          -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
+          -(trueDistanceX * turretPivotVX + trueDistanceY * turretPivotVY) / trueDistance;
       double fPrime = (derivativeOfTOF(trueDistance) * dDist_Dt) - 1.0;
 
       if (Math.abs(fPrime) > MIN_SLOPE) {
@@ -363,11 +384,18 @@ public class LaunchCalculator {
       if (Math.abs(t - prevT) < CONVERGENCE_TOLERANCE) break;
     }
 
-    // Velocity feedforward angular velocity
+    // Velocity feedforward angular velocity.
+    // This is the required turret angular rate in the field frame to track the target.
+    // Sign convention: positive = CCW in field frame.
+    // The caller must apply this directly without sign inversion.
     double feedforwardAngularVelocity = 0;
     if (trueDistance > VFF_DIST_TOLERANCE) {
+      // Tangential velocity of the target relative to the turret pivot, perpendicular to LOS.
+      // tangentialVel = (-dy * vx + dx * vy) / dist  (cross product / dist)
       double tangentialVel =
-          (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
+          (-trueDistanceY * turretPivotVX + trueDistanceX * turretPivotVY) / trueDistance;
+      // Required turret angular rate = tangential rate of LOS angle minus robot angular rate
+      // (since turret angle is measured robot-relative).
       feedforwardAngularVelocity = (tangentialVel / trueDistance) - launchOmega;
     }
 
