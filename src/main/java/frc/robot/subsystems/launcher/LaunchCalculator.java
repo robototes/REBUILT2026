@@ -80,7 +80,7 @@ public class LaunchCalculator {
   private static final double MIN_MOVING_SPEED = 0.05; // m/s
 
   // Low-pass filter for acceleration. 0 = no filtering, 1 = effectively disabled.
-  private static final double ACCEL_FILTER_ALPHA = 0.8;
+  private static final double ACCEL_FILTER_ALPHA = 0.9;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
