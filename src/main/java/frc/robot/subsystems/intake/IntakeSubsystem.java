@@ -59,8 +59,8 @@ public class IntakeSubsystem extends SubsystemBase {
     if (!intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
       deployPivot();
     }
-    runRollers(
-        () -> Math.hypot(speeds.get().vxMetersPerSecond, speeds.get().vyMetersPerSecond) * 6 + 40);
+    var s = speeds.get();
+    runRollers(() -> Math.hypot(s.vxMetersPerSecond, s.vyMetersPerSecond) * 6 + 50);
   }
 
   public void extakeIntake() {
