@@ -38,6 +38,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
 import frc.robot.util.DriveStateSignalLogger;
+import frc.robot.util.GCMonitor;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
@@ -87,6 +88,8 @@ public class Robot extends TimedRobot {
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
     BuildInfo.logBuildInfo();
+    // Start GC monitor to count garbage collections and publish to SmartDashboard
+    frc.robot.util.GCMonitor.start();
 
     // Set brownout Voltage
     RobotController.setBrownoutVoltage(BROWNOUT_VOLTAGE);
@@ -188,18 +191,21 @@ public class Robot extends TimedRobot {
       m_simWrapper.robotPeriodic();
     }
 
-    // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
-    // commands, running already-scheduled commands, removing finished or interrupted commands,
-    // and running subsystem periodic() methods.  This must be called from the robot's periodic
-    // block in order for anything in the Command-based framework to work.
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
+
+    // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
+    // commands, running already-scheduled commands, removing finished or interrupted commands,
+    // and running subsystem periodic() methods.  This must be called from the robot's periodic
+    // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
+
+    SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
