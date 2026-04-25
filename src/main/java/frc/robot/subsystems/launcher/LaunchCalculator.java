@@ -290,7 +290,7 @@ public class LaunchCalculator {
       // x and y) to get the velocity component that is tangent to the target. then divide by the
       // distance to normalize the magnitude in m/s
       double tangentialVel =
-          (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
+          (trueDistanceY * turretVelocityX - trueDistanceX * turretVelocityY) / trueDistance;
 
       // Calculated using the standard angular velocity formula (linear velocity / radius). We
       // offset it with the robot's field angular velocity to get the true angular velocity in
