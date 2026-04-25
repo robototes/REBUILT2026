@@ -78,7 +78,7 @@ public class LaunchCalculator {
   // Hysteresis thresholds for pose-diff activation.
   // Must reach ON threshold to activate; must drop below OFF threshold to deactivate.
   // The gap prevents rapid toggling and the stale-baseline spike on start/stop.
-  private static final double MOVING_SPEED_THRESHOLD_ON = 0.15; // m/s
+  private static final double MOVING_SPEED_THRESHOLD_ON = 0.10; // m/s
   private static final double MOVING_SPEED_THRESHOLD_OFF = 0.05; // m/s
 
   // Trench stuff
