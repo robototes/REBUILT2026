@@ -33,15 +33,6 @@ public class LaunchCalculator {
   private double lastTurretOmega = 0;
   private double lastTimeStamp = 0;
 
-  // Hysteresis state for pose-diff activation.
-  // Requires a higher speed to turn ON than to turn OFF, preventing rapid toggling at the
-  // boundary and the stale-prevPose spike that would otherwise occur on the first frame after
-  // starting to move. prevPose is explicitly reset to the current pose on activation so the
-  // first diff frame always computes over a fresh baseline.
-  private boolean poseBlendActive = false;
-  private Pose2d prevPose = new Pose2d();
-  private double prevTimestamp = 0;
-
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
   private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(0.5); // Radians
@@ -63,25 +54,6 @@ public class LaunchCalculator {
   private static final double TURRET_TX;
   private static final double TURRET_TY;
 
-  private static final double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
-
-  // Precalculated: PHASEDELAY ^ 2 * 0.5
-  private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
-
-  // Pose-differentiation velocity blending.
-  // Max blend weight at MIN_POSE_DT, fades to 0 at MAX_POSE_DT.
-  // Set high because accepted poses are always correct — the dynamic dt scaling handles
-  // the fast-movement spottiness by fading to wheel speeds as vision updates become sparse.
-  private static final double POSE_VELOCITY_BLEND = 0.9;
-  private static final double MIN_POSE_DT = 0.005; // seconds
-  private static final double MAX_POSE_DT = 0.05; // seconds
-
-  // Hysteresis thresholds for pose-diff activation.
-  // Must reach ON threshold to activate; must drop below OFF threshold to deactivate.
-  // The gap prevents rapid toggling and the stale-baseline spike on start/stop.
-  private static final double MOVING_SPEED_THRESHOLD_ON = 0.10; // m/s
-  private static final double MOVING_SPEED_THRESHOLD_OFF = 0.05; // m/s
-
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE_X = Units.inchesToMeters(12);
@@ -94,6 +66,11 @@ public class LaunchCalculator {
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
   private static final List<Pose2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
+
+  private static final double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
+
+  // Precalculated: PHASEDELAY ^ 2 * 0.5
+  private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
 
   public record LaunchingParameters(
       double targetHood,
@@ -185,10 +162,6 @@ public class LaunchCalculator {
                 0,
                 cachedParams.turretPose);
       }
-      // Update differentiation state on cache hit so poseDt stays valid next cycle.
-      prevPose = currentPose;
-      prevTimestamp = currentTimeStamp;
-      lastTimeStamp = currentTimeStamp;
       return cachedParams;
     }
 
@@ -197,12 +170,6 @@ public class LaunchCalculator {
     lastTimeStamp = currentTimeStamp;
 
     cachedParams = calculate(driveState, turretSubsystem, accel.getX(), accel.getY(), alpha);
-
-    // Update differentiation state AFTER calculate() so calculate() sees the previous cycle's
-    // state (real non-zero poseDt), and the next cycle uses this cycle as its baseline.
-    prevPose = currentPose;
-    prevTimestamp = currentTimeStamp;
-
     return cachedParams;
   }
 
@@ -228,60 +195,22 @@ public class LaunchCalculator {
 
     ChassisSpeeds chassisSpeeds = driveState.Speeds;
     Pose2d currentPose = driveState.Pose;
-    double timestamp = driveState.Timestamp;
-
-    // --- DEFENSE COMPENSATION: Pose-differentiated velocity with hysteresis gate ---
-    // Gate prevents toggling at the boundary and the stale-baseline spike on start.
-    // When activating, prevPose/prevTimestamp are reset so the first diff frame is clean.
-    double wheelSpeedMagnitude =
-        Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
-    if (!poseBlendActive && wheelSpeedMagnitude > MOVING_SPEED_THRESHOLD_ON) {
-      poseBlendActive = true;
-      prevPose = currentPose;
-      prevTimestamp = timestamp;
-    } else if (poseBlendActive && wheelSpeedMagnitude < MOVING_SPEED_THRESHOLD_OFF) {
-      poseBlendActive = false;
-    }
 
     // 1. Convert current speeds to pure Field-Relative values
     ChassisSpeeds fieldSpeeds =
         ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, currentPose.getRotation());
 
-    // Effective field speeds default to wheel-reported values.
-    // Linear and angular effective field speeds are tracked separately:
-    // - Linear blend uses pose-diff (handles defense pushes).
-    // - Angular blend also uses pose-diff omega, but is only used for robot rotation
-    //   prediction (dTheta), not for the turret cross-product velocity.
-    double effectiveVX = fieldSpeeds.vxMetersPerSecond;
-    double effectiveVY = fieldSpeeds.vyMetersPerSecond;
-    double effectiveOmega = chassisSpeeds.omegaRadiansPerSecond;
-
-    double poseDt = timestamp - prevTimestamp;
-    if (poseBlendActive && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT) {
-      Twist2d twist = prevPose.log(currentPose);
-      double poseDerivedVX = twist.dx / poseDt;
-      double poseDerivedVY = twist.dy / poseDt;
-      double poseDerivedOmega = twist.dtheta / poseDt;
-
-      // Scale blend weight: full at MIN_POSE_DT, fades to 0 at MAX_POSE_DT.
-      // Sparse vision updates produce large poseDt and naturally fall back to wheel speeds.
-      double blendAlpha =
-          POSE_VELOCITY_BLEND * (1.0 - (poseDt - MIN_POSE_DT) / (MAX_POSE_DT - MIN_POSE_DT));
-
-      effectiveVX = blendAlpha * poseDerivedVX + (1.0 - blendAlpha) * fieldSpeeds.vxMetersPerSecond;
-      effectiveVY = blendAlpha * poseDerivedVY + (1.0 - blendAlpha) * fieldSpeeds.vyMetersPerSecond;
-      effectiveOmega =
-          blendAlpha * poseDerivedOmega + (1.0 - blendAlpha) * chassisSpeeds.omegaRadiansPerSecond;
-    }
-
     // 2. Predict Field-Relative Pose using Acceleration (PHASE_DELAY)
 
     // Field-relative displacement
-    double dxField = (effectiveVX * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ax);
-    double dyField = (effectiveVY * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ay);
+    double dxField =
+        (fieldSpeeds.vxMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ax);
+    double dyField =
+        (fieldSpeeds.vyMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ay);
 
     // Angular changes are frame-independent in 2D
-    double dTheta = (effectiveOmega * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * alpha);
+    double dTheta =
+        (chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * alpha);
     Rotation2d predictedAngle = currentPose.getRotation().plus(new Rotation2d(dTheta));
 
     // Apply translation directly in the field frame (bypassing Twist2d's curved robot-frame path)
@@ -290,10 +219,9 @@ public class LaunchCalculator {
     Rotation2d robotAngle = estimatedPose.getRotation();
 
     // 3. Predict Field-Relative Velocities at the moment of launch
-    double predicted_vx_field = effectiveVX + (ax * PHASE_DELAY);
-    double predicted_vy_field = effectiveVY + (ay * PHASE_DELAY);
-    double predicted_omega_robot = effectiveOmega + (alpha * PHASE_DELAY);
-
+    double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
+    double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
+    double predicted_omega_robot = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
     // 4. Calculate final Field-Relative Turret speeds
     // Find the turret's translation vector rotated into the field frame
     double cos = predictedAngle.getCos(), sin = predictedAngle.getSin();
@@ -331,11 +259,6 @@ public class LaunchCalculator {
       trueDistanceY = distanceY - turretVelocityY * t;
       trueDistance = Math.sqrt(trueDistanceX * trueDistanceX + trueDistanceY * trueDistanceY);
 
-      // Guard against degenerate case where robot velocity exactly reaches the target.
-      if (trueDistance < MIN_DISTANCE_TO_TARGET) {
-        break;
-      }
-
       // begin newton raphson's method to find the converged time of flight
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
       // calculate time error
@@ -356,7 +279,6 @@ public class LaunchCalculator {
 
       if (Math.abs(t - prevT) < CONVERGENCE_TOLERANCE) break;
     }
-
     // Velocity feedforward
     double feedforwardAngularVelocity = 0;
     if (trueDistance > VFF_DIST_TOLERANCE) {
@@ -381,14 +303,8 @@ public class LaunchCalculator {
       // We still pass dx and dy to the constructor so it stays "linked" to the vector
       targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
     }
-
     // FINAL NUMS
-    // Use predicted robot-relative speeds for trench check since isApproachingTrench uses
-    // ChassisSpeeds in robot-relative form via Twist2d.exp.
-    ChassisSpeeds launchSpeedsRobotRelative =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            predicted_vx_field, predicted_vy_field, predicted_omega_robot, predictedAngle);
-    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeedsRobotRelative);
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
