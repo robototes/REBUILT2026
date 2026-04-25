@@ -31,6 +31,7 @@ public class LaunchCalculator {
   private LaunchingParameters cachedParams;
   private Pose2d lastPose = new Pose2d();
   private double lastTurretOmega = 0;
+  private double lastTimeStamp = 0;
 
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
@@ -114,7 +115,14 @@ public class LaunchCalculator {
    */
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
+
     SwerveDriveState driveState = drivetrain.getState();
+
+    double currentTimeStamp = driveState.Timestamp;
+    if (currentTimeStamp == lastTimeStamp && cachedParams != null) {
+      return cachedParams;
+    }
+
     Pose2d currentPose = driveState.Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
     double currentTurretOmega = turretSubsystem.getOmega();
@@ -122,7 +130,7 @@ public class LaunchCalculator {
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
             <= MIN_DIST_TOLERANCE;
-    boolean hasNotRotatedSigificantly =
+    boolean hasNotRotatedSignificantly =
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
@@ -135,7 +143,7 @@ public class LaunchCalculator {
 
     // Check to see if all conditions are met
     if (hasNotMovedSignificantly
-        && hasNotRotatedSigificantly
+        && hasNotRotatedSignificantly
         && isNotMovingFastEnough
         && isTurretOmegaStable
         && cachedParams != null) {
@@ -153,7 +161,7 @@ public class LaunchCalculator {
     // cache the pose and chassis speeds
     lastPose = currentPose;
     lastTurretOmega = currentTurretOmega;
-
+    lastTimeStamp = currentTimeStamp;
     // Recalcualate
     cachedParams =
         calculate(
