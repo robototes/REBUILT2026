@@ -49,7 +49,7 @@ public class Flywheels extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   public final double FLYWHEEL_TOLERANCE =
-      15; // RPS // increased on drive practice 3/18 from 5 -> 10 //Increased to 15 by TD 3/18
+      12; 
   public final NtTunableBoolean TUNER_CONTROLLED =
       new NtTunableBoolean("/SmartDashboard/Tunables/Flywheels", false);
 
