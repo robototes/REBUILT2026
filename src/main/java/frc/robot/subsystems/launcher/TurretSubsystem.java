@@ -30,6 +30,8 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
+
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -234,6 +236,11 @@ public class TurretSubsystem extends SubsystemBase {
   public boolean atTarget() {
     return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
+  }
+
+  public boolean atTarget(DoubleSupplier turretTolerance) {
+    return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
+        < Units.radiansToRotations(turretTolerance.getAsDouble());
   }
 
   /**

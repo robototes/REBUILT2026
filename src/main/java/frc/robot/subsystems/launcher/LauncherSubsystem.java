@@ -1,6 +1,8 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -53,7 +55,7 @@ public class LauncherSubsystem extends SubsystemBase {
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
     return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
         && s.hood.atTargetPosition()
-        && s.turretSubsystem.atTarget()
+        && s.turretSubsystem.atTarget(() -> Math.max(Units.degreesToRadians(20), Math.min(Units.degreesToRadians(4), Math.atan(0.3 / LauncherConstants.distToHub()))))
         && !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds)
         && !LaunchCalculator.isUnderClimb(
             driveState.Pose.transformBy(LauncherConstants.turretTransform()));
