@@ -317,7 +317,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public boolean atLimitSwitch() {
-    return limitSwitch.getAverageVoltage() > HALL_EFFECT_THRESHOLD_VOLTS
-        && velocitySignal.getValueAsDouble() < 0;
+    double velo = velocitySignal.getValueAsDouble();
+    return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
   }
 }
