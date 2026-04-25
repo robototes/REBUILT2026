@@ -19,6 +19,7 @@ public class LauncherSubsystem extends SubsystemBase {
   private final DoublePublisher hoodGoalPub;
   private final DoublePublisher flywheelGoalPub;
   private LaunchingParameters launchParameters;
+  private final double MIN_FAR_DIST = 6; // Meters
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -52,7 +53,12 @@ public class LauncherSubsystem extends SubsystemBase {
       return false;
     }
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
-    return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
+    double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
+    if (LauncherConstants.distToHub() >= MIN_FAR_DIST) {
+      flywheelTolerance = 30;
+    }
+
+    return s.flywheels.atTargetVelocity(flywheelsGoal, flywheelTolerance)
         && s.hood.atTargetPosition()
         && s.turretSubsystem.atTarget(
             () ->
