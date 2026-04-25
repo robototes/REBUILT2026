@@ -2,7 +2,6 @@ package frc.robot.util;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.atomic.AtomicLong;
@@ -52,13 +51,8 @@ public final class GCMonitor {
                               info.getGcAction(),
                               info.getGcName(),
                               info.getGcInfo().getDuration()));
-                      try {
-                        SmartDashboard.putNumber("GCCount", current);
-                      } catch (Throwable t) {
-                        // ignore SmartDashboard errors (e.g., not initialized in some contexts)
-                      }
-                    } catch (Throwable t) {
-                      DataLogManager.log("Error processing GC notification: " + t);
+                    } catch (Exception e) {
+                      DataLogManager.log("Error processing GC notification: " + e);
                     }
                   }
                 }
@@ -68,8 +62,8 @@ public final class GCMonitor {
       }
       started = true;
       DataLogManager.log("GCMonitor started");
-    } catch (Throwable t) {
-      DataLogManager.log("GCMonitor failed to start: " + t);
+    } catch (Exception e) {
+      DataLogManager.log("GCMonitor failed to start: " + e);
     }
   }
 
