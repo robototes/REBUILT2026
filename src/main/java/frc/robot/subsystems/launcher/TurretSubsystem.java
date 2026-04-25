@@ -30,6 +30,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -57,19 +58,18 @@ public class TurretSubsystem extends SubsystemBase {
   // PID variables
   private static final double kP = RobotType.isAlpha() ? 25 : 200;
   private static final double kI = 0;
-  private static final double kD = RobotType.isAlpha() ? 0 : 20;
+  private static final double kD = RobotType.isAlpha() ? 0 : 2;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.36;
-  private static final double kV =
-      RobotType.isAlpha() ? 0.884766 / 1.125 : 12 / 1.29; // volts per requested rps
-  private static final double kA = 0.12;
+  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.65;
+  private static final double kV = 0; // volts per requested rps
+  private static final double kA = 0;
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
   private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
 
   // Gear Ratio
-  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 72;
+  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 40;
 
   // Soft Limits
   public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 350; // degrees
@@ -237,6 +237,11 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
+  public boolean atTarget(DoubleSupplier turretTolerance) {
+    return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
+        < Units.radiansToRotations(turretTolerance.getAsDouble());
+  }
+
   /**
    * @return the angular velocity of the turret in rad/s
    */
@@ -312,7 +317,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public boolean atLimitSwitch() {
-    return limitSwitch.getAverageVoltage() > HALL_EFFECT_THRESHOLD_VOLTS
-        && velocitySignal.getValueAsDouble() < 0;
+    double velo = velocitySignal.getValueAsDouble();
+    return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
   }
 }
