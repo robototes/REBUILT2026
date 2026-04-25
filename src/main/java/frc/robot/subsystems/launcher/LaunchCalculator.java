@@ -33,19 +33,6 @@ public class LaunchCalculator {
   private double lastTurretOmega = 0;
   private double lastTimeStamp = 0;
 
-  // Pose-differentiation state (for defense/push compensation).
-  // Updated at the END of getParameters() — after calculate() has consumed the previous
-  // state — so that poseDt and speedsDt reflect a real elapsed interval, not zero.
-  private Pose2d prevPose = new Pose2d();
-  private double prevTimestamp = 0;
-
-  // Acceleration tracking state — always derived from raw wheel speeds.
-  // Also updated at the end of getParameters(), including on cache hits, so that
-  // the filtered acceleration and time deltas stay valid every cycle.
-  private ChassisSpeeds lastWheelSpeeds = new ChassisSpeeds();
-  private double lastWheelSpeedsTimestamp = 0;
-  private ChassisSpeeds filteredAcceleration = new ChassisSpeeds(0, 0, 0);
-
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
   private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(0.5); // Radians
@@ -59,29 +46,13 @@ public class LaunchCalculator {
 
   private static final double PHASE_DELAY = 0.02;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
-  private static final double STEP_SIZE = 0.01;
+  private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
   private static final int NEWTON_METHOD_MAX_ITERATIONS = 5;
   private static final double VFF_DIST_TOLERANCE = 0.1;
   private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
   private static final double TURRET_TX;
   private static final double TURRET_TY;
-
-  // Pose-differentiation velocity blending.
-  // Maximum blend weight when poseDt is at its minimum (most trustworthy).
-  // Only active when the robot is actually moving — see robotIsMoving gate below.
-  private static final double POSE_VELOCITY_BLEND = 0.9;
-
-  // Sanity bounds for pose-differentiated velocity.
-  private static final double MIN_POSE_DT = 0.005; // seconds
-  private static final double MAX_POSE_DT = 0.05; // seconds
-
-  // Gate for pose-derived velocity. Below this wheel speed magnitude we consider the
-  // robot stationary and skip pose-diff to avoid amplifying estimator noise into jitter.
-  private static final double MIN_MOVING_SPEED = 0.05; // m/s
-
-  // Low-pass filter for acceleration. 0 = no filtering, 1 = effectively disabled.
-  private static final double ACCEL_FILTER_ALPHA = 0.9;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -136,17 +107,12 @@ public class LaunchCalculator {
 
   /**
    * This method returns the cached LaunchingParameter. It updates this cache only if the robot has
-   * moved, and is moving within a specified threshold of values.
-   *
-   * <p>Differentiation state (prevPose, prevTimestamp, lastWheelSpeeds, lastWheelSpeedsTimestamp,
-   * filteredAcceleration) is updated at the END of this method in all code paths — both on cache
-   * hits and after calculate(). This is critical: updating them BEFORE calculate() would cause
-   * poseDt = 0 inside calculate(), disabling pose-diff entirely. Updating them AFTER ensures
-   * calculate() always sees a real elapsed interval, and that cache hits don't let the deltas go
-   * stale over time.
+   * moved, and is moving within a specified threshold of values. This includes minimum distance,
+   * velocity, rotation, and angular velocity
    *
    * @param drivetrain the drivebase's CommandSwerveDrivetrain object
-   * @param turretSubsystem the turretSubsystem object
+   * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
+   *     the entirety of run time
    * @return LaunchingParameters record holding all the target values.
    */
   public LaunchingParameters getParameters(
@@ -196,11 +162,6 @@ public class LaunchCalculator {
                 0,
                 cachedParams.turretPose);
       }
-      // Update differentiation state on cache hit so deltas stay valid next cycle.
-      lastWheelSpeeds = currentSpeeds;
-      lastWheelSpeedsTimestamp = timestamp;
-      prevPose = currentPose;
-      prevTimestamp = timestamp;
       return cachedParams;
     }
 
@@ -213,20 +174,17 @@ public class LaunchCalculator {
   }
 
   /**
-   * Returns a new record of all the numbers required to shoot. Key design decisions:
+   * This method returns a new record of all the numbers required to shoot a ball the moment it's
+   * done with one code loop. Its' calculation heavy nature comes from the turret's target angle
+   * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
+   * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
-   * <p>1. ACCELERATION COMPENSATION (phase delay only): Acceleration is used to predict the robot's
-   * velocity at the end of PHASE_DELAY via x = x0 + v*t + 0.5*a*t^2. The velocity predicted at end
-   * of phase delay (launchSpeeds) is treated as constant throughout the Newton loop — post-launch
-   * robot acceleration does not affect ball trajectory.
-   *
-   * <p>2. DEFENSE/PUSH COMPENSATION: Pose-differentiated velocity blended with wheel speeds. Blend
-   * weight scales dynamically with poseDt and is gated off when stationary to prevent estimator
-   * noise from being amplified into a fake jittery velocity signal.
-   *
-   * @param driveState the drivebase's SwerveDriveState
-   * @param turretSubsystem the turretSubsystem object
-   * @return LaunchingParameters record holding all the target values
+   * @param SwerveDriveState the drivebase's swervedrivestate. It's only called in getParameters()
+   *     and should not use any other drive state
+   * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
+   *     the entirety of run time
+   * @return LaunchingParameters record holding all the target values. Record is defined in the
+   *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
       SwerveDriveState driveState,
@@ -280,12 +238,12 @@ public class LaunchCalculator {
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
 
+    // Initial distances
     double distanceX = target.getX() - turretPose.getX();
     double distanceY = target.getY() - turretPose.getY();
     double distance = Math.hypot(distanceX, distanceY);
 
-    // Newton-Raphson TOF convergence.
-    // turretVelocityX/Y are constant — post-launch robot acceleration doesn't affect the ball.
+    // Final distances
     double trueDistance = distance;
     double trueDistanceX = distanceX;
     double trueDistanceY = distanceY;
@@ -293,29 +251,41 @@ public class LaunchCalculator {
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
+      // true distance is calculated by subtracting the displacement of the ball to the initial
+      // calculated distance of the hub. We're essentially trying to find the distance of the ball's
+      // landing spot and the hub.
+      // NOTE: Drag compensation removed as it is accounted for in the interpolating map.
       trueDistanceX = distanceX - turretVelocityX * t;
       trueDistanceY = distanceY - turretVelocityY * t;
       trueDistance = Math.sqrt(trueDistanceX * trueDistanceX + trueDistanceY * trueDistanceY);
 
+      // begin newton raphson's method to find the converged time of flight
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
+      // calculate time error
       double f = lookupT - t;
-
+      // Rate of change of the distance from turret to hub with respect to time (derivative of
+      // (pythagorean formula: sqrt((X_distance)^2+(Y_distance)^2) )
       double dDist_Dt =
           -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
+      // Slope of error, or the derivative of f as instantiated above
       double fPrime = (derivativeOfTOF(trueDistance) * dDist_Dt) - 1.0;
 
-      if (Math.abs(fPrime) > MIN_SLOPE) {
+      // If the derivative is big enough, calculate
+      if (Math.abs(fPrime) > MIN_SLOPE) { // Prevent divide by zero error
         t = t - f / fPrime;
       } else {
-        t = lookupT;
+        t = lookupT; // Fallback to fixed-point
       }
 
       if (Math.abs(t - prevT) < CONVERGENCE_TOLERANCE) break;
     }
-
     // Velocity feedforward
     double feedforwardAngularVelocity = 0;
     if (trueDistance > VFF_DIST_TOLERANCE) {
+      // Calculated using the 2D cross product. We find the tangential velocity by taking the dot
+      // product of our velocity vector and a vector perpendicular to our target direction (swapped
+      // x and y) to get the velocity component that is tangent to the target. then divide by the
+      // distance to normalize the magnitude in m/s
       double tangentialVel =
           (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
 
@@ -329,12 +299,11 @@ public class LaunchCalculator {
     if (trueDistance < MIN_DISTANCE_TO_TARGET) {
       targetAngleFieldRelative = Rotation2d.kZero;
     } else {
+      // We still pass dx and dy to the constructor so it stays "linked" to the vector
       targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
     }
-
-    // Use launchSpeeds for trench check — consistent with the velocity used for all other
-    // calculations and represents the predicted state at the moment of launch.
-    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeeds);
+    // FINAL NUMS
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
@@ -347,7 +316,8 @@ public class LaunchCalculator {
    * Calculates the derivative of Time with respect to distance, at a given distance.
    *
    * @param distance instantaneous distance
-   * @return the derivative of the TOF lookup table at the given distance
+   * @return returns returns the derivative of the Time of flight from the interpolating map, with
+   *     the change in time being 2*STEP_SIZE
    */
   public double derivativeOfTOF(double distance) {
     double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
@@ -356,12 +326,14 @@ public class LaunchCalculator {
   }
 
   /**
-   * Returns the hood angle. Checks isApproachingTrench(); if true, returns 0 to protect the hood.
+   * returns the hood angle, as defined in launcherConstants's interpolating map. Checks
+   * isCloseToTrench(). If true, set it to 0 so that we don't rip our hood.
    *
-   * @param robotPose the robot's estimated pose
-   * @param trueDist distance from turret to hub
-   * @param speeds chassis speeds at launch time
-   * @return hood angle (unitless, defined by LauncherConstants interpolating map)
+   * @param lookaheadPose currentPose. This should be the robot's pose, or a point on the robot's
+   *     pose
+   * @param trueDist The distance from the curretPose to the hub
+   * @return returns a double representing the hood angle (should be tuned in launcher constants).
+   *     Returned value does not have an apparant unit.
    */
   public double getHoodAngle(Pose2d robotPose, double trueDist, ChassisSpeeds speeds) {
     if (isApproachingTrench(robotPose, speeds)) return 0;
@@ -377,6 +349,8 @@ public class LaunchCalculator {
                   speeds.vxMetersPerSecond * t,
                   speeds.vyMetersPerSecond * t,
                   speeds.omegaRadiansPerSecond * t));
+      // Transform by turret transform because we are checking to see if the turret is close to the
+      // trench not the center of the robot
       Pose2d sampledTurretPose = sampledRobotPose.transformBy(turretTransform);
       if (isCloseToTrench(sampledTurretPose)) return true;
     }
