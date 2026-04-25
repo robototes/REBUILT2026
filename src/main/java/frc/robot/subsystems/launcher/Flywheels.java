@@ -48,8 +48,7 @@ public class Flywheels extends SubsystemBase {
   public NtTunableDouble targetVelocity;
   private long lastPositionUpdateTime = 0;
 
-  public final double FLYWHEEL_TOLERANCE =
-      12; 
+  public final double FLYWHEEL_TOLERANCE = 10;
   public final NtTunableBoolean TUNER_CONTROLLED =
       new NtTunableBoolean("/SmartDashboard/Tunables/Flywheels", false);
 
