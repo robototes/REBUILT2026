@@ -266,7 +266,6 @@ public class TurretSubsystem extends SubsystemBase {
               LaunchingParameters params =
                   LaunchCalculator.getInstance().getParameters(driveTrain, this);
               double targetDegrees = -params.targetTurret().getDegrees();
-              double FFV = params.targetTurretFeedforward();
 
               double normalizedTarget =
                   MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
@@ -289,7 +288,7 @@ public class TurretSubsystem extends SubsystemBase {
               }
 
               // Negate FFV: calculator outputs CCW-positive, motor is CW-positive.
-              setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
+              setTurretRawPosition(Units.degreesToRotations(finalTarget));
               targetPos = Units.degreesToRotations(finalTarget);
             },
             () -> turretMotor.stopMotor())

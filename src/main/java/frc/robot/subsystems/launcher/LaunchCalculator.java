@@ -73,11 +73,7 @@ public class LaunchCalculator {
   private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
 
   public record LaunchingParameters(
-      double targetHood,
-      Rotation2d targetTurret,
-      double targetFlywheels,
-      double targetTurretFeedforward,
-      Pose2d turretPose) {}
+      double targetHood, Rotation2d targetTurret, double targetFlywheels, Pose2d turretPose) {}
 
   static {
     TURRET_TX = LauncherConstants.turretTransform().getTranslation().getX();
@@ -153,15 +149,6 @@ public class LaunchCalculator {
         && isTurretOmegaStable
         && isNotAcceleratingSignificantly
         && cachedParams != null) {
-      if (cachedParams.targetTurretFeedforward != 0) {
-        cachedParams =
-            new LaunchingParameters(
-                cachedParams.targetHood,
-                cachedParams.targetTurret,
-                cachedParams.targetFlywheels,
-                0,
-                cachedParams.turretPose);
-      }
       return cachedParams;
     }
 
@@ -279,22 +266,6 @@ public class LaunchCalculator {
 
       if (Math.abs(t - prevT) < CONVERGENCE_TOLERANCE) break;
     }
-    // Velocity feedforward
-    double feedforwardAngularVelocity = 0;
-    if (trueDistance > VFF_DIST_TOLERANCE) {
-      // Calculated using the 2D cross product. We find the tangential velocity by taking the dot
-      // product of our velocity vector and a vector perpendicular to our target direction (swapped
-      // x and y) to get the velocity component that is tangent to the target. then divide by the
-      // distance to normalize the magnitude in m/s
-      double targetAngleFieldDot =
-          (trueDistanceY * turretVelocityX - trueDistanceX * turretVelocityY) / trueDistance;
-
-      // Calculated using the standard angular velocity formula (linear velocity / radius). We
-      // offset it with the robot's field angular velocity to get the true angular velocity in
-      // radians per second
-      feedforwardAngularVelocity =
-          (targetAngleFieldDot / trueDistance) - predicted_omega_robot; // RAD/S
-    }
 
     Rotation2d targetAngleFieldRelative;
     if (trueDistance < MIN_DISTANCE_TO_TARGET) {
@@ -309,8 +280,7 @@ public class LaunchCalculator {
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
-    return new LaunchingParameters(
-        targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity, turretPose);
+    return new LaunchingParameters(targetHood, targetTurret, targetFlywheels, turretPose);
   }
 
   /**
