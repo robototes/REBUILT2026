@@ -476,8 +476,8 @@ public class Controls {
     }
     turretAtZero = new Trigger(() -> s.turretSubsystem.atLimitSwitch());
 
-    // s.turretSubsystem.setDefaultCommand(
-    //     s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
+    s.turretSubsystem.setDefaultCommand(
+        s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
     turretAtZero.onTrue(
         Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
