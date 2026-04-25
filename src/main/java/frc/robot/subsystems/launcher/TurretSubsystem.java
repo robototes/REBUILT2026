@@ -61,7 +61,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kD = RobotType.isAlpha() ? 0 : 2;
   private static final double kG = 0;
   private static final double kS = RobotType.isAlpha() ? 0.41 : 0.65;
-  private static final double kV = 0; // volts per requested rps
+  private static final double kV =
+      ((8.57 / 1.511) + (5.63 / 0.898438)) / 2; // volts per requested rps
   private static final double kA = 0;
 
   // Current limits
