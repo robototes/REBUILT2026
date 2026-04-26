@@ -39,7 +39,7 @@ public class AutonomousField {
 
     addPeriodic.accept(
         () -> {
-          autonomousField.update(AutoLogic.getSelectedAutoName());
+          autonomousField.update(PathPlannerLogic.getSelectedAutoName());
           SmartDashboard.putNumber(
               "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
         },

@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
 
-public class AutoLogic {
+public class PathPlannerLogic {
 
   private static Subsystems s;
 
@@ -112,18 +112,18 @@ public class AutoLogic {
 
     physicalRebuiltPaths =
         List.of(
-            new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-            new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
-            new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
-            new AutoPath("LT-Neutral", "LT-Neutral"),
-            new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
-            new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
-            new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-            new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
-            new AutoPath("RT-Neutral", "RT-Neutral"),
-            new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
-            new AutoPath("RT-BLOCK", "RT-BLOCK"),
-            new AutoPath("LT-BLOCK", "LT-BLOCK"));
+           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
+           new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
+        new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
+          new AutoPath("LT-Neutral", "LT-Neutral"),
+           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
+           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
+           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
+           new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
+           new AutoPath("RT-Neutral", "RT-Neutral"),
+          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
+           new AutoPath("RT-BLOCK", "RT-BLOCK"),
+          new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
     rebuiltPaths = physicalRebuiltPaths;
 

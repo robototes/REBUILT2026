@@ -3,7 +3,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
-import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.subsystems.auto.PathPlannerLogic;
 import frc.robot.subsystems.auto.AutoPath;
 import java.io.IOException;
 import java.util.Dictionary;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 class AutosTest {
 
-  @BeforeEach
+ // @BeforeEach
   void setup() {
 
     AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), true);
@@ -23,10 +23,10 @@ class AutosTest {
 
   @Test
   void validateFileName() throws IOException, ParseException {
-    AutoLogic.initCommandsAndPaths(true);
+    PathPlannerLogic.initCommandsAndPaths(true);
 
     Dictionary<String, Boolean> pathDictionary = new Hashtable<>();
-    for (AutoPath path : AutoLogic.getAutos()) { // Every auto in the auto chooser
+    for (AutoPath path : PathPlannerLogic.getAutos()) { // Every auto in the auto chooser
       pathDictionary.put(
           path.getAutoName(), false); // Putting each auto from the auto chooser in dictionary
     }

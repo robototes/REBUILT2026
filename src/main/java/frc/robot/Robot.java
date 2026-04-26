@@ -32,8 +32,9 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
-import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.subsystems.auto.PathPlannerLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.subsystems.auto.BLineLogic;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -119,9 +120,11 @@ public class Robot extends TimedRobot {
     controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
-      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
+      BLineLogic.init(subsystems);
+     BLineLogic.configure(subsystems);
+     BLineLogic.runAuto();
     }
-    AutoLogic.init(subsystems);
+   // PathPlannerLogic.init(subsystems);
     if (Robot.isSimulation()) {
       robotSim = new RobotSim(subsystems.drivebaseSubsystem);
     } else {
@@ -144,11 +147,11 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(CommandScheduler.getInstance());
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      AutoLogic.initCommandsAndPaths(false);
-      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+     // PathPlannerLogic.initCommandsAndPaths(true);
+    //  AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
-      AutoLogic.initSmartDashBoard();
-      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+    //  PathPlannerLogic.initSmartDashBoard();
+      //CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
@@ -282,12 +285,12 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
-    if (AutoLogic.getSelectedAuto() != null) {
+
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
       }
 
-      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+      CommandScheduler.getInstance().schedule(BLineLogic.runAuto());
       double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
@@ -300,7 +303,7 @@ public class Robot extends TimedRobot {
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
         }
       }
-    }
+
   }
 
   /** This function is called periodically during autonomous. */
