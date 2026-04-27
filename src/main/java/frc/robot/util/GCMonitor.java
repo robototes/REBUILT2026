@@ -54,7 +54,7 @@ public final class GCMonitor {
                               info.getGcInfo().getDuration()));
                       try {
                         SmartDashboard.putNumber("GCCount", current);
-                      } catch (Throwable t) {
+                      } catch (Exception e) {
                         // ignore SmartDashboard errors (e.g., not initialized in some contexts)
                       }
                     } catch (Throwable t) {
