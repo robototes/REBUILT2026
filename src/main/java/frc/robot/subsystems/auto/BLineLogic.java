@@ -9,16 +9,19 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 public class BLineLogic {
 private static Subsystems s;
-  private  Consumer<Pose2d> chassisConsumer;
+
 
 private  static   FollowPath.Builder pathBuilder;
-
+private static Path myPath;
      public static void init(Subsystems subsystems) {
-
+ myPath = new Path("LT-Neutral");
     s = subsystems;
     s.drivebaseSubsystem.resetPose(getStartPose());
                                                     }
@@ -40,7 +43,7 @@ public static void configure(Subsystems s) {
         (speeds) -> {
             s.drivebaseSubsystem.setControl(
                 new SwerveRequest.ApplyRobotSpeeds()
-                    .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
+                  .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
             );
         },
 
@@ -53,22 +56,22 @@ public static void configure(Subsystems s) {
         // cross-track PID
         new PIDController(2.0, 0.0, 0.0)
     )
-    .withDefaultShouldFlip().
-    withPoseReset(s.drivebaseSubsystem::resetPose);
+    .withDefaultShouldFlip().withPoseReset(s.drivebaseSubsystem::resetPose);
 
         };
-public static Command runAuto() {
+public static  Command runAuto() {
 
-Path myPath = new Path("LT-Neutral");  // loads deploy/autos/paths/myPathFile.json
 
-return pathBuilder.build(myPath);
+
+       return  pathBuilder.build(myPath);
+        // ... rest of auto
 
 }
 public static Pose2d getStartPose() {
 
-Path myPath = new Path("LT-Neutral");  // loads deploy/autos/paths/myPathFile.json
 
-return myPath.getStartPose();
+
+return myPath.getStartPose(Rotation2d.fromDegrees(90));
 
 }
 public static FollowPath.Builder getBuilder() {
