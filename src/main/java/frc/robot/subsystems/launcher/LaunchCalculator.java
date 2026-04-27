@@ -27,39 +27,38 @@ public class LaunchCalculator {
     return Holder.INSTANCE;
   }
 
-  // Cached variables
+  // Cached variables (mostly for throttling method)
   private LaunchingParameters cachedParams;
   private Pose2d lastPose = new Pose2d();
   private double lastTurretOmega = 0;
-  private double lastTimestamp = 0;
 
-  // Hysteresis state for pose-diff activation.
-  // Requires a higher speed to turn ON than to turn OFF, preventing rapid toggling at the
-  // boundary and the stale-prevPose spike that would otherwise occur on the first frame after
-  // starting to move. prevPose is explicitly reset to the current pose on activation so the
-  // first diff frame always computes over a fresh baseline.
-  private boolean robotIsMoving = false;
+  // Pose-differentiation state (for defense/push compensation).
+  // Updated at the END of getParameters() — after calculate() has consumed the previous
+  // state — so that poseDt and speedsDt reflect a real elapsed interval, not zero.
   private Pose2d prevPose = new Pose2d();
   private double prevTimestamp = 0;
 
-  // Throttling constants
+  // Acceleration tracking state — always derived from raw wheel speeds.
+  // Also updated at the end of getParameters(), including on cache hits, so that
+  // the filtered acceleration and time deltas stay valid every cycle.
+  private ChassisSpeeds lastWheelSpeeds = new ChassisSpeeds();
+  private double lastWheelSpeedsTimestamp = 0;
+  private ChassisSpeeds filteredAcceleration = new ChassisSpeeds(0, 0, 0);
+
+  // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
   private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(0.5); // Radians
   private static final double MIN_VELOCITY_TOLERANCE = Units.inchesToMeters(0.5); // M/s
   private static final double MIN_OMEGA_TOLERANCE = 0.05; // Radians/s
-  // Cache bust uses drivetrain's Kalman-filtered acceleration — already smooth, no need to
-  // differentiate wheel speeds ourselves.
+  // Cache bust threshold uses filtered acceleration magnitude (linear + angular).
+  // Using raw acceleration here would cause frequent unnecessary cache misses from noise.
   private static final double MIN_ACCEL_TOLERANCE = 0.3; // M/s^2
   private static final double MIN_ANGULAR_ACCEL_TOLERANCE = 0.5; // Rad/s^2
 
-  // Turret transform components — cached at startup to avoid repeated object allocation
-  // per loop cycle.
-  private static final double TURRET_TX;
-  private static final double TURRET_TY;
+  // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
   private static final double PHASE_DELAY = 0.02;
-  private static final double ONE_HALF_PHASE_DELAY_SQUARED = 0.5 * PHASE_DELAY * PHASE_DELAY;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
   private static final double STEP_SIZE = 0.01;
   private static final double MIN_SLOPE = 1e-4;
@@ -67,36 +66,21 @@ public class LaunchCalculator {
   private static final double VFF_DIST_TOLERANCE = 0.1;
   private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
 
+  // Pose-differentiation velocity blending.
+  // Maximum blend weight when poseDt is at its minimum (most trustworthy).
+  // Only active when the robot is actually moving — see robotIsMoving gate below.
+  private static final double POSE_VELOCITY_BLEND = 0.9;
+
+  // Sanity bounds for pose-differentiated velocity.
   private static final double MIN_POSE_DT = 0.005; // seconds
   private static final double MAX_POSE_DT = 0.05; // seconds
 
-  // Hysteresis thresholds for pose-diff activation.
-  // Must reach ON threshold to activate; must drop below OFF threshold to deactivate.
-  // The gap prevents rapid toggling and the stale-baseline spike on start/stop.
-  private static final double MOVING_SPEED_THRESHOLD_ON = 0.10; // m/s
-  private static final double MOVING_SPEED_THRESHOLD_OFF = 0.05; // m/s
+  // Gate for pose-derived velocity. Below this wheel speed magnitude we consider the
+  // robot stationary and skip pose-diff to avoid amplifying estimator noise into jitter.
+  private static final double MIN_MOVING_SPEED = 0.05; // m/s
 
-  // Variable-alpha low-pass filter for the slip estimate. Vision-correction noise and
-  // real wheel slip live in different magnitude regimes:
-  //   - Vision noise: <1 cm correction over 20 ms, single-frame transients.
-  //   - Real stuck/push: wheels at 2 m/s vs robot at 0 = 2+ m/s, sustained over many frames.
-  // We use a heavy filter (slow) below the threshold to reject noise, and a light filter
-  // (fast) above it to track real events with minimal lag. Hysteresis on the threshold
-  // prevents flicker between modes.
-  private static final double SLIP_FILTER_ALPHA_SLOW = 0.85; // noise rejection
-  private static final double SLIP_FILTER_ALPHA_FAST = 0.20; // fast tracking
-  private static final double FAST_SLIP_THRESHOLD_ENTER = 2.0; // m/s
-  private static final double FAST_SLIP_THRESHOLD_EXIT = 0.5; // m/s (hysteresis)
-  private boolean slipFastMode = false;
-
-  // Safety caps on the filtered slip. Prevents a runaway pose-estimator glitch, such as
-  // a bad vision measurement that spikes the derivative, from injecting nonsense into the
-  // calculation. Real robot pushes and rotational disturbances stay well below these.
-  private static final double MAX_SLIP_MAGNITUDE = 5.0; // m/s
-  private static final double MAX_SLIP_OMEGA = 8.0; // rad/s (~1.3 rotations/s)
-
-  // Filtered slip state (instance, persists across cycles)
-  private ChassisSpeeds filteredSlip = new ChassisSpeeds(0, 0, 0);
+  // Low-pass filter for acceleration. 0 = no filtering, 1 = effectively disabled.
+  private static final double ACCEL_FILTER_ALPHA = 0.9;
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -105,7 +89,7 @@ public class LaunchCalculator {
   private static final double TRENCH_LOOKAHEAD = 0.5; // seconds
   private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
   private static final List<Pose2d> trenchTags = new ArrayList<>();
-  private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28};
+  private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_X = Units.inchesToMeters(47.0 / 2);
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
   private static final List<Pose2d> underclimbTags = new ArrayList<>();
@@ -115,14 +99,10 @@ public class LaunchCalculator {
       double targetHood,
       Rotation2d targetTurret,
       double targetFlywheels,
-      // Positive = CCW in field frame. Caller must negate if motor is CW-positive.
       double targetTurretFeedforward,
       Pose2d turretPose) {}
 
   static {
-    TURRET_TX = LauncherConstants.turretTransform().getTranslation().getX();
-    TURRET_TY = LauncherConstants.turretTransform().getTranslation().getY();
-
     for (int tag : tags) {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
@@ -146,16 +126,15 @@ public class LaunchCalculator {
   // ------ MAIN LOGIC ------ //
 
   /**
-   * Returns the cached LaunchingParameters, recomputing only when the robot has moved beyond the
-   * specified thresholds or is accelerating significantly.
+   * This method returns the cached LaunchingParameter. It updates this cache only if the robot has
+   * moved, and is moving within a specified threshold of values.
    *
-   * <p>Acceleration is sourced directly from the drivetrain's Kalman-filtered IMU+odometry fusion
-   * (KinematicFilterInfused), which is already smooth and field-relative. This replaces the
-   * previous wheel-speed differentiation approach and eliminates the associated noise and lag.
-   *
-   * <p>Differentiation state (prevPose, prevTimestamp) is updated at the END of this method in all
-   * code paths so that calculate() always sees a real non-zero poseDt, and cache hits don't let the
-   * delta go stale.
+   * <p>Differentiation state (prevPose, prevTimestamp, lastWheelSpeeds, lastWheelSpeedsTimestamp,
+   * filteredAcceleration) is updated at the END of this method in all code paths — both on cache
+   * hits and after calculate(). This is critical: updating them BEFORE calculate() would cause
+   * poseDt = 0 inside calculate(), disabling pose-diff entirely. Updating them AFTER ensures
+   * calculate() always sees a real elapsed interval, and that cache hits don't let the deltas go
+   * stale over time.
    *
    * @param drivetrain the drivebase's CommandSwerveDrivetrain object
    * @param turretSubsystem the turretSubsystem object
@@ -164,29 +143,48 @@ public class LaunchCalculator {
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
     SwerveDriveState driveState = drivetrain.getState();
-    double timestamp = driveState.Timestamp;
-
-    // Guard against re-entrant calls within the same robot loop cycle.
-    if (cachedParams != null && timestamp == lastTimestamp) {
-      return cachedParams;
-    }
-
     Pose2d currentPose = driveState.Pose;
     ChassisSpeeds currentSpeeds = driveState.Speeds;
     double currentTurretOmega = turretSubsystem.getOmega();
+    double timestamp = driveState.Timestamp;
 
-    // Pull Kalman-filtered acceleration from the drivetrain.
-    // getAccel() is already field-relative (robot-relative IMU values rotated by pose rotation).
-    // getRobotRelativeAcceleration() is angular acceleration in rad/s² (frame-independent in 2D).
-    Translation2d accel = drivetrain.getAccel();
-    double ax = accel.getX();
-    double ay = accel.getY();
-    double alpha = drivetrain.getRobotRelativeAcceleration();
+    if (cachedParams != null && timestamp == prevTimestamp) {
+      return cachedParams;
+    }
+
+    // Compute filtered acceleration for cache-bust check.
+    // Uses filteredAcceleration (not raw delta) to avoid noise-driven unnecessary cache misses.
+    // Includes angular acceleration so aggressive rotation also busts the cache.
+    double speedsDt = timestamp - lastWheelSpeedsTimestamp;
+    if (speedsDt > MIN_POSE_DT && speedsDt < MAX_POSE_DT) {
+      double rawAX =
+          (currentSpeeds.vxMetersPerSecond - lastWheelSpeeds.vxMetersPerSecond) / speedsDt;
+      double rawAY =
+          (currentSpeeds.vyMetersPerSecond - lastWheelSpeeds.vyMetersPerSecond) / speedsDt;
+      double rawAOmega =
+          (currentSpeeds.omegaRadiansPerSecond - lastWheelSpeeds.omegaRadiansPerSecond) / speedsDt;
+      filteredAcceleration =
+          new ChassisSpeeds(
+              ACCEL_FILTER_ALPHA * filteredAcceleration.vxMetersPerSecond
+                  + (1 - ACCEL_FILTER_ALPHA) * rawAX,
+              ACCEL_FILTER_ALPHA * filteredAcceleration.vyMetersPerSecond
+                  + (1 - ACCEL_FILTER_ALPHA) * rawAY,
+              ACCEL_FILTER_ALPHA * filteredAcceleration.omegaRadiansPerSecond
+                  + (1 - ACCEL_FILTER_ALPHA) * rawAOmega);
+    } else if (speedsDt >= MAX_POSE_DT) {
+      // speedsDt outside valid range means the system was disabled, restarted, or had a
+      // significant loop overrun. Reset to zero so stale acceleration from before the gap
+      // doesn't corrupt the phase delay prediction on the first active cycle.
+      filteredAcceleration = new ChassisSpeeds(0, 0, 0);
+    }
+
+    double filteredAccelMagnitude =
+        Math.hypot(filteredAcceleration.vxMetersPerSecond, filteredAcceleration.vyMetersPerSecond);
 
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
             <= MIN_DIST_TOLERANCE;
-    boolean hasNotRotatedSignificantly =
+    boolean hasNotRotatedSigificantly =
         Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
@@ -196,10 +194,11 @@ public class LaunchCalculator {
     boolean isTurretOmegaStable =
         Math.abs(currentTurretOmega - lastTurretOmega) <= MIN_OMEGA_TOLERANCE;
     boolean isNotAcceleratingSignificantly =
-        Math.hypot(ax, ay) <= MIN_ACCEL_TOLERANCE && Math.abs(alpha) <= MIN_ANGULAR_ACCEL_TOLERANCE;
+        filteredAccelMagnitude <= MIN_ACCEL_TOLERANCE
+            && Math.abs(filteredAcceleration.omegaRadiansPerSecond) <= MIN_ANGULAR_ACCEL_TOLERANCE;
 
     if (hasNotMovedSignificantly
-        && hasNotRotatedSignificantly
+        && hasNotRotatedSigificantly
         && isNotMovingFastEnough
         && isTurretOmegaStable
         && isNotAcceleratingSignificantly
@@ -213,164 +212,118 @@ public class LaunchCalculator {
                 0,
                 cachedParams.turretPose);
       }
-      // Update differentiation state on cache hit so poseDt stays valid next cycle.
+      // Update differentiation state on cache hit so deltas stay valid next cycle.
+      lastWheelSpeeds = currentSpeeds;
+      lastWheelSpeedsTimestamp = timestamp;
       prevPose = currentPose;
       prevTimestamp = timestamp;
-      lastTimestamp = timestamp;
       return cachedParams;
     }
 
     lastPose = currentPose;
     lastTurretOmega = currentTurretOmega;
 
-    cachedParams = calculate(driveState, turretSubsystem, ax, ay, alpha);
+    cachedParams = calculate(driveState, turretSubsystem);
 
-    // Update differentiation state AFTER calculate() so calculate() sees the previous cycle's
-    // state (real non-zero poseDt), and the next cycle uses this cycle as its baseline.
+    // Update differentiation state AFTER calculate() so that calculate() sees the previous
+    // cycle's state (giving a real non-zero poseDt / speedsDt), and the next cycle sees
+    // this cycle's state as its baseline.
+    lastWheelSpeeds = currentSpeeds;
+    lastWheelSpeedsTimestamp = timestamp;
     prevPose = currentPose;
     prevTimestamp = timestamp;
-    lastTimestamp = timestamp;
 
     return cachedParams;
   }
 
   /**
-   * Computes a fresh set of LaunchingParameters.
+   * Returns a new record of all the numbers required to shoot. Key design decisions:
    *
-   * <p>1. ACCELERATION COMPENSATION (phase delay only): Field-relative acceleration from the
-   * drivetrain's IMU+odometry Kalman filter is used to predict robot state at the end of
-   * PHASE_DELAY via x = x0 + v*t + 0.5*a*t^2, computed directly in the field frame. The velocity at
-   * end of phase delay (launchSpeeds) is treated as constant for the Newton loop — post-launch
+   * <p>1. ACCELERATION COMPENSATION (phase delay only): Acceleration is used to predict the robot's
+   * velocity at the end of PHASE_DELAY via x = x0 + v*t + 0.5*a*t^2. The velocity predicted at end
+   * of phase delay (launchSpeeds) is treated as constant throughout the Newton loop — post-launch
    * robot acceleration does not affect ball trajectory.
    *
-   * <p>2. DEFENSE/PUSH COMPENSATION: Pose-differentiated velocity blended with wheel speeds behind
-   * a hysteresis gate. Requires MOVING_SPEED_THRESHOLD_ON to activate and drops off at
-   * MOVING_SPEED_THRESHOLD_OFF. prevPose is reset on activation so the first diff frame computes
-   * over a fresh baseline rather than a stale stationary pose. Note: angular velocity from
-   * pose-diff is blended separately from linear velocity and is only used for robot rotation
-   * prediction — it does not feed into the turret velocity cross-product, which uses wheel omega
-   * for accuracy.
-   *
-   * <p>3. TURRET VELOCITY: The turret pivot moves with the robot. Its field-relative velocity has
-   * two components: (a) robot CoM velocity, and (b) tangential velocity from robot rotation about
-   * the CoM, computed as omega_robot × r_turretOffset. The turret's own spin (omega_turret)
-   * contributes to the ball's launch direction but does NOT add additional velocity to the pivot
-   * itself — only to the barrel tip. Since we aim to the turret pivot (not the barrel), only robot
-   * omega enters the cross-product here.
+   * <p>2. DEFENSE/PUSH COMPENSATION: Pose-differentiated velocity blended with wheel speeds. Blend
+   * weight scales dynamically with poseDt and is gated off when stationary to prevent estimator
+   * noise from being amplified into a fake jittery velocity signal.
    *
    * @param driveState the drivebase's SwerveDriveState
    * @param turretSubsystem the turretSubsystem object
-   * @param ax field-relative X acceleration in m/s² (from drivetrain Kalman filter)
-   * @param ay field-relative Y acceleration in m/s²
-   * @param alpha robot angular acceleration in rad/s²
    * @return LaunchingParameters record holding all the target values
    */
   public LaunchingParameters calculate(
-      SwerveDriveState driveState,
-      TurretSubsystem turretSubsystem,
-      double ax,
-      double ay,
-      double alpha) {
+      SwerveDriveState driveState, TurretSubsystem turretSubsystem) {
 
-    Pose2d currentPose = driveState.Pose;
-    ChassisSpeeds chassisSpeeds = driveState.Speeds;
+    Pose2d estimatedPose = driveState.Pose;
+    ChassisSpeeds wheelSpeeds = driveState.Speeds;
     double timestamp = driveState.Timestamp;
 
-    // --- DEFENSE COMPENSATION: Slip filter with hysteresis gate ---
+    // --- DEFENSE COMPENSATION: Pose-differentiated velocity with dynamic blending ---
+    // Gate: only use pose-derived velocity when the robot is actually moving.
     // When still, tiny estimator corrections divided by a small dt produce large fake velocities.
     double wheelSpeedMagnitude =
-        Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+        Math.hypot(wheelSpeeds.vxMetersPerSecond, wheelSpeeds.vyMetersPerSecond);
+    boolean robotIsMoving = wheelSpeedMagnitude > MIN_MOVING_SPEED;
 
-    if (robotIsMoving) {
-      robotIsMoving = wheelSpeedMagnitude > MOVING_SPEED_THRESHOLD_OFF;
-    } else {
-      robotIsMoving = wheelSpeedMagnitude > MOVING_SPEED_THRESHOLD_ON;
-    }
-
-    // Convert wheel speeds to field-relative for blending with field-relative pose-diff velocity.
-    ChassisSpeeds fieldWheelSpeeds =
-        ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, currentPose.getRotation());
-
-    double effectiveVX = fieldWheelSpeeds.vxMetersPerSecond;
-    double effectiveVY = fieldWheelSpeeds.vyMetersPerSecond;
-    double effectiveOmega = fieldWheelSpeeds.omegaRadiansPerSecond;
-
+    ChassisSpeeds effectiveSpeeds = wheelSpeeds;
     double poseDt = timestamp - prevTimestamp;
     if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT) {
-      Twist2d twist = prevPose.log(currentPose);
-
-      // Slip = (pose-derived velocity) - (wheel velocity). When wheels match pose,
-      // slip is ~0; when the robot is pushed or wheels slip, slipRaw is the motion delta.
-      double slipRawX = twist.dx / poseDt - fieldWheelSpeeds.vxMetersPerSecond;
-      double slipRawY = twist.dy / poseDt - fieldWheelSpeeds.vyMetersPerSecond;
-      double slipRawOmega = twist.dtheta / poseDt - fieldWheelSpeeds.omegaRadiansPerSecond;
-
-      // Switch to fast tracking when slip is large enough to be a real event
-      // rather than vision noise. Hysteresis prevents flicker.
-      double slipRawMag = Math.hypot(slipRawX, slipRawY);
-      slipFastMode =
-          slipRawMag > FAST_SLIP_THRESHOLD_EXIT
-              ? slipRawMag > FAST_SLIP_THRESHOLD_ENTER
-              : slipFastMode;
-      double filterAlpha = slipFastMode ? SLIP_FILTER_ALPHA_FAST : SLIP_FILTER_ALPHA_SLOW;
-
-      double newSlipX = filterAlpha * filteredSlip.vxMetersPerSecond + (1 - filterAlpha) * slipRawX;
-      double newSlipY = filterAlpha * filteredSlip.vyMetersPerSecond + (1 - filterAlpha) * slipRawY;
-      double newSlipOmega =
-          filterAlpha * filteredSlip.omegaRadiansPerSecond + (1 - filterAlpha) * slipRawOmega;
-
-      // Cap the filtered slip magnitude
-      double newSlipMag = Math.hypot(newSlipX, newSlipY);
-      if (newSlipMag > MAX_SLIP_MAGNITUDE) {
-        double scale = MAX_SLIP_MAGNITUDE / newSlipMag;
-        newSlipX *= scale;
-        newSlipY *= scale;
-      }
-      newSlipOmega = Math.max(-MAX_SLIP_OMEGA, Math.min(MAX_SLIP_OMEGA, newSlipOmega));
-      filteredSlip = new ChassisSpeeds(newSlipX, newSlipY, newSlipOmega);
-
-      effectiveVX = fieldWheelSpeeds.vxMetersPerSecond + filteredSlip.vxMetersPerSecond;
-      effectiveVY = fieldWheelSpeeds.vyMetersPerSecond + filteredSlip.vyMetersPerSecond;
-      effectiveOmega = fieldWheelSpeeds.omegaRadiansPerSecond + filteredSlip.omegaRadiansPerSecond;
-    } else {
-      // Reset slip filter when robot stops or poseDt is out of range
-      filteredSlip = new ChassisSpeeds(0, 0, 0);
-      slipFastMode = false;
+      Twist2d twist = prevPose.log(estimatedPose);
+      ChassisSpeeds poseDerivedSpeeds =
+          new ChassisSpeeds(twist.dx / poseDt, twist.dy / poseDt, twist.dtheta / poseDt);
+      double blendAlpha =
+          POSE_VELOCITY_BLEND * (1.0 - (poseDt - MIN_POSE_DT) / (MAX_POSE_DT - MIN_POSE_DT));
+      effectiveSpeeds =
+          new ChassisSpeeds(
+              blendAlpha * poseDerivedSpeeds.vxMetersPerSecond
+                  + (1.0 - blendAlpha) * wheelSpeeds.vxMetersPerSecond,
+              blendAlpha * poseDerivedSpeeds.vyMetersPerSecond
+                  + (1.0 - blendAlpha) * wheelSpeeds.vyMetersPerSecond,
+              blendAlpha * poseDerivedSpeeds.omegaRadiansPerSecond
+                  + (1.0 - blendAlpha) * wheelSpeeds.omegaRadiansPerSecond);
     }
 
-    // --- PHASE DELAY PREDICTION (second-order, field frame) ---
-    // x = x0 + v*t + 0.5*a*t^2, computed directly in the field frame.
-    // This avoids Twist2d's robot-frame curved path integration, which is less accurate
-    // when acceleration is known in the field frame.
-    // ax/ay are already field-relative from drivetrain.getAccel().
-    double dxField = effectiveVX * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * ax;
-    double dyField = effectiveVY * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * ay;
-    double dTheta = effectiveOmega * PHASE_DELAY + ONE_HALF_PHASE_DELAY_SQUARED * alpha;
+    // --- PHASE DELAY PREDICTION (second-order) ---
+    // Predict robot state at end of PHASE_DELAY: x = x0 + v*t + 0.5*a*t^2.
+    // launchSpeeds = velocity at end of phase delay = what the ball actually inherits.
+    // This is treated as constant for all subsequent calculations.
+    ChassisSpeeds acceleration = filteredAcceleration;
+    double pdt = PHASE_DELAY;
+    estimatedPose =
+        estimatedPose.exp(
+            new Twist2d(
+                effectiveSpeeds.vxMetersPerSecond * pdt
+                    + 0.5 * acceleration.vxMetersPerSecond * pdt * pdt,
+                effectiveSpeeds.vyMetersPerSecond * pdt
+                    + 0.5 * acceleration.vyMetersPerSecond * pdt * pdt,
+                effectiveSpeeds.omegaRadiansPerSecond * pdt
+                    + 0.5 * acceleration.omegaRadiansPerSecond * pdt * pdt));
 
-    Rotation2d predictedAngle = currentPose.getRotation().plus(new Rotation2d(dTheta));
-    Pose2d estimatedPose =
-        new Pose2d(currentPose.getX() + dxField, currentPose.getY() + dyField, predictedAngle);
+    ChassisSpeeds launchSpeeds =
+        new ChassisSpeeds(
+            effectiveSpeeds.vxMetersPerSecond + acceleration.vxMetersPerSecond * pdt,
+            effectiveSpeeds.vyMetersPerSecond + acceleration.vyMetersPerSecond * pdt,
+            effectiveSpeeds.omegaRadiansPerSecond + acceleration.omegaRadiansPerSecond * pdt);
 
-    // Predicted field-relative velocity at the moment of launch (end of phase delay).
-    // This is what the ball actually inherits — treated as constant for the Newton loop.
-    double launchVX = effectiveVX + ax * PHASE_DELAY;
-    double launchVY = effectiveVY + ay * PHASE_DELAY;
-    // launchOmega is the robot's angular rate at launch time, used for turret pivot velocity.
-    double launchOmega = effectiveOmega + alpha * PHASE_DELAY;
+    Rotation2d robotAngle = estimatedPose.getRotation();
 
-    // --- TURRET PIVOT VELOCITY (field-relative, at launch time) ---
-    // The turret pivot's field-relative velocity = robot CoM velocity + omega_robot × r_turret.
-    // Only robot omega enters the cross-product — the turret's own spin (omega_turret) rotates
-    // the barrel tip around the pivot but does NOT move the pivot itself.
-    // Using predictedAngle (not current) keeps this consistent with estimatedPose.
-    double cos = predictedAngle.getCos();
-    double sin = predictedAngle.getSin();
-    double turretOffsetFieldX = TURRET_TX * cos - TURRET_TY * sin;
-    double turretOffsetFieldY = TURRET_TX * sin + TURRET_TY * cos;
-    // v_pivot = v_robot + omega_robot × r_turret
-    // Cross product in 2D: omega × (rx, ry) = (-omega*ry, omega*rx)
-    double turretPivotVX = launchVX + (-turretOffsetFieldY * launchOmega);
-    double turretPivotVY = launchVY + (turretOffsetFieldX * launchOmega);
+    // Turret velocity at launch (robot-relative then field-relative).
+    // Uses launchSpeeds — this is the velocity the ball inherits at the moment of release.
+    double totalOmega = launchSpeeds.omegaRadiansPerSecond + turretSubsystem.getOmega();
+    ChassisSpeeds turretRobotRelativeSpeeds =
+        new ChassisSpeeds(
+            launchSpeeds.vxMetersPerSecond
+                - launchSpeeds.omegaRadiansPerSecond * turretTransform.getY(),
+            launchSpeeds.vyMetersPerSecond
+                + launchSpeeds.omegaRadiansPerSecond * turretTransform.getX(),
+            totalOmega);
+    ChassisSpeeds turretFieldRelativeSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(turretRobotRelativeSpeeds, robotAngle);
+
+    // Constant for the Newton loop — ball velocity is fixed at launch.
+    double turretVelocityX = turretFieldRelativeSpeeds.vxMetersPerSecond;
+    double turretVelocityY = turretFieldRelativeSpeeds.vyMetersPerSecond;
 
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
@@ -381,30 +334,23 @@ public class LaunchCalculator {
     double distance = Math.hypot(distanceX, distanceY);
 
     // Newton-Raphson TOF convergence.
-    // turretPivotVX/Y are constant — post-launch robot acceleration doesn't affect the ball.
-    // Seed t from the lookup table to start close to the solution.
+    // turretVelocityX/Y are constant — post-launch robot acceleration doesn't affect the ball.
     double trueDistance = distance;
     double trueDistanceX = distanceX;
     double trueDistanceY = distanceY;
     double t = LauncherConstants.getTimeFromDistance(distance);
-
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
-      trueDistanceX = distanceX - turretPivotVX * t;
-      trueDistanceY = distanceY - turretPivotVY * t;
+      trueDistanceX = distanceX - turretVelocityX * t;
+      trueDistanceY = distanceY - turretVelocityY * t;
       trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
-
-      // Guard against degenerate case where robot velocity exactly reaches the target.
-      if (trueDistance < MIN_DISTANCE_TO_TARGET) {
-        break;
-      }
 
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
       double f = lookupT - t;
 
       double dDist_Dt =
-          -(trueDistanceX * turretPivotVX + trueDistanceY * turretPivotVY) / trueDistance;
+          -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
       double fPrime = (derivativeOfTOF(trueDistance) * dDist_Dt) - 1.0;
 
       if (Math.abs(fPrime) > MIN_SLOPE) {
@@ -416,19 +362,13 @@ public class LaunchCalculator {
       if (Math.abs(t - prevT) < CONVERGENCE_TOLERANCE) break;
     }
 
-    // Velocity feedforward angular velocity.
-    // This is the required turret angular rate in the field frame to track the target.
-    // Sign convention: positive = CCW in field frame.
-    // The caller must apply this directly without sign inversion.
+    // Velocity feedforward
     double feedforwardAngularVelocity = 0;
     if (trueDistance > VFF_DIST_TOLERANCE) {
-      // Tangential velocity of the target relative to the turret pivot, perpendicular to LOS.
-      // tangentialVel = (-dy * vx + dx * vy) / dist  (cross product / dist)
       double tangentialVel =
-          (-trueDistanceY * turretPivotVX + trueDistanceX * turretPivotVY) / trueDistance;
-      // Required turret angular rate = tangential rate of LOS angle minus robot angular rate
-      // (since turret angle is measured robot-relative).
-      feedforwardAngularVelocity = (tangentialVel / trueDistance) - launchOmega;
+          (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
+      feedforwardAngularVelocity =
+          (tangentialVel / trueDistance) - launchSpeeds.omegaRadiansPerSecond;
     }
 
     Rotation2d targetAngleFieldRelative;
@@ -438,24 +378,22 @@ public class LaunchCalculator {
       targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
     }
 
-    // Use launchSpeeds (robot-relative) for trench check since isApproachingTrench uses
-    // ChassisSpeeds in robot-relative form via Twist2d.exp.
-    ChassisSpeeds launchSpeedsRobotRelative =
-        ChassisSpeeds.fromFieldRelativeSpeeds(launchVX, launchVY, launchOmega, predictedAngle);
-    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeedsRobotRelative);
+    // Use launchSpeeds for trench check — consistent with the velocity used for all other
+    // calculations and represents the predicted state at the moment of launch.
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
-        targetAngleFieldRelative.minus(predictedAngle).rotateBy(Rotation2d.k180deg);
+        targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
     return new LaunchingParameters(
         targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity, turretPose);
   }
 
   /**
-   * Calculates the derivative of TOF with respect to distance at a given distance.
+   * Calculates the derivative of Time with respect to distance, at a given distance.
    *
    * @param distance instantaneous distance
-   * @return derivative of the TOF lookup table at the given distance
+   * @return the derivative of the TOF lookup table at the given distance
    */
   public double derivativeOfTOF(double distance) {
     double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
@@ -464,11 +402,11 @@ public class LaunchCalculator {
   }
 
   /**
-   * Returns the hood angle. Returns 0 if approaching the trench to protect the hood.
+   * Returns the hood angle. Checks isApproachingTrench(); if true, returns 0 to protect the hood.
    *
    * @param robotPose the robot's estimated pose
    * @param trueDist distance from turret to hub
-   * @param speeds robot-relative chassis speeds at launch time
+   * @param speeds chassis speeds at launch time
    * @return hood angle (unitless, defined by LauncherConstants interpolating map)
    */
   public double getHoodAngle(Pose2d robotPose, double trueDist, ChassisSpeeds speeds) {
