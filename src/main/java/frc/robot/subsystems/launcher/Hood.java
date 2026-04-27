@@ -2,6 +2,7 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -14,6 +15,7 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -59,6 +61,9 @@ public class Hood extends SubsystemBase {
 
   private static final double AUTO_ZERO_VOLTAGE = -3;
 
+  // Status signals
+  private final StatusSignal<Current> hoodCurrent;
+
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
 
@@ -68,6 +73,7 @@ public class Hood extends SubsystemBase {
     if (RobotBase.isSimulation()) {
       hoodSim = new HoodSim(hood);
     }
+    hoodCurrent = hood.getStatorCurrent();
   }
 
   public void initializeNT() {
@@ -199,10 +205,11 @@ public class Hood extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.waitUntil(
-                                () ->
-                                    hood.getStatorCurrent().getValueAsDouble()
-                                        >= (STATOR_CURRENT_LIMIT - 1)))),
+                            Commands.run(() -> hoodCurrent.refresh())
+                                .until(
+                                    () ->
+                                        hoodCurrent.getValueAsDouble()
+                                            >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroHoodCommand())
         .withTimeout(3)
         .withName("Automatic Zero Hood");

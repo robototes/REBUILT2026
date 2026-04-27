@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -9,6 +10,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleTopic;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
@@ -37,6 +39,10 @@ public class IntakeRollers extends SubsystemBase {
       new NtTunableDouble("SmartDashboard/intake/TargetVelocityRPS", TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest = new VelocityTorqueCurrentFOC(0);
 
+  // status signals
+  private final StatusSignal<AngularVelocity> SS_roller1;
+  private final StatusSignal<AngularVelocity> SS_roller2;
+
   public IntakeRollers() {
     // define motors and configs
     leftRoller =
@@ -53,6 +59,9 @@ public class IntakeRollers extends SubsystemBase {
     if (RobotBase.isSimulation()) {
       rollerSim = new RollerSim(leftRoller, rightRoller);
     }
+
+    SS_roller1 = leftRoller.getVelocity();
+    SS_roller2 = rightRoller.getVelocity();
   }
 
   // roller configs
@@ -108,8 +117,9 @@ public class IntakeRollers extends SubsystemBase {
   @Override
   // update networktables
   public void periodic() {
-    leftRollerPub.set(leftRoller.getVelocity().getValueAsDouble());
-    rightRollerPub.set(rightRoller.getVelocity().getValueAsDouble());
+    StatusSignal.refreshAll(SS_roller1, SS_roller2);
+    leftRollerPub.set(SS_roller1.getValueAsDouble());
+    rightRollerPub.set(SS_roller2.getValueAsDouble());
   }
 
   // update sim
