@@ -45,28 +45,28 @@ public static void configure(Subsystems s) {
         },
 
         // translation PID
-        new PIDController(5.0, 0.0, 0.0),
+        new PIDController(3.0, 0.0, 0.0),
 
         // rotation PID
-        new PIDController(3.0, 0.0, 0.0),
+        new PIDController(5.0, 0.0, 0.0),
 
         // cross-track PID
         new PIDController(2.0, 0.0, 0.0)
     )
-    .withDefaultShouldFlip()
-    .withPoseReset((pose) -> getStartPose());
+    .withDefaultShouldFlip().
+    withPoseReset(s.drivebaseSubsystem::resetPose);
 
         };
 public static Command runAuto() {
 
-Path myPath = new Path("RT-Neutral-ClimbD");  // loads deploy/autos/paths/myPathFile.json
+Path myPath = new Path("LT-Neutral");  // loads deploy/autos/paths/myPathFile.json
 
 return pathBuilder.build(myPath);
 
 }
 public static Pose2d getStartPose() {
 
-Path myPath = new Path("RT-Neutral-ClimbD");  // loads deploy/autos/paths/myPathFile.json
+Path myPath = new Path("LT-Neutral");  // loads deploy/autos/paths/myPathFile.json
 
 return myPath.getStartPose();
 
