@@ -18,7 +18,20 @@ public class LauncherSubsystem extends SubsystemBase {
 
   private final DoublePublisher hoodGoalPub;
   private final DoublePublisher flywheelGoalPub;
+  private final BooleanPublisher hoodBooleanPub;
+  private final BooleanPublisher turretBooleanPub;
+  private final BooleanPublisher flywheelBooleanPub;
+  private final BooleanPublisher notGoingToBeUnderTrenchPub;
+  private final BooleanPublisher notUnderClimbPub;
+
+  private boolean turretAtTarget;
+  private boolean hoodAtTarget;
+  private boolean flywheelAtTarget;
+  private boolean notUunderClimb;
+  private boolean notGoingToBeUnderTrench;
+
   private LaunchingParameters launchParameters;
+  private final double MIN_FAR_DIST = 6; // Meters
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -28,6 +41,16 @@ public class LauncherSubsystem extends SubsystemBase {
     hoodGoalPub.set(0.0);
     flywheelGoalPub = nt.getDoubleTopic("/AutoAim/flywheelGoal").publish();
     flywheelGoalPub.set(0.0);
+    hoodBooleanPub = nt.getBooleanTopic("/AutoAim/hoodAtTarget").publish();
+    turretBooleanPub = nt.getBooleanTopic("/AutoAim/turretAtTarget").publish();
+    flywheelBooleanPub = nt.getBooleanTopic("/AutoAim/flywheelAtTarget").publish();
+    notUnderClimbPub = nt.getBooleanTopic("/AutoAim/NotUnderClimb").publish();
+    notGoingToBeUnderTrenchPub = nt.getBooleanTopic("/AutoAim/NotUnderTrench").publish();
+    hoodBooleanPub.set(false);
+    turretBooleanPub.set(false);
+    flywheelBooleanPub.set(false);
+    notUnderClimbPub.set(false);
+    notGoingToBeUnderTrenchPub.set(false);
   }
 
   public Command launcherAimCommand() {
@@ -39,6 +62,9 @@ public class LauncherSubsystem extends SubsystemBase {
               this.launchParameters = para;
               hoodGoal = para.targetHood();
               flywheelsGoal = para.targetFlywheels();
+
+              hoodGoalPub.set(hoodGoal);
+              flywheelGoalPub.set(flywheelsGoal);
 
               s.hood.setHoodPosition(hoodGoal);
               s.flywheels.setVelocityRPS(flywheelsGoal);
@@ -63,6 +89,17 @@ public class LauncherSubsystem extends SubsystemBase {
         && !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds)
         && !LaunchCalculator.isUnderClimb(
             driveState.Pose.transformBy(LauncherConstants.turretTransform()));
+    notUnderClimbPub.set(notUunderClimb);
+
+    notGoingToBeUnderTrench =
+        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
+    notGoingToBeUnderTrenchPub.set(notGoingToBeUnderTrench);
+
+    return flywheelAtTarget
+        && hoodAtTarget
+        && turretAtTarget
+        && notUunderClimb
+        && notGoingToBeUnderTrench;
   }
 
   public boolean isHoodAtTarget() {
