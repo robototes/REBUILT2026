@@ -368,9 +368,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     Rotation2d poseRotation = currentPose.getRotation();
     ChassisSpeeds robotSpeeds = currentState.Speeds; // robot-relative
 
+    ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, poseRotation);
     Translation2d fieldVelocity =
-        new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond)
-            .rotateBy(poseRotation);
+        new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
 
     if (RobotBase.isSimulation()) {
       simAccelX = (fieldVelocity.getX() - lastFieldVelocity.getX()) / dt;
@@ -445,13 +445,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   public ChassisSpeeds getFilteredSpeeds() {
     Rotation2d poseRotation = getState().Pose.getRotation();
-    double cos = poseRotation.getCos();
-    double sin = poseRotation.getSin();
     double fieldVx = filteredFieldX.getVelocity();
     double fieldVy = filteredFieldY.getVelocity();
 
-    return new ChassisSpeeds(
-        fieldVx * cos + fieldVy * sin, -fieldVx * sin + fieldVy * cos, filteredAlpha.getVelocity());
+    return ChassisSpeeds.fromFieldRelativeSpeeds(
+        fieldVx, fieldVy, filteredAlpha.getVelocity(), poseRotation);
   }
 
   public double getRobotRelativeAcceleration() {

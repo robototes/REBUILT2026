@@ -270,7 +270,8 @@ public class VisionSubsystem extends SubsystemBase {
     if (estimate == null || estimate.tagCount <= 0) return;
 
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
-    if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
+    double lastVisionTimestamp = camera.getLastTimestampSeconds(estimate.isMegaTag2);
+    if (estimate.timestampSeconds == lastVisionTimestamp) {
       publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp");
       return;
     }
@@ -311,7 +312,7 @@ public class VisionSubsystem extends SubsystemBase {
         visionPose2d,
         estimate.timestampSeconds,
         lastVisionPose,
-        camera.getLastTimestampSeconds(),
+        lastVisionTimestamp,
         underDefense)) {
       publishDiagnostics(estimate, visionPose2d, camera, "velocity-implausible");
       return;
@@ -366,7 +367,7 @@ public class VisionSubsystem extends SubsystemBase {
             visionPose2d,
             estimate.timestampSeconds,
             lastVisionPose,
-            camera.getLastTimestampSeconds(),
+            lastVisionTimestamp,
             underDefense);
     if (acceptedVisionVelocity != null) {
       drivetrain.addAcceptedVisionVelocityMeasurement(
@@ -381,7 +382,7 @@ public class VisionSubsystem extends SubsystemBase {
     } else {
       camera.setlastPoseMT1(visionPose2d);
     }
-    camera.setLastTimestampSeconds(estimate.timestampSeconds);
+    camera.setLastTimestampSeconds(estimate.isMegaTag2, estimate.timestampSeconds);
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
       fieldPose3dEntry.set(estimate.pose3d);
