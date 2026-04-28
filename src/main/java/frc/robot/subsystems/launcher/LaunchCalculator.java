@@ -309,10 +309,11 @@ public class LaunchCalculator {
       // Switch to fast tracking when slip is large enough to be a real event
       // rather than vision noise. Hysteresis prevents flicker.
       double slipRawMag = Math.hypot(slipRawX, slipRawY);
-      slipFastMode =
-          slipRawMag > FAST_SLIP_THRESHOLD_EXIT
-              ? slipRawMag > FAST_SLIP_THRESHOLD_ENTER
-              : slipFastMode;
+      if (slipRawMag > FAST_SLIP_THRESHOLD_ENTER) {
+        slipFastMode = true;
+      } else if (slipRawMag < FAST_SLIP_THRESHOLD_EXIT) {
+        slipFastMode = false;
+      }
       double filterAlpha = slipFastMode ? SLIP_FILTER_ALPHA_FAST : SLIP_FILTER_ALPHA_SLOW;
 
       double newSlipX = filterAlpha * filteredSlip.vxMetersPerSecond + (1 - filterAlpha) * slipRawX;
