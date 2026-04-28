@@ -21,6 +21,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.robotType.RobotType;
+
 import java.util.function.Supplier;
 
 public class IntakePivot extends SubsystemBase {
@@ -29,6 +31,7 @@ public class IntakePivot extends SubsystemBase {
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private static final double AUTO_ZERO_VOLTAGE = 8;
   private final Timer timer = new Timer();
+  public boolean pivotExist = !RobotType.isAlpha();
 
   // Positions
   // -0.17 Vertical Pos.
@@ -70,10 +73,15 @@ public class IntakePivot extends SubsystemBase {
   private DoublePublisher targetPosPub;
   private BooleanPublisher zeroPublisher;
 
+
   public IntakePivot() {
-    pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
-    pivotConfig();
-    pivotMotor.clearStickyFaults();
+    if (!RobotType.isAlpha()) {
+      pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
+      pivotConfig();
+      pivotMotor.clearStickyFaults();
+    } else {
+      pivotMotor = null;
+    }
     networktables();
     if (Robot.isSimulation()) {
       pivotSim = new PivotSim(pivotMotor);

@@ -43,7 +43,11 @@ public class IntakeRollers extends SubsystemBase {
         new TalonFX(
             Hardware.INTAKE_MOTOR_ONE_ID,
             (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
-    rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
+    if (!RobotType.isAlpha()) {
+      rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
+    } else {
+      rightRoller = null;
+    }
     motorConfigs();
     leftRoller.clearStickyFaults();
     rightRoller.clearStickyFaults();

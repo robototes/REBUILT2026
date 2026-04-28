@@ -31,6 +31,7 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoDriveRotate;
+import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
@@ -365,7 +366,9 @@ public class Controls {
       intakeMode = IntakeMode.LAUNCH;
       s.intakePivot.restartTimer();
     } else {
+        if (s.intakePivot.pivotExist) {
       intakeMode = IntakeMode.DEPLOYED;
+        }
       ledsMode = LEDMode.DEFAULT;
     }
   }
@@ -401,6 +404,7 @@ public class Controls {
                     })
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));
+    if (!RobotType.isAlpha()) {
     driverController
         .povUp()
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
@@ -413,7 +417,7 @@ public class Controls {
         .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE).withName("Extaking"))
         .onFalse(
             Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Extaking Finished"));
-
+    }
     connected(intakeTestController)
         .and(intakeTestController.a())
         .whileTrue(Commands.run(() -> s.intakeSubsystem.runRollers()));
