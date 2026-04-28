@@ -86,10 +86,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private StatusSignal<LinearAcceleration> ss_YAccel;
   private StatusSignal<AngularVelocity> ss_Omega;
 
-  private KinematicFilterInfused filteredVX =
-      new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
-  private KinematicFilterInfused filteredVY =
-      new KinematicFilterInfused(0.05, 1.0, 0.05, 0.5, 0.02);
+  private KinematicFilterInfused filteredFieldX =
+      new KinematicFilterInfused(0.02, 0.05, 1.0, 0.10, 0.05, 0.5, 0.02);
+  private KinematicFilterInfused filteredFieldY =
+      new KinematicFilterInfused(0.02, 0.05, 1.0, 0.10, 0.05, 0.5, 0.02);
   private KinematicFilter filteredAlpha = new KinematicFilter(0.005, 0.5, 0.001, 0.02);
 
   private final double nominalDt = 0.02;
@@ -290,7 +290,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     StatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
 
-    ChassisSpeeds robotSpeeds = getState().Speeds; // robot-relative
+    var currentState = getState();
+    Pose2d currentPose = currentState.Pose;
+    Rotation2d poseRotation = currentPose.getRotation();
+    ChassisSpeeds robotSpeeds = currentState.Speeds; // robot-relative
 
     if (RobotBase.isSimulation()) {
       simAccelX = (robotSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond) / dt;
@@ -305,28 +308,36 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     double rawAY =
         RobotBase.isSimulation() ? simAccelY : ss_YAccel.getValue().in(MetersPerSecondPerSecond);
 
-    filteredVX.update(robotSpeeds.vxMetersPerSecond, rawAX, dt);
-    filteredVY.update(robotSpeeds.vyMetersPerSecond, rawAY, dt);
+    Translation2d fieldVelocity =
+        new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond)
+            .rotateBy(poseRotation);
+    Translation2d fieldAccel = new Translation2d(rawAX, rawAY).rotateBy(poseRotation);
+
+    filteredFieldX.update(currentPose.getX(), fieldVelocity.getX(), fieldAccel.getX(), dt);
+    filteredFieldY.update(currentPose.getY(), fieldVelocity.getY(), fieldAccel.getY(), dt);
     filteredAlpha.update(currentOmega, dt);
 
-    pub_XAccel.set(filteredVX.getAccel());
-    pub_YAccel.set(filteredVY.getAccel());
+    pub_XAccel.set(filteredFieldX.getAccel());
+    pub_YAccel.set(filteredFieldY.getAccel());
     pub_Alpha.set(Units.radiansToDegrees(filteredAlpha.getAccel()));
   }
 
   public Translation2d getAccel() {
-    // Rotate robot-relative filtered acceleration into the field frame.
-    // Using pose rotation (not raw pigeon) keeps this consistent with
-    // ChassisSpeeds.fromRobotRelative
-    // in LaunchCalculator, which also uses currentPose.getRotation().
-    Rotation2d poseRotation = getState().Pose.getRotation();
-    return new Translation2d(filteredVX.getAccel(), filteredVY.getAccel()).rotateBy(poseRotation);
+    // The translational kinematic filters are field-relative because they use AprilTag-corrected
+    // Pose2d position as the position measurement.
+    return new Translation2d(filteredFieldX.getAccel(), filteredFieldY.getAccel());
   }
 
   public ChassisSpeeds getFilteredSpeeds() {
+    Rotation2d poseRotation = getState().Pose.getRotation();
+    double cos = poseRotation.getCos();
+    double sin = poseRotation.getSin();
+    double fieldVx = filteredFieldX.getVelocity();
+    double fieldVy = filteredFieldY.getVelocity();
+
     return new ChassisSpeeds(
-        filteredVX.getVelocity(),
-        filteredVY.getVelocity(),
+        fieldVx * cos + fieldVy * sin,
+        -fieldVx * sin + fieldVy * cos,
         getState().Speeds.omegaRadiansPerSecond);
   }
 
