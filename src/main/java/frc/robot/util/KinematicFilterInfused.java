@@ -1,64 +1,94 @@
 package frc.robot.util;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.estimator.KalmanFilter;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.system.LinearSystem;
-
 /**
- * A 2-state Kalman Filter (Velocity, Acceleration) that fuses two independent measurement sources
- * with different noise profiles:
+ * A 2-state Kalman Filter [Velocity, Acceleration] with per-source innovation gating.
+ *
+ * <p>Fuses two independent measurement sources:
  *
  * <ul>
- *   <li><b>Wheel odometry velocity</b> — low noise, encoder-backed, but blind to real acceleration
- *       until it integrates into velocity over time.
- *   <li><b>IMU acceleration</b> — higher noise floor, but responds immediately to real force
- *       inputs.
+ *   <li><b>Wheel odometry velocity</b> — low noise, but blind to external forces until they
+ *       integrate into measured velocity over time.
+ *   <li><b>IMU acceleration</b> — higher noise floor, but responds immediately to real forces.
  * </ul>
  *
- * <p>Both measurements observe a single state each (C = I₂), and the kinematic relationship v̇ = a
- * ties them together through the Kalman gain. A real acceleration transient seen by the IMU
- * propagates up into the velocity estimate; a wheel velocity correction propagates down into the
- * acceleration estimate. Neither source dominates — trust is split by their respective measurement
- * noise parameters.
+ * <p>Unlike a fixed-gain filter, this implementation monitors each source's Normalized Innovation
+ * Squared (NIS) — a chi-squared statistic that measures how consistent a measurement is with the
+ * current state estimate. When NIS exceeds a threshold (6.63 = chi² at 99% confidence, 1 DOF), that
+ * source's measurement noise covariance R is temporarily inflated, reducing its Kalman gain and
+ * limiting its influence on the state. R recovers exponentially toward nominal each cycle.
  *
- * <p>Intended use: one instance per axis, operating in a consistent reference frame (e.g. robot-
- * relative). Rotate outputs to field-relative at the call site.
+ * <p>In practice:
+ *
+ * <ul>
+ *   <li>If the robot is pushed and wheels slip, wheel velocity diverges — its R inflates and the
+ *       IMU dominates. The velocity estimate follows the real chassis motion.
+ *   <li>If the IMU spikes from a hard floor impact, its R inflates and wheel odometry dominates.
+ *   <li>If both diverge simultaneously (e.g. a violent collision), both R values inflate and the
+ *       filter relies more heavily on its kinematic model until measurements reconverge.
+ * </ul>
+ *
+ * <p>Covariance updates use the Joseph form (P = (I-KC)*P*(I-KC)^T + K*R*K^T) for numerical
+ * stability, which keeps P symmetric and positive-semi-definite even under floating-point error.
+ *
+ * <p>Intended use: one instance per axis, operating in a consistent reference frame (e.g.
+ * robot-relative X). Rotate outputs to field-relative at the call site.
  */
 public class KinematicFilterInfused {
-  // States:       [Velocity, Acceleration] (N2)
-  // Inputs:       None                     (N1, always zero)
-  // Measurements: [Velocity, Acceleration] (N2) — wheel odom + IMU fused
-  private final KalmanFilter<N2, N1, N2> filter;
+
+  // State: x = [velocity, acceleration]
+  private double xVel;
+  private double xAccel;
+
+  // Error covariance P (2x2 symmetric — stored as three scalars: p00, p01, p11)
+  private double p00, p01, p11;
+
+  // Process noise variances (diagonal Q, in units²)
+  private final double qVel;
+  private final double qAccel;
+
+  // Nominal measurement noise variances (in units²)
+  private final double rVelNominal;
+  private final double rAccelNominal;
+
+  // Current (possibly inflated) measurement noise variances
+  private double rVel;
+  private double rAccel;
+
+  // Chi-squared threshold for 1 DOF at 99% confidence.
+  // A NIS value above this means the measurement is statistically inconsistent
+  // with the predicted state — almost certainly a fault, not just noise.
+  private static final double NIS_THRESHOLD = 6.63;
+
+  // How much to inflate R when a source fails the NIS gate.
+  // At 10x, the faulting source contributes roughly 1/10th its normal weight.
+  private static final double R_INFLATION_FACTOR = 10.0;
+
+  // Per-cycle exponential decay of inflated R back toward nominal.
+  // 0.95 means R recovers to within ~5% of nominal after ~60 cycles (~1.2 s at 50 Hz).
+  private static final double R_RECOVERY_RATE = 0.95;
+
   private final double nominalDt;
   private boolean initialized = false;
 
-  private static final Matrix<N1, N1> EMPTY_INPUT = new Matrix<>(Nat.N1(), Nat.N1());
-  private final Matrix<N2, N1> measurementVector = new Matrix<>(Nat.N2(), Nat.N1());
-
   /**
-   * Constructs a fused kinematic filter.
+   * Constructs an adaptive fused kinematic filter.
    *
    * <p>Tuning intuition:
    *
    * <ul>
-   *   <li>{@code velProcessStdDev} — How much the model's kinematic velocity propagation is trusted
-   *       between corrections. Keep low.
-   *   <li>{@code accelProcessStdDev} — How much the model's constant-acceleration assumption is
-   *       trusted. Keep high to allow fast acceleration changes.
-   *   <li>{@code velMeasurementStdDev} — Noise on the wheel odometry velocity. Keep low — encoders
-   *       are reliable on carpet.
-   *   <li>{@code accelMeasurementStdDev} — Noise on the IMU acceleration. Higher than the odometry
-   *       noise since the IMU picks up vibration and module transients.
+   *   <li>{@code velProcessStdDev} — Trust in the kinematic velocity propagation. Keep low.
+   *   <li>{@code accelProcessStdDev} — Trust in the constant-acceleration assumption. Keep high to
+   *       allow the acceleration state to change quickly.
+   *   <li>{@code velMeasurementStdDev} — Noise on wheel odometry. Keep low — encoders are reliable
+   *       on carpet when there is no slip.
+   *   <li>{@code accelMeasurementStdDev} — Noise on IMU acceleration. Higher than odometry, since
+   *       the IMU picks up vibration and module transients.
    * </ul>
    *
-   * @param velProcessStdDev Process noise for velocity state
-   * @param accelProcessStdDev Process noise for acceleration state
-   * @param velMeasurementStdDev Measurement noise for wheel odometry velocity
-   * @param accelMeasurementStdDev Measurement noise for IMU acceleration
+   * @param velProcessStdDev Process noise std dev for velocity state
+   * @param accelProcessStdDev Process noise std dev for acceleration state
+   * @param velMeasurementStdDev Measurement noise std dev for wheel odometry velocity
+   * @param accelMeasurementStdDev Measurement noise std dev for IMU acceleration
    * @param dt Nominal loop period in seconds
    */
   public KinematicFilterInfused(
@@ -67,58 +97,31 @@ public class KinematicFilterInfused {
       double velMeasurementStdDev,
       double accelMeasurementStdDev,
       double dt) {
+    this.qVel = velProcessStdDev * velProcessStdDev;
+    this.qAccel = accelProcessStdDev * accelProcessStdDev;
+    this.rVelNominal = velMeasurementStdDev * velMeasurementStdDev;
+    this.rAccelNominal = accelMeasurementStdDev * accelMeasurementStdDev;
+    this.rVel = rVelNominal;
+    this.rAccel = rAccelNominal;
     this.nominalDt = dt;
-
-    // State transition: v̇ = a, ȧ = 0 (constant acceleration model)
-    var matrixA =
-        new Matrix<>(
-            Nat.N2(),
-            Nat.N2(),
-            new double[] {
-              0.0, 1.0,
-              0.0, 0.0
-            });
-
-    // No control input
-    var matrixB = new Matrix<>(Nat.N2(), Nat.N1());
-
-    // Both states are directly (noisily) observable — C = I₂.
-    // The kinematic relationship in A is what ties the two corrections together.
-    var matrixC =
-        new Matrix<>(
-            Nat.N2(),
-            Nat.N2(),
-            new double[] {
-              1.0, 0.0,
-              0.0, 1.0
-            });
-
-    // No feedthrough
-    var matrixD = new Matrix<>(Nat.N2(), Nat.N1());
-
-    LinearSystem<N2, N1, N2> system = new LinearSystem<>(matrixA, matrixB, matrixC, matrixD);
-
-    this.filter =
-        new KalmanFilter<>(
-            Nat.N2(),
-            Nat.N2(),
-            system,
-            VecBuilder.fill(velProcessStdDev, accelProcessStdDev),
-            VecBuilder.fill(velMeasurementStdDev, accelMeasurementStdDev),
-            dt);
   }
 
-  /** Hard resets the filter to a known velocity, zeroing acceleration. */
+  /** Hard-resets the filter to a known velocity, zeroing acceleration. */
   public void reset(double currentVel) {
+    xVel = currentVel;
+    xAccel = 0.0;
+    p00 = rVelNominal;
+    p01 = 0.0;
+    p11 = rAccelNominal;
+    rVel = rVelNominal;
+    rAccel = rAccelNominal;
     initialized = true;
-    filter.setXhat(0, currentVel);
-    filter.setXhat(1, 0.0);
   }
 
   /**
-   * Updates the filter with both measurement sources.
+   * Predict + update with both measurement sources.
    *
-   * <p>Both inputs should be in the same reference frame (e.g. both robot-relative X axis).
+   * <p>Both inputs must be in the same reference frame (e.g. both robot-relative X axis).
    *
    * @param wheelVel Velocity from wheel odometry (m/s)
    * @param imuAccel Acceleration from IMU (m/s²)
@@ -129,22 +132,110 @@ public class KinematicFilterInfused {
       reset(wheelVel);
       return;
     }
-    filter.predict(EMPTY_INPUT, dt);
-    measurementVector.set(0, 0, wheelVel);
-    measurementVector.set(1, 0, imuAccel);
-    filter.correct(EMPTY_INPUT, measurementVector);
+
+    // ── PREDICT ──────────────────────────────────────────────────────────────
+    // Kinematic state transition: v' = v + a*dt,  a' = a
+    // A = [[1, dt], [0, 1]]
+    xVel = xVel + xAccel * dt;
+    // xAccel is unchanged by the predict step
+
+    // P = A*P*A^T + Q  (A = [[1,dt],[0,1]])
+    //   p00' = p00 + 2*dt*p01 + dt²*p11 + qVel
+    //   p01' = p01 + dt*p11
+    //   p11' = p11 + qAccel
+    double dt2 = dt * dt;
+    double pp00 = p00 + 2.0 * dt * p01 + dt2 * p11 + qVel;
+    double pp01 = p01 + dt * p11;
+    double pp11 = p11 + qAccel;
+    p00 = pp00;
+    p01 = pp01;
+    p11 = pp11;
+
+    // ── R RECOVERY ───────────────────────────────────────────────────────────
+    // Exponentially decay any inflated R back toward nominal each cycle.
+    // This ensures the filter doesn't permanently distrust a source after a transient event.
+    rVel = rVelNominal + (rVel - rVelNominal) * R_RECOVERY_RATE;
+    rAccel = rAccelNominal + (rAccel - rAccelNominal) * R_RECOVERY_RATE;
+
+    // ── UPDATE 1: wheel velocity  (C = [1, 0]) ───────────────────────────────
+    // Innovation: difference between measurement and predicted state
+    // S: innovation covariance = C*P*C^T + R = p00 + rVel
+    // NIS: normalized innovation squared = innov² / S  (chi-squared statistic)
+    // K: Kalman gain = P*C^T / S → [p00, p01]^T / S  (C^T = [1,0]^T)
+    {
+      double innov = wheelVel - xVel;
+      double S = p00 + rVel;
+
+      // Gate: if NIS exceeds threshold, inflate R and recompute S
+      if ((innov * innov) / S > NIS_THRESHOLD) {
+        rVel = Math.max(rVel, rVelNominal * R_INFLATION_FACTOR);
+        S = p00 + rVel;
+      }
+
+      double k0 = p00 / S;
+      double k1 = p01 / S;
+
+      xVel += k0 * innov;
+      xAccel += k1 * innov;
+
+      // Joseph form: P = (I-KC)*P*(I-KC)^T + K*R*K^T
+      // With C=[1,0], derived element-by-element:
+      //   p00' = (1-k0)²*p00 + k0²*R
+      //   p01' = (1-k0)*(-k1*p00 + p01) + k0*k1*R
+      //   p11' = k1²*p00 - 2*k1*p01 + p11 + k1²*R
+      double ik0 = 1.0 - k0;
+      double np00 = ik0 * ik0 * p00 + k0 * k0 * rVel;
+      double np01 = ik0 * (-k1 * p00 + p01) + k0 * k1 * rVel;
+      double np11 = k1 * k1 * p00 - 2.0 * k1 * p01 + p11 + k1 * k1 * rVel;
+      p00 = np00;
+      p01 = np01;
+      p11 = np11;
+    }
+
+    // ── UPDATE 2: IMU acceleration  (C = [0, 1]) ─────────────────────────────
+    // S = C*P*C^T + R = p11 + rAccel
+    // K = P*C^T / S → [p01, p11]^T / S  (C^T = [0,1]^T)
+    {
+      double innov = imuAccel - xAccel;
+      double S = p11 + rAccel;
+
+      if ((innov * innov) / S > NIS_THRESHOLD) {
+        rAccel = Math.max(rAccel, rAccelNominal * R_INFLATION_FACTOR);
+        S = p11 + rAccel;
+      }
+
+      double k0 = p01 / S;
+      double k1 = p11 / S;
+
+      xVel += k0 * innov;
+      xAccel += k1 * innov;
+
+      // Joseph form with C=[0,1]:
+      //   p00' = p00 - 2*k0*p01 + k0²*p11 + k0²*R
+      //   p01' = (p01 - k0*p11)*(1-k1) + k0*k1*R
+      //   p11' = (1-k1)²*p11 + k1²*R
+      double ik1 = 1.0 - k1;
+      double np00 = p00 - 2.0 * k0 * p01 + k0 * k0 * p11 + k0 * k0 * rAccel;
+      double np01 = (p01 - k0 * p11) * ik1 + k0 * k1 * rAccel;
+      double np11 = ik1 * ik1 * p11 + k1 * k1 * rAccel;
+      p00 = np00;
+      p01 = np01;
+      p11 = np11;
+    }
   }
 
-  /** Updates using the nominal dt. */
+  /** Updates using the nominal dt configured at construction. */
   public void update(double wheelVel, double imuAccel) {
     update(wheelVel, imuAccel, nominalDt);
   }
 
+  /** Returns the filtered velocity estimate (m/s). Push-compensated when wheels slip. */
   public double getVelocity() {
-    return filter.getXhat(0);
+    return xVel;
   }
 
+  /** Returns the filtered acceleration estimate (m/s²). */
   public double getAccel() {
-    return filter.getXhat(1);
+    return xAccel;
   }
 }
