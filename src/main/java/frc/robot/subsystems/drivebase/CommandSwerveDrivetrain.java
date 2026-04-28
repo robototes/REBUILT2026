@@ -91,8 +91,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final double FIELD_VEL_PROCESS_STD_DEV = 0.05;
   private static final double FIELD_ACCEL_PROCESS_STD_DEV = 4.0;
   private static final double FIELD_POS_MEASUREMENT_STD_DEV = 0.10;
+  private static final double FIELD_POSE_VEL_MEASUREMENT_STD_DEV = 0.25;
+  private static final double FIELD_VISION_VEL_MEASUREMENT_STD_DEV = 0.15;
   private static final double FIELD_VEL_MEASUREMENT_STD_DEV = 0.05;
   private static final double FIELD_ACCEL_MEASUREMENT_STD_DEV = 0.35;
+  private static final double VISION_VELOCITY_TRUST_RAMP_SECONDS = 1.0;
+  private static final double VISION_VELOCITY_TRUST_DECAY_SECONDS = 0.35;
+  private static final double VISION_VELOCITY_MAX_AGE_SECONDS = 0.35;
+  private static final double VISION_VELOCITY_CONSISTENCY_TOLERANCE = 2.0;
+  private static final double VISION_VELOCITY_MAX_SPEED = 12.0;
 
   private KinematicFilterInfused filteredFieldX =
       new KinematicFilterInfused(
@@ -100,6 +107,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           FIELD_VEL_PROCESS_STD_DEV,
           FIELD_ACCEL_PROCESS_STD_DEV,
           FIELD_POS_MEASUREMENT_STD_DEV,
+          FIELD_POSE_VEL_MEASUREMENT_STD_DEV,
+          FIELD_VISION_VEL_MEASUREMENT_STD_DEV,
           FIELD_VEL_MEASUREMENT_STD_DEV,
           FIELD_ACCEL_MEASUREMENT_STD_DEV,
           0.02);
@@ -109,6 +118,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           FIELD_VEL_PROCESS_STD_DEV,
           FIELD_ACCEL_PROCESS_STD_DEV,
           FIELD_POS_MEASUREMENT_STD_DEV,
+          FIELD_POSE_VEL_MEASUREMENT_STD_DEV,
+          FIELD_VISION_VEL_MEASUREMENT_STD_DEV,
           FIELD_VEL_MEASUREMENT_STD_DEV,
           FIELD_ACCEL_MEASUREMENT_STD_DEV,
           0.02);
@@ -120,12 +131,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private double lastPeriodicTime = 0;
   private double simAccelX = 0;
   private double simAccelY = 0;
+  private Translation2d acceptedVisionFieldVelocity = new Translation2d();
+  private double acceptedVisionVelocityTimestamp = Double.NEGATIVE_INFINITY;
+  private double acceptedVisionVelocityTrust = 0.0;
+  private boolean hasAcceptedVisionVelocity = false;
 
   private DoublePublisher pub_XAccel;
   private DoublePublisher pub_YAccel;
   private DoublePublisher pub_Alpha;
   private DoublePublisher pub_RawFieldXAccel;
   private DoublePublisher pub_RawFieldYAccel;
+  private DoublePublisher pub_PoseDerivedFieldXVelocity;
+  private DoublePublisher pub_PoseDerivedFieldYVelocity;
+  private DoublePublisher pub_AcceptedVisionFieldXVelocity;
+  private DoublePublisher pub_AcceptedVisionFieldYVelocity;
+  private DoublePublisher pub_AcceptedVisionVelocityTrust;
 
   /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
   private final SysIdRoutine m_sysIdRoutineSteer =
@@ -249,12 +269,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     pub_Alpha = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
     pub_RawFieldXAccel = nt.getDoubleTopic("/DriveState/Accelerations/rawFieldAccelX").publish();
     pub_RawFieldYAccel = nt.getDoubleTopic("/DriveState/Accelerations/rawFieldAccelY").publish();
+    pub_PoseDerivedFieldXVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/poseDerivedFieldVelocityX").publish();
+    pub_PoseDerivedFieldYVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/poseDerivedFieldVelocityY").publish();
+    pub_AcceptedVisionFieldXVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/acceptedVisionFieldVelocityX").publish();
+    pub_AcceptedVisionFieldYVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/acceptedVisionFieldVelocityY").publish();
+    pub_AcceptedVisionVelocityTrust =
+        nt.getDoubleTopic("/DriveState/Velocities/acceptedVisionVelocityTrust").publish();
     // initialize with zeros
     pub_XAccel.set(0.0);
     pub_YAccel.set(0.0);
     pub_Alpha.set(0.0);
     pub_RawFieldXAccel.set(0.0);
     pub_RawFieldYAccel.set(0.0);
+    pub_PoseDerivedFieldXVelocity.set(0.0);
+    pub_PoseDerivedFieldYVelocity.set(0.0);
+    pub_AcceptedVisionFieldXVelocity.set(0.0);
+    pub_AcceptedVisionFieldYVelocity.set(0.0);
+    pub_AcceptedVisionVelocityTrust.set(0.0);
   }
 
   /**
@@ -361,14 +396,42 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         RobotBase.isSimulation()
             ? new Translation2d(rawAX, rawAY)
             : new Translation2d(rawAX, rawAY).rotateBy(poseRotation);
+    double visionVelocityTrust = getCurrentAcceptedVisionVelocityTrust(now, dt);
+    Translation2d acceptedVisionVelocity =
+        visionVelocityTrust > 0.0
+            ? acceptedVisionFieldVelocity
+            : new Translation2d(Double.NaN, Double.NaN);
 
     pub_RawFieldXAccel.set(fieldAccel.getX());
     pub_RawFieldYAccel.set(fieldAccel.getY());
 
-    filteredFieldX.update(currentPose.getX(), fieldVelocity.getX(), fieldAccel.getX(), dt);
-    filteredFieldY.update(currentPose.getY(), fieldVelocity.getY(), fieldAccel.getY(), dt);
+    filteredFieldX.update(
+        currentPose.getX(),
+        fieldVelocity.getX(),
+        acceptedVisionVelocity.getX(),
+        visionVelocityTrust,
+        fieldAccel.getX(),
+        dt);
+    filteredFieldY.update(
+        currentPose.getY(),
+        fieldVelocity.getY(),
+        acceptedVisionVelocity.getY(),
+        visionVelocityTrust,
+        fieldAccel.getY(),
+        dt);
     filteredAlpha.update(currentOmega, dt);
 
+    double poseDerivedFieldXVelocity = filteredFieldX.getPoseDerivedVelocity();
+    double poseDerivedFieldYVelocity = filteredFieldY.getPoseDerivedVelocity();
+    pub_PoseDerivedFieldXVelocity.set(
+        Double.isFinite(poseDerivedFieldXVelocity) ? poseDerivedFieldXVelocity : 0.0);
+    pub_PoseDerivedFieldYVelocity.set(
+        Double.isFinite(poseDerivedFieldYVelocity) ? poseDerivedFieldYVelocity : 0.0);
+    pub_AcceptedVisionFieldXVelocity.set(
+        Double.isFinite(acceptedVisionVelocity.getX()) ? acceptedVisionVelocity.getX() : 0.0);
+    pub_AcceptedVisionFieldYVelocity.set(
+        Double.isFinite(acceptedVisionVelocity.getY()) ? acceptedVisionVelocity.getY() : 0.0);
+    pub_AcceptedVisionVelocityTrust.set(visionVelocityTrust);
     pub_XAccel.set(filteredFieldX.getAccel());
     pub_YAccel.set(filteredFieldY.getAccel());
     pub_Alpha.set(Units.radiansToDegrees(filteredAlpha.getAccel()));
@@ -393,6 +456,73 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   public double getRobotRelativeAcceleration() {
     return filteredAlpha.getAccel();
+  }
+
+  public void addAcceptedVisionVelocityMeasurement(
+      Translation2d fieldVelocity, double timestampSeconds, double quality) {
+    if (!Double.isFinite(timestampSeconds)
+        || !Double.isFinite(fieldVelocity.getX())
+        || !Double.isFinite(fieldVelocity.getY())) {
+      return;
+    }
+
+    double speed = fieldVelocity.getNorm();
+    if (speed > VISION_VELOCITY_MAX_SPEED) {
+      return;
+    }
+
+    double clampedQuality = MathUtil.clamp(quality, 0.0, 1.0);
+    if (!hasAcceptedVisionVelocity) {
+      acceptedVisionFieldVelocity = fieldVelocity;
+      acceptedVisionVelocityTimestamp = timestampSeconds;
+      acceptedVisionVelocityTrust = 0.0;
+      hasAcceptedVisionVelocity = true;
+      return;
+    }
+
+    if (timestampSeconds < acceptedVisionVelocityTimestamp - 1e-3) {
+      return;
+    }
+
+    if (Math.abs(timestampSeconds - acceptedVisionVelocityTimestamp) < 1e-3) {
+      acceptedVisionFieldVelocity =
+          acceptedVisionFieldVelocity.interpolate(fieldVelocity, 0.5 * clampedQuality);
+      return;
+    }
+
+    double dt = timestampSeconds - acceptedVisionVelocityTimestamp;
+    boolean continuous = dt > 0.0 && dt <= VISION_VELOCITY_MAX_AGE_SECONDS;
+    boolean consistent =
+        acceptedVisionFieldVelocity.getDistance(fieldVelocity)
+            <= VISION_VELOCITY_CONSISTENCY_TOLERANCE;
+
+    if (continuous && consistent) {
+      acceptedVisionVelocityTrust =
+          Math.min(
+              1.0,
+              acceptedVisionVelocityTrust
+                  + clampedQuality * dt / VISION_VELOCITY_TRUST_RAMP_SECONDS);
+    } else {
+      acceptedVisionVelocityTrust =
+          Math.min(acceptedVisionVelocityTrust * 0.5, 0.15 * clampedQuality);
+    }
+
+    acceptedVisionFieldVelocity = fieldVelocity;
+    acceptedVisionVelocityTimestamp = timestampSeconds;
+  }
+
+  private double getCurrentAcceptedVisionVelocityTrust(double now, double dt) {
+    if (!hasAcceptedVisionVelocity) {
+      return 0.0;
+    }
+
+    double age = now - acceptedVisionVelocityTimestamp;
+    if (!Double.isFinite(age) || age > VISION_VELOCITY_MAX_AGE_SECONDS) {
+      acceptedVisionVelocityTrust =
+          Math.max(0.0, acceptedVisionVelocityTrust - dt / VISION_VELOCITY_TRUST_DECAY_SECONDS);
+    }
+
+    return acceptedVisionVelocityTrust;
   }
 
   private void startSimThread() {

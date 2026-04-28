@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -360,6 +361,19 @@ public class VisionSubsystem extends SubsystemBase {
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+    Translation2d acceptedVisionVelocity =
+        getAcceptedVisionVelocity(
+            visionPose2d,
+            estimate.timestampSeconds,
+            lastVisionPose,
+            camera.getLastTimestampSeconds(),
+            underDefense);
+    if (acceptedVisionVelocity != null) {
+      drivetrain.addAcceptedVisionVelocityMeasurement(
+          acceptedVisionVelocity,
+          estimate.timestampSeconds,
+          getAcceptedVisionVelocityQuality(estimate.tagCount, maxAmbiguity, spread, stdDevs));
+    }
     robotField.setRobotPose(drivetrain.getState().Pose);
 
     if (estimate.isMegaTag2) {
@@ -435,6 +449,44 @@ public class VisionSubsystem extends SubsystemBase {
             ? VisionConstants.MAX_VISION_IMPLIED_SPEED_DEFENSE
             : VisionConstants.MAX_VISION_IMPLIED_SPEED;
     return impliedSpeed < limit;
+  }
+
+  private Translation2d getAcceptedVisionVelocity(
+      Pose2d newPose,
+      double newTimestamp,
+      Pose2d lastPose,
+      double lastTimestamp,
+      boolean underDefense) {
+    if (lastPose == null || lastTimestamp <= 0.0) return null;
+    double dt = newTimestamp - lastTimestamp;
+    if (dt <= 0.0 || dt > 1.0) return null;
+
+    Translation2d delta = newPose.getTranslation().minus(lastPose.getTranslation());
+    Translation2d velocity = new Translation2d(delta.getX() / dt, delta.getY() / dt);
+    double limit =
+        underDefense
+            ? VisionConstants.MAX_VISION_IMPLIED_SPEED_DEFENSE
+            : VisionConstants.MAX_VISION_IMPLIED_SPEED;
+    if (!Double.isFinite(velocity.getX())
+        || !Double.isFinite(velocity.getY())
+        || velocity.getNorm() > limit) {
+      return null;
+    }
+
+    return velocity;
+  }
+
+  private double getAcceptedVisionVelocityQuality(
+      int tagCount, double maxAmbiguity, double spread, Matrix<N3, N1> stdDevs) {
+    double ambiguityQuality =
+        MathUtil.clamp(1.0 - maxAmbiguity / VisionConstants.MAX_AMBIGUITY, 0.0, 1.0);
+    double spreadQuality = MathUtil.clamp(1.0 - spread / VisionConstants.SPREAD_REJECT, 0.0, 1.0);
+    double tagQuality = MathUtil.clamp(tagCount / 3.0, 0.35, 1.0);
+    double xyStdDev = Math.max(stdDevs.get(0, 0), stdDevs.get(1, 0));
+    double stdDevQuality = MathUtil.clamp(0.35 / Math.max(xyStdDev, 1e-6), 0.0, 1.0);
+
+    return MathUtil.clamp(
+        tagQuality * Math.min(Math.min(ambiguityQuality, spreadQuality), stdDevQuality), 0.05, 1.0);
   }
 
   /**

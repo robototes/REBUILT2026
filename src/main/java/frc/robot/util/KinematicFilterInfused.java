@@ -3,11 +3,15 @@ package frc.robot.util;
 /**
  * A 3-state Kalman Filter [Position, Velocity, Acceleration] with per-source innovation gating.
  *
- * <p>Fuses three independent measurement types:
+ * <p>Fuses five measurement types:
  *
  * <ul>
  *   <li><b>Vision-corrected field position</b> — absolute field anchor, but can jump on noisy or
  *       ambiguous AprilTag updates.
+ *   <li><b>Pose-derived velocity</b> — slower field velocity inferred from pose deltas, useful when
+ *       defense moves the robot but wheel velocity does not describe the real chassis motion.
+ *   <li><b>Accepted vision velocity</b> — timestamped velocity inferred from accepted vision poses,
+ *       weighted by how consistently vision has reported the same motion.
  *   <li><b>Wheel odometry velocity</b> — low noise, but blind to external forces until they
  *       integrate into measured velocity over time.
  *   <li><b>IMU acceleration</b> — higher noise floor, but responds immediately to real forces.
@@ -69,11 +73,15 @@ public class KinematicFilterInfused {
 
   // Nominal measurement noise variances (in units²)
   private final double rPosNominal;
+  private final double rPoseVelNominal;
+  private final double rVisionVelNominal;
   private final double rVelNominal;
   private final double rAccelNominal;
 
   // Current (possibly inflated) measurement noise variances
   private double rPos;
+  private double rPoseVel;
+  private double rVisionVel;
   private double rVel;
   private double rAccel;
 
@@ -86,6 +94,15 @@ public class KinematicFilterInfused {
   // gate much wider so hard stops/starts are accepted quickly while impossible IMU spikes are still
   // softened.
   private static final double ACCEL_NIS_THRESHOLD = 100.0;
+
+  // Pose-derived velocity comes from differentiated field pose, so give it enough room to catch
+  // sustained defense drift without letting a single vision snap masquerade as real velocity.
+  private static final double POSE_VELOCITY_NIS_THRESHOLD = 25.0;
+  private static final double POSE_VELOCITY_ALPHA = 0.25;
+  private static final double MAX_POSE_DERIVED_VELOCITY = 8.0;
+  private static final double VISION_VELOCITY_NIS_THRESHOLD = 25.0;
+  private static final double MIN_VISION_VELOCITY_TRUST = 0.05;
+  private static final double MAX_WHEEL_VELOCITY_NOISE_MULTIPLIER_UNDER_VISION = 40.0;
 
   // Safety margin applied when dynamically inflating R from the NIS threshold.
   private static final double R_INFLATION_MARGIN = 1.05;
@@ -101,6 +118,10 @@ public class KinematicFilterInfused {
 
   private final double nominalDt;
   private boolean initialized = false;
+  private boolean hasLastPositionMeasurement = false;
+  private boolean poseVelocityInitialized = false;
+  private double lastPositionMeasurement = 0.0;
+  private double poseDerivedVelocity = 0.0;
 
   /**
    * Constructs an adaptive fused field-relative kinematic filter.
@@ -113,6 +134,9 @@ public class KinematicFilterInfused {
    *   <li>{@code accelProcessStdDev} — Trust in the constant-acceleration assumption. Keep high to
    *       allow the acceleration state to change quickly.
    *   <li>{@code posMeasurementStdDev} — Noise on vision-corrected field position.
+   *   <li>{@code poseVelocityMeasurementStdDev} — Noise on velocity inferred from pose deltas.
+   *   <li>{@code visionVelocityMeasurementStdDev} — Noise on velocity inferred from accepted vision
+   *       poses.
    *   <li>{@code velMeasurementStdDev} — Noise on wheel odometry velocity.
    *   <li>{@code accelMeasurementStdDev} — Noise on IMU acceleration.
    * </ul>
@@ -121,6 +145,8 @@ public class KinematicFilterInfused {
    * @param velProcessStdDev Process noise std dev for velocity state
    * @param accelProcessStdDev Process noise std dev for acceleration state
    * @param posMeasurementStdDev Measurement noise std dev for vision-corrected position
+   * @param poseVelocityMeasurementStdDev Measurement noise std dev for pose-derived velocity
+   * @param visionVelocityMeasurementStdDev Measurement noise std dev for accepted vision velocity
    * @param velMeasurementStdDev Measurement noise std dev for wheel odometry velocity
    * @param accelMeasurementStdDev Measurement noise std dev for IMU acceleration
    * @param dt Nominal loop period in seconds
@@ -130,6 +156,8 @@ public class KinematicFilterInfused {
       double velProcessStdDev,
       double accelProcessStdDev,
       double posMeasurementStdDev,
+      double poseVelocityMeasurementStdDev,
+      double visionVelocityMeasurementStdDev,
       double velMeasurementStdDev,
       double accelMeasurementStdDev,
       double dt) {
@@ -137,9 +165,13 @@ public class KinematicFilterInfused {
     this.qVel = variance(velProcessStdDev);
     this.qAccel = variance(accelProcessStdDev);
     this.rPosNominal = variance(posMeasurementStdDev);
+    this.rPoseVelNominal = variance(poseVelocityMeasurementStdDev);
+    this.rVisionVelNominal = variance(visionVelocityMeasurementStdDev);
     this.rVelNominal = variance(velMeasurementStdDev);
     this.rAccelNominal = variance(accelMeasurementStdDev);
     this.rPos = rPosNominal;
+    this.rPoseVel = rPoseVelNominal;
+    this.rVisionVel = rVisionVelNominal;
     this.rVel = rVelNominal;
     this.rAccel = rAccelNominal;
     this.nominalDt = sanitizeNominalDt(dt);
@@ -163,8 +195,14 @@ public class KinematicFilterInfused {
     p[ACCELERATION][ACCELERATION] = rAccelNominal;
 
     rPos = rPosNominal;
+    rPoseVel = rPoseVelNominal;
+    rVisionVel = rVisionVelNominal;
     rVel = rVelNominal;
     rAccel = rAccelNominal;
+    hasLastPositionMeasurement = Double.isFinite(currentPos);
+    lastPositionMeasurement = hasLastPositionMeasurement ? currentPos : 0.0;
+    poseVelocityInitialized = Double.isFinite(currentVel);
+    poseDerivedVelocity = poseVelocityInitialized ? currentVel : 0.0;
     initialized = true;
   }
 
@@ -179,10 +217,18 @@ public class KinematicFilterInfused {
    *
    * @param position Vision-corrected field-relative position (m)
    * @param wheelVel Field-relative velocity from wheel odometry (m/s)
+   * @param visionVel Field-relative velocity from accepted vision poses (m/s)
+   * @param visionVelTrust Confidence from sustained accepted vision velocity consistency [0, 1]
    * @param imuAccel Field-relative acceleration from IMU (m/s²), gravity-compensated
    * @param dt Actual elapsed time since last update (seconds)
    */
-  public void update(double position, double wheelVel, double imuAccel, double dt) {
+  public void update(
+      double position,
+      double wheelVel,
+      double visionVel,
+      double visionVelTrust,
+      double imuAccel,
+      double dt) {
     if (!initialized) {
       reset(
           Double.isFinite(position) ? position : 0.0,
@@ -192,13 +238,32 @@ public class KinematicFilterInfused {
     }
 
     dt = sanitizeDt(dt);
+    double poseVelocity = calculatePoseDerivedVelocity(position, dt);
 
     predict(dt);
     recoverMeasurementNoise(dt);
 
     rPos = updateScalar(position, POSITION, rPos, DEFAULT_NIS_THRESHOLD);
-    rVel = updateScalar(wheelVel, VELOCITY, rVel, DEFAULT_NIS_THRESHOLD);
+    rPoseVel = updateScalar(poseVelocity, VELOCITY, rPoseVel, POSE_VELOCITY_NIS_THRESHOLD);
+    rVisionVel =
+        updateScalar(
+            visionVel,
+            VELOCITY,
+            rVisionVel,
+            VISION_VELOCITY_NIS_THRESHOLD,
+            visionVelocityNoiseMultiplier(visionVelTrust));
+    rVel =
+        updateScalar(
+            wheelVel,
+            VELOCITY,
+            rVel,
+            DEFAULT_NIS_THRESHOLD,
+            wheelVelocityNoiseMultiplier(visionVelTrust));
     rAccel = updateScalar(imuAccel, ACCELERATION, rAccel, ACCEL_NIS_THRESHOLD);
+  }
+
+  public void update(double position, double wheelVel, double imuAccel, double dt) {
+    update(position, wheelVel, Double.NaN, 0.0, imuAccel, dt);
   }
 
   /** Updates using the nominal dt configured at construction. */
@@ -214,6 +279,11 @@ public class KinematicFilterInfused {
   /** Returns the filtered field-relative velocity estimate (m/s). */
   public double getVelocity() {
     return x[VELOCITY];
+  }
+
+  /** Returns the most recent filtered pose-derived field velocity measurement (m/s). */
+  public double getPoseDerivedVelocity() {
+    return poseVelocityInitialized ? poseDerivedVelocity : Double.NaN;
   }
 
   /** Returns the filtered field-relative acceleration estimate (m/s²). */
@@ -264,19 +334,64 @@ public class KinematicFilterInfused {
   private void recoverMeasurementNoise(double dt) {
     double recovery = Math.pow(R_RECOVERY_RATE, dt / nominalDt);
     rPos = rPosNominal + (rPos - rPosNominal) * recovery;
+    rPoseVel = rPoseVelNominal + (rPoseVel - rPoseVelNominal) * recovery;
+    rVisionVel = rVisionVelNominal + (rVisionVel - rVisionVelNominal) * recovery;
     rVel = rVelNominal + (rVel - rVelNominal) * recovery;
     rAccel = rAccelNominal + (rAccel - rAccelNominal) * recovery;
   }
 
+  private double calculatePoseDerivedVelocity(double position, double dt) {
+    if (!Double.isFinite(position)) {
+      return Double.NaN;
+    }
+
+    if (!hasLastPositionMeasurement) {
+      lastPositionMeasurement = position;
+      hasLastPositionMeasurement = true;
+      return Double.NaN;
+    }
+
+    double rawPoseVelocity = (position - lastPositionMeasurement) / dt;
+    lastPositionMeasurement = position;
+
+    if (!Double.isFinite(rawPoseVelocity)
+        || Math.abs(rawPoseVelocity) > MAX_POSE_DERIVED_VELOCITY) {
+      return Double.NaN;
+    }
+
+    if (!poseVelocityInitialized) {
+      poseDerivedVelocity = rawPoseVelocity;
+      poseVelocityInitialized = true;
+    } else {
+      poseDerivedVelocity += POSE_VELOCITY_ALPHA * (rawPoseVelocity - poseDerivedVelocity);
+    }
+
+    return poseDerivedVelocity;
+  }
+
   private double updateScalar(
       double measurement, int stateIndex, double currentR, double nisThreshold) {
+    return updateScalar(measurement, stateIndex, currentR, nisThreshold, 1.0);
+  }
+
+  private double updateScalar(
+      double measurement,
+      int stateIndex,
+      double currentR,
+      double nisThreshold,
+      double measurementNoiseMultiplier) {
     if (!Double.isFinite(measurement)) {
       return currentR;
     }
 
     double innov = measurement - x[stateIndex];
     double priorVariance = Math.max(p[stateIndex][stateIndex], MIN_VARIANCE);
-    double s = priorVariance + currentR;
+    double multiplier = sanitizeMeasurementNoiseMultiplier(measurementNoiseMultiplier);
+    if (!Double.isFinite(multiplier)) {
+      return currentR;
+    }
+    double effectiveR = currentR * multiplier;
+    double s = priorVariance + effectiveR;
 
     if (!Double.isFinite(s) || s <= MIN_VARIANCE) {
       return currentR;
@@ -286,8 +401,10 @@ public class KinematicFilterInfused {
     if (nis > nisThreshold) {
       double requiredR = (innov * innov) / nisThreshold - priorVariance;
       if (Double.isFinite(requiredR)) {
-        currentR = Math.max(currentR, Math.max(MIN_VARIANCE, R_INFLATION_MARGIN * requiredR));
-        s = priorVariance + currentR;
+        currentR =
+            Math.max(currentR, Math.max(MIN_VARIANCE, R_INFLATION_MARGIN * requiredR / multiplier));
+        effectiveR = currentR * multiplier;
+        s = priorVariance + effectiveR;
       }
     }
 
@@ -307,13 +424,35 @@ public class KinematicFilterInfused {
 
     for (int i = 0; i < STATE_SIZE; i++) {
       for (int j = 0; j < STATE_SIZE; j++) {
-        pNew[i][j] += k[i] * currentR * k[j];
+        pNew[i][j] += k[i] * effectiveR * k[j];
       }
     }
 
     copyMatrix(pNew, p);
     symmetrize(p);
     return currentR;
+  }
+
+  private double visionVelocityNoiseMultiplier(double trust) {
+    if (!Double.isFinite(trust) || trust < MIN_VISION_VELOCITY_TRUST) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return 1.0 / Math.min(1.0, trust);
+  }
+
+  private double wheelVelocityNoiseMultiplier(double visionTrust) {
+    if (!Double.isFinite(visionTrust) || visionTrust < MIN_VISION_VELOCITY_TRUST) {
+      return 1.0;
+    }
+    double clampedTrust = Math.max(0.0, Math.min(1.0, visionTrust));
+    return 1.0 + clampedTrust * (MAX_WHEEL_VELOCITY_NOISE_MULTIPLIER_UNDER_VISION - 1.0);
+  }
+
+  private double sanitizeMeasurementNoiseMultiplier(double multiplier) {
+    if (!Double.isFinite(multiplier)) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return Math.max(1.0, multiplier);
   }
 
   private double sanitizeDt(double dt) {
