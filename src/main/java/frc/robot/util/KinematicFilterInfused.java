@@ -14,8 +14,9 @@ package frc.robot.util;
  * <p>Unlike a fixed-gain filter, this implementation monitors each source's Normalized Innovation
  * Squared (NIS) — a chi-squared statistic that measures how consistent a measurement is with the
  * current state estimate. When NIS exceeds a threshold (6.63 = chi² at 99% confidence, 1 DOF), that
- * source's measurement noise covariance R is temporarily inflated, reducing its Kalman gain and
- * limiting its influence on the state. R recovers exponentially toward nominal each cycle.
+ * source's measurement noise covariance R is dynamically inflated to the minimum value that would
+ * make the measurement "just barely" acceptable, reducing its Kalman gain and limiting its
+ * influence on the state. R recovers exponentially toward nominal each cycle.
  *
  * <p>In practice:
  *
@@ -25,6 +26,8 @@ package frc.robot.util;
  *   <li>If the IMU spikes from a hard floor impact, its R inflates and wheel odometry dominates.
  *   <li>If both diverge simultaneously (e.g. a violent collision), both R values inflate and the
  *       filter relies more heavily on its kinematic model until measurements reconverge.
+ *   <li>If either source sends NaN or Inf (e.g. sensor disconnect), that update is skipped entirely
+ *       — the predict step and the other source's update still run normally.
  * </ul>
  *
  * <p>Covariance updates use the Joseph form (P = (I-KC)*P*(I-KC)^T + K*R*K^T) for numerical
@@ -42,7 +45,7 @@ public class KinematicFilterInfused {
   // Error covariance P (2x2 symmetric — stored as three scalars: p00, p01, p11)
   private double p00, p01, p11;
 
-  // Process noise variances (diagonal Q, in units²)
+  // Process noise variances (diagonal Q, in units²/s — scaled by dt each predict step)
   private final double qVel;
   private final double qAccel;
 
@@ -59,12 +62,8 @@ public class KinematicFilterInfused {
   // with the predicted state — almost certainly a fault, not just noise.
   private static final double NIS_THRESHOLD = 6.63;
 
-  // How much to inflate R when a source fails the NIS gate.
-  // At 10x, the faulting source contributes roughly 1/10th its normal weight.
-  private static final double R_INFLATION_FACTOR = 100.0;
-
   // Per-cycle exponential decay of inflated R back toward nominal.
-  // 0.95 means R recovers to within ~5% of nominal after ~60 cycles (~1.2 s at 50 Hz).
+  // 0.88 recovers to within ~5% of nominal after ~23 cycles (~0.46s at 50Hz).
   private static final double R_RECOVERY_RATE = 0.88;
 
   private final double nominalDt;
@@ -106,10 +105,18 @@ public class KinematicFilterInfused {
     this.nominalDt = dt;
   }
 
-  /** Hard-resets the filter to a known velocity, zeroing acceleration. */
-  public void reset(double currentVel) {
+  /**
+   * Hard-resets the filter to known velocity and acceleration states.
+   *
+   * <p>Pass the current IMU reading as {@code currentAccel} to avoid a jolt in the velocity
+   * estimate on the first update cycle. Use 0.0 if no reading is available.
+   *
+   * @param currentVel Current wheel odometry velocity (m/s)
+   * @param currentAccel Current IMU acceleration (m/s²)
+   */
+  public void reset(double currentVel, double currentAccel) {
     xVel = currentVel;
-    xAccel = 0.0;
+    xAccel = currentAccel;
     p00 = rVelNominal;
     p01 = 0.0;
     p11 = rAccelNominal;
@@ -123,13 +130,17 @@ public class KinematicFilterInfused {
    *
    * <p>Both inputs must be in the same reference frame (e.g. both robot-relative X axis).
    *
+   * <p>If either input is non-finite (NaN, Inf), that source's update step is skipped. The predict
+   * step and the other source's update still run normally, so the filter degrades gracefully on
+   * sensor disconnect rather than corrupting the covariance matrix.
+   *
    * @param wheelVel Velocity from wheel odometry (m/s)
-   * @param imuAccel Acceleration from IMU (m/s²)
+   * @param imuAccel Acceleration from IMU (m/s²), gravity-compensated
    * @param dt Actual elapsed time since last update (seconds)
    */
   public void update(double wheelVel, double imuAccel, double dt) {
     if (!initialized) {
-      reset(wheelVel);
+      reset(Double.isFinite(wheelVel) ? wheelVel : 0.0, Double.isFinite(imuAccel) ? imuAccel : 0.0);
       return;
     }
 
@@ -140,13 +151,13 @@ public class KinematicFilterInfused {
     // xAccel is unchanged by the predict step
 
     // P = A*P*A^T + Q  (A = [[1,dt],[0,1]])
-    //   p00' = p00 + 2*dt*p01 + dt²*p11 + qVel
+    //   p00' = p00 + 2*dt*p01 + dt²*p11 + qVel*dt   (Q scaled by dt for loop-overrun robustness)
     //   p01' = p01 + dt*p11
-    //   p11' = p11 + qAccel
+    //   p11' = p11 + qAccel*dt
     double dt2 = dt * dt;
-    double pp00 = p00 + 2.0 * dt * p01 + dt2 * p11 + qVel;
+    double pp00 = p00 + 2.0 * dt * p01 + dt2 * p11 + qVel * dt;
     double pp01 = p01 + dt * p11;
-    double pp11 = p11 + qAccel;
+    double pp11 = p11 + qAccel * dt;
     p00 = pp00;
     p01 = pp01;
     p11 = pp11;
@@ -162,13 +173,15 @@ public class KinematicFilterInfused {
     // S: innovation covariance = C*P*C^T + R = p00 + rVel
     // NIS: normalized innovation squared = innov² / S  (chi-squared statistic)
     // K: Kalman gain = P*C^T / S → [p00, p01]^T / S  (C^T = [1,0]^T)
-    {
+    if (Double.isFinite(wheelVel)) {
       double innov = wheelVel - xVel;
       double S = p00 + rVel;
 
-      // Gate: if NIS exceeds threshold, inflate R and recompute S
+      // Dynamic inflation: set R to the minimum value that makes NIS == threshold.
+      // More principled than a fixed multiplier — large divergences inflate more than small ones.
+      // requiredR = innov²/NIS_THRESHOLD - p00  (derived by solving NIS == threshold for R)
       if ((innov * innov) / S > NIS_THRESHOLD) {
-        rVel = Math.max(rVel, rVelNominal * R_INFLATION_FACTOR);
+        rVel = Math.max(rVel, (innov * innov) / NIS_THRESHOLD - p00);
         S = p00 + rVel;
       }
 
@@ -195,12 +208,12 @@ public class KinematicFilterInfused {
     // ── UPDATE 2: IMU acceleration  (C = [0, 1]) ─────────────────────────────
     // S = C*P*C^T + R = p11 + rAccel
     // K = P*C^T / S → [p01, p11]^T / S  (C^T = [0,1]^T)
-    {
+    if (Double.isFinite(imuAccel)) {
       double innov = imuAccel - xAccel;
       double S = p11 + rAccel;
 
       if ((innov * innov) / S > NIS_THRESHOLD) {
-        rAccel = Math.max(rAccel, rAccelNominal * R_INFLATION_FACTOR);
+        rAccel = Math.max(rAccel, (innov * innov) / NIS_THRESHOLD - p11);
         S = p11 + rAccel;
       }
 
