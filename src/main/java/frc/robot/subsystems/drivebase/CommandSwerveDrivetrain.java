@@ -100,6 +100,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final double VISION_VELOCITY_MAX_AGE_SECONDS = 0.35;
   private static final double VISION_VELOCITY_CONSISTENCY_TOLERANCE = 2.0;
   private static final double VISION_VELOCITY_MAX_SPEED = 12.0;
+  private static final double FILTERED_PREDICTION_POSE_MAX_DIVERGENCE = 0.75;
 
   private KinematicFilterInfused filteredFieldX =
       new KinematicFilterInfused(
@@ -455,7 +456,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       return currentPose;
     }
 
-    return new Pose2d(filteredX, filteredY, currentPose.getRotation());
+    Translation2d filteredTranslation = new Translation2d(filteredX, filteredY);
+    if (filteredTranslation.getDistance(currentPose.getTranslation())
+        > FILTERED_PREDICTION_POSE_MAX_DIVERGENCE) {
+      return currentPose;
+    }
+
+    return new Pose2d(filteredTranslation, currentPose.getRotation());
   }
 
   public ChassisSpeeds getFilteredSpeeds() {
