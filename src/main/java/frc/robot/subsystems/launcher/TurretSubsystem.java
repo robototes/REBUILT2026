@@ -287,7 +287,6 @@ public class TurretSubsystem extends SubsystemBase {
                 }
               }
 
-              // Negate FFV: calculator outputs CCW-positive, motor is CW-positive.
               setTurretRawPosition(Units.degreesToRotations(finalTarget));
               targetPos = Units.degreesToRotations(finalTarget);
             },
