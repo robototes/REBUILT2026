@@ -61,7 +61,7 @@ public class KinematicFilterInfused {
 
   // How much to inflate R when a source fails the NIS gate.
   // At 10x, the faulting source contributes roughly 1/10th its normal weight.
-  private static final double R_INFLATION_FACTOR = 10.0;
+  private static final double R_INFLATION_FACTOR = 100.0;
 
   // Per-cycle exponential decay of inflated R back toward nominal.
   // 0.95 means R recovers to within ~5% of nominal after ~60 cycles (~1.2 s at 50 Hz).
