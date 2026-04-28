@@ -47,6 +47,7 @@ import java.util.function.Supplier;
  */
 public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
   private static final double kSimLoopPeriod = 0.005; // 5 ms
+  private static final double kMaxFilterDt = 0.05;
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
 
@@ -94,7 +95,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   private final double nominalDt = 0.02;
   private Pigeon2 pigeon;
-  private ChassisSpeeds lastSpeeds = new ChassisSpeeds();
+  private Translation2d lastFieldVelocity = new Translation2d();
   private double lastPeriodicTime = 0;
   private double simAccelX = 0;
   private double simAccelY = 0;
@@ -280,6 +281,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     alliance == DriverStation.Alliance.Blue
                         ? kBlueAlliancePerspectiveRotation
                         : kRedAlliancePerspectiveRotation);
+                m_hasAppliedOperatorPerspective = true;
               });
     }
     clampPoseToField();
@@ -287,31 +289,51 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     double now = Timer.getFPGATimestamp();
     double dt = (lastPeriodicTime > 0) ? (now - lastPeriodicTime) : nominalDt;
     lastPeriodicTime = now;
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      dt = nominalDt;
+    } else {
+      dt = Math.min(dt, kMaxFilterDt);
+    }
 
-    StatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
+    var imuRefreshStatus = StatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
+    boolean imuSignalsHealthy = imuRefreshStatus.isOK();
+    boolean xAccelHealthy = imuSignalsHealthy && ss_XAccel.getStatus().isOK();
+    boolean yAccelHealthy = imuSignalsHealthy && ss_YAccel.getStatus().isOK();
+    boolean omegaHealthy = imuSignalsHealthy && ss_Omega.getStatus().isOK();
 
     var currentState = getState();
     Pose2d currentPose = currentState.Pose;
     Rotation2d poseRotation = currentPose.getRotation();
     ChassisSpeeds robotSpeeds = currentState.Speeds; // robot-relative
 
-    if (RobotBase.isSimulation()) {
-      simAccelX = (robotSpeeds.vxMetersPerSecond - lastSpeeds.vxMetersPerSecond) / dt;
-      simAccelY = (robotSpeeds.vyMetersPerSecond - lastSpeeds.vyMetersPerSecond) / dt;
-      lastSpeeds = robotSpeeds;
-    }
-
-    double currentOmega = ss_Omega.getValue().in(RadiansPerSecond);
-
-    double rawAX =
-        RobotBase.isSimulation() ? simAccelX : ss_XAccel.getValue().in(MetersPerSecondPerSecond);
-    double rawAY =
-        RobotBase.isSimulation() ? simAccelY : ss_YAccel.getValue().in(MetersPerSecondPerSecond);
-
     Translation2d fieldVelocity =
         new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond)
             .rotateBy(poseRotation);
-    Translation2d fieldAccel = new Translation2d(rawAX, rawAY).rotateBy(poseRotation);
+
+    if (RobotBase.isSimulation()) {
+      simAccelX = (fieldVelocity.getX() - lastFieldVelocity.getX()) / dt;
+      simAccelY = (fieldVelocity.getY() - lastFieldVelocity.getY()) / dt;
+      lastFieldVelocity = fieldVelocity;
+    }
+
+    double currentOmega =
+        RobotBase.isSimulation()
+            ? robotSpeeds.omegaRadiansPerSecond
+            : omegaHealthy ? ss_Omega.getValue().in(RadiansPerSecond) : Double.NaN;
+
+    double rawAX =
+        RobotBase.isSimulation()
+            ? simAccelX
+            : xAccelHealthy ? ss_XAccel.getValue().in(MetersPerSecondPerSecond) : Double.NaN;
+    double rawAY =
+        RobotBase.isSimulation()
+            ? simAccelY
+            : yAccelHealthy ? ss_YAccel.getValue().in(MetersPerSecondPerSecond) : Double.NaN;
+
+    Translation2d fieldAccel =
+        RobotBase.isSimulation()
+            ? new Translation2d(rawAX, rawAY)
+            : new Translation2d(rawAX, rawAY).rotateBy(poseRotation);
 
     filteredFieldX.update(currentPose.getX(), fieldVelocity.getX(), fieldAccel.getX(), dt);
     filteredFieldY.update(currentPose.getY(), fieldVelocity.getY(), fieldAccel.getY(), dt);
@@ -336,9 +358,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     double fieldVy = filteredFieldY.getVelocity();
 
     return new ChassisSpeeds(
-        fieldVx * cos + fieldVy * sin,
-        -fieldVx * sin + fieldVy * cos,
-        getState().Speeds.omegaRadiansPerSecond);
+        fieldVx * cos + fieldVy * sin, -fieldVx * sin + fieldVy * cos, filteredAlpha.getVelocity());
   }
 
   public double getRobotRelativeAcceleration() {

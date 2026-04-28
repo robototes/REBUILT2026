@@ -20,6 +20,9 @@ public class KinematicFilter {
   private final double nominalDt;
   private boolean initialized = false;
 
+  private static final double DEFAULT_DT = 0.02;
+  private static final double MAX_DT = 0.05;
+
   private static final Matrix<N1, N1> EMPTY_INPUT = new Matrix<>(Nat.N1(), Nat.N1());
   private final Matrix<N1, N1> measurementVector = new Matrix<>(Nat.N1(), Nat.N1());
 
@@ -35,7 +38,7 @@ public class KinematicFilter {
    */
   public KinematicFilter(
       double velProcessStdDev, double accelProcessStdDev, double velMeasurementStdDev, double dt) {
-    this.nominalDt = dt;
+    this.nominalDt = sanitizeDt(dt);
 
     // State Transition Matrix (A)
     // dv/dt = a  -> A[0, 1] = 1.0
@@ -67,7 +70,7 @@ public class KinematicFilter {
             system,
             VecBuilder.fill(velProcessStdDev, accelProcessStdDev),
             VecBuilder.fill(velMeasurementStdDev),
-            dt);
+            this.nominalDt);
   }
 
   /** Hard resets the filter's internal state to a new velocity, zeroing out acceleration. */
@@ -80,14 +83,23 @@ public class KinematicFilter {
   /** Updates the filter with a new velocity measurement and a dynamic timestep. */
   public void update(double measuredVel, double dt) {
     if (!initialized) {
-      reset(measuredVel);
+      if (Double.isFinite(measuredVel)) {
+        reset(measuredVel);
+      }
       return;
     }
+
+    dt = sanitizeDt(dt);
 
     // 1. Predict next state
     filter.predict(EMPTY_INPUT, dt);
 
-    // 2. Update with measurement
+    // 2. Skip bad measurements so a disconnected/stale sensor cannot poison the Kalman state.
+    if (!Double.isFinite(measuredVel)) {
+      return;
+    }
+
+    // 3. Update with measurement
     measurementVector.set(0, 0, measuredVel);
     filter.correct(EMPTY_INPUT, measurementVector);
   }
@@ -103,5 +115,12 @@ public class KinematicFilter {
 
   public double getAccel() {
     return filter.getXhat(1);
+  }
+
+  private static double sanitizeDt(double dt) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      return DEFAULT_DT;
+    }
+    return Math.min(dt, MAX_DT);
   }
 }

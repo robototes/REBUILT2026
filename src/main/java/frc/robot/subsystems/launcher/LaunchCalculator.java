@@ -130,12 +130,12 @@ public class LaunchCalculator {
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
             <= MIN_DIST_TOLERANCE;
     boolean hasNotRotatedSignificantly =
-        Math.abs(currentPose.getRotation().getRadians() - lastPose.getRotation().getRadians())
+        Math.abs(currentPose.getRotation().minus(lastPose.getRotation()).getRadians())
             <= MIN_ROTATION_TOLERANCE;
     boolean isNotMovingFastEnough =
         Math.abs(currentSpeeds.vxMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
             && Math.abs(currentSpeeds.vyMetersPerSecond) <= MIN_VELOCITY_TOLERANCE
-            && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_ROTATION_TOLERANCE;
+            && Math.abs(currentSpeeds.omegaRadiansPerSecond) <= MIN_OMEGA_TOLERANCE;
     boolean isTurretOmegaStable =
         Math.abs(currentTurretOmega - lastTurretOmega) <= MIN_OMEGA_TOLERANCE;
     boolean isNotAcceleratingSignificantly =
@@ -210,6 +210,9 @@ public class LaunchCalculator {
     double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
     double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
     double predicted_omega_robot = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
+    ChassisSpeeds predictedChassisSpeeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            predicted_vx_field, predicted_vy_field, predicted_omega_robot, predictedAngle);
     // 4. Calculate final Field-Relative Turret speeds
     // Find the turret's translation vector rotated into the field frame
     double cos = predictedAngle.getCos(), sin = predictedAngle.getSin();
@@ -245,7 +248,8 @@ public class LaunchCalculator {
       // NOTE: Drag compensation removed as it is accounted for in the interpolating map.
       trueDistanceX = distanceX - turretVelocityX * t;
       trueDistanceY = distanceY - turretVelocityY * t;
-      trueDistance = Math.sqrt(trueDistanceX * trueDistanceX + trueDistanceY * trueDistanceY);
+      trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
+      if (trueDistance < MIN_DISTANCE_TO_TARGET) break;
 
       // begin newton raphson's method to find the converged time of flight
       double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
@@ -264,6 +268,10 @@ public class LaunchCalculator {
       } else {
         t = lookupT; // Fallback to fixed-point
       }
+      if (!Double.isFinite(t) || t < 0.0) {
+        t = Math.max(0.0, lookupT);
+        break;
+      }
 
       if (Math.abs(t - prevT) < CONVERGENCE_TOLERANCE) break;
     }
@@ -276,7 +284,7 @@ public class LaunchCalculator {
       targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
     }
     // FINAL NUMS
-    double targetHood = getHoodAngle(estimatedPose, trueDistance, chassisSpeeds);
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, predictedChassisSpeeds);
     double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
@@ -292,7 +300,7 @@ public class LaunchCalculator {
    *     the change in time being 2*STEP_SIZE
    */
   public double derivativeOfTOF(double distance) {
-    double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
+    double min = LauncherConstants.getTimeFromDistance(Math.max(0.0, distance - STEP_SIZE));
     double max = LauncherConstants.getTimeFromDistance(distance + STEP_SIZE);
     return (max - min) / (2 * STEP_SIZE);
   }
