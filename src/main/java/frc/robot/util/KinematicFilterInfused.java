@@ -276,6 +276,11 @@ public class KinematicFilterInfused {
     return x[POSITION];
   }
 
+  /** Returns true after the filter has received enough data to initialize its state. */
+  public boolean isInitialized() {
+    return initialized;
+  }
+
   /** Returns the filtered field-relative velocity estimate (m/s). */
   public double getVelocity() {
     return x[VELOCITY];

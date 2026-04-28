@@ -443,6 +443,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     return new Translation2d(filteredFieldX.getAccel(), filteredFieldY.getAccel());
   }
 
+  public Pose2d getFilteredPoseForPrediction() {
+    Pose2d currentPose = getState().Pose;
+    if (!filteredFieldX.isInitialized() || !filteredFieldY.isInitialized()) {
+      return currentPose;
+    }
+
+    double filteredX = filteredFieldX.getPosition();
+    double filteredY = filteredFieldY.getPosition();
+    if (!Double.isFinite(filteredX) || !Double.isFinite(filteredY)) {
+      return currentPose;
+    }
+
+    return new Pose2d(filteredX, filteredY, currentPose.getRotation());
+  }
+
   public ChassisSpeeds getFilteredSpeeds() {
     Rotation2d poseRotation = getState().Pose.getRotation();
     double fieldVx = filteredFieldX.getVelocity();

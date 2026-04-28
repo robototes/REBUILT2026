@@ -118,7 +118,7 @@ public class LaunchCalculator {
       return cachedParams;
     }
 
-    Pose2d currentPose = driveState.Pose;
+    Pose2d currentPose = drivetrain.getFilteredPoseForPrediction();
     ChassisSpeeds currentSpeeds = drivetrain.getFilteredSpeeds();
     double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
@@ -156,7 +156,7 @@ public class LaunchCalculator {
     lastTimeStamp = currentTimeStamp;
 
     cachedParams =
-        calculate(currentSpeeds, driveState, turretSubsystem, accel.getX(), accel.getY(), alpha);
+        calculate(currentSpeeds, currentPose, turretSubsystem, accel.getX(), accel.getY(), alpha);
     return cachedParams;
   }
 
@@ -166,8 +166,7 @@ public class LaunchCalculator {
    * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
    * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
-   * @param SwerveDriveState the drivebase's swervedrivestate. It's only called in getParameters()
-   *     and should not use any other drive state
+   * @param currentPose the filtered pose used as the launch prediction base
    * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
    *     the entirety of run time
    * @return LaunchingParameters record holding all the target values. Record is defined in the
@@ -175,14 +174,13 @@ public class LaunchCalculator {
    */
   public LaunchingParameters calculate(
       ChassisSpeeds filteredSpeeds,
-      SwerveDriveState driveState,
+      Pose2d currentPose,
       TurretSubsystem turretSubsystem,
       double ax,
       double ay,
       double alpha) {
 
     ChassisSpeeds chassisSpeeds = filteredSpeeds;
-    Pose2d currentPose = driveState.Pose;
 
     // 1. Convert current speeds to pure Field-Relative values
     ChassisSpeeds fieldSpeeds =
