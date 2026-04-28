@@ -15,10 +15,10 @@ package frc.robot.util;
  *
  * <p>Unlike a fixed-gain filter, this implementation monitors each source's Normalized Innovation
  * Squared (NIS) — a chi-squared statistic that measures how consistent a measurement is with the
- * current state estimate. When NIS exceeds a threshold (6.63 = chi² at 99% confidence, 1 DOF), that
- * source's measurement noise covariance R is dynamically inflated to the minimum value that would
- * make the measurement "just barely" acceptable, reducing its Kalman gain and limiting its
- * influence on the state. R recovers exponentially toward nominal each cycle.
+ * current state estimate. When NIS exceeds a source-specific threshold, that source's measurement
+ * noise covariance R is dynamically inflated to the minimum value that would make the measurement
+ * "just barely" acceptable, reducing its Kalman gain and limiting its influence on the state. R
+ * recovers exponentially toward nominal each cycle.
  *
  * <p>In practice:
  *
@@ -80,7 +80,12 @@ public class KinematicFilterInfused {
   // Chi-squared threshold for 1 DOF at 99% confidence.
   // A NIS value above this means the measurement is statistically inconsistent
   // with the predicted state — almost certainly a fault, not just noise.
-  private static final double NIS_THRESHOLD = 6.63;
+  private static final double DEFAULT_NIS_THRESHOLD = 6.63;
+
+  // Real chassis acceleration changes faster than pose or wheel velocity can validate. Keep this
+  // gate much wider so hard stops/starts are accepted quickly while impossible IMU spikes are still
+  // softened.
+  private static final double ACCEL_NIS_THRESHOLD = 100.0;
 
   // Safety margin applied when dynamically inflating R from the NIS threshold.
   private static final double R_INFLATION_MARGIN = 1.05;
@@ -191,9 +196,9 @@ public class KinematicFilterInfused {
     predict(dt);
     recoverMeasurementNoise(dt);
 
-    rPos = updateScalar(position, POSITION, rPos);
-    rVel = updateScalar(wheelVel, VELOCITY, rVel);
-    rAccel = updateScalar(imuAccel, ACCELERATION, rAccel);
+    rPos = updateScalar(position, POSITION, rPos, DEFAULT_NIS_THRESHOLD);
+    rVel = updateScalar(wheelVel, VELOCITY, rVel, DEFAULT_NIS_THRESHOLD);
+    rAccel = updateScalar(imuAccel, ACCELERATION, rAccel, ACCEL_NIS_THRESHOLD);
   }
 
   /** Updates using the nominal dt configured at construction. */
@@ -263,7 +268,8 @@ public class KinematicFilterInfused {
     rAccel = rAccelNominal + (rAccel - rAccelNominal) * recovery;
   }
 
-  private double updateScalar(double measurement, int stateIndex, double currentR) {
+  private double updateScalar(
+      double measurement, int stateIndex, double currentR, double nisThreshold) {
     if (!Double.isFinite(measurement)) {
       return currentR;
     }
@@ -277,8 +283,8 @@ public class KinematicFilterInfused {
     }
 
     double nis = (innov * innov) / s;
-    if (nis > NIS_THRESHOLD) {
-      double requiredR = (innov * innov) / NIS_THRESHOLD - priorVariance;
+    if (nis > nisThreshold) {
+      double requiredR = (innov * innov) / nisThreshold - priorVariance;
       if (Double.isFinite(requiredR)) {
         currentR = Math.max(currentR, Math.max(MIN_VARIANCE, R_INFLATION_MARGIN * requiredR));
         s = priorVariance + currentR;

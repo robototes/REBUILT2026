@@ -87,10 +87,31 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private StatusSignal<LinearAcceleration> ss_YAccel;
   private StatusSignal<AngularVelocity> ss_Omega;
 
+  private static final double FIELD_POS_PROCESS_STD_DEV = 0.02;
+  private static final double FIELD_VEL_PROCESS_STD_DEV = 0.05;
+  private static final double FIELD_ACCEL_PROCESS_STD_DEV = 4.0;
+  private static final double FIELD_POS_MEASUREMENT_STD_DEV = 0.10;
+  private static final double FIELD_VEL_MEASUREMENT_STD_DEV = 0.05;
+  private static final double FIELD_ACCEL_MEASUREMENT_STD_DEV = 0.35;
+
   private KinematicFilterInfused filteredFieldX =
-      new KinematicFilterInfused(0.02, 0.05, 1.0, 0.10, 0.05, 0.5, 0.02);
+      new KinematicFilterInfused(
+          FIELD_POS_PROCESS_STD_DEV,
+          FIELD_VEL_PROCESS_STD_DEV,
+          FIELD_ACCEL_PROCESS_STD_DEV,
+          FIELD_POS_MEASUREMENT_STD_DEV,
+          FIELD_VEL_MEASUREMENT_STD_DEV,
+          FIELD_ACCEL_MEASUREMENT_STD_DEV,
+          0.02);
   private KinematicFilterInfused filteredFieldY =
-      new KinematicFilterInfused(0.02, 0.05, 1.0, 0.10, 0.05, 0.5, 0.02);
+      new KinematicFilterInfused(
+          FIELD_POS_PROCESS_STD_DEV,
+          FIELD_VEL_PROCESS_STD_DEV,
+          FIELD_ACCEL_PROCESS_STD_DEV,
+          FIELD_POS_MEASUREMENT_STD_DEV,
+          FIELD_VEL_MEASUREMENT_STD_DEV,
+          FIELD_ACCEL_MEASUREMENT_STD_DEV,
+          0.02);
   private KinematicFilter filteredAlpha = new KinematicFilter(0.005, 0.5, 0.001, 0.02);
 
   private final double nominalDt = 0.02;
@@ -103,6 +124,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private DoublePublisher pub_XAccel;
   private DoublePublisher pub_YAccel;
   private DoublePublisher pub_Alpha;
+  private DoublePublisher pub_RawFieldXAccel;
+  private DoublePublisher pub_RawFieldYAccel;
 
   /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
   private final SysIdRoutine m_sysIdRoutineSteer =
@@ -224,10 +247,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     pub_XAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
     pub_YAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelY").publish();
     pub_Alpha = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelOmega").publish();
+    pub_RawFieldXAccel = nt.getDoubleTopic("/DriveState/Accelerations/rawFieldAccelX").publish();
+    pub_RawFieldYAccel = nt.getDoubleTopic("/DriveState/Accelerations/rawFieldAccelY").publish();
     // initialize with zeros
     pub_XAccel.set(0.0);
     pub_YAccel.set(0.0);
     pub_Alpha.set(0.0);
+    pub_RawFieldXAccel.set(0.0);
+    pub_RawFieldYAccel.set(0.0);
   }
 
   /**
@@ -334,6 +361,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         RobotBase.isSimulation()
             ? new Translation2d(rawAX, rawAY)
             : new Translation2d(rawAX, rawAY).rotateBy(poseRotation);
+
+    pub_RawFieldXAccel.set(fieldAccel.getX());
+    pub_RawFieldYAccel.set(fieldAccel.getY());
 
     filteredFieldX.update(currentPose.getX(), fieldVelocity.getX(), fieldAccel.getX(), dt);
     filteredFieldY.update(currentPose.getY(), fieldVelocity.getY(), fieldAccel.getY(), dt);
