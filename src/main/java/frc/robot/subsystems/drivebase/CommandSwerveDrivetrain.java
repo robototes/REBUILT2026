@@ -323,6 +323,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     return new Translation2d(filteredVX.getAccel(), filteredVY.getAccel()).rotateBy(poseRotation);
   }
 
+  public ChassisSpeeds getFilteredSpeeds() {
+    return new ChassisSpeeds(
+        filteredVX.getVelocity(),
+        filteredVY.getVelocity(),
+        getState().Speeds.omegaRadiansPerSecond);
+  }
+
   public double getRobotRelativeAcceleration() {
     return filteredAlpha.getAccel();
   }

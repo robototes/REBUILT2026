@@ -119,7 +119,7 @@ public class LaunchCalculator {
     }
 
     Pose2d currentPose = driveState.Pose;
-    ChassisSpeeds currentSpeeds = driveState.Speeds;
+    ChassisSpeeds currentSpeeds = drivetrain.getFilteredSpeeds();
     double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
 
@@ -155,7 +155,8 @@ public class LaunchCalculator {
     lastTurretOmega = currentTurretOmega;
     lastTimeStamp = currentTimeStamp;
 
-    cachedParams = calculate(driveState, turretSubsystem, accel.getX(), accel.getY(), alpha);
+    cachedParams =
+        calculate(currentSpeeds, driveState, turretSubsystem, accel.getX(), accel.getY(), alpha);
     return cachedParams;
   }
 
@@ -173,13 +174,14 @@ public class LaunchCalculator {
    *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
+      ChassisSpeeds filteredSpeeds,
       SwerveDriveState driveState,
       TurretSubsystem turretSubsystem,
       double ax,
       double ay,
       double alpha) {
 
-    ChassisSpeeds chassisSpeeds = driveState.Speeds;
+    ChassisSpeeds chassisSpeeds = filteredSpeeds;
     Pose2d currentPose = driveState.Pose;
 
     // 1. Convert current speeds to pure Field-Relative values
