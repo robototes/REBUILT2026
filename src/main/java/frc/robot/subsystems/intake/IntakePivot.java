@@ -180,7 +180,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public boolean isAtTarget(double degreeTolerance, double pose) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - pose)
+    return Math.abs(SS_position.getValueAsDouble() - pose)
         < Units.degreesToRotations(degreeTolerance);
   }
 
@@ -199,7 +199,7 @@ public class IntakePivot extends SubsystemBase {
                         .andThen(Commands.run(() -> SS_intakePivotCurrent.refresh()))
                         .until(
                             () ->
-                                pivotMotor.getStatorCurrent().getValueAsDouble()
+                                SS_intakePivotCurrent.getValueAsDouble()
                                     >= (STATOR_CURRENT_LIMIT - 1))),
             zeroPivot())
         .withTimeout(3)
