@@ -15,6 +15,7 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -62,6 +63,7 @@ public class Hood extends SubsystemBase {
 
   // Status signals
   private final StatusSignal<Current> hoodCurrent;
+  private final StatusSignal<Angle> SS_pos;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -73,6 +75,7 @@ public class Hood extends SubsystemBase {
       hoodSim = new HoodSim(hood);
     }
     hoodCurrent = hood.getStatorCurrent();
+    SS_pos = hood.getPosition();
   }
 
   public void initializeNT() {
@@ -133,7 +136,8 @@ public class Hood extends SubsystemBase {
 
   @Override
   public void periodic() {
-    positionPub.set(hood.getPosition().getValueAsDouble());
+    StatusSignal.refreshAll(SS_pos);
+    positionPub.set(SS_pos.getValueAsDouble());
     goalPub.set(request.Position);
     if (TUNER_CONTROLLED.get()) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
@@ -145,7 +149,7 @@ public class Hood extends SubsystemBase {
   }
 
   public double getHoodPosition() {
-    return hood.getPosition().getValueAsDouble();
+    return SS_pos.getValueAsDouble();
   }
 
   public void setHoodPosition(double positionRotations) {
@@ -176,7 +180,7 @@ public class Hood extends SubsystemBase {
 
   public boolean atTargetPosition() {
     return DriverStation.isEnabled()
-        && Math.abs(hood.getPosition().getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
+        && Math.abs(SS_pos.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
