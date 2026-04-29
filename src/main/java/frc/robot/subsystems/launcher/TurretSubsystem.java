@@ -92,9 +92,15 @@ public class TurretSubsystem extends SubsystemBase {
           .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
           .publish();
   private final DoublePublisher turretToHubDistance =
-      NetworkTableInstance.getDefault().getDoubleTopic("Turret to hub distance").publish();
+      NetworkTableInstance.getDefault()
+          .getTable("/SmartDashboard/LiveLauncherData")
+          .getDoubleTopic("Turret to hub distance")
+          .publish();
   private final DoublePublisher turretToHubDistanceCompensated =
-      NetworkTableInstance.getDefault().getDoubleTopic("Turret to hub compensated").publish();
+      NetworkTableInstance.getDefault()
+          .getTable("/SmartDashboard/LiveLauncherData")
+          .getDoubleTopic("Turret to hub compensated")
+          .publish();
 
   // Network tables
   private final DoublePublisher posPub;

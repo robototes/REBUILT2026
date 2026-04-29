@@ -350,7 +350,7 @@ public class LaunchCalculator {
   }
 
   public static boolean isUnderClimb(Pose2d turretPose) {
-    Pose2d nearestTag = TrenchUtil.nearestTrenchTag(turretPose.getTranslation());
+    Pose2d nearestTag = turretPose.nearest(underclimbTags);
     double dx = Math.abs(turretPose.getX() - nearestTag.getX());
     double dy = Math.abs(turretPose.getY() - nearestTag.getY());
     return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;

@@ -6,8 +6,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
@@ -15,9 +13,6 @@ public class LauncherConstants {
       RobotType.isAlpha()
           ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
           : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
-
-  private static final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
