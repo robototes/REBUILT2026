@@ -85,7 +85,7 @@ public class ClimbSubsystem extends SubsystemBase {
   // Motor requests
   private final MotionMagicVoltage mmRequest;
   private final VoltageOut voltageRequest;
-  private static final double MAX_VOLTS = 3;
+  private static final double MAX_VOLTS = 8;
 
   // -------- HARDWARE -------- //
 
@@ -158,8 +158,8 @@ public class ClimbSubsystem extends SubsystemBase {
   // Motor Tunables
   private static final double KP = 3;
   private static final double KI = 0;
-  private static final double KD = 3;
-  private static final double KS = 3;
+  private static final double KD = 0.3;
+  private static final double KS = 0.3;
   private static final double KV = 2;
   private static final double KA = 2;
   private static final double STATOR_CURRENT_LIMIT = 40;
