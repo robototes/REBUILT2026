@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
@@ -26,7 +25,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
@@ -128,7 +126,6 @@ public class Controls {
     configureVisionBindings();
     configureTurretBindings();
     configureLedBindings();
-    configureTurretSysId();
   }
 
   private Trigger connected(CommandXboxController controller) {
@@ -213,11 +210,6 @@ public class Controls {
                         .withVelocityY(getDriveY())
                         .withRotationalRate(getDriveRotate()))
             .withName("Drive"));
-
-    // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
-    // driverController.b().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kReverse));
-    // driverController.y().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kForward));
-    // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on back button press
     // driverController
@@ -553,35 +545,5 @@ public class Controls {
             .withName("LED Default Command"));
 
     readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
-  }
-
-  private void configureTurretSysId() {
-    // Left Bumper = start logger, Right Bumper = stop logger
-    connected(launcherTuningController)
-        .and(launcherTuningController.leftBumper())
-        .onTrue(Commands.runOnce(SignalLogger::start));
-    connected(launcherTuningController)
-        .and(launcherTuningController.rightBumper())
-        .onTrue(Commands.runOnce(SignalLogger::stop));
-
-    // Y = quasistatic forward
-    connected(launcherTuningController)
-        .and(launcherTuningController.povUp())
-        .whileTrue(s.turretSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-
-    // A = quasistatic reverse
-    connected(launcherTuningController)
-        .and(launcherTuningController.povDown())
-        .whileTrue(s.turretSubsystem.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-
-    // B = dynamic forward
-    connected(launcherTuningController)
-        .and(launcherTuningController.povRight())
-        .whileTrue(s.turretSubsystem.sysIdDynamic(SysIdRoutine.Direction.kForward));
-
-    // X = dynamic reverse
-    connected(launcherTuningController)
-        .and(launcherTuningController.povLeft())
-        .whileTrue(s.turretSubsystem.sysIdDynamic(SysIdRoutine.Direction.kReverse));
   }
 }
