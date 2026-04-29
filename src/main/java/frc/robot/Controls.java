@@ -295,8 +295,7 @@ public class Controls {
                             Commands.parallel(
                                     s.indexerSubsystem.runIndexer(
                                         () -> s.flywheels.getTargetSpeed()),
-                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                    Commands.waitSeconds(1)
+                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH)
                                         .andThen(Commands.runOnce(() -> updateIntakeMode())))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
                                 .andThen(
