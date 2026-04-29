@@ -103,7 +103,7 @@ public class LauncherSubsystem extends SubsystemBase {
                     Units.degreesToRadians(20),
                     Math.max(
                         Units.degreesToRadians(4),
-                        Math.atan(0.3 / LauncherConstants.distToHub()))));
+                        Math.atan(0.3 / launchParameters.currentDist()))));
     turretBooleanPub.set(turretAtTarget);
 
     notUunderClimb =

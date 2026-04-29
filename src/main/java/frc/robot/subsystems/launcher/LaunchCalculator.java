@@ -73,7 +73,12 @@ public class LaunchCalculator {
   private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
 
   public record LaunchingParameters(
-      double targetHood, Rotation2d targetTurret, double targetFlywheels, Pose2d turretPose) {}
+      double targetHood,
+      Rotation2d targetTurret,
+      double targetFlywheels,
+      Pose2d turretPose,
+      double currentDist,
+      double trueDist) {}
 
   static {
     TURRET_TX = LauncherConstants.turretTransform().getTranslation().getX();
@@ -288,7 +293,8 @@ public class LaunchCalculator {
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
-    return new LaunchingParameters(targetHood, targetTurret, targetFlywheels, turretPose);
+    return new LaunchingParameters(
+        targetHood, targetTurret, targetFlywheels, turretPose, distance, trueDistance);
   }
 
   /**

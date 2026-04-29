@@ -6,11 +6,8 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
@@ -21,15 +18,9 @@ public class LauncherConstants {
 
   private static final NetworkTable table =
       NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
-  private static final StructPublisher<Pose2d> turretPose =
-      table.getStructTopic("Turret Pose", Pose2d.struct).publish();
-  private static final DoublePublisher turretToHubDistance =
-      table.getDoubleTopic("Turret to hub distance").publish();
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
-
-  private static double distToHub;
 
   public static class LauncherDistanceDataPoint {
     public final double hoodAngle;
@@ -114,13 +105,6 @@ public class LauncherConstants {
     return LAUNCHER_OFFSET.getTranslation();
   }
 
-  public static void UpdateNT(Pose2d robot) {
-    Pose2d result = robot.transformBy(LAUNCHER_OFFSET);
-    turretPose.set(result);
-    distToHub = AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm();
-    turretToHubDistance.set(distToHub);
-  }
-
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
     double distance = launcherFromRobot(robot).getDistance(target);
     return getFlywheelSpeedFromDistance(distance);
@@ -128,13 +112,6 @@ public class LauncherConstants {
 
   public static Transform2d turretTransform() {
     return LAUNCHER_OFFSET;
-  }
-
-  public static double distToHub() {
-    if (distToHub <= 0.1) {
-      return 0.1;
-    }
-    return distToHub;
   }
 
   public static double getHoodAngleFromDistance(double distance) {

@@ -42,7 +42,6 @@ import frc.robot.util.GCMonitor;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
-import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -203,7 +202,6 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
-    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 
     SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
   }
