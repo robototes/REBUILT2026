@@ -13,6 +13,7 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
+import frc.robot.util.TrenchUtil;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.ArrayList;
 import java.util.List;
@@ -430,14 +431,14 @@ public class LaunchCalculator {
   }
 
   public static boolean isCloseToTrench(Pose2d pose) {
-    Pose2d nearestTag = pose.nearest(trenchTags);
+    Pose2d nearestTag = TrenchUtil.nearestTrenchTag(pose.getTranslation());
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
     return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
   }
 
   public static boolean isUnderClimb(Pose2d turretPose) {
-    Pose2d nearestTag = turretPose.nearest(underclimbTags);
+    Pose2d nearestTag = TrenchUtil.nearestTrenchTag(turretPose.getTranslation());
     double dx = Math.abs(turretPose.getX() - nearestTag.getX());
     double dy = Math.abs(turretPose.getY() - nearestTag.getY());
     return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;
