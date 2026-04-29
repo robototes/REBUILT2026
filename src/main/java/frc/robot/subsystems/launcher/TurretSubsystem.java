@@ -91,6 +91,10 @@ public class TurretSubsystem extends SubsystemBase {
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
           .publish();
+  private final DoublePublisher turretToHubDistance =
+      NetworkTableInstance.getDefault().getDoubleTopic("Turret to hub distance").publish();
+  private final DoublePublisher turretToHubDistanceCompensated =
+      NetworkTableInstance.getDefault().getDoubleTopic("Turret to hub compensated").publish();
 
   // Network tables
   private final DoublePublisher posPub;
@@ -289,6 +293,10 @@ public class TurretSubsystem extends SubsystemBase {
 
               setTurretRawPosition(Units.degreesToRotations(finalTarget));
               targetPos = Units.degreesToRotations(finalTarget);
+
+              // Network tables
+              turretToHubDistance.set(params.currentDist());
+              turretToHubDistanceCompensated.set(params.trueDist());
             },
             () -> turretMotor.stopMotor())
         .withName("Set Turret Position: SOTM calculation");
