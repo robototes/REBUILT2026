@@ -196,11 +196,12 @@ public class IntakePivot extends SubsystemBase {
             voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
                 .withDeadline(
                     Commands.waitSeconds(0.5)
-                        .andThen(Commands.run(() -> SS_intakePivotCurrent.refresh()))
-                        .until(
-                            () ->
-                                SS_intakePivotCurrent.getValueAsDouble()
-                                    >= (STATOR_CURRENT_LIMIT - 1))),
+                        .andThen(
+                            Commands.run(() -> SS_intakePivotCurrent.refresh())
+                                .until(
+                                    () ->
+                                        SS_intakePivotCurrent.getValueAsDouble()
+                                            >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroPivot())
         .withTimeout(3)
         .withName("Automatic Zero Pivot");
