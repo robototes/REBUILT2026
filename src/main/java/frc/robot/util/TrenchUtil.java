@@ -47,7 +47,7 @@ public final class TrenchUtil {
   public static Pose2d nearestTrenchTag(Translation2d translation) {
     Objects.requireNonNull(translation, "translation");
 
-    if (!FIELD_BOUNDS.contains(translation)) {
+    if (!isInFieldBounds(translation)) {
       DriverStation.reportWarning(
           "Translation is outside the WPILib field bounds: " + translation, false);
       return Pose2d.kZero;
@@ -61,5 +61,10 @@ public final class TrenchUtil {
     }
 
     return highY ? BLUE_HIGH_Y_TRENCH : BLUE_LOW_Y_TRENCH;
+  }
+
+  public static boolean isInFieldBounds(Translation2d translation) {
+    Objects.requireNonNull(translation, "translation");
+    return FIELD_BOUNDS.contains(translation);
   }
 }

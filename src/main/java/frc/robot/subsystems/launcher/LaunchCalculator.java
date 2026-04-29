@@ -154,6 +154,7 @@ public class LaunchCalculator {
         && isTurretOmegaStable
         && isNotAcceleratingSignificantly
         && cachedParams != null) {
+      lastTimeStamp = currentTimeStamp;
       return cachedParams;
     }
 
@@ -343,6 +344,10 @@ public class LaunchCalculator {
   }
 
   public static boolean isCloseToTrench(Pose2d pose) {
+    if (!TrenchUtil.isInFieldBounds(pose.getTranslation())) {
+      return false;
+    }
+
     Pose2d nearestTag = TrenchUtil.nearestTrenchTag(pose.getTranslation());
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
