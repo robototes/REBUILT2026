@@ -62,16 +62,16 @@ public class LauncherConstants {
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(1, 1.5, 40, 1.018),
-    new LauncherDistanceDataPoint(1.5, 2, 42, 1.138),
-    new LauncherDistanceDataPoint(2, 3, 43, 1.104),
-    new LauncherDistanceDataPoint(2.55, 3.5, 45, 1.204),
-    new LauncherDistanceDataPoint(3.2, 4.5, 48, 1.15),
-    new LauncherDistanceDataPoint(3.5, 4.8, 51, 1.229),
-    new LauncherDistanceDataPoint(3.75, 5, 51.5, 1.217),
-    new LauncherDistanceDataPoint(4.2, 5.125, 53.5, 1.275),
-    new LauncherDistanceDataPoint(4.5, 5.5, 58, 1.305),
-    new LauncherDistanceDataPoint(5, 5.8, 60, 1.349),
-    new LauncherDistanceDataPoint(5.8, 6.6, 64, 1.378),
+    new LauncherDistanceDataPoint(1.5, 2.2, 45, 1.138),
+    new LauncherDistanceDataPoint(2, 3.4, 48, 1.104),
+    new LauncherDistanceDataPoint(2.55, 3.5, 50, 1.204),
+    new LauncherDistanceDataPoint(3.2, 4.5, 52, 1.15),
+    new LauncherDistanceDataPoint(3.5, 4.8, 55, 1.229),
+    new LauncherDistanceDataPoint(3.75, 5, 55.5, 1.217),
+    new LauncherDistanceDataPoint(4.2, 5.125, 57.5, 1.275),
+    new LauncherDistanceDataPoint(4.5, 5.5, 62, 1.305),
+    new LauncherDistanceDataPoint(5, 5.8, 64, 1.349),
+    new LauncherDistanceDataPoint(5.8, 6.6, 68, 1.378),
     new LauncherDistanceDataPoint(8, 9, 90, 1.53)
   };
 
