@@ -10,6 +10,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
@@ -105,6 +107,8 @@ public class LaunchCalculator {
 
   // Filtered slip state (instance, persists across cycles)
   private ChassisSpeeds filteredSlip = new ChassisSpeeds(0, 0, 0);
+  private DoublePublisher filteredSlipXPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
+  private DoublePublisher filteredSlipYPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -297,7 +301,7 @@ public class LaunchCalculator {
 
     ChassisSpeeds effectiveSpeeds = wheelSpeeds;
     double poseDt = timestamp - prevTimestamp;
-    if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT) {
+    if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT && false) {
       Twist2d twist = prevPose.log(estimatedPose);
 
       // Slip = (pose-derived velocity) - (wheel velocity). When wheels match pose,
@@ -341,6 +345,9 @@ public class LaunchCalculator {
       filteredSlip = new ChassisSpeeds(0, 0, 0);
       slipFastMode = false;
     }
+
+    filteredSlipXPub.set(filteredSlip.vxMetersPerSecond);
+    filteredSlipYPub.set(filteredSlip.vyMetersPerSecond);
 
     // --- PHASE DELAY PREDICTION (second-order) ---
     // Predict robot state at end of PHASE_DELAY: x = x0 + v*t + 0.5*a*t^2.
