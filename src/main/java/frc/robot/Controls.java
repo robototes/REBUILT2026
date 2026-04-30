@@ -90,6 +90,7 @@ public class Controls {
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
 
   public static boolean turretKillActive = false;
+  public static boolean turretSkipped = false;
 
   public static final double MaxSpeed =
       (RobotType.TYPE == RobotTypesEnum.ALPHA)
@@ -283,7 +284,7 @@ public class Controls {
                                     .withVelocityX(getDriveX())
                                     .withVelocityY(getDriveY())
                                     .withRotationalRate(getDriveRotate())),
-                        () -> turretKillActive),
+                        () -> (turretKillActive && !turretSkipped)),
                     s.launcherSubsystem.launcherAimCommand(),
                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
@@ -491,6 +492,8 @@ public class Controls {
         .onTrue(
             Commands.runOnce(() -> turretKillActive = !turretKillActive)
                 .withName("Toggle Turret Kill"));
+    driverController.povRight().onTrue(Commands.runOnce(() -> turretSkipped = !turretSkipped).withName("Toggle Turret Skipped"));
+
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
