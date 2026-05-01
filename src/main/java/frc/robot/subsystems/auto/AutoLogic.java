@@ -112,6 +112,7 @@ public class AutoLogic {
 
     physicalRebuiltPaths =
         List.of(
+            new AutoPath("LB-Depot-Sweep", "LB-Depot-Sweep"),
             new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
             new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
             new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
