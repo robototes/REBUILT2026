@@ -34,6 +34,7 @@ import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
@@ -189,7 +190,7 @@ public class Controls {
       return;
     }
 
-    // readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
+    readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
 
     connected(launcherTuningController)
         .and(launcherTuningController.y())
