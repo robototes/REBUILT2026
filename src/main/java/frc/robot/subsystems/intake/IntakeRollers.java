@@ -117,8 +117,9 @@ public class IntakeRollers extends SubsystemBase {
   @Override
   // update networktables
   public void periodic() {
-    SS_roller1.refresh();
-    SS_roller2.refresh();
+    // SS_roller1.refresh();
+    // SS_roller2.refresh();
+    StatusSignal.refreshAll(SS_roller1, SS_roller2);
     leftRollerPub.set(SS_roller1.getValueAsDouble());
     rightRollerPub.set(SS_roller2.getValueAsDouble());
   }
