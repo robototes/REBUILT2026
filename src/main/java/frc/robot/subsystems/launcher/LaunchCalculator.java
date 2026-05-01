@@ -315,9 +315,9 @@ public class LaunchCalculator {
    * returns the hood angle, as defined in launcherConstants's interpolating map. Checks
    * isCloseToTrench(). If true, set it to 0 so that we don't rip our hood.
    *
-   * @param lookaheadPose currentPose. This should be the robot's pose, or a point on the robot's
-   *     pose
-   * @param trueDist The distance from the curretPose to the hub
+   * @param robotPose current robot pose used for trench lookahead
+   * @param trueDist The distance from the current pose to the hub
+   * @param speeds robot-relative chassis speeds used for trench lookahead
    * @return returns a double representing the hood angle (should be tuned in launcher constants).
    *     Returned value does not have an apparant unit.
    */

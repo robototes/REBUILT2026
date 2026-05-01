@@ -471,8 +471,8 @@ public class Controls {
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
-    (turretAtZero
-        .and(new Trigger(()-> s.turretSubsystem.getTurretPosition() < 0.5))).or(driverController.povLeft())
+    (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
+        .or(driverController.povLeft())
         .onTrue(
             Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
                 .withName("Zero Turret on Limit Switch"));
