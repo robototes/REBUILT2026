@@ -109,6 +109,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final double VISION_VELOCITY_CONSISTENCY_TOLERANCE = 2.0;
   private static final double VISION_VELOCITY_MAX_SPEED = 12.0;
   private static final double FILTERED_PREDICTION_POSE_MAX_DIVERGENCE = 0.75;
+  private static final double STATIONARY_WHEEL_SPEED_MPS = 0.08;
+  private static final double STATIONARY_VISION_SPEED_MPS = 0.12;
+  private static final double STATIONARY_OMEGA_RAD_PER_SEC = 0.08;
+  private static final double STATIONARY_ACCEL_MPS2 = 0.75;
+  private static final double STATIONARY_SETTLE_SECONDS = 0.06;
+  private static final double STATIONARY_RESET_MAX_POSE_ERROR = 0.30;
 
   private KinematicFilterInfused filteredFieldX =
       new KinematicFilterInfused(
@@ -140,6 +146,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private Translation2d lastFieldVelocity = new Translation2d();
   private double lastPeriodicTime = 0;
   private boolean predictionFilterRunsInPeriodic = true;
+  private double stationaryPredictionTime = 0.0;
   private double simAccelX = 0;
   private double simAccelY = 0;
   private Translation2d acceptedVisionFieldVelocity = new Translation2d();
@@ -446,6 +453,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         dt);
     filteredAlpha.update(currentOmega, dt);
 
+    settlePredictionFilterIfStationary(
+        currentPose,
+        fieldVelocity,
+        acceptedVisionVelocity,
+        visionVelocityTrust,
+        fieldAccel,
+        currentOmega,
+        dt);
     double poseDerivedFieldXVelocity = filteredFieldX.getPoseDerivedVelocity();
     double poseDerivedFieldYVelocity = filteredFieldY.getPoseDerivedVelocity();
     pub_PoseDerivedFieldXVelocity.set(
@@ -460,6 +475,47 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     pub_XAccel.set(filteredFieldX.getAccel());
     pub_YAccel.set(filteredFieldY.getAccel());
     pub_Alpha.set(Units.radiansToDegrees(filteredAlpha.getAccel()));
+  }
+
+  private void settlePredictionFilterIfStationary(
+      Pose2d currentPose,
+      Translation2d fieldVelocity,
+      Translation2d acceptedVisionVelocity,
+      double visionVelocityTrust,
+      Translation2d fieldAccel,
+      double currentOmega,
+      double dt) {
+    boolean wheelStationary = fieldVelocity.getNorm() <= STATIONARY_WHEEL_SPEED_MPS;
+    boolean omegaStationary =
+        Double.isFinite(currentOmega) && Math.abs(currentOmega) <= STATIONARY_OMEGA_RAD_PER_SEC;
+    boolean accelStationary =
+        Double.isFinite(fieldAccel.getX())
+            && Double.isFinite(fieldAccel.getY())
+            && fieldAccel.getNorm() <= STATIONARY_ACCEL_MPS2;
+    boolean visionStationary =
+        visionVelocityTrust <= 0.0
+            || acceptedVisionVelocity.getNorm() <= STATIONARY_VISION_SPEED_MPS;
+    boolean filterCloseToPose =
+        new Translation2d(filteredFieldX.getPosition(), filteredFieldY.getPosition())
+                .getDistance(currentPose.getTranslation())
+            <= STATIONARY_RESET_MAX_POSE_ERROR;
+
+    if (wheelStationary
+        && omegaStationary
+        && accelStationary
+        && visionStationary
+        && filterCloseToPose) {
+      stationaryPredictionTime += dt;
+    } else {
+      stationaryPredictionTime = 0.0;
+      return;
+    }
+
+    if (stationaryPredictionTime >= STATIONARY_SETTLE_SECONDS) {
+      filteredFieldX.reset(currentPose.getX(), 0.0, 0.0);
+      filteredFieldY.reset(currentPose.getY(), 0.0, 0.0);
+      filteredAlpha.reset(0.0);
+    }
   }
 
   public Translation2d getAccel() {
