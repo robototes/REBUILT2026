@@ -200,10 +200,8 @@ public class LaunchCalculator {
     // 2. Predict Field-Relative Pose using Acceleration (PHASE_DELAY)
 
     // Field-relative displacement
-    double dxField =
-        (fieldSpeeds.vxMetersPerSecond * phaseDelay) + (halfPhaseDelaySquared * ax);
-    double dyField =
-        (fieldSpeeds.vyMetersPerSecond * phaseDelay) + (halfPhaseDelaySquared * ay);
+    double dxField = (fieldSpeeds.vxMetersPerSecond * phaseDelay) + (halfPhaseDelaySquared * ax);
+    double dyField = (fieldSpeeds.vyMetersPerSecond * phaseDelay) + (halfPhaseDelaySquared * ay);
 
     // Angular changes are frame-independent in 2D
     double dTheta =
