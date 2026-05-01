@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -13,6 +14,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -70,6 +73,10 @@ public class IntakePivot extends SubsystemBase {
   private DoublePublisher targetPosPub;
   private BooleanPublisher zeroPublisher;
 
+  // Status Signals
+  private final StatusSignal<Current> SS_intakePivotCurrent;
+  private final StatusSignal<Angle> SS_position;
+
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     pivotConfig();
@@ -78,6 +85,8 @@ public class IntakePivot extends SubsystemBase {
     if (Robot.isSimulation()) {
       pivotSim = new PivotSim(pivotMotor);
     }
+    SS_intakePivotCurrent = pivotMotor.getStatorCurrent();
+    SS_position = pivotMotor.getPosition();
   }
 
   public void pivotConfig() {
@@ -163,7 +172,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public double getPivotPosition() {
-    return pivotMotor.getPosition().getValueAsDouble();
+    return SS_position.getValueAsDouble();
   }
 
   public double getPivotTargetPosition() {
@@ -171,7 +180,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public boolean isAtTarget(double degreeTolerance, double pose) {
-    return Math.abs(pivotMotor.getPosition().getValueAsDouble() - pose)
+    return Math.abs(SS_position.getValueAsDouble() - pose)
         < Units.degreesToRotations(degreeTolerance);
   }
 
@@ -188,10 +197,11 @@ public class IntakePivot extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.waitUntil(
-                                () ->
-                                    pivotMotor.getStatorCurrent().getValueAsDouble()
-                                        >= (STATOR_CURRENT_LIMIT - 1)))),
+                            Commands.run(() -> SS_intakePivotCurrent.refresh())
+                                .until(
+                                    () ->
+                                        SS_intakePivotCurrent.getValueAsDouble()
+                                            >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroPivot())
         .withTimeout(3)
         .withName("Automatic Zero Pivot");
@@ -200,6 +210,7 @@ public class IntakePivot extends SubsystemBase {
   @Override
   // update simulation
   public void periodic() {
+    StatusSignal.refreshAll(SS_position);
     currentPosPub.set(getPivotPosition());
     targetPosPub.set(getPivotTargetPosition());
   }
