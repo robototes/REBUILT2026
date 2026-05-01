@@ -2,6 +2,7 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -14,6 +15,8 @@ import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -58,6 +61,10 @@ public class Hood extends SubsystemBase {
 
   private static final double AUTO_ZERO_VOLTAGE = -3;
 
+  // Status signals
+  private final StatusSignal<Current> hoodCurrent;
+  private final StatusSignal<Angle> SS_pos;
+
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
 
@@ -67,6 +74,8 @@ public class Hood extends SubsystemBase {
     if (RobotBase.isSimulation()) {
       hoodSim = new HoodSim(hood);
     }
+    hoodCurrent = hood.getStatorCurrent();
+    SS_pos = hood.getPosition();
   }
 
   public void initializeNT() {
@@ -127,7 +136,8 @@ public class Hood extends SubsystemBase {
 
   @Override
   public void periodic() {
-    positionPub.set(hood.getPosition().getValueAsDouble());
+    StatusSignal.refreshAll(SS_pos);
+    positionPub.set(SS_pos.getValueAsDouble());
     goalPub.set(request.Position);
     if (TUNER_CONTROLLED.get()) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
@@ -139,7 +149,7 @@ public class Hood extends SubsystemBase {
   }
 
   public double getHoodPosition() {
-    return hood.getPosition().getValueAsDouble();
+    return SS_pos.getValueAsDouble();
   }
 
   public void setHoodPosition(double positionRotations) {
@@ -170,7 +180,7 @@ public class Hood extends SubsystemBase {
 
   public boolean atTargetPosition() {
     return DriverStation.isEnabled()
-        && Math.abs(hood.getPosition().getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
+        && Math.abs(SS_pos.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
@@ -194,10 +204,11 @@ public class Hood extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.waitUntil(
-                                () ->
-                                    hood.getStatorCurrent().getValueAsDouble()
-                                        >= (STATOR_CURRENT_LIMIT - 1)))),
+                            Commands.run(() -> hoodCurrent.refresh())
+                                .until(
+                                    () ->
+                                        hoodCurrent.getValueAsDouble()
+                                            >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroHoodCommand())
         .withTimeout(3)
         .withName("Automatic Zero Hood");
