@@ -47,10 +47,9 @@ public class LaunchCalculator {
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
+  private static final double DEFAULT_SOTM_PHASE_DELAY_SECONDS = 0.02;
   private static final NtTunableDouble SOTM_PHASE_DELAY_SECONDS =
-      new NtTunableDouble(
-          "/AutoAim/sotmPhaseDelaySeconds",
-          CommandSwerveDrivetrain.PREDICTION_UPDATE_PERIOD_SECONDS);
+      new NtTunableDouble("/AutoAim/sotmPhaseDelaySeconds", DEFAULT_SOTM_PHASE_DELAY_SECONDS);
   private static final double MAX_PHASE_DELAY_SECONDS = 0.05;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
@@ -125,13 +124,13 @@ public class LaunchCalculator {
       return cachedParams;
     }
 
-    Pose2d currentPose = drivetrain.getFilteredPoseForPrediction();
-    ChassisSpeeds currentSpeeds = drivetrain.getFilteredSpeeds();
+    Pose2d currentPose = drivetrain.getSotmPoseForPrediction();
+    ChassisSpeeds currentSpeeds = drivetrain.getSotmSpeedsForPrediction();
     double currentTurretOmega = turretSubsystem.getOmega();
     // If the robot has moved within a certain threshold
 
-    Translation2d accel = drivetrain.getAccel();
-    double alpha = drivetrain.getRobotRelativeAcceleration();
+    Translation2d accel = drivetrain.getSotmFieldAccelerationForPrediction();
+    double alpha = drivetrain.getSotmAngularAccelerationForPrediction();
 
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
@@ -174,21 +173,24 @@ public class LaunchCalculator {
    * calculation. It uses newton's method (f(x)/f'(x)) to find the root, and calculate the converged
    * TOF (time of flight) iteratively. TOF Converges quickly, often within 5 iterations.
    *
-   * @param currentPose the filtered pose used as the launch prediction base
+   * @param currentPose the pose used as the launch prediction base
    * @param turretSubsystem the turretSubsystem object. There should only be one instance throughout
    *     the entirety of run time
+   * @param ax field-relative X acceleration used for phase-delay prediction
+   * @param ay field-relative Y acceleration used for phase-delay prediction
+   * @param alpha angular acceleration used for phase-delay prediction
    * @return LaunchingParameters record holding all the target values. Record is defined in the
    *     LaunchCalculator class
    */
   public LaunchingParameters calculate(
-      ChassisSpeeds filteredSpeeds,
+      ChassisSpeeds predictionSpeeds,
       Pose2d currentPose,
       TurretSubsystem turretSubsystem,
       double ax,
       double ay,
       double alpha) {
 
-    ChassisSpeeds chassisSpeeds = filteredSpeeds;
+    ChassisSpeeds chassisSpeeds = predictionSpeeds;
 
     // 1. Convert current speeds to pure Field-Relative values
     ChassisSpeeds fieldSpeeds =

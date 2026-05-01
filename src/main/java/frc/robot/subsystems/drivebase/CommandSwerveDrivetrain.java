@@ -40,6 +40,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.KinematicFilter;
 import frc.robot.util.KinematicFilterInfused;
+import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.Supplier;
 
 /**
@@ -115,6 +116,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final double STATIONARY_ACCEL_MPS2 = 0.75;
   private static final double STATIONARY_SETTLE_SECONDS = 0.06;
   private static final double STATIONARY_RESET_MAX_POSE_ERROR = 0.30;
+  private static final double SOTM_BLEND_EPSILON = 1e-4;
+  private static final double MIN_DERIVED_ACCEL_DT = 1e-4;
+  private static final double MAX_DERIVED_ACCEL_DT = kMaxFilterDt;
+  private static final double SOTM_WHEEL_ACCEL_FILTER_ALPHA_PER_20MS = 0.9;
+  private static final double SOTM_WHEEL_ACCEL_FILTER_PERIOD_SECONDS = 0.02;
+  private static final NtTunableDouble SOTM_ACCEL_DIVERGENCE_START =
+      new NtTunableDouble("/AutoAim/sotmAccelDivergenceStart", 2.0);
+  private static final NtTunableDouble SOTM_ACCEL_DIVERGENCE_FULL =
+      new NtTunableDouble("/AutoAim/sotmAccelDivergenceFull", 5.0);
+  private static final NtTunableDouble SOTM_ACCEL_DIVERGENCE_MIN_SECONDS =
+      new NtTunableDouble("/AutoAim/sotmAccelDivergenceMinSeconds", 0.04);
+  private static final NtTunableDouble SOTM_VISION_VELOCITY_DIVERGENCE_START =
+      new NtTunableDouble("/AutoAim/sotmVisionVelocityDivergenceStart", 0.5);
+  private static final NtTunableDouble SOTM_VISION_VELOCITY_DIVERGENCE_FULL =
+      new NtTunableDouble("/AutoAim/sotmVisionVelocityDivergenceFull", 2.0);
+  private static final NtTunableDouble SOTM_MIN_VISION_VELOCITY_TRUST =
+      new NtTunableDouble("/AutoAim/sotmMinVisionVelocityTrust", 0.15);
+  private static final NtTunableDouble SOTM_BLEND_RISE_PER_SECOND =
+      new NtTunableDouble("/AutoAim/sotmBlendRisePerSecond", 20.0);
+  private static final NtTunableDouble SOTM_BLEND_FALL_PER_SECOND =
+      new NtTunableDouble("/AutoAim/sotmBlendFallPerSecond", 2.5);
 
   private KinematicFilterInfused filteredFieldX =
       new KinematicFilterInfused(
@@ -144,11 +166,25 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private final double nominalDt = PREDICTION_UPDATE_PERIOD_SECONDS;
   private Pigeon2 pigeon;
   private Translation2d lastFieldVelocity = new Translation2d();
+  private double lastWheelOmegaForAccel = 0.0;
+  private boolean hasWheelAccelBaseline = false;
+  private Translation2d filteredWheelFieldAccel = new Translation2d();
+  private double filteredWheelAlpha = 0.0;
+  private boolean hasFilteredWheelAccel = false;
   private double lastPeriodicTime = 0;
   private boolean predictionFilterRunsInPeriodic = true;
   private double stationaryPredictionTime = 0.0;
   private double simAccelX = 0;
   private double simAccelY = 0;
+  private Translation2d sotmPredictionFieldVelocity = new Translation2d();
+  private Translation2d sotmPredictionFieldAcceleration = new Translation2d();
+  private double sotmPredictionOmega = 0.0;
+  private double sotmPredictionAlpha = 0.0;
+  private double sotmExternalCorrectionBlend = 0.0;
+  private double sotmAccelDisagreement = 0.0;
+  private double sotmAccelDivergenceTime = 0.0;
+  private double sotmVisionVelocityDisagreement = 0.0;
+  private boolean sotmPredictionInitialized = false;
   private Translation2d acceptedVisionFieldVelocity = new Translation2d();
   private double acceptedVisionVelocityTimestamp = Double.NEGATIVE_INFINITY;
   private double acceptedVisionVelocityTrust = 0.0;
@@ -164,6 +200,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private DoublePublisher pub_AcceptedVisionFieldXVelocity;
   private DoublePublisher pub_AcceptedVisionFieldYVelocity;
   private DoublePublisher pub_AcceptedVisionVelocityTrust;
+  private DoublePublisher pub_FilteredFieldXVelocity;
+  private DoublePublisher pub_FilteredFieldYVelocity;
+  private DoublePublisher pub_SotmRawFieldXVelocity;
+  private DoublePublisher pub_SotmRawFieldYVelocity;
+  private DoublePublisher pub_SotmPredictionFieldXVelocity;
+  private DoublePublisher pub_SotmPredictionFieldYVelocity;
+  private DoublePublisher pub_SotmExternalCorrectionBlend;
+  private DoublePublisher pub_SotmAccelDisagreement;
+  private DoublePublisher pub_SotmAccelDivergenceTime;
+  private DoublePublisher pub_SotmVisionVelocityDisagreement;
 
   /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
   private final SysIdRoutine m_sysIdRoutineSteer =
@@ -296,6 +342,26 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         nt.getDoubleTopic("/DriveState/Velocities/acceptedVisionFieldVelocityY").publish();
     pub_AcceptedVisionVelocityTrust =
         nt.getDoubleTopic("/DriveState/Velocities/acceptedVisionVelocityTrust").publish();
+    pub_FilteredFieldXVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/filteredFieldVelocityX").publish();
+    pub_FilteredFieldYVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/filteredFieldVelocityY").publish();
+    pub_SotmRawFieldXVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmRawFieldVelocityX").publish();
+    pub_SotmRawFieldYVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmRawFieldVelocityY").publish();
+    pub_SotmPredictionFieldXVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmPredictionFieldVelocityX").publish();
+    pub_SotmPredictionFieldYVelocity =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmPredictionFieldVelocityY").publish();
+    pub_SotmExternalCorrectionBlend =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmExternalCorrectionBlend").publish();
+    pub_SotmAccelDisagreement =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmAccelDisagreement").publish();
+    pub_SotmAccelDivergenceTime =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmAccelDivergenceTime").publish();
+    pub_SotmVisionVelocityDisagreement =
+        nt.getDoubleTopic("/DriveState/Velocities/sotmVisionVelocityDisagreement").publish();
     // initialize with zeros
     pub_XAccel.set(0.0);
     pub_YAccel.set(0.0);
@@ -307,6 +373,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     pub_AcceptedVisionFieldXVelocity.set(0.0);
     pub_AcceptedVisionFieldYVelocity.set(0.0);
     pub_AcceptedVisionVelocityTrust.set(0.0);
+    pub_FilteredFieldXVelocity.set(0.0);
+    pub_FilteredFieldYVelocity.set(0.0);
+    pub_SotmRawFieldXVelocity.set(0.0);
+    pub_SotmRawFieldYVelocity.set(0.0);
+    pub_SotmPredictionFieldXVelocity.set(0.0);
+    pub_SotmPredictionFieldYVelocity.set(0.0);
+    pub_SotmExternalCorrectionBlend.set(0.0);
+    pub_SotmAccelDisagreement.set(0.0);
+    pub_SotmAccelDivergenceTime.set(0.0);
+    pub_SotmVisionVelocityDisagreement.set(0.0);
   }
 
   /**
@@ -381,13 +457,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   /** Updates the fused prediction filters from the latest drivetrain, IMU, and vision inputs. */
   public void updatePredictionFilter() {
     double now = Timer.getFPGATimestamp();
-    double dt = (lastPeriodicTime > 0) ? (now - lastPeriodicTime) : nominalDt;
+    double measuredDt = (lastPeriodicTime > 0) ? (now - lastPeriodicTime) : nominalDt;
     lastPeriodicTime = now;
-    if (!Double.isFinite(dt) || dt <= 0.0) {
-      dt = nominalDt;
-    } else {
-      dt = Math.min(dt, kMaxFilterDt);
-    }
+    boolean measuredDtValid = Double.isFinite(measuredDt) && measuredDt > 0.0;
+    double dt = measuredDtValid ? Math.min(measuredDt, kMaxFilterDt) : nominalDt;
+    boolean derivedAccelDtValid =
+        measuredDtValid && measuredDt >= MIN_DERIVED_ACCEL_DT && measuredDt <= MAX_DERIVED_ACCEL_DT;
 
     var imuRefreshStatus = BaseStatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
     boolean imuSignalsHealthy = imuRefreshStatus.isOK();
@@ -403,12 +478,30 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, poseRotation);
     Translation2d fieldVelocity =
         new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
+    Translation2d wheelFieldAccel = new Translation2d();
+    double wheelAlpha = 0.0;
+    if (hasWheelAccelBaseline && derivedAccelDtValid) {
+      wheelFieldAccel =
+          new Translation2d(
+              (fieldVelocity.getX() - lastFieldVelocity.getX()) / measuredDt,
+              (fieldVelocity.getY() - lastFieldVelocity.getY()) / measuredDt);
+      wheelAlpha = (robotSpeeds.omegaRadiansPerSecond - lastWheelOmegaForAccel) / measuredDt;
+    }
+    lastFieldVelocity = fieldVelocity;
+    lastWheelOmegaForAccel = robotSpeeds.omegaRadiansPerSecond;
+    hasWheelAccelBaseline = true;
 
     if (RobotBase.isSimulation()) {
-      simAccelX = (fieldVelocity.getX() - lastFieldVelocity.getX()) / dt;
-      simAccelY = (fieldVelocity.getY() - lastFieldVelocity.getY()) / dt;
-      lastFieldVelocity = fieldVelocity;
+      simAccelX = wheelFieldAccel.getX();
+      simAccelY = wheelFieldAccel.getY();
     }
+    if (derivedAccelDtValid) {
+      updateFilteredWheelAcceleration(wheelFieldAccel, wheelAlpha, dt);
+    } else {
+      resetFilteredWheelAcceleration();
+    }
+    Translation2d rawWheelAccelForDisagreement =
+        derivedAccelDtValid ? wheelFieldAccel : new Translation2d(Double.NaN, Double.NaN);
 
     double currentOmega =
         RobotBase.isSimulation()
@@ -461,6 +554,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         fieldAccel,
         currentOmega,
         dt);
+    updateSotmPredictionSource(
+        fieldVelocity,
+        robotSpeeds.omegaRadiansPerSecond,
+        rawWheelAccelForDisagreement,
+        derivedAccelDtValid ? wheelAlpha : Double.NaN,
+        filteredWheelFieldAccel,
+        filteredWheelAlpha,
+        fieldAccel,
+        acceptedVisionVelocity,
+        visionVelocityTrust,
+        dt);
     double poseDerivedFieldXVelocity = filteredFieldX.getPoseDerivedVelocity();
     double poseDerivedFieldYVelocity = filteredFieldY.getPoseDerivedVelocity();
     pub_PoseDerivedFieldXVelocity.set(
@@ -475,6 +579,173 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     pub_XAccel.set(filteredFieldX.getAccel());
     pub_YAccel.set(filteredFieldY.getAccel());
     pub_Alpha.set(Units.radiansToDegrees(filteredAlpha.getAccel()));
+    pub_FilteredFieldXVelocity.set(filteredFieldX.getVelocity());
+    pub_FilteredFieldYVelocity.set(filteredFieldY.getVelocity());
+  }
+
+  private void updateFilteredWheelAcceleration(
+      Translation2d wheelFieldAccel, double wheelAlpha, double dt) {
+    if (!hasFilteredWheelAccel || !isFinite(wheelFieldAccel) || !Double.isFinite(wheelAlpha)) {
+      filteredWheelFieldAccel = isFinite(wheelFieldAccel) ? wheelFieldAccel : new Translation2d();
+      filteredWheelAlpha = Double.isFinite(wheelAlpha) ? wheelAlpha : 0.0;
+      hasFilteredWheelAccel = true;
+      return;
+    }
+
+    double alpha =
+        Math.pow(
+            SOTM_WHEEL_ACCEL_FILTER_ALPHA_PER_20MS,
+            Math.max(0.0, dt) / SOTM_WHEEL_ACCEL_FILTER_PERIOD_SECONDS);
+    double newSampleWeight = 1.0 - MathUtil.clamp(alpha, 0.0, 1.0);
+    filteredWheelFieldAccel = filteredWheelFieldAccel.interpolate(wheelFieldAccel, newSampleWeight);
+    filteredWheelAlpha += newSampleWeight * (wheelAlpha - filteredWheelAlpha);
+  }
+
+  private void resetFilteredWheelAcceleration() {
+    filteredWheelFieldAccel = new Translation2d();
+    filteredWheelAlpha = 0.0;
+    hasFilteredWheelAccel = true;
+  }
+
+  private void updateSotmPredictionSource(
+      Translation2d rawFieldVelocity,
+      double rawOmega,
+      Translation2d rawWheelFieldAccel,
+      double rawWheelAlpha,
+      Translation2d predictionWheelFieldAccel,
+      double predictionWheelAlpha,
+      Translation2d imuFieldAccel,
+      Translation2d acceptedVisionVelocity,
+      double visionVelocityTrust,
+      double dt) {
+    Translation2d filteredFieldVelocity =
+        filteredFieldX.isInitialized() && filteredFieldY.isInitialized()
+            ? new Translation2d(filteredFieldX.getVelocity(), filteredFieldY.getVelocity())
+            : rawFieldVelocity;
+    if (!isFinite(filteredFieldVelocity)) {
+      filteredFieldVelocity = rawFieldVelocity;
+    }
+
+    Translation2d filteredFieldAccel =
+        filteredFieldX.isInitialized() && filteredFieldY.isInitialized()
+            ? new Translation2d(filteredFieldX.getAccel(), filteredFieldY.getAccel())
+            : predictionWheelFieldAccel;
+    if (!isFinite(filteredFieldAccel)) {
+      filteredFieldAccel = predictionWheelFieldAccel;
+    }
+
+    double filteredOmega = filteredAlpha.getVelocity();
+    if (!Double.isFinite(filteredOmega)) {
+      filteredOmega = rawOmega;
+    }
+
+    double filteredAlphaValue = filteredAlpha.getAccel();
+    if (!Double.isFinite(filteredAlphaValue)) {
+      filteredAlphaValue = predictionWheelAlpha;
+    }
+
+    sotmAccelDisagreement = 0.0;
+    if (isFinite(rawWheelFieldAccel) && isFinite(imuFieldAccel)) {
+      sotmAccelDisagreement = rawWheelFieldAccel.minus(imuFieldAccel).getNorm();
+    }
+    double accelDivergenceStart = SOTM_ACCEL_DIVERGENCE_START.get();
+    if (sotmAccelDisagreement >= accelDivergenceStart) {
+      sotmAccelDivergenceTime += Math.max(0.0, dt);
+    } else {
+      sotmAccelDivergenceTime = 0.0;
+    }
+
+    double accelScore =
+        sotmAccelDivergenceTime >= Math.max(0.0, SOTM_ACCEL_DIVERGENCE_MIN_SECONDS.get())
+            ? scoreFromThresholds(
+                sotmAccelDisagreement, accelDivergenceStart, SOTM_ACCEL_DIVERGENCE_FULL.get())
+            : 0.0;
+
+    sotmVisionVelocityDisagreement = 0.0;
+    double visionScore = 0.0;
+    if (visionVelocityTrust >= SOTM_MIN_VISION_VELOCITY_TRUST.get()
+        && isFinite(acceptedVisionVelocity)) {
+      sotmVisionVelocityDisagreement = rawFieldVelocity.getDistance(acceptedVisionVelocity);
+      visionScore =
+          scoreFromThresholds(
+              sotmVisionVelocityDisagreement,
+              SOTM_VISION_VELOCITY_DIVERGENCE_START.get(),
+              SOTM_VISION_VELOCITY_DIVERGENCE_FULL.get());
+    }
+
+    double targetBlend = Math.max(accelScore, visionScore);
+    double rate =
+        targetBlend > sotmExternalCorrectionBlend
+            ? SOTM_BLEND_RISE_PER_SECOND.get()
+            : SOTM_BLEND_FALL_PER_SECOND.get();
+    sotmExternalCorrectionBlend =
+        stepToward(
+            sotmExternalCorrectionBlend, targetBlend, Math.max(0.0, rate) * Math.max(0.0, dt));
+
+    if (sotmExternalCorrectionBlend <= SOTM_BLEND_EPSILON) {
+      sotmPredictionFieldVelocity = rawFieldVelocity;
+      sotmPredictionFieldAcceleration = predictionWheelFieldAccel;
+      sotmPredictionOmega = rawOmega;
+      sotmPredictionAlpha = predictionWheelAlpha;
+    } else {
+      sotmPredictionFieldVelocity =
+          rawFieldVelocity.interpolate(filteredFieldVelocity, sotmExternalCorrectionBlend);
+      sotmPredictionFieldAcceleration =
+          predictionWheelFieldAccel.interpolate(filteredFieldAccel, sotmExternalCorrectionBlend);
+      sotmPredictionOmega = rawOmega + (filteredOmega - rawOmega) * sotmExternalCorrectionBlend;
+      sotmPredictionAlpha =
+          predictionWheelAlpha
+              + (filteredAlphaValue - predictionWheelAlpha) * sotmExternalCorrectionBlend;
+    }
+
+    if (!isFinite(sotmPredictionFieldVelocity)) {
+      sotmPredictionFieldVelocity = rawFieldVelocity;
+    }
+    if (!isFinite(sotmPredictionFieldAcceleration)) {
+      sotmPredictionFieldAcceleration = predictionWheelFieldAccel;
+    }
+    if (!Double.isFinite(sotmPredictionOmega)) {
+      sotmPredictionOmega = rawOmega;
+    }
+    if (!Double.isFinite(sotmPredictionAlpha)) {
+      sotmPredictionAlpha = predictionWheelAlpha;
+    }
+
+    sotmPredictionInitialized = true;
+    pub_SotmRawFieldXVelocity.set(rawFieldVelocity.getX());
+    pub_SotmRawFieldYVelocity.set(rawFieldVelocity.getY());
+    pub_SotmPredictionFieldXVelocity.set(sotmPredictionFieldVelocity.getX());
+    pub_SotmPredictionFieldYVelocity.set(sotmPredictionFieldVelocity.getY());
+    pub_SotmExternalCorrectionBlend.set(sotmExternalCorrectionBlend);
+    pub_SotmAccelDisagreement.set(sotmAccelDisagreement);
+    pub_SotmAccelDivergenceTime.set(sotmAccelDivergenceTime);
+    pub_SotmVisionVelocityDisagreement.set(sotmVisionVelocityDisagreement);
+  }
+
+  private static double scoreFromThresholds(double value, double start, double full) {
+    if (!Double.isFinite(value) || !Double.isFinite(start) || !Double.isFinite(full)) {
+      return 0.0;
+    }
+    if (full <= start) {
+      return value >= start ? 1.0 : 0.0;
+    }
+    return MathUtil.clamp((value - start) / (full - start), 0.0, 1.0);
+  }
+
+  private static double stepToward(double current, double target, double maxStep) {
+    if (!Double.isFinite(target)) {
+      target = 0.0;
+    }
+    current = MathUtil.clamp(Double.isFinite(current) ? current : 0.0, 0.0, 1.0);
+    target = MathUtil.clamp(target, 0.0, 1.0);
+    if (target > current) {
+      return Math.min(target, current + maxStep);
+    }
+    return Math.max(target, current - maxStep);
+  }
+
+  private static boolean isFinite(Translation2d value) {
+    return value != null && Double.isFinite(value.getX()) && Double.isFinite(value.getY());
   }
 
   private void settlePredictionFilterIfStationary(
@@ -545,6 +816,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     return new Pose2d(filteredTranslation, currentPose.getRotation());
   }
 
+  /**
+   * Returns the pose used by shoot-on-the-move prediction.
+   *
+   * <p>This is the drivetrain pose during normal driving. When external sensors indicate wheel
+   * motion is untrustworthy, translation blends toward the kinematic filter pose using the same
+   * correction blend as velocity.
+   *
+   * @return pose for launch prediction
+   */
+  public Pose2d getSotmPoseForPrediction() {
+    Pose2d currentPose = getState().Pose;
+    if (!sotmPredictionInitialized || sotmExternalCorrectionBlend <= SOTM_BLEND_EPSILON) {
+      return currentPose;
+    }
+
+    Pose2d filteredPose = getFilteredPoseForPrediction();
+    Translation2d blendedTranslation =
+        currentPose
+            .getTranslation()
+            .interpolate(filteredPose.getTranslation(), sotmExternalCorrectionBlend);
+    return new Pose2d(blendedTranslation, currentPose.getRotation());
+  }
+
   public ChassisSpeeds getFilteredSpeeds() {
     Rotation2d poseRotation = getState().Pose.getRotation();
     double fieldVx = filteredFieldX.getVelocity();
@@ -552,6 +846,57 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
         fieldVx, fieldVy, filteredAlpha.getVelocity(), poseRotation);
+  }
+
+  /**
+   * Returns the chassis speeds used by shoot-on-the-move prediction.
+   *
+   * <p>Normal driving returns raw drivetrain speeds. External acceleration or vision-velocity
+   * disagreement ramps in the fused prediction velocity.
+   *
+   * @return robot-relative chassis speeds for launch prediction
+   */
+  public ChassisSpeeds getSotmSpeedsForPrediction() {
+    var state = getState();
+    if (!sotmPredictionInitialized || sotmExternalCorrectionBlend <= SOTM_BLEND_EPSILON) {
+      return state.Speeds;
+    }
+
+    return ChassisSpeeds.fromFieldRelativeSpeeds(
+        sotmPredictionFieldVelocity.getX(),
+        sotmPredictionFieldVelocity.getY(),
+        sotmPredictionOmega,
+        state.Pose.getRotation());
+  }
+
+  /**
+   * Returns the field-relative acceleration used by shoot-on-the-move phase-delay prediction.
+   *
+   * @return field-relative translational acceleration in m/s^2
+   */
+  public Translation2d getSotmFieldAccelerationForPrediction() {
+    if (!sotmPredictionInitialized) {
+      return new Translation2d();
+    }
+    return sotmPredictionFieldAcceleration;
+  }
+
+  /**
+   * Returns the angular acceleration used by shoot-on-the-move phase-delay prediction.
+   *
+   * @return angular acceleration in rad/s^2
+   */
+  public double getSotmAngularAccelerationForPrediction() {
+    return sotmPredictionInitialized ? sotmPredictionAlpha : 0.0;
+  }
+
+  /**
+   * Returns how much external correction is blended into the raw drivetrain prediction.
+   *
+   * @return correction blend from 0.0 (raw drivetrain) to 1.0 (fused prediction)
+   */
+  public double getSotmExternalCorrectionBlend() {
+    return sotmExternalCorrectionBlend;
   }
 
   public double getRobotRelativeAcceleration() {
