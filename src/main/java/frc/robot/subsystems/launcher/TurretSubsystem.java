@@ -2,6 +2,7 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -38,6 +39,8 @@ public class TurretSubsystem extends SubsystemBase {
   private final AnalogInput limitSwitch;
 
   private final CommandSwerveDrivetrain driveTrain;
+  private boolean fastAutoAimPeriodicEnabled = false;
+  private boolean autoAimActive = false;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
@@ -129,6 +132,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
     currentPub = table.getDoubleTopic("/Turret/Current").publish();
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        CommandSwerveDrivetrain.PREDICTION_UPDATE_FREQUENCY_HZ, positionSignal, velocitySignal);
 
     targetPub = table.getDoubleTopic("/Turret/Target").publish();
     ffPub = table.getDoubleTopic("/Turret/FF Volts").publish();
@@ -247,46 +252,71 @@ public class TurretSubsystem extends SubsystemBase {
   public Command rotateToTargetWithCalc() {
     return runEnd(
             () -> {
-              double currentDegrees = Units.rotationsToDegrees(getTurretPosition());
-
-              LaunchingParameters params =
-                  LaunchCalculator.getInstance().getParameters(driveTrain, this);
-              double targetDegrees = -params.targetTurret().getDegrees();
-
-              double normalizedTarget =
-                  MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
-
-              double[] candidates = {
-                normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
-              };
-
-              double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
-              double bestDist = Double.MAX_VALUE;
-
-              for (double candidate : candidates) {
-                if (candidate >= TURRET_MIN && candidate <= TURRET_MAX) {
-                  double dist = Math.abs(candidate - currentDegrees);
-                  if (dist < bestDist) {
-                    bestDist = dist;
-                    finalTarget = candidate;
-                  }
-                }
+              autoAimActive = true;
+              if (!fastAutoAimPeriodicEnabled) {
+                updateAutoAimSetpoint();
               }
-
-              setTurretRawPosition(Units.degreesToRotations(finalTarget));
-              targetPos = Units.degreesToRotations(finalTarget);
-
-              // Network tables
-              turretToHubDistance.set(params.currentDist());
-              turretToHubDistanceCompensated.set(params.trueDist());
             },
-            () -> turretMotor.stopMotor())
+            () -> {
+              autoAimActive = false;
+              turretMotor.stopMotor();
+            })
         .withName("Set Turret Position: SOTM calculation");
+  }
+
+  /**
+   * Selects whether turret auto-aim setpoints are updated by the faster prediction loop.
+   *
+   * @param enabled true when Robot has registered the fast aim callback
+   */
+  public void setFastAutoAimPeriodicEnabled(boolean enabled) {
+    fastAutoAimPeriodicEnabled = enabled;
+  }
+
+  /** Updates turret auto-aim from the fast prediction loop while the auto-aim command is active. */
+  public void updateFastAutoAim() {
+    if (fastAutoAimPeriodicEnabled && autoAimActive) {
+      updateAutoAimSetpoint();
+    }
+  }
+
+  private void updateAutoAimSetpoint() {
+    BaseStatusSignal.refreshAll(positionSignal, velocitySignal);
+    double currentDegrees = Units.rotationsToDegrees(getTurretPosition());
+
+    LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain, this);
+    double targetDegrees = -params.targetTurret().getDegrees();
+
+    double normalizedTarget =
+        MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
+
+    double[] candidates = {
+      normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
+    };
+
+    double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
+    double bestDist = Double.MAX_VALUE;
+
+    for (double candidate : candidates) {
+      if (candidate >= TURRET_MIN && candidate <= TURRET_MAX) {
+        double dist = Math.abs(candidate - currentDegrees);
+        if (dist < bestDist) {
+          bestDist = dist;
+          finalTarget = candidate;
+        }
+      }
+    }
+
+    setTurretRawPosition(Units.degreesToRotations(finalTarget));
+    targetPos = Units.degreesToRotations(finalTarget);
+
+    turretToHubDistance.set(params.currentDist());
+    turretToHubDistanceCompensated.set(params.trueDist());
   }
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal);
+    BaseStatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal);
     posPub.set(positionSignal.getValueAsDouble());
     velocityPub.set(velocitySignal.getValueAsDouble());
     currentPub.set(statorCurrentSignal.getValueAsDouble());

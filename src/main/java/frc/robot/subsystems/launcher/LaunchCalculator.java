@@ -2,6 +2,7 @@ package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -15,6 +16,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.TrenchUtil;
 import frc.robot.util.tuning.LauncherConstants;
+import frc.robot.util.tuning.NtTunableDouble;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +47,11 @@ public class LaunchCalculator {
   // Transforms and pose2ds
   private static final Transform2d turretTransform = LauncherConstants.turretTransform();
 
-  private static final double PHASE_DELAY = 0.02;
+  private static final NtTunableDouble SOTM_PHASE_DELAY_SECONDS =
+      new NtTunableDouble(
+          "/AutoAim/sotmPhaseDelaySeconds",
+          CommandSwerveDrivetrain.PREDICTION_UPDATE_PERIOD_SECONDS);
+  private static final double MAX_PHASE_DELAY_SECONDS = 0.05;
   private static final double CONVERGENCE_TOLERANCE = 0.001;
   private static final double STEP_SIZE = 0.01; // Instantaneous rate of change step size in meters
   private static final double MIN_SLOPE = 1e-4;
@@ -66,11 +72,6 @@ public class LaunchCalculator {
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
   private static final List<Pose2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
-
-  private static final double PHASE_DELAY_SQUARED = PHASE_DELAY * PHASE_DELAY;
-
-  // Precalculated: PHASEDELAY ^ 2 * 0.5
-  private static final double ONE_HALF_X_PHASE_D_SQUARED = 0.5 * PHASE_DELAY_SQUARED;
 
   public record LaunchingParameters(
       double targetHood,
@@ -192,18 +193,21 @@ public class LaunchCalculator {
     // 1. Convert current speeds to pure Field-Relative values
     ChassisSpeeds fieldSpeeds =
         ChassisSpeeds.fromRobotRelativeSpeeds(chassisSpeeds, currentPose.getRotation());
+    double phaseDelay =
+        MathUtil.clamp(SOTM_PHASE_DELAY_SECONDS.get(), 0.0, MAX_PHASE_DELAY_SECONDS);
+    double halfPhaseDelaySquared = 0.5 * phaseDelay * phaseDelay;
 
     // 2. Predict Field-Relative Pose using Acceleration (PHASE_DELAY)
 
     // Field-relative displacement
     double dxField =
-        (fieldSpeeds.vxMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ax);
+        (fieldSpeeds.vxMetersPerSecond * phaseDelay) + (halfPhaseDelaySquared * ax);
     double dyField =
-        (fieldSpeeds.vyMetersPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * ay);
+        (fieldSpeeds.vyMetersPerSecond * phaseDelay) + (halfPhaseDelaySquared * ay);
 
     // Angular changes are frame-independent in 2D
     double dTheta =
-        (chassisSpeeds.omegaRadiansPerSecond * PHASE_DELAY) + (ONE_HALF_X_PHASE_D_SQUARED * alpha);
+        (chassisSpeeds.omegaRadiansPerSecond * phaseDelay) + (halfPhaseDelaySquared * alpha);
     Rotation2d predictedAngle = currentPose.getRotation().plus(new Rotation2d(dTheta));
 
     // Apply translation directly in the field frame (bypassing Twist2d's curved robot-frame path)
@@ -212,9 +216,9 @@ public class LaunchCalculator {
     Rotation2d robotAngle = estimatedPose.getRotation();
 
     // 3. Predict Field-Relative Velocities at the moment of launch
-    double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * PHASE_DELAY);
-    double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * PHASE_DELAY);
-    double predicted_omega_robot = chassisSpeeds.omegaRadiansPerSecond + (alpha * PHASE_DELAY);
+    double predicted_vx_field = fieldSpeeds.vxMetersPerSecond + (ax * phaseDelay);
+    double predicted_vy_field = fieldSpeeds.vyMetersPerSecond + (ay * phaseDelay);
+    double predicted_omega_robot = chassisSpeeds.omegaRadiansPerSecond + (alpha * phaseDelay);
     ChassisSpeeds predictedChassisSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
             predicted_vx_field, predicted_vy_field, predicted_omega_robot, predictedAngle);

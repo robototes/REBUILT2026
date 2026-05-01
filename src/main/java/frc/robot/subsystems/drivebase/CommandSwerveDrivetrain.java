@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -46,6 +47,13 @@ import java.util.function.Supplier;
  * be used in command-based projects.
  */
 public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+  /** Period for the fast prediction filter update loop, in seconds. */
+  public static final double PREDICTION_UPDATE_PERIOD_SECONDS = 0.01;
+
+  /** Frequency for prediction-related CTRE status signals, in hertz. */
+  public static final double PREDICTION_UPDATE_FREQUENCY_HZ =
+      1.0 / PREDICTION_UPDATE_PERIOD_SECONDS;
+
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private static final double kMaxFilterDt = 0.05;
   private Notifier m_simNotifier = null;
@@ -112,7 +120,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           FIELD_VISION_VEL_MEASUREMENT_STD_DEV,
           FIELD_VEL_MEASUREMENT_STD_DEV,
           FIELD_ACCEL_MEASUREMENT_STD_DEV,
-          0.02);
+          PREDICTION_UPDATE_PERIOD_SECONDS);
   private KinematicFilterInfused filteredFieldY =
       new KinematicFilterInfused(
           FIELD_POS_PROCESS_STD_DEV,
@@ -123,13 +131,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           FIELD_VISION_VEL_MEASUREMENT_STD_DEV,
           FIELD_VEL_MEASUREMENT_STD_DEV,
           FIELD_ACCEL_MEASUREMENT_STD_DEV,
-          0.02);
-  private KinematicFilter filteredAlpha = new KinematicFilter(0.005, 0.5, 0.001, 0.02);
+          PREDICTION_UPDATE_PERIOD_SECONDS);
+  private KinematicFilter filteredAlpha =
+      new KinematicFilter(0.005, 0.5, 0.001, PREDICTION_UPDATE_PERIOD_SECONDS);
 
-  private final double nominalDt = 0.02;
+  private final double nominalDt = PREDICTION_UPDATE_PERIOD_SECONDS;
   private Pigeon2 pigeon;
   private Translation2d lastFieldVelocity = new Translation2d();
   private double lastPeriodicTime = 0;
+  private boolean predictionFilterRunsInPeriodic = true;
   private double simAccelX = 0;
   private double simAccelY = 0;
   private Translation2d acceptedVisionFieldVelocity = new Translation2d();
@@ -260,9 +270,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     ss_XAccel = pigeon.getAccelerationX();
     ss_YAccel = pigeon.getAccelerationY();
     ss_Omega = pigeon.getAngularVelocityZWorld();
-    ss_XAccel.setUpdateFrequency(100);
-    ss_YAccel.setUpdateFrequency(100);
-    ss_Omega.setUpdateFrequency(100);
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        PREDICTION_UPDATE_FREQUENCY_HZ, ss_XAccel, ss_YAccel, ss_Omega);
 
     var nt = NetworkTableInstance.getDefault();
     pub_XAccel = nt.getDoubleTopic("/DriveState/Accelerations/filteredAccelX").publish();
@@ -296,7 +305,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   /**
    * Returns a command that applies the specified control request to this swerve drivetrain.
    *
-   * @param request Function returning the request to apply
+   * @param requestSupplier Function returning the request to apply
    * @return Command to run
    */
   public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
@@ -348,7 +357,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               });
     }
     clampPoseToField();
+    if (predictionFilterRunsInPeriodic) {
+      updatePredictionFilter();
+    }
+  }
 
+  /**
+   * Selects whether the prediction filter is updated from this subsystem's normal 20 ms periodic.
+   *
+   * @param enabled true to use subsystem periodic updates, false when a faster outer loop owns them
+   */
+  public void setPredictionFilterRunsInPeriodic(boolean enabled) {
+    predictionFilterRunsInPeriodic = enabled;
+  }
+
+  /** Updates the fused prediction filters from the latest drivetrain, IMU, and vision inputs. */
+  public void updatePredictionFilter() {
     double now = Timer.getFPGATimestamp();
     double dt = (lastPeriodicTime > 0) ? (now - lastPeriodicTime) : nominalDt;
     lastPeriodicTime = now;
@@ -358,7 +382,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       dt = Math.min(dt, kMaxFilterDt);
     }
 
-    var imuRefreshStatus = StatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
+    var imuRefreshStatus = BaseStatusSignal.refreshAll(ss_XAccel, ss_YAccel, ss_Omega);
     boolean imuSignalsHealthy = imuRefreshStatus.isOK();
     boolean xAccelHealthy = imuSignalsHealthy && ss_XAccel.getStatus().isOK();
     boolean yAccelHealthy = imuSignalsHealthy && ss_YAccel.getStatus().isOK();

@@ -110,6 +110,7 @@ public class KinematicFilterInfused {
   // Per-nominal-cycle exponential decay of inflated R back toward nominal.
   // 0.88 recovers to within ~5% of nominal after ~23 nominal cycles (~0.46s at 50Hz).
   private static final double R_RECOVERY_RATE = 0.88;
+  private static final double R_RECOVERY_PERIOD_SECONDS = 0.02;
 
   // Prevents a scheduler pause from producing a huge dead-reckoning jump.
   private static final double MAX_DT = 0.05;
@@ -337,7 +338,7 @@ public class KinematicFilterInfused {
   }
 
   private void recoverMeasurementNoise(double dt) {
-    double recovery = Math.pow(R_RECOVERY_RATE, dt / nominalDt);
+    double recovery = Math.pow(R_RECOVERY_RATE, dt / R_RECOVERY_PERIOD_SECONDS);
     rPos = rPosNominal + (rPos - rPosNominal) * recovery;
     rPoseVel = rPoseVelNominal + (rPoseVel - rPoseVelNominal) * recovery;
     rVisionVel = rVisionVelNominal + (rVisionVel - rVisionVelNominal) * recovery;
