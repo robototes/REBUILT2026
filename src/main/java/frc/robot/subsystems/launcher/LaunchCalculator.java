@@ -10,6 +10,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
@@ -45,6 +47,11 @@ public class LaunchCalculator {
   private double lastWheelSpeedsTimestamp = 0;
   private ChassisSpeeds filteredAcceleration = new ChassisSpeeds(0, 0, 0);
 
+  // Hysteresis state for robotIsMoving gate.
+  // Requires a higher speed to turn ON than to turn OFF, preventing rapid toggling at the
+  // boundary and the stale-baseline spike on start/stop.
+  private boolean robotIsMoving = false;
+
   // Throttling Magic numbers
   private static final double MIN_DIST_TOLERANCE = Units.inchesToMeters(1); // Meters
   private static final double MIN_ROTATION_TOLERANCE = Units.degreesToRadians(0.5); // Radians
@@ -66,21 +73,42 @@ public class LaunchCalculator {
   private static final double VFF_DIST_TOLERANCE = 0.1;
   private static final double MIN_DISTANCE_TO_TARGET = 1e-4;
 
-  // Pose-differentiation velocity blending.
-  // Maximum blend weight when poseDt is at its minimum (most trustworthy).
-  // Only active when the robot is actually moving — see robotIsMoving gate below.
-  private static final double POSE_VELOCITY_BLEND = 0.9;
-
   // Sanity bounds for pose-differentiated velocity.
   private static final double MIN_POSE_DT = 0.005; // seconds
   private static final double MAX_POSE_DT = 0.05; // seconds
 
-  // Gate for pose-derived velocity. Below this wheel speed magnitude we consider the
-  // robot stationary and skip pose-diff to avoid amplifying estimator noise into jitter.
-  private static final double MIN_MOVING_SPEED = 0.05; // m/s
+  // Hysteresis thresholds for the robotIsMoving gate.
+  // Must reach ENABLE threshold to activate; must drop below DISABLE threshold to deactivate.
+  // The gap prevents rapid toggling and the stale-baseline spike on start/stop.
+  private static final double MIN_MOVING_SPEED_ENABLE = 0.1; // m/s
+  private static final double MIN_MOVING_SPEED_DISABLE = 0.03; // m/s
 
   // Low-pass filter for acceleration. 0 = no filtering, 1 = effectively disabled.
   private static final double ACCEL_FILTER_ALPHA = 0.9;
+
+  // Variable-alpha low-pass filter for the slip estimate. Vision-correction noise and
+  // real wheel slip live in different magnitude regimes:
+  //   - Vision noise: <1 cm correction over 20 ms, single-frame transients.
+  //   - Real stuck/push: wheels at 2 m/s vs robot at 0 = 2+ m/s, sustained over many frames.
+  // We use a heavy filter (slow) below the threshold to reject noise, and a light filter
+  // (fast) above it to track real events with minimal lag. Hysteresis on the threshold
+  // prevents flicker between modes.
+  private static final double SLIP_FILTER_ALPHA_SLOW = 0.85; // noise rejection
+  private static final double SLIP_FILTER_ALPHA_FAST = 0.20; // fast tracking
+  private static final double FAST_SLIP_THRESHOLD_ENTER = 2.0; // m/s
+  private static final double FAST_SLIP_THRESHOLD_EXIT = 0.5; // m/s (hysteresis)
+  private boolean slipFastMode = false;
+
+  // Safety caps on the filtered slip. Prevents a runaway pose-estimator glitch, such as
+  // a bad vision measurement that spikes the derivative, from injecting nonsense into the
+  // calculation. Real robot pushes and rotational disturbances stay well below these.
+  private static final double MAX_SLIP_MAGNITUDE = 5.0; // m/s
+  private static final double MAX_SLIP_OMEGA = 8.0; // rad/s (~1.3 rotations/s)
+
+  // Filtered slip state (instance, persists across cycles)
+  private ChassisSpeeds filteredSlip = new ChassisSpeeds(0, 0, 0);
+  private DoublePublisher filteredSlipXPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
+  private DoublePublisher filteredSlipYPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -244,9 +272,10 @@ public class LaunchCalculator {
    * of phase delay (launchSpeeds) is treated as constant throughout the Newton loop — post-launch
    * robot acceleration does not affect ball trajectory.
    *
-   * <p>2. DEFENSE/PUSH COMPENSATION: Pose-differentiated velocity blended with wheel speeds. Blend
-   * weight scales dynamically with poseDt and is gated off when stationary to prevent estimator
-   * noise from being amplified into a fake jittery velocity signal.
+   * <p>2. DEFENSE/PUSH COMPENSATION: Slip filter blended on top of wheel speeds. The slip is the
+   * difference between pose-derived velocity and wheel velocity. A variable-alpha low-pass filter
+   * separates real push events (large, sustained slip) from vision noise (small, transient). Gated
+   * off when stationary to prevent estimator noise from being amplified into jitter.
    *
    * @param driveState the drivebase's SwerveDriveState
    * @param turretSubsystem the turretSubsystem object
@@ -259,30 +288,66 @@ public class LaunchCalculator {
     ChassisSpeeds wheelSpeeds = driveState.Speeds;
     double timestamp = driveState.Timestamp;
 
-    // --- DEFENSE COMPENSATION: Pose-differentiated velocity with dynamic blending ---
-    // Gate: only use pose-derived velocity when the robot is actually moving.
+    // --- DEFENSE COMPENSATION: Slip filter with hysteresis gate ---
     // When still, tiny estimator corrections divided by a small dt produce large fake velocities.
     double wheelSpeedMagnitude =
         Math.hypot(wheelSpeeds.vxMetersPerSecond, wheelSpeeds.vyMetersPerSecond);
-    boolean robotIsMoving = wheelSpeedMagnitude > MIN_MOVING_SPEED;
+
+    if (robotIsMoving) {
+      robotIsMoving = wheelSpeedMagnitude > MIN_MOVING_SPEED_DISABLE;
+    } else {
+      robotIsMoving = wheelSpeedMagnitude > MIN_MOVING_SPEED_ENABLE;
+    }
 
     ChassisSpeeds effectiveSpeeds = wheelSpeeds;
     double poseDt = timestamp - prevTimestamp;
-    if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT) {
+    if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT && false) {
       Twist2d twist = prevPose.log(estimatedPose);
-      ChassisSpeeds poseDerivedSpeeds =
-          new ChassisSpeeds(twist.dx / poseDt, twist.dy / poseDt, twist.dtheta / poseDt);
-      double blendAlpha =
-          POSE_VELOCITY_BLEND * (1.0 - (poseDt - MIN_POSE_DT) / (MAX_POSE_DT - MIN_POSE_DT));
+
+      // Slip = (pose-derived velocity) - (wheel velocity). When wheels match pose,
+      // slip is ~0; when the robot is pushed or wheels slip, slipRaw is the motion delta.
+      double slipRawX = twist.dx / poseDt - wheelSpeeds.vxMetersPerSecond;
+      double slipRawY = twist.dy / poseDt - wheelSpeeds.vyMetersPerSecond;
+      double slipRawOmega = twist.dtheta / poseDt - wheelSpeeds.omegaRadiansPerSecond;
+
+      // Switch to fast tracking when slip is large enough to be a real event
+      // rather than vision noise. Hysteresis prevents flicker.
+      double slipRawMag = Math.hypot(slipRawX, slipRawY);
+      if (slipRawMag > FAST_SLIP_THRESHOLD_ENTER) {
+        slipFastMode = true;
+      } else if (slipRawMag < FAST_SLIP_THRESHOLD_EXIT) {
+        slipFastMode = false;
+      }
+      double filterAlpha = slipFastMode ? SLIP_FILTER_ALPHA_FAST : SLIP_FILTER_ALPHA_SLOW;
+
+      double newSlipX = filterAlpha * filteredSlip.vxMetersPerSecond + (1 - filterAlpha) * slipRawX;
+      double newSlipY = filterAlpha * filteredSlip.vyMetersPerSecond + (1 - filterAlpha) * slipRawY;
+      double newSlipOmega =
+          filterAlpha * filteredSlip.omegaRadiansPerSecond + (1 - filterAlpha) * slipRawOmega;
+
+      // Cap the filtered slip magnitude
+      double newSlipMag = Math.hypot(newSlipX, newSlipY);
+      if (newSlipMag > MAX_SLIP_MAGNITUDE) {
+        double scale = MAX_SLIP_MAGNITUDE / newSlipMag;
+        newSlipX *= scale;
+        newSlipY *= scale;
+      }
+      newSlipOmega = Math.max(-MAX_SLIP_OMEGA, Math.min(MAX_SLIP_OMEGA, newSlipOmega));
+      filteredSlip = new ChassisSpeeds(newSlipX, newSlipY, newSlipOmega);
+
       effectiveSpeeds =
           new ChassisSpeeds(
-              blendAlpha * poseDerivedSpeeds.vxMetersPerSecond
-                  + (1.0 - blendAlpha) * wheelSpeeds.vxMetersPerSecond,
-              blendAlpha * poseDerivedSpeeds.vyMetersPerSecond
-                  + (1.0 - blendAlpha) * wheelSpeeds.vyMetersPerSecond,
-              blendAlpha * poseDerivedSpeeds.omegaRadiansPerSecond
-                  + (1.0 - blendAlpha) * wheelSpeeds.omegaRadiansPerSecond);
+              wheelSpeeds.vxMetersPerSecond + filteredSlip.vxMetersPerSecond,
+              wheelSpeeds.vyMetersPerSecond + filteredSlip.vyMetersPerSecond,
+              wheelSpeeds.omegaRadiansPerSecond + filteredSlip.omegaRadiansPerSecond);
+    } else {
+      // Reset slip filter when robot stops or poseDt is out of range
+      filteredSlip = new ChassisSpeeds(0, 0, 0);
+      slipFastMode = false;
     }
+
+    filteredSlipXPub.set(filteredSlip.vxMetersPerSecond);
+    filteredSlipYPub.set(filteredSlip.vyMetersPerSecond);
 
     // --- PHASE DELAY PREDICTION (second-order) ---
     // Predict robot state at end of PHASE_DELAY: x = x0 + v*t + 0.5*a*t^2.
