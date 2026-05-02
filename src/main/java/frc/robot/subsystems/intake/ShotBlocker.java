@@ -57,6 +57,8 @@ public class ShotBlocker extends SubsystemBase {
     SS_blockerPos = blockerPivot.getPosition();
     SS_blockerVoltage = blockerPivot.getSupplyVoltage();
     SS_blockerCurrent = blockerPivot.getStatorCurrent();
+
+    initMotors();
   }
 
   public void initMotors() {
