@@ -26,7 +26,6 @@ public class ShotBlocker extends SubsystemBase {
   // Request
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
 
-  private final double GEAR_RATIO = 5;
   private final double MM_CRUISE_VELOCITY = 5; // Rot/s^2
   private final double MM_ACCELERATION = 300; // Rot/s^2
   private final double MM_JERK = 1000;
