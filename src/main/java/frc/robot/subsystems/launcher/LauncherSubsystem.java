@@ -1,7 +1,6 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -11,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
-import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 
 public class LauncherSubsystem extends SubsystemBase {
@@ -35,6 +33,7 @@ public class LauncherSubsystem extends SubsystemBase {
 
   private LaunchingParameters launchParameters;
   private final double MIN_FAR_DIST = 6; // Meters
+  private static final double MIN_TURRET_TOLERANCE_DISTANCE = 0.1;
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -81,12 +80,10 @@ public class LauncherSubsystem extends SubsystemBase {
       return false;
     }
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
-    Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
-    double distanceToTarget =
-        GetTargetFromPose.getTargetLocation(turretPose).getDistance(turretPose.getTranslation());
+    double targetDistance = Math.max(launchParameters.currentDist(), MIN_TURRET_TOLERANCE_DISTANCE);
 
-    if (distanceToTarget >= MIN_FAR_DIST) {
+    if (targetDistance >= MIN_FAR_DIST) {
       flywheelTolerance = 30;
     }
 
@@ -101,9 +98,7 @@ public class LauncherSubsystem extends SubsystemBase {
             () ->
                 Math.min(
                     Units.degreesToRadians(20),
-                    Math.max(
-                        Units.degreesToRadians(4),
-                        Math.atan(0.3 / LauncherConstants.distToHub()))));
+                    Math.max(Units.degreesToRadians(4), Math.atan(0.3 / targetDistance))));
     turretBooleanPub.set(turretAtTarget);
 
     notUunderClimb =

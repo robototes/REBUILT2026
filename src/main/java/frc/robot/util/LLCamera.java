@@ -11,7 +11,8 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 public class LLCamera {
 
   private final String name;
-  private double lastTimestampSeconds = 0;
+  private double lastTimestampSecondsMT1 = 0;
+  private double lastTimestampSecondsMT2 = 0;
   private Pose2d lastPose2dMT1 = null;
   private Pose2d lastPose2dMT2 = null;
   private double[] lastRawBotposeMT1 = null;
@@ -100,11 +101,23 @@ public class LLCamera {
   }
 
   public void setLastTimestampSeconds(double timestampSeconds) {
-    lastTimestampSeconds = timestampSeconds;
+    setLastTimestampSeconds(false, timestampSeconds);
+  }
+
+  public void setLastTimestampSeconds(boolean isMegaTag2, double timestampSeconds) {
+    if (isMegaTag2) {
+      lastTimestampSecondsMT2 = timestampSeconds;
+    } else {
+      lastTimestampSecondsMT1 = timestampSeconds;
+    }
   }
 
   public double getLastTimestampSeconds() {
-    return lastTimestampSeconds;
+    return Math.max(lastTimestampSecondsMT1, lastTimestampSecondsMT2);
+  }
+
+  public double getLastTimestampSeconds(boolean isMegaTag2) {
+    return isMegaTag2 ? lastTimestampSecondsMT2 : lastTimestampSecondsMT1;
   }
 
   public BetterPoseEstimate getPoseEstimateMegatag2() {
@@ -130,7 +143,9 @@ public class LLCamera {
     }
     TimestampedDoubleArray tsValue = poseEntry.getAtomic();
     double[] poseArray = tsValue.value;
-    long timestamp = tsValue.timestamp;
+    // CTRE vision updates later convert this FPGA/server timestamp to Phoenix's current-time base.
+    // Locally-set sim values may not have a server timestamp yet, so fall back to local time there.
+    long timestamp = tsValue.serverTime > 1 ? tsValue.serverTime : tsValue.timestamp;
     if (poseArray == null || poseArray.length < 11) {
       // Handle the case where no data is available
       return null; // or some default PoseEstimate

@@ -65,6 +65,10 @@ public class Hood extends SubsystemBase {
   private final StatusSignal<Current> hoodCurrent;
   private final StatusSignal<Angle> SS_pos;
 
+  // Status signals
+  private final StatusSignal<Current> hoodCurrent;
+  private final StatusSignal<Angle> SS_pos;
+
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
 

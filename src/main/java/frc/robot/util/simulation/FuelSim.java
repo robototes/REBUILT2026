@@ -883,11 +883,7 @@ public class FuelSim {
       RobotSim.fuelsHeld = 8;
     }
 
-    /**
-     * Get the current count of fuel scored in this hub
-     *
-     * @return
-     */
+    /** Checks whether fuel collided with a side of this hub. */
     protected void fuelCollideSide(Fuel fuel) {
       fuelCollideRectangle(
           fuel,

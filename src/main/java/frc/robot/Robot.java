@@ -34,6 +34,7 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -42,7 +43,6 @@ import frc.robot.util.GCMonitor;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
-import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -64,6 +64,8 @@ public class Robot extends TimedRobot {
   private final SimWrapper m_simWrapper;
   private static final double BROWNOUT_VOLTAGE = 7.0;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
+  private static final double FAST_PREDICTION_OFFSET_SECONDS =
+      CommandSwerveDrivetrain.PREDICTION_UPDATE_PERIOD_SECONDS / 2.0;
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
 
@@ -156,6 +158,22 @@ public class Robot extends TimedRobot {
     subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
     driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
 
+    if (SubsystemConstants.DRIVEBASE_ENABLED && subsystems.drivebaseSubsystem != null) {
+      subsystems.drivebaseSubsystem.setPredictionFilterRunsInPeriodic(false);
+      if (subsystems.turretSubsystem != null) {
+        subsystems.turretSubsystem.setFastAutoAimPeriodicEnabled(true);
+      }
+      addPeriodic(
+          () -> {
+            subsystems.drivebaseSubsystem.updatePredictionFilter();
+            if (subsystems.turretSubsystem != null) {
+              subsystems.turretSubsystem.updateFastAutoAim();
+            }
+          },
+          CommandSwerveDrivetrain.PREDICTION_UPDATE_PERIOD_SECONDS,
+          FAST_PREDICTION_OFFSET_SECONDS);
+    }
+
     // Explicitly register struct schemas with the DataLog
     if (RobotBase.isReal()) {
       DataLog log = DataLogManager.getLog();
@@ -203,7 +221,6 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
-    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 
     SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
   }
@@ -278,7 +295,7 @@ public class Robot extends TimedRobot {
     }
   }
 
-  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
+  /** This autonomous runs the selected autonomous command. */
   @Override
   public void autonomousInit() {
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
