@@ -26,7 +26,6 @@ public class ShotBlocker extends SubsystemBase {
   // Request
   private final MotionMagicVoltage request = new MotionMagicVoltage(0);
 
-  private final double PIVOT_POS = 0.5; // Degrees
   private final double GEAR_RATIO = 5;
   private final double MM_CRUISE_VELOCITY = 5; // Rot/s^2
   private final double MM_ACCELERATION = 300; // Rot/s^2
@@ -65,6 +64,11 @@ public class ShotBlocker extends SubsystemBase {
     TalonFXConfiguration config = new TalonFXConfiguration();
     MotionMagicConfigs MM_config = new MotionMagicConfigs();
     Slot0Configs slot0 = config.Slot0;
+
+    config.CurrentLimits.StatorCurrentLimit = 20;
+    config.CurrentLimits.SupplyCurrentLimit = 10;
+    config.CurrentLimits.SupplyCurrentLimitEnable = true;
+    config.CurrentLimits.StatorCurrentLimitEnable = true;
 
     slot0.kP = 1;
     slot0.kI = 0;
