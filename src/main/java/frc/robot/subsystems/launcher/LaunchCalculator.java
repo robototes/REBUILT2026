@@ -107,8 +107,10 @@ public class LaunchCalculator {
 
   // Filtered slip state (instance, persists across cycles)
   private ChassisSpeeds filteredSlip = new ChassisSpeeds(0, 0, 0);
-  private DoublePublisher filteredSlipXPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
-  private DoublePublisher filteredSlipYPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
+  private DoublePublisher filteredSlipXPub =
+      NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
+  private DoublePublisher filteredSlipYPub =
+      NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
