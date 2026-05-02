@@ -71,6 +71,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void holdAtExtake() {
     intakeRollers.stopMotor();
-    intakePivot.setPivotPosition(IntakePivot.EXTAKE_POS);
+    intakePivot.setPivotPosition(IntakePivot.SHOTBLOCK_POS);
   }
 }
