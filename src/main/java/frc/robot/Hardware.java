@@ -20,6 +20,9 @@ public class Hardware {
   // Climb Motor (35-39)
   public static final int CLIMB_MOTOR_ID = 35;
 
+  // Shot Blocker pivot ID
+  public static final int SHOT_BLOCKER_ID = 0;
+
   // CANdle
   public static final int CANDLE_ID = 40;
 
