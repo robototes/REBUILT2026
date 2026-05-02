@@ -10,6 +10,7 @@ import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.INTAKE_ROLLERS_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.LAUNCHER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.LEDS_ENABLED;
+import static frc.robot.Subsystems.SubsystemConstants.SHOT_BLOCKER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
@@ -27,6 +28,7 @@ import frc.robot.subsystems.index.Spindexer;
 import frc.robot.subsystems.intake.IntakePivot;
 import frc.robot.subsystems.intake.IntakeRollers;
 import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.intake.ShotBlocker;
 import frc.robot.subsystems.launcher.Flywheels;
 import frc.robot.subsystems.launcher.Hood;
 import frc.robot.subsystems.launcher.LauncherSubsystem;
@@ -52,6 +54,7 @@ public class Subsystems {
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
     public static final boolean LEDS_ENABLED = true;
+    public static final boolean SHOT_BLOCKER_ENABLED = true;
   }
 
   // Subsystems go here
@@ -68,6 +71,7 @@ public class Subsystems {
   public final TurretSubsystem turretSubsystem;
   public final IndexerSubsystem indexerSubsystem;
   public final LEDSubsystem ledSubsystem;
+  public final ShotBlocker shotBlocker;
 
   public Subsystems(Mechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
@@ -154,6 +158,11 @@ public class Subsystems {
       ledSubsystem = new LEDSubsystem();
     } else {
       ledSubsystem = null;
+    }
+    if (SHOT_BLOCKER_ENABLED) {
+      shotBlocker = new ShotBlocker();
+    } else {
+      shotBlocker = null;
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {

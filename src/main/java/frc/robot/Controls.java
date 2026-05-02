@@ -393,6 +393,10 @@ public class Controls {
                 },
                 s.intakeSubsystem)
             .withName("Intake Default Command"));
+    // Shot blocker stuff
+    driverController.povLeft().onTrue(s.shotBlocker.stow());
+    driverController.povRight().onTrue(s.shotBlocker.deploy());
+
     driverController
         .leftTrigger()
         .whileTrue(
@@ -477,8 +481,8 @@ public class Controls {
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
-    (turretAtZero
-        .and(new Trigger(()-> s.turretSubsystem.getTurretPosition() < 0.5))).or(driverController.povLeft())
+    (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
+        .or(driverController.povLeft())
         .onTrue(
             Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
                 .withName("Zero Turret on Limit Switch"));
