@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -49,6 +50,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   // Field dimensions from the layout
   private static final double FIELD_X_MAX = AllianceUtils.FIELD_LAYOUT.getFieldLength();
   private static final double FIELD_Y_MAX = AllianceUtils.FIELD_LAYOUT.getFieldWidth();
+
+  /** Threshold in degrees to detect if the robot is tilted (on a bump or beached). */
+  private static final double kTiltThresholdDegrees = 10.0;
+
+  /* Bump location constants - Zones for both Blue and Red alliances */
+  private static final double kBumpBlueXMin = 3.6;
+  private static final double kBumpBlueXMax = 5.6;
+  private static final double kBumpRedXMin = 11.0;
+  private static final double kBumpRedXMax = 12.95;
+  private static final double kBumpYMin = 1.5;
+  private static final double kBumpYMax = 6.5;
+
+  /* Bump simulation constants */
+  private static final double kBumpSimMaxPitchDegrees = 15.0; // Max pitch angle when on bump
+  private static final double kBumpSimMaxRollDegrees = 5.0; // Max roll angle when traversing bump width-wise
+  private static final double kBumpSimSlopeLength = 0.5; // meters, length of the slope for pitch/roll change
 
   /* Swerve requests to apply during SysId characterization */
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -233,7 +250,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         : kRedAlliancePerspectiveRotation);
               });
     }
+
+    // Refresh gyro signals once per loop to ensure all checks use fresh, synchronized data
+    getPigeon2().getPitch().refresh();
+    getPigeon2().getRoll().refresh();
+
     clampPoseToField();
+
+    // Pushing telemetry to SmartDashboard every loop as an alternative to initSendable
+    SmartDashboard.putBoolean("Drivebase/isOnBump", isOnBump());
+    SmartDashboard.putBoolean("Drivebase/inBumpZone", isRobotInBumpZone());
+    SmartDashboard.putBoolean("Drivebase/isBeached", isBeached(kTiltThresholdDegrees));
+    SmartDashboard.putNumber("Drivebase/pitchDegrees", getPigeon2().getPitch().getValueAsDouble());
+    SmartDashboard.putNumber("Drivebase/rollDegrees", getPigeon2().getRoll().getValueAsDouble());
   }
 
   private void startSimThread() {
@@ -248,6 +277,67 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               m_lastSimTime = currentTime;
 
               /* use the measured time delta, get battery voltage from WPILib */
+              // Simulate bump effect on gyro
+              Pose2d currentPose = getState().Pose; // Get the current simulated pose
+
+              double simulatedPitchDegrees = 0.0;
+              double simulatedRollDegrees = 0.0;
+
+              double x = currentPose.getX();
+              double y = currentPose.getY();
+
+              boolean inBlueBumpZone = (x >= kBumpBlueXMin && x <= kBumpBlueXMax && y >= kBumpYMin && y <= kBumpYMax);
+              boolean inRedBumpZone = (x >= kBumpRedXMin && x <= kBumpRedXMax && y >= kBumpYMin && y <= kBumpYMax);
+
+              if (inBlueBumpZone || inRedBumpZone) {
+                  double currentBumpXMin, currentBumpXMax;
+                  if (inBlueBumpZone) {
+                      currentBumpXMin = kBumpBlueXMin;
+                      currentBumpXMax = kBumpBlueXMax;
+                  } else { // inRedBumpZone
+                      currentBumpXMin = kBumpRedXMin;
+                      currentBumpXMax = kBumpRedXMax;
+                  }
+
+                  // Calculate pitch based on X position relative to the bump
+                  // Assuming the bump is a trapezoid profile along the X-axis
+                  if (x < currentBumpXMin + kBumpSimSlopeLength) { // Rising slope
+                      double progress = (x - currentBumpXMin) / kBumpSimSlopeLength;
+                      simulatedPitchDegrees = kBumpSimMaxPitchDegrees * progress;
+                  } else if (x > currentBumpXMax - kBumpSimSlopeLength) { // Falling slope
+                      double progress = (currentBumpXMax - x) / kBumpSimSlopeLength;
+                      simulatedPitchDegrees = kBumpSimMaxPitchDegrees * progress;
+                  } else { // Flat top of the bump
+                      simulatedPitchDegrees = kBumpSimMaxPitchDegrees;
+                  }
+
+                  // Simulate roll if the robot is traversing the bump width-wise
+                  // This assumes a similar trapezoidal profile along the Y-axis within the bump zone
+                  double currentBumpYMin = kBumpYMin;
+                  double currentBumpYMax = kBumpYMax;
+
+                  if (y < currentBumpYMin + kBumpSimSlopeLength) { // Rising slope along Y
+                      double progress = (y - currentBumpYMin) / kBumpSimSlopeLength;
+                      simulatedRollDegrees = kBumpSimMaxRollDegrees * progress;
+                  } else if (y > currentBumpYMax - kBumpSimSlopeLength) { // Falling slope along Y
+                      double progress = (currentBumpYMax - y) / kBumpSimSlopeLength;
+                      simulatedRollDegrees = kBumpSimMaxRollDegrees * progress;
+                  } else { // Flat top along Y
+                      // If the robot is fully within the Y bounds of the bump,
+                      // we might not want a constant roll unless the bump itself is angled.
+                      // For simplicity, let's assume roll is only affected on the edges.
+                      simulatedRollDegrees = 0.0;
+                  }
+
+                  // If the robot is driving diagonally, both pitch and roll could be affected.
+                  // For this 2.5D sim, we're applying them independently based on X and Y position.
+              }
+
+              // Update the simulated Pigeon2's pitch and roll
+              // The Pigeon2's SimState expects degrees
+              getPigeon2().getSimState().setPitch(simulatedPitchDegrees);
+              getPigeon2().getSimState().setRoll(simulatedRollDegrees);
+
               updateSimState(deltaTime, RobotController.getBatteryVoltage());
             });
     m_simNotifier.startPeriodic(kSimLoopPeriod);
@@ -307,9 +397,46 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
   }
 
-  public boolean isBeached(double pitchThreshold) {
+  /**
+   * Checks if the robot's current pose is within the X/Y coordinates defined for the bump.
+   *
+   * @return True if the robot is in the bump area.
+   */
+  public boolean isRobotInBumpZone() {
+    Pose2d pose = getState().Pose;
+    double x = pose.getX();
+    double y = pose.getY();
+
+    boolean withinY = y >= kBumpYMin && y <= kBumpYMax;
+    boolean inBlueBump = x >= kBumpBlueXMin && x <= kBumpBlueXMax;
+    boolean inRedBump = x >= kBumpRedXMin && x <= kBumpRedXMax;
+
+    return withinY && (inBlueBump || inRedBump);
+  }
+
+  /**
+   * Returns true if the robot's pitch or roll exceeds the default threshold,
+   * indicating it is currently on a bump or beached.
+   *
+   * @return True if the robot is significantly tilted.
+   */
+  public boolean isOnBump() {
+    return  isRobotInBumpZone() && isBeached(kTiltThresholdDegrees);
+  }
+
+  /**
+   * Detects if the robot is beached or on a bump by checking if either the pitch or roll
+   * exceeds the specified threshold. This check is constrained by the
+   * robot's position to ensure that tilt caused by other factors (like rapid acceleration
+   * or collisions outside the bump area) isn't falsely identified as being beached on the bump.
+   *
+   * @param pitchThreshold The angle threshold in degrees.
+   * @return True if the tilt exceeds the threshold.
+   */
+  private boolean isBeached(double pitchThreshold) {
     double pitch = Math.abs(getPigeon2().getPitch().getValueAsDouble());
     double roll = Math.abs(getPigeon2().getRoll().getValueAsDouble());
-    return pitch > pitchThreshold || roll > pitchThreshold;
+
+    return(pitch > pitchThreshold || roll > pitchThreshold);
   }
 }
