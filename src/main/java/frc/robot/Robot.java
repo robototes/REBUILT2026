@@ -120,13 +120,16 @@ public class Robot extends TimedRobot {
     controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
-      BLineLogic.init(subsystems);
-     BLineLogic.configure(subsystems);
-     BLineLogic.runAuto();
+     // BLineLogic.init(subsystems);
+    // BLineLogic.configure(subsystems);
+    // BLineLogic.runAuto();
     }
    // PathPlannerLogic.init(subsystems);
     if (Robot.isSimulation()) {
       robotSim = new RobotSim(subsystems.drivebaseSubsystem);
+       BLineLogic.init(subsystems);
+     BLineLogic.configure(subsystems);
+     BLineLogic.runAuto();
     } else {
       robotSim = null;
     }

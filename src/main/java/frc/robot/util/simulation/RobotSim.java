@@ -2,6 +2,10 @@ package frc.robot.util.simulation;
 
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
 
@@ -63,5 +67,18 @@ public class RobotSim {
     fuelSim.updateSim();
     scorePublisher.accept(score);
     fuelHeld.accept(fuelsHeld);
+  }
+
+  public static Command launch(Subsystems s, double timeout) {
+    return Commands.run(
+            () ->
+                FuelSim.getInstance()
+                    .launchFuel(
+                        Units.MetersPerSecond.of(6),
+                        Units.Radians.of(s.hood.getHoodPosition()),
+                        Units.Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                        Units.Meters.of(1.45)))
+        .withTimeout(timeout)
+        .withName("Auto Launcher Sim Command");
   }
 }

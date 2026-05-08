@@ -22,6 +22,8 @@ import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.FuelSim;
+import frc.robot.util.simulation.RobotSim;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -274,19 +276,7 @@ public class PathPlannerLogic {
   }
 
   public static Command launcherSimCommand() {
-    return Commands.sequence(
-            AutoDriveRotate.autoRotate(
-                s.drivebaseSubsystem, () -> 0, () -> 0, () -> 0), // SIM PURPOSES ONLY
-            Commands.run(
-                    () ->
-                        FuelSim.getInstance()
-                            .launchFuel(
-                                MetersPerSecond.of(6),
-                                Radians.of(s.hood.getHoodPosition()),
-                                Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
-                                Meters.of(1.45)))
-                .withTimeout(3))
-        .withName("Auto Launcher Sim Command");
+    return RobotSim.launch(s,2);
   }
 
   public static Command intakeCommand() {

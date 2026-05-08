@@ -1,0 +1,21 @@
+{
+  "path_elements": [
+    {
+      "type": "translation",
+      "x_meters": 1.0,
+      "y_meters": 5.0,
+      "intermediate_handoff_radius_meters": 0.2
+    },
+    {
+      "type": "event_trigger",
+      "t_ratio": 0.1,
+      "lib_key": "launch"
+    },
+    {
+      "type": "translation",
+      "x_meters": 3.0,
+      "y_meters": 5.0,
+      "intermediate_handoff_radius_meters": 0.2
+    }
+  ]
+}
