@@ -6,7 +6,6 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -31,9 +30,6 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
-import frc.robot.subsystems.auto.AutoBuilderConfig;
-import frc.robot.subsystems.auto.PathPlannerLogic;
-import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.subsystems.auto.BLineLogic;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
@@ -120,19 +116,17 @@ public class Robot extends TimedRobot {
     controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
-     // BLineLogic.init(subsystems);
-    // BLineLogic.configure(subsystems);
-    // BLineLogic.runAuto();
+      if (Robot.isSimulation()) {
+        robotSim = new RobotSim(subsystems.drivebaseSubsystem);
+
+      } else {
+        robotSim = null;
+      }
+      BLineLogic.init(subsystems);
+      BLineLogic.configure(subsystems);
+      BLineLogic.runAuto();
     }
-   // PathPlannerLogic.init(subsystems);
-    if (Robot.isSimulation()) {
-      robotSim = new RobotSim(subsystems.drivebaseSubsystem);
-       BLineLogic.init(subsystems);
-     BLineLogic.configure(subsystems);
-     BLineLogic.runAuto();
-    } else {
-      robotSim = null;
-    }
+
     CommandScheduler.getInstance()
         .onCommandInitialize(
             command -> DataLogManager.log("Command initialized: " + command.getName()));
@@ -150,11 +144,11 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(CommandScheduler.getInstance());
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-     // PathPlannerLogic.initCommandsAndPaths(true);
-    //  AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+      // PathPlannerLogic.initCommandsAndPaths(true);
+      //  AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
-    //  PathPlannerLogic.initSmartDashBoard();
-      //CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+      //  PathPlannerLogic.initSmartDashBoard();
+      // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
@@ -289,24 +283,23 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
 
-      if (Robot.isSimulation()) {
-        robotSim.resetFuelSim();
-      }
+    if (Robot.isSimulation()) {
+      robotSim.resetFuelSim();
+    }
 
-      CommandScheduler.getInstance().schedule(BLineLogic.runAuto());
-      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
-      if (subsystems.visionSubsystem != null) {
-        if (subsystems.visionSubsystem.limelightaOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
-        }
-        if (subsystems.visionSubsystem.limelightbOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
-        }
-        if (subsystems.visionSubsystem.limelightcOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
-        }
+    CommandScheduler.getInstance().schedule(BLineLogic.runAuto());
+    double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
+    if (subsystems.visionSubsystem != null) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
       }
-
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
+      }
+    }
   }
 
   /** This function is called periodically during autonomous. */
