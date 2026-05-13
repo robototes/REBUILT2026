@@ -1,11 +1,14 @@
 package frc.robot.subsystems.auto;
 
+import java.util.concurrent.BlockingDeque;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Controls;
 import frc.robot.Robot;
@@ -20,6 +23,7 @@ public class BLineLogic {
 
   private static FollowPath.Builder pathBuilder;
   private static Path myPath;
+  private static Command bLineLaunching;
 
   public static void init(Subsystems subsystems) {
 
@@ -78,22 +82,9 @@ public class BLineLogic {
 
     return pathBuilder;
   }
+  public static void main(String[] args) {
 
-  private static void registerCommands() {
-    if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
-      if (Robot.isSimulation()) {
-        FollowPath.registerEventTrigger("launch", RobotSim.launch(s, 1));
-
-      } else {
-        FollowPath.registerEventTrigger("launch", launcherCommand());
-      }
-    }
-    if (s.indexerSubsystem != null) {
-      FollowPath.registerEventTrigger("intake", intakeCommand());
-    }
-    FollowPath.registerEventTrigger("climb", climbCommand());
   }
-
   public static Command intakeCommand() {
     return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
         .withName("Auto Intake Command");
@@ -104,6 +95,7 @@ public class BLineLogic {
   }
 
   public static Command launcherCommand() {
+
     return Commands.parallel(
             Commands.runOnce(
                 () -> {
@@ -112,9 +104,36 @@ public class BLineLogic {
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
-        // .until(() -> s.flywheels.isOutOfFuel())
-        .withTimeout(4.5)
+       //Timeout may not be needed if it only is supposed to run when the launcher can reach the target at certain points during the path?
+      // .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
         .withName("Auto Launcher Command");
   }
+  public static void cancelCommand() {
+
+     CommandScheduler.getInstance().cancel(bLineLaunching);
+  }
+
+  private static void registerCommands() {
+
+    if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
+      if (Robot.isSimulation()) {
+         bLineLaunching =  RobotSim.launch(s, 1);
+        FollowPath.registerEventTrigger("launch", bLineLaunching);
+
+      } else {
+         bLineLaunching = launcherCommand();
+       FollowPath.registerEventTrigger("launch", bLineLaunching);
+
+      }
+    }
+    if (s.indexerSubsystem != null) {
+
+      FollowPath.registerEventTrigger("intake", intakeCommand());
+    }
+    FollowPath.registerEventTrigger("climb", climbCommand());
+        FollowPath.registerEventTrigger("cancel", Commands.runOnce(() -> cancelCommand()).andThen(Commands.print("IS IT OVER")));
+  }
+
+
 }
