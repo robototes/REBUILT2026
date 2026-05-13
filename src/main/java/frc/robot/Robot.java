@@ -124,7 +124,6 @@ public class Robot extends TimedRobot {
       }
       BLineLogic.init(subsystems);
       BLineLogic.configure(subsystems);
-      BLineLogic.runAuto();
     }
 
     CommandScheduler.getInstance()

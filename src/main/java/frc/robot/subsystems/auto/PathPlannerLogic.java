@@ -1,9 +1,5 @@
 package frc.robot.subsystems.auto;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Radians;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -21,9 +17,7 @@ import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
-import frc.robot.util.simulation.FuelSim;
 import frc.robot.util.simulation.RobotSim;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -114,18 +108,18 @@ public class PathPlannerLogic {
 
     physicalRebuiltPaths =
         List.of(
-           new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-           new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
-        new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
-          new AutoPath("LT-Neutral", "LT-Neutral"),
-           new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
-           new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
-           new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-           new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
-           new AutoPath("RT-Neutral", "RT-Neutral"),
-          new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
-           new AutoPath("RT-BLOCK", "RT-BLOCK"),
-          new AutoPath("LT-BLOCK", "LT-BLOCK"));
+            new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
+            new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
+            new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
+            new AutoPath("LT-Neutral", "LT-Neutral"),
+            new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
+            new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
+            new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
+            new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
+            new AutoPath("RT-Neutral", "RT-Neutral"),
+            new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
+            new AutoPath("RT-BLOCK", "RT-BLOCK"),
+            new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
     rebuiltPaths = physicalRebuiltPaths;
 
@@ -276,7 +270,7 @@ public class PathPlannerLogic {
   }
 
   public static Command launcherSimCommand() {
-    return RobotSim.launch(s,2);
+    return RobotSim.launch(s, 2);
   }
 
   public static Command intakeCommand() {

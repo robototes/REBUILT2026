@@ -1,7 +1,5 @@
 package frc.robot.subsystems.auto;
 
-import java.util.concurrent.BlockingDeque;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -30,7 +28,6 @@ public class BLineLogic {
     s = subsystems;
     registerCommands();
     myPath = new Path("test1");
-    s.drivebaseSubsystem.resetPose(getStartPose());
   }
 
   // 2. Create a reusable path builder
@@ -62,13 +59,13 @@ public class BLineLogic {
                 // cross-track PID
                 new PIDController(2.0, 0.0, 0.0))
             .withDefaultShouldFlip()
-            .withPoseReset(s.drivebaseSubsystem::resetPose);
+            .withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
   }
   ;
 
   public static Command runAuto() {
-
     return pathBuilder.build(myPath);
+
     // ... rest of auto
 
   }
@@ -82,9 +79,9 @@ public class BLineLogic {
 
     return pathBuilder;
   }
-  public static void main(String[] args) {
 
-  }
+  public static void main(String[] args) {}
+
   public static Command intakeCommand() {
     return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
         .withName("Auto Intake Command");
@@ -104,27 +101,33 @@ public class BLineLogic {
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
-       //Timeout may not be needed if it only is supposed to run when the launcher can reach the target at certain points during the path?
-      // .withTimeout(4.5)
+        // Timeout may not be needed if it only is supposed to run when the launcher can reach the
+        // target at certain points during the path?
+        // .withTimeout(4.5)
         .andThen(s.launcherSubsystem.rawStowCommand())
         .withName("Auto Launcher Command");
   }
+
   public static void cancelCommand() {
 
-     CommandScheduler.getInstance().cancel(bLineLaunching);
+    CommandScheduler.getInstance().cancel(bLineLaunching);
   }
 
   private static void registerCommands() {
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
       if (Robot.isSimulation()) {
-         bLineLaunching =  RobotSim.launch(s, 1);
-        FollowPath.registerEventTrigger("launch", bLineLaunching);
+        bLineLaunching = RobotSim.launch(s, 1);
+
+        FollowPath.registerEventTrigger(
+            "launch", bLineLaunching.andThen(Commands.print("LAUNCH FINISHED")));
+        FollowPath.registerEventTrigger("climb", Commands.print("CLIMB FINISHED"));
+        FollowPath.registerEventTrigger("cancel", Commands.print("IS IT OVER"));
+        FollowPath.registerEventTrigger("intake", Commands.print("INTAKE FINISHED"));
 
       } else {
-         bLineLaunching = launcherCommand();
-       FollowPath.registerEventTrigger("launch", bLineLaunching);
-
+        bLineLaunching = launcherCommand();
+        FollowPath.registerEventTrigger("launch", bLineLaunching);
       }
     }
     if (s.indexerSubsystem != null) {
@@ -132,8 +135,7 @@ public class BLineLogic {
       FollowPath.registerEventTrigger("intake", intakeCommand());
     }
     FollowPath.registerEventTrigger("climb", climbCommand());
-        FollowPath.registerEventTrigger("cancel", Commands.runOnce(() -> cancelCommand()).andThen(Commands.print("IS IT OVER")));
+    FollowPath.registerEventTrigger(
+        "cancel", Commands.runOnce(() -> cancelCommand()).andThen(Commands.print("IS IT OVER")));
   }
-
-
 }
