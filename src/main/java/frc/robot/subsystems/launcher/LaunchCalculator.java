@@ -1,6 +1,7 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import com.ctre.phoenix6.swerve.SwerveModule;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -10,6 +11,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanArrayPublisher;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -107,8 +111,49 @@ public class LaunchCalculator {
 
   // Filtered slip state (instance, persists across cycles)
   private ChassisSpeeds filteredSlip = new ChassisSpeeds(0, 0, 0);
-  private DoublePublisher filteredSlipXPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
-  private DoublePublisher filteredSlipYPub = NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
+
+  // ---- SLIP DETECTION (stator current + velocity spike) ----
+  // A module is considered slipping when BOTH conditions hold simultaneously:
+  //   1. Stator current drops below SLIP_CURRENT_THRESHOLD — wheel is unloaded.
+  //   2. Velocity derivative exceeds SLIP_VELOCITY_DELTA_THRESHOLD — wheel spun up suddenly.
+  // Requiring both avoids false positives from normal low-load coasting (current alone)
+  // or from smooth acceleration (velocity delta alone).
+  //
+  // TUNING GUIDE (log /LaunchCalculator/slip/* during a match):
+  //   - SLIP_CURRENT_THRESHOLD: watch perModuleCurrent during normal driving. Set this
+  //     just below the minimum you see while pushing hard. Start around 10–15 A.
+  //   - SLIP_VELOCITY_DELTA_THRESHOLD: watch perModuleVelocityDelta. A real slip event
+  //     at 50 Hz on carpet typically spikes > 3–5 rot/s per 20 ms. Start around 3.0.
+  //   - SLIP_MODULE_COUNT_THRESHOLD: 1 = very sensitive (any single wheel), 2 = more
+  //     conservative. Start at 1 and raise if you see false positives during defense.
+  private static final double SLIP_CURRENT_THRESHOLD = 15.0; // Amps — tune this
+  private static final double SLIP_VELOCITY_DELTA_THRESHOLD = 3.0; // rot/s per 20ms — tune this
+  private static final int SLIP_MODULE_COUNT_THRESHOLD = 1; // modules slipping to confirm
+
+  // Per-module velocity history for delta computation (rot/s, one entry per module)
+  private double[] lastModuleVelocity = null; // lazy-initialized on first call
+
+  // NT publishers
+  private final DoublePublisher filteredSlipXPub =
+      NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
+  private final DoublePublisher filteredSlipYPub =
+      NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
+  private final BooleanPublisher isSlippingPub =
+      NetworkTableInstance.getDefault()
+          .getBooleanTopic("/LaunchCalculator/slip/isSlipping")
+          .publish();
+  private final DoubleArrayPublisher perModuleCurrentPub =
+      NetworkTableInstance.getDefault()
+          .getDoubleArrayTopic("/LaunchCalculator/slip/perModuleCurrent")
+          .publish();
+  private final DoubleArrayPublisher perModuleVelocityDeltaPub =
+      NetworkTableInstance.getDefault()
+          .getDoubleArrayTopic("/LaunchCalculator/slip/perModuleVelocityDelta")
+          .publish();
+  private final BooleanArrayPublisher perModuleSlippingPub =
+      NetworkTableInstance.getDefault()
+          .getBooleanArrayTopic("/LaunchCalculator/slip/perModuleSlipping")
+          .publish();
 
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
@@ -151,6 +196,62 @@ public class LaunchCalculator {
     }
   }
 
+  // ------ SLIP DETECTION ------ //
+
+  /**
+   * Checks each swerve module for wheel slip using stator current drop + velocity spike. Both
+   * conditions must be true simultaneously on the same module to count as a slip event. Returns
+   * true if the number of slipping modules meets SLIP_MODULE_COUNT_THRESHOLD.
+   *
+   * <p>Also publishes per-module diagnostics and the aggregate flag to NetworkTables every cycle so
+   * thresholds can be tuned from logs without redeploying.
+   *
+   * @param modules swerve modules from drivetrain.getModules()
+   * @return true if slip is confidently detected
+   */
+  private boolean detectSlip(SwerveModule<?, ?, ?>[] modules) {
+    int moduleCount = modules.length;
+
+    // Lazy-initialize per-module velocity history
+    if (lastModuleVelocity == null) {
+      lastModuleVelocity = new double[moduleCount];
+    }
+
+    double[] currents = new double[moduleCount];
+    double[] velocityDeltas = new double[moduleCount];
+    boolean[] moduleSlipping = new boolean[moduleCount];
+    int slippingCount = 0;
+
+    for (int i = 0; i < moduleCount; i++) {
+      var driveMotor = modules[i].getDriveMotor();
+
+      double statorCurrent = driveMotor.getStatorCurrent().getValueAsDouble();
+      double velocity = driveMotor.getVelocity().getValueAsDouble(); // rot/s
+      double velocityDelta = Math.abs(velocity - lastModuleVelocity[i]);
+
+      currents[i] = statorCurrent;
+      velocityDeltas[i] = velocityDelta;
+
+      // Both conditions required: unloaded wheel AND sudden velocity spike
+      boolean currentDrop = statorCurrent < SLIP_CURRENT_THRESHOLD;
+      boolean velocitySpike = velocityDelta > SLIP_VELOCITY_DELTA_THRESHOLD;
+      moduleSlipping[i] = currentDrop && velocitySpike;
+
+      if (moduleSlipping[i]) slippingCount++;
+      lastModuleVelocity[i] = velocity;
+    }
+
+    boolean isSlipping = slippingCount >= SLIP_MODULE_COUNT_THRESHOLD;
+
+    // Publish diagnostics every cycle for tuning
+    isSlippingPub.set(isSlipping);
+    perModuleCurrentPub.set(currents);
+    perModuleVelocityDeltaPub.set(velocityDeltas);
+    perModuleSlippingPub.set(moduleSlipping);
+
+    return isSlipping;
+  }
+
   // ------ MAIN LOGIC ------ //
 
   /**
@@ -175,6 +276,10 @@ public class LaunchCalculator {
     ChassisSpeeds currentSpeeds = driveState.Speeds;
     double currentTurretOmega = turretSubsystem.getOmega();
     double timestamp = driveState.Timestamp;
+
+    // Run slip detection every cycle regardless of cache — keeps lastModuleVelocity
+    // fresh and NT logs continuous even when the cache is hit.
+    boolean isSlipping = detectSlip(drivetrain.getModules());
 
     if (cachedParams != null && timestamp == prevTimestamp) {
       return cachedParams;
@@ -251,7 +356,7 @@ public class LaunchCalculator {
     lastPose = currentPose;
     lastTurretOmega = currentTurretOmega;
 
-    cachedParams = calculate(driveState, turretSubsystem);
+    cachedParams = calculate(driveState, turretSubsystem, isSlipping);
 
     // Update differentiation state AFTER calculate() so that calculate() sees the previous
     // cycle's state (giving a real non-zero poseDt / speedsDt), and the next cycle sees
@@ -275,14 +380,17 @@ public class LaunchCalculator {
    * <p>2. DEFENSE/PUSH COMPENSATION: Slip filter blended on top of wheel speeds. The slip is the
    * difference between pose-derived velocity and wheel velocity. A variable-alpha low-pass filter
    * separates real push events (large, sustained slip) from vision noise (small, transient). Gated
-   * off when stationary to prevent estimator noise from being amplified into jitter.
+   * off when stationary to prevent estimator noise from being amplified into jitter. The filter is
+   * only active when isSlipping is true, confirmed by stator current drop + velocity spike on at
+   * least SLIP_MODULE_COUNT_THRESHOLD modules.
    *
    * @param driveState the drivebase's SwerveDriveState
    * @param turretSubsystem the turretSubsystem object
+   * @param isSlipping whether wheel slip has been confirmed this cycle by motor signals
    * @return LaunchingParameters record holding all the target values
    */
   public LaunchingParameters calculate(
-      SwerveDriveState driveState, TurretSubsystem turretSubsystem) {
+      SwerveDriveState driveState, TurretSubsystem turretSubsystem, boolean isSlipping) {
 
     Pose2d estimatedPose = driveState.Pose;
     ChassisSpeeds wheelSpeeds = driveState.Speeds;
@@ -301,7 +409,12 @@ public class LaunchCalculator {
 
     ChassisSpeeds effectiveSpeeds = wheelSpeeds;
     double poseDt = timestamp - prevTimestamp;
-    if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT && false) {
+
+    // Slip filter is gated on three conditions:
+    //   1. robotIsMoving — prevents estimator noise amplification when stationary
+    //   2. poseDt in valid range — ensures pose-diff gives a meaningful velocity
+    //   3. isSlipping — confirmed by stator current drop + velocity spike this cycle
+    if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT && isSlipping) {
       Twist2d twist = prevPose.log(estimatedPose);
 
       // Slip = (pose-derived velocity) - (wheel velocity). When wheels match pose,
@@ -341,7 +454,9 @@ public class LaunchCalculator {
               wheelSpeeds.vyMetersPerSecond + filteredSlip.vyMetersPerSecond,
               wheelSpeeds.omegaRadiansPerSecond + filteredSlip.omegaRadiansPerSecond);
     } else {
-      // Reset slip filter when robot stops or poseDt is out of range
+      // Reset slip filter when robot stops, poseDt is out of range, or no slip confirmed.
+      // Resetting on !isSlipping ensures stale slip state from a previous push event
+      // doesn't persist and bias effectiveSpeeds during normal driving.
       filteredSlip = new ChassisSpeeds(0, 0, 0);
       slipFastMode = false;
     }
