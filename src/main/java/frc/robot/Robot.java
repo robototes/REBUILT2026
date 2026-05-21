@@ -124,6 +124,7 @@ public class Robot extends TimedRobot {
       }
       BLineLogic.init(subsystems);
       BLineLogic.configure(subsystems);
+      BLineLogic.initSmartDashboard();
     }
 
     CommandScheduler.getInstance()
@@ -144,9 +145,8 @@ public class Robot extends TimedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       // PathPlannerLogic.initCommandsAndPaths(true);
-      //  AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+        
 
-      //  PathPlannerLogic.initSmartDashBoard();
       // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
@@ -286,7 +286,7 @@ public class Robot extends TimedRobot {
       robotSim.resetFuelSim();
     }
 
-    CommandScheduler.getInstance().schedule(BLineLogic.runAuto());
+    CommandScheduler.getInstance().schedule(BLineLogic.getSelectedAuto());
     double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
     if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
