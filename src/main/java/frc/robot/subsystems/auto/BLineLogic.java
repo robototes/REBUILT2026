@@ -27,7 +27,7 @@ import frc.robot.Robot;
 import frc.robot.Subsystems;
 
 import frc.robot.lib.BLine.FollowPath;
-
+import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 
 import frc.robot.util.simulation.RobotSim;
@@ -339,12 +339,9 @@ public class BLineLogic {
 
     return Commands.waitSeconds(delay)
 
-        .andThen(
-            AutoBuilder.buildAuto(
-                selected.getAutoName()))
+        .andThen(pathBuilder.build(new Path(selected.getAutoName())));
 
-        .withName(
-            selected.getDisplayName());
+       
   }
 
   // ========================= PATHPLANNER DIRECT =========================
