@@ -126,8 +126,8 @@ public class LaunchCalculator {
   //     at 50 Hz on carpet typically spikes > 3–5 rot/s per 20 ms. Start around 3.0.
   //   - SLIP_MODULE_COUNT_THRESHOLD: 1 = very sensitive (any single wheel), 2 = more
   //     conservative. Start at 1 and raise if you see false positives during defense.
-  private static final double SLIP_CURRENT_THRESHOLD = 15.0; // Amps — tune this
-  private static final double SLIP_VELOCITY_DELTA_THRESHOLD = 3.0; // rot/s per 20ms — tune this
+  private static final double SLIP_CURRENT_THRESHOLD = 75.0; // Amps — tune this
+  private static final double SLIP_VELOCITY_DELTA_THRESHOLD = 1.0; // rot/s per 20ms — tune this
   private static final int SLIP_MODULE_COUNT_THRESHOLD = 1; // modules slipping to confirm
 
   // Per-module velocity history for delta computation (rot/s, one entry per module)
