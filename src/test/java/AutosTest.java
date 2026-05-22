@@ -23,7 +23,7 @@ class AutosTest {
 
   @Test
   void validateFileName() throws IOException, ParseException {
-    AutoLogic.initCommandsAndPaths();
+    AutoLogic.initCommandsAndPaths(true);
 
     Dictionary<String, Boolean> pathDictionary = new Hashtable<>();
     for (AutoPath path : AutoLogic.getAutos()) { // Every auto in the auto chooser

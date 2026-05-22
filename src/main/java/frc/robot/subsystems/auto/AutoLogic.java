@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.json.simple.parser.ParseException;
 
 public class AutoLogic {
@@ -94,16 +93,12 @@ public class AutoLogic {
   // We always need to register commands BEFORE we initialize paths.  This is
   // because paths may reference commands or triggers that need to be registered first.
   // This helper-method insures caller initializes these in the correct order.
-  public static void initCommandsAndPaths(Optional<Boolean> testMode) {
-    if (testMode != null && !testMode.orElse(false)) {
+  public static void initCommandsAndPaths(boolean testMode) {
+    if (!testMode) {
       registerCommands();
     }
 
     initPaths();
-  }
-
-  public static void initCommandsAndPaths() {
-    initCommandsAndPaths(Optional.of(true));
   }
 
   private static void initPaths() {
