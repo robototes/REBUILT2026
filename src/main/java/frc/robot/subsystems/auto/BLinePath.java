@@ -2,6 +2,7 @@ package frc.robot.subsystems.auto;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.lib.BLine.Path;
+import frc.robot.lib.BLine.Path.PathElement;
 
 public class BLinePath {
 
@@ -37,8 +38,12 @@ public class BLinePath {
   }
 
   public Pose2d getStartPose2d() {
+
+
+
     return startPose;
   }
+
 
   public boolean isVision() {
     return vision;
