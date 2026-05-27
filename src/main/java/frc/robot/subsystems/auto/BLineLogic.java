@@ -22,7 +22,9 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BLineLogic {
 
@@ -48,11 +50,11 @@ public class BLineLogic {
     }
   }
 
-  // ========================= AUTOS =========================
+
 
   private static final List<BLinePath> autos = new ArrayList<>();
 
-  // ========================= CHOOSERS =========================
+
 
   private static final SendableChooser<StartPosition> startPositionChooser =
       new SendableChooser<>();
@@ -66,7 +68,15 @@ public class BLineLogic {
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
-  // ========================= PATH BUILDER =========================
+  private static BLinePath defaultPath;
+
+  private static List<BLinePath> rebuiltPaths = List.of();
+
+  private static Map<Integer, List<BLinePath>> commandsMap = Map.of();
+
+  private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
+  private static boolean pathsInitialized = false;
+
 
   public static FollowPath.Builder pathBuilder;
 
@@ -74,24 +84,46 @@ public class BLineLogic {
 
   // ========================= INIT =========================
 
-  public static void init(Subsystems subsystems) {
+public static void init(Subsystems subsystems) {
 
-    s = subsystems;
+  s = subsystems;
 
-    registerCommands();
+  registerCommands();
 
-    autos.clear();
+  autos.clear();
 
-    // ========================= DEFINE AUTOS HERE =========================
-
-    autos.add(new BLinePath("Sample 1", "sample1"));
-
-    autos.add(new BLinePath("Sample 2", "sample2"));
-
-    autos.add(new BLinePath("Sample 5", "Sample 5"));
+  if (pathsInitialized) {
+    return;
   }
 
-  // ========================= CONFIGURE =========================
+  defaultPath = new BLinePath("test1", "test1");
+
+  List<BLinePath> physicalRebuiltPaths =
+      List.of(
+        defaultPath,
+          new BLinePath("Sample 1", "sample1"),
+          new BLinePath("Sample 2", "sample2"),
+          new BLinePath("Sample 5", "Sample 5"));
+
+  rebuiltPaths = physicalRebuiltPaths;
+
+
+  autos.clear();
+  autos.addAll(rebuiltPaths);
+
+  commandsMap = Map.of(0, rebuiltPaths);
+
+  namesToAuto.clear();
+  for (List<BLinePath> list : commandsMap.values()) {
+    for (BLinePath auto : list) {
+      namesToAuto.put(auto.getDisplayName(), auto);
+    }
+  }
+
+  pathsInitialized = true;
+}
+
+
 
   public static void configure(Subsystems s) {
 
@@ -111,7 +143,7 @@ public class BLineLogic {
             .withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
   }
 
-  // ========================= SMARTDASHBOARD =========================
+
 
   public static void initSmartDashboard() {
 
@@ -124,16 +156,15 @@ public class BLineLogic {
       startPositionChooser.addOption(pos.title, pos);
     }
 
-    // game objects chooser
+
 
     gameObjects.setDefaultOption("0", 0);
 
-    // auto chooser
 
-    refreshAutoChooser();
-    Commands.print("started" + startPositionChooser.getSelected().toString());
+   filterAutos(0);
 
-    // NT / Elastic publishing
+
+
 
     SmartDashboard.putData("Starting Position", startPositionChooser);
 
@@ -145,73 +176,45 @@ public class BLineLogic {
 
     autoDelayEntry.setDouble(0.0);
 
-    // update chooser when selection changes
 
-    startPositionChooser.onChange(v -> refreshAutoChooser());
+    startPositionChooser.onChange(v ->   filterAutos(gameObjects.getSelected()));
 
-    // debug
 
-    System.out.println("========== REGISTERED AUTOS ==========");
 
-    for (BLinePath auto : autos) {
 
-      System.out.println(auto.getDisplayName() + " | " + auto.getStartPose2d());
-    }
 
-    System.out.println("======================================");
   }
-
   // ========================= AUTO FILTERING =========================
 
-  private static void refreshAutoChooser() {
 
-    autoChooser.clearOptions();
+   public static void filterAutos(int numGameObjects) {
 
-    StartPosition selectedStart = startPositionChooser.getSelected();
+  autoChooser.clearOptions();
 
-    if (selectedStart == null) {
+  StartPosition selected = startPositionChooser.getSelected();
 
-      System.out.println("START POSITION NULL");
-
-      selectedStart = StartPosition.MISC;
-    }
-
-
-
-    boolean first = true;
-
-    for (BLinePath auto : autos) {
-
-      Pose2d autoPose = auto.getStartPose2d();
-
-      boolean matches =
-          selectedStart == StartPosition.MISC
-              || (autoPose != null
-                  && selectedStart.startPose != null
-                  && autoPose.getTranslation().getDistance(selectedStart.startPose.getTranslation())
-                      < 0.05);
-
-
-      if (!matches) {
-        continue;
-      }
-
-      if (first) {
-
-        autoChooser.setDefaultOption(auto.getDisplayName(), auto.getDisplayName());
-
-        first = false;
-
-      } else {
-
-        autoChooser.addOption(auto.getDisplayName(), auto.getDisplayName());
-      }
-    }
-
-
+  if (selected == null) {
+    selected = StartPosition.MISC;
   }
 
-  // ========================= GETTERS =========================
+  for (BLinePath auto : autos) {
+
+    Pose2d autoPose = auto.getStartPose2d();
+
+
+
+
+    if (autoPose.equals(startPositionChooser.getSelected().startPose)) {
+
+      autoChooser.addOption(auto.getDisplayName(), auto.getDisplayName());
+    }
+    else {
+
+    }
+  }
+}
+
+
 
   public static String getSelectedAutoName() {
 
@@ -249,23 +252,20 @@ public class BLineLogic {
 
   public static Command getSelectedAuto() {
 
-    double delay = autoDelayEntry.getDouble(0.0);
+  double delay = autoDelayEntry.getDouble(0.0);
 
-    BLinePath selected = getSelectedAutoPath();
+  BLinePath path = namesToAuto.get(getSelectedAutoName());
 
-    if (selected == null) {
+  if (path == null) {
 
-      System.out.println("NO AUTO SELECTED");
-
-      return Commands.none();
-    }
-
-    System.out.println("RUNNING AUTO: " + selected.getDisplayName());
-
-    return Commands.waitSeconds(delay).andThen(pathBuilder.build(new Path(selected.getAutoName())));
+    return Commands.none();
   }
 
-  // ========================= PATHPLANNER DIRECT =========================
+  return Commands.waitSeconds(delay)
+      .andThen(pathBuilder.build(new Path(path.getAutoName())));
+}
+
+
 
   // ========================= COMMANDS =========================
 

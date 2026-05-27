@@ -124,6 +124,7 @@ public class Robot extends TimedRobot {
       }
       BLineLogic.init(subsystems);
       BLineLogic.configure(subsystems);
+
       BLineLogic.initSmartDashboard();
     }
 
@@ -145,7 +146,7 @@ public class Robot extends TimedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       // PathPlannerLogic.initCommandsAndPaths(true);
-        
+
 
       // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
