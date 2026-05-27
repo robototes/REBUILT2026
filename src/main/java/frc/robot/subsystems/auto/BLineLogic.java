@@ -264,6 +264,10 @@ public static void init(Subsystems subsystems) {
   return Commands.waitSeconds(delay)
       .andThen(pathBuilder.build(new Path(path.getAutoName())));
 }
+public static Command buildRTNeutralAuto() {
+  return Commands.sequence(Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+     pathBuilder.build(new Path("sample1")),(pathBuilder.build(new Path("sample2"))));
+}
 
 
 
