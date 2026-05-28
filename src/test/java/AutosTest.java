@@ -2,9 +2,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.auto.AutoBuilderConfig;
-import frc.robot.subsystems.auto.AutoPath;
-import frc.robot.subsystems.auto.PathPlannerLogic;
+import frc.robot.subsystems.auto.PathPlanner.AutoBuilderConfig;
+import frc.robot.subsystems.auto.PathPlanner.AutoPath;
+import frc.robot.subsystems.auto.PathPlanner.PathPlannerLogic;
+
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Enumeration;

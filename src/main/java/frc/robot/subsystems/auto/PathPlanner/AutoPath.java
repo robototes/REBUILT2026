@@ -1,11 +1,11 @@
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems.auto.PathPlanner;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.auto.PathPlannerLogic.StartPosition;
+import frc.robot.subsystems.auto.PathPlanner.PathPlannerLogic.StartPosition;
 
 public class AutoPath {
 

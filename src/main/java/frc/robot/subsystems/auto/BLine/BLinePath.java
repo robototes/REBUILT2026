@@ -1,4 +1,4 @@
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems.auto.BLine;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.lib.BLine.Path;
@@ -47,5 +47,8 @@ public class BLinePath {
 
   public boolean isVision() {
     return vision;
+  }
+  public Path getPath() {
+    return path;
   }
 }

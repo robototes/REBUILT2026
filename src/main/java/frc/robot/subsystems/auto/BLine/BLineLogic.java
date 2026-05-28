@@ -1,6 +1,4 @@
-// ========================= BLineLogic.java =========================
-
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems.auto.BLine;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
@@ -19,6 +17,7 @@ import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
+import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
@@ -30,15 +29,10 @@ public class BLineLogic {
 
   private static Subsystems s;
 
-  // ========================= START POSITIONS =========================
-
   public enum StartPosition {
     LEFT_TRENCH("Left Trench", new Pose2d(4.013, 7.597, Rotation2d.fromDegrees(90))),
-
     CENTER("Center", new Pose2d(3.600, 4.035, Rotation2d.fromDegrees(0))),
-
     RIGHT_TRENCH("Right Trench", new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90))),
-
     MISC("Misc", null);
 
     public final String title;
@@ -50,11 +44,7 @@ public class BLineLogic {
     }
   }
 
-
-
   private static final List<BLinePath> autos = new ArrayList<>();
-
-
 
   private static final SendableChooser<StartPosition> startPositionChooser =
       new SendableChooser<>();
@@ -69,61 +59,48 @@ public class BLineLogic {
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
   private static BLinePath defaultPath;
-
   private static List<BLinePath> rebuiltPaths = List.of();
-
   private static Map<Integer, List<BLinePath>> commandsMap = Map.of();
-
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
+
   private static boolean pathsInitialized = false;
 
-
   public static FollowPath.Builder pathBuilder;
-
   private static Command bLineLaunching;
 
   // ========================= INIT =========================
 
-public static void init(Subsystems subsystems) {
+  public static void init(Subsystems subsystems) {
 
-  s = subsystems;
+    s = subsystems;
 
-  registerCommands();
+    registerCommands();
 
-  autos.clear();
+    if (pathsInitialized) return;
 
-  if (pathsInitialized) {
-    return;
-  }
+    defaultPath = new BLinePath("test1", "test1");
 
-  defaultPath = new BLinePath("test1", "test1");
+    rebuiltPaths =
+        List.of(
+            defaultPath,
+            new BLinePath("RTNEUTRAL", "RTNEUTRAL"),
+            new BLinePath("Sample 2", "sample2"),
+            new BLinePath("Sample 5", "Sample 5"));
 
-  List<BLinePath> physicalRebuiltPaths =
-      List.of(
-        defaultPath,
-          new BLinePath("Sample 1", "sample1"),
-          new BLinePath("Sample 2", "sample2"),
-          new BLinePath("Sample 5", "Sample 5"));
+    autos.clear();
+    autos.addAll(rebuiltPaths);
 
-  rebuiltPaths = physicalRebuiltPaths;
+    commandsMap = Map.of(0, rebuiltPaths);
 
-
-  autos.clear();
-  autos.addAll(rebuiltPaths);
-
-  commandsMap = Map.of(0, rebuiltPaths);
-
-  namesToAuto.clear();
-  for (List<BLinePath> list : commandsMap.values()) {
-    for (BLinePath auto : list) {
-      namesToAuto.put(auto.getDisplayName(), auto);
+    namesToAuto.clear();
+    for (List<BLinePath> list : commandsMap.values()) {
+      for (BLinePath auto : list) {
+        namesToAuto.put(auto.getDisplayName(), auto);
+      }
     }
+
+    pathsInitialized = true;
   }
-
-  pathsInitialized = true;
-}
-
-
 
   public static void configure(Subsystems s) {
 
@@ -143,81 +120,67 @@ public static void init(Subsystems subsystems) {
             .withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
   }
 
-
+  // ========================= LOGGING =========================
 
   public static void initSmartDashboard() {
-
-    // starting positions
 
     startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
 
     for (StartPosition pos : StartPosition.values()) {
-
       startPositionChooser.addOption(pos.title, pos);
     }
 
-
-
     gameObjects.setDefaultOption("0", 0);
 
-
-   filterAutos(0);
-
-
-
+    filterAutos(0);
 
     SmartDashboard.putData("Starting Position", startPositionChooser);
-
     SmartDashboard.putData("Auto Mode", gameObjects);
-
     SmartDashboard.putData("Available Auto Variants", autoChooser);
-
     SmartDashboard.putString("Auto Key", keys);
 
     autoDelayEntry.setDouble(0.0);
 
+    startPositionChooser.onChange(
+        v -> {
+          filterAutos(gameObjects.getSelected());
+          updateInitialHeading();
+        });
 
-    startPositionChooser.onChange(v ->   filterAutos(gameObjects.getSelected()));
-
-
-
-
-
-  }
-  // ========================= AUTO FILTERING =========================
-
-
-   public static void filterAutos(int numGameObjects) {
-
-  autoChooser.clearOptions();
-
-  StartPosition selected = startPositionChooser.getSelected();
-
-  if (selected == null) {
-    selected = StartPosition.MISC;
+    autoChooser.onChange(v -> updateInitialHeading());
   }
 
-  for (BLinePath auto : autos) {
+  // ========================= AUTOS FILTERING =========================
 
-    Pose2d autoPose = auto.getStartPose2d();
+  public static void filterAutos(int numGameObjects) {
 
+    autoChooser.clearOptions();
 
+    StartPosition selected = startPositionChooser.getSelected();
 
-
-    if (autoPose.equals(startPositionChooser.getSelected().startPose)) {
-
-      autoChooser.addOption(auto.getDisplayName(), auto.getDisplayName());
+    // fallback safety
+    if (selected == null) {
+      selected = StartPosition.MISC;
     }
-    else {
 
+    for (BLinePath auto : autos) {
+
+      if (selected == StartPosition.MISC) {
+        autoChooser.addOption(auto.getDisplayName(), auto.getDisplayName());
+      }
+
+      Pose2d autoPose = auto.getStartPose2d();
+
+      if (autoPose != null && selected.startPose != null && autoPose.equals(selected.startPose)) {
+
+        autoChooser.addOption(auto.getDisplayName(), auto.getDisplayName());
+      }
     }
   }
-}
 
-
+  // ========================= SELECTION METHODS =========================
 
   public static String getSelectedAutoName() {
-
     return autoChooser.getSelected();
   }
 
@@ -226,92 +189,121 @@ public static void init(Subsystems subsystems) {
     String selectedName = autoChooser.getSelected();
 
     if (selectedName == null) {
-      return null;
+      return defaultPath;
     }
 
-    for (BLinePath auto : autos) {
-
-      if (auto.getDisplayName().equals(selectedName)) {
-        return auto;
-      }
-    }
-
-    return null;
+    return namesToAuto.getOrDefault(selectedName, defaultPath);
   }
 
   public static Pose2d getSelectedAutoStartingPose() {
 
     BLinePath selected = getSelectedAutoPath();
 
-    if (selected == null) {
-      return Pose2d.kZero;
-    }
+    if (selected == null) return Pose2d.kZero;
 
     return selected.getStartPose2d();
   }
 
+  // ========================= AUTO EXECUTION =========================
+
   public static Command getSelectedAuto() {
 
-  double delay = autoDelayEntry.getDouble(0.0);
+    double delay = autoDelayEntry.getDouble(0.0);
 
-  BLinePath path = namesToAuto.get(getSelectedAutoName());
-
-  if (path == null) {
-
-    return Commands.none();
+    BLinePath path = getSelectedAutoPath();
+    s.drivebaseSubsystem.resetRotation(path.getPath().getInitialModuleDirection());
+    return Commands.waitSeconds(delay).andThen(pathBuilder.build(path.getPath()));
   }
 
-  return Commands.waitSeconds(delay)
-      .andThen(pathBuilder.build(new Path(path.getAutoName())));
-}
-public static Command buildRTNeutralAuto() {
-  return Commands.sequence(Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-     pathBuilder.build(new Path("sample1")),(pathBuilder.build(new Path("sample2"))));
-}
+  public static Command buildRTNeutralAuto() {
+    return Commands.sequence(
+        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+        buildAndSetHeading(new Path("RTNEUTRAL")),
+        launcherCommand(5));
+  }
 
+  private static Command buildAndSetHeading(Path path) {
 
+    return Commands.runOnce(
+            () -> s.drivebaseSubsystem.resetRotation(path.getInitialModuleDirection()))
+        .andThen(pathBuilder.build(path));
+  }
 
-  // ========================= COMMANDS =========================
+  private static void updateInitialHeading() {
+
+    BLinePath selected = getSelectedAutoPath();
+
+    if (selected == null || selected.getPath() == null) {
+      SmartDashboard.putNumber("Initial Heading", 0.0);
+      return;
+    }
+
+    Pose2d start = selected.getPath().getStartPose();
+
+    SmartDashboard.putNumber("Initial Heading", start.getRotation().getDegrees());
+  }
 
   public static Command intakeCommand() {
-
     return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
         .withName("Auto Intake Command");
   }
 
-  public static Command climbCommand() {
+  public static Command launcherCommand(double timeout) {
+    return Commands.parallel(
+            Commands.runOnce(
+                () -> {
+                  s.flywheels.resetFuelCheck();
+                }),
+            s.launcherSubsystem.launcherAimCommand(),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
+        // .until(() -> s.flywheels.isOutOfFuel())
+        .withTimeout(timeout)
+        .andThen(s.launcherSubsystem.rawStowCommand())
+        .withName("Auto Launcher Command");
+  }
 
+  public static Command launcherCommand() {
+    return Commands.parallel(
+            Commands.runOnce(
+                () -> {
+                  s.flywheels.resetFuelCheck();
+                }),
+            s.launcherSubsystem.launcherAimCommand(),
+            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
+        // .until(() -> s.flywheels.isOutOfFuel())
+
+        .withName("Auto Launcher Command");
+  }
+
+  public static Command stowCommand() {
+    return s.launcherSubsystem.rawStowCommand();
+  }
+
+  public static Command climbCommand() {
     return Commands.none().withName("Auto Climb Command");
   }
 
   public static void cancelCommand() {
-
     CommandScheduler.getInstance().cancel(bLineLaunching);
   }
-
-  // ========================= EVENT TRIGGERS =========================
 
   private static void registerCommands() {
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
 
       if (Robot.isSimulation()) {
-
         bLineLaunching = RobotSim.launch(s, 1);
-
         FollowPath.registerEventTrigger(
             "launch", bLineLaunching.andThen(Commands.print("LAUNCH FINISHED")));
-
       } else {
-
-        bLineLaunching = Commands.none();
-
+        bLineLaunching = launcherCommand();
         FollowPath.registerEventTrigger("launch", bLineLaunching);
       }
     }
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
-
     FollowPath.registerEventTrigger("climb", climbCommand());
   }
 }
