@@ -218,17 +218,15 @@ public class BLineLogic {
   public static Command buildRTNeutralAuto() {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildAndSetHeading(new Path("RTNEUTRAL")),
-        launcherCommand(5));
+        buildAndSetHeading(new Path("RTNEUTRALTEST")));
   }
 
   public static Command buildRTNeutralTestingAuto() {
-    
+
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildAndSetHeading(new Path("RTNEUTRAL")),
-        launcherCommand(5),
-        buildAndSetHeading(new Path("RTRBNEUTRAL")));
+        buildAndSetHeading(new Path("RTNEUTRALTEST")),
+        buildAndSetHeading(new Path("RTRBNEUTRALTEST")));
   }
 
   private static Command buildAndSetHeading(Path path) {
@@ -258,8 +256,8 @@ public class BLineLogic {
   }
 
   public static Command launcherCommand(double timeout) {
-    if(Robot.isSimulation()) {
-      return RobotSim.launch(s,timeout);
+    if (Robot.isSimulation()) {
+      return RobotSim.launch(s, timeout);
     }
     return Commands.parallel(
             Commands.runOnce(
