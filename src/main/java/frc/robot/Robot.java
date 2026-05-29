@@ -150,17 +150,7 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putData(CommandScheduler.getInstance());
 
-    // PATHPLANNER STUFF
-   /*  if (DRIVEBASE_ENABLED) {
-      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
-    }
-    PathPlannerLogic.init(subsystems);
-    if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      PathPlannerLogic.initCommandsAndPaths(false);
-      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
-      PathPlannerLogic.initSmartDashBoard();
-      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand()); }*/
 
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
@@ -293,9 +283,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-   /*  if (PathPlannerLogic.getSelectedAuto() != null) {
-      CommandScheduler.getInstance().schedule(PathPlannerLogic.getSelectedAuto());
-    } */
+
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
 
     if (Robot.isSimulation()) {
