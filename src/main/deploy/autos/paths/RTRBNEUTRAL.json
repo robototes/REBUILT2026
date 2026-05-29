@@ -18,11 +18,7 @@
       "y_meters": 1.327273381294968,
       "intermediate_handoff_radius_meters": 0.6
     },
-    {
-      "type": "event_trigger",
-      "t_ratio": 0.6000000000000013,
-      "lib_key": "intake"
-    },
+    
     {
       "type": "translation",
       "x_meters": 4.153028776978418,

@@ -83,7 +83,7 @@ public class BLineLogic {
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNEUTRAL", "RTNEUTRAL"),
+            new BLinePath("RTNeutral", "RTNeutral"),
             new BLinePath("Sample 2", "sample2"),
             new BLinePath("Sample 5", "Sample 5"));
 
@@ -218,15 +218,17 @@ public class BLineLogic {
   public static Command buildRTNeutralAuto() {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildAndSetHeading(new Path("RTNEUTRALTEST")));
+        buildAndSetHeading(new Path("RTNEUTRALTEST")), launcherCommand(4));
   }
 
   public static Command buildRTNeutralTestingAuto() {
 
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildAndSetHeading(new Path("RTNEUTRALTEST")),
-        buildAndSetHeading(new Path("RTRBNEUTRALTEST")));
+        buildAndSetHeading(new Path("RTNEUTRAL")),
+        launcherCommand(3.5),
+        buildAndSetHeading(new Path("RTRBNEUTRAL")),
+            launcherCommand());
   }
 
   private static Command buildAndSetHeading(Path path) {

@@ -120,6 +120,8 @@ public class PathPlannerLogic {
             new AutoPath("RT-Neutral", "RT-Neutral"),
             new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
             new AutoPath("RT-BLOCK", "RT-BLOCK"),
+              new AutoPath("test", "BLINECOMPARE"),
+
             new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
     rebuiltPaths = physicalRebuiltPaths;

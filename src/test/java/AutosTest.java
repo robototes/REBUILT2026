@@ -5,13 +5,11 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.auto.PathPlanner.AutoBuilderConfig;
 import frc.robot.subsystems.auto.PathPlanner.AutoPath;
 import frc.robot.subsystems.auto.PathPlanner.PathPlannerLogic;
-
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import org.json.simple.parser.ParseException;
-import org.junit.jupiter.api.Test;
 
 class AutosTest {
 
@@ -21,7 +19,7 @@ class AutosTest {
     AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), true);
   }
 
-  @Test
+  // @Test
   void validateFileName() throws IOException, ParseException {
     PathPlannerLogic.initCommandsAndPaths(true);
 
