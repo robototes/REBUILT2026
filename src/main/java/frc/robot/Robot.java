@@ -6,6 +6,7 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -26,10 +27,14 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
+import frc.robot.subsystems.auto.PathPlanner.AutoBuilderConfig;
+import frc.robot.subsystems.auto.PathPlanner.AutonomousField;
+import frc.robot.subsystems.auto.PathPlanner.PathPlannerLogic;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -121,7 +126,9 @@ public class Robot extends TimedRobot {
       } else {
         robotSim = null;
       }
-      BLineLogic.init(subsystems);
+   //  BLINE STUFF
+
+       BLineLogic.init(subsystems);
       BLineLogic.configure(subsystems);
 
       BLineLogic.initSmartDashboard();
@@ -144,17 +151,17 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(CommandScheduler.getInstance());
 
     // PATHPLANNER STUFF
-    /*if (DRIVEBASE_ENABLED) {
-         AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
-       }
-       PathPlannerLogic.init(subsystems);
+   /*  if (DRIVEBASE_ENABLED) {
+      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
+    }
+    PathPlannerLogic.init(subsystems);
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-         AutoLogic.initCommandsAndPaths(false);
-         AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+      PathPlannerLogic.initCommandsAndPaths(false);
+      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
-         AutoLogic.initSmartDashBoard();
-         CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
-       } */
+      PathPlannerLogic.initSmartDashBoard();
+      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand()); }*/
+
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
     logger = new DriveStateSignalLogger();
@@ -286,8 +293,8 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    /*  if (AutoLogic.getSelectedAuto() != null) {
-       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+   /*  if (PathPlannerLogic.getSelectedAuto() != null) {
+      CommandScheduler.getInstance().schedule(PathPlannerLogic.getSelectedAuto());
     } */
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
 
