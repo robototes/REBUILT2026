@@ -11,6 +11,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
@@ -75,13 +76,20 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(8, 9, 90, 1.53)
   };
 
+  // TODO
+  public static final LauncherDistanceDataPoint[] ballingDistanceData = {
+    new LauncherDistanceDataPoint(1, 1, 1, 1)
+  };
+
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
   static {
     LauncherDistanceDataPoint[] distanceData =
-        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+        GetTargetFromPose.BALLING.get()
+            ? ballingDistanceData
+            : RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
