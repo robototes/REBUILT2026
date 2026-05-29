@@ -61,8 +61,9 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kD = RobotType.isAlpha() ? 0 : 2;
   private static final double kG = 0;
   private static final double kS = RobotType.isAlpha() ? 0.41 : 0.65;
-  private static final double kV = 0; // volts per requested rps
-  private static final double kA = 0;
+  private static final double kV =
+      0; // volts per requested rps RobotType.isAlpha() ? 0.884766 / 1.125 : 12 / 1.29;
+  private static final double kA = 0; // 0.12;
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
@@ -229,16 +230,16 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public double getTurretPosition() {
-    return turretMotor.getPosition().getValueAsDouble();
+    return positionSignal.getValueAsDouble();
   }
 
   public boolean atTarget() {
-    return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
+    return Math.abs(positionSignal.getValueAsDouble() - targetPos)
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
   public boolean atTarget(DoubleSupplier turretTolerance) {
-    return Math.abs(turretMotor.getPosition().getValueAsDouble() - targetPos)
+    return Math.abs(positionSignal.getValueAsDouble() - targetPos)
         < Units.radiansToRotations(turretTolerance.getAsDouble());
   }
 
