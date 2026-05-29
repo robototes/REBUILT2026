@@ -279,7 +279,8 @@ public class LaunchCalculator {
 
     // Run slip detection every cycle regardless of cache — keeps lastModuleVelocity
     // fresh and NT logs continuous even when the cache is hit.
-    boolean isSlipping = detectSlip(drivetrain.getModules());
+    // boolean isSlipping = detectSlip(drivetrain.getModules());
+    boolean isSlipping = false; // Disable slip detection for now since it needs tuning and we don't have defense yet.
 
     if (cachedParams != null && timestamp == prevTimestamp) {
       return cachedParams;
