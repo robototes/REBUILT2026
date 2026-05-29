@@ -58,6 +58,7 @@ public class Controls {
   private static final int TURRET_TEST_CONTROLLER_PORT = 3;
   private static final int INTAKE_TEST_CONTROLLER_PORT = 4;
   private static final int VISION_TEST_CONTROLLER_PORT = 5;
+  private static final int TEST_TEST_CONTROLLER_PORT = 6;
 
   private final CommandXboxController driverController =
       new CommandXboxController(DRIVER_CONTROLLER_PORT);
@@ -77,6 +78,9 @@ public class Controls {
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
+  private final CommandXboxController testTestController =
+      new CommandXboxController(TEST_TEST_CONTROLLER_PORT);
+
   AprilTagFieldLayout aprilTagFieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
   // Robot with bumpers is 36.875 inches by 30.750 inches
@@ -90,7 +94,7 @@ public class Controls {
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
 
   public static boolean turretKillActive = false;
-  public static boolean turretSkipped = false;
+  public static boolean turretSkipped = false; // only resets when the robot code restarts, that's intentional
 
   public static final double MaxSpeed =
       (RobotType.TYPE == RobotTypesEnum.ALPHA)
@@ -233,7 +237,7 @@ public class Controls {
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
       // In simulation, inject drift with POV-right to test vision correction
-      driverController
+      testTestController
           .povRight()
           .onTrue(
               s.drivebaseSubsystem
@@ -241,7 +245,7 @@ public class Controls {
                   .withName("Inject Drift"));
 
       // POV-left resets robot to the starting pose of the selected auto
-      driverController
+      testTestController
           .povLeft()
           .onTrue(
               s.drivebaseSubsystem

@@ -345,6 +345,9 @@ public class LaunchCalculator {
                 cachedParams.targetFlywheels,
                 0,
                 cachedParams.turretPose);
+                // Reset slip filter when robot stops or poseDt is out of range
+                filteredSlip = new ChassisSpeeds(0, 0, 0);
+                slipFastMode = false;
       }
       // Update differentiation state on cache hit so deltas stay valid next cycle.
       lastWheelSpeeds = currentSpeeds;
