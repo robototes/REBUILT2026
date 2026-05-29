@@ -182,7 +182,6 @@ public class VisionSubsystem extends SubsystemBase {
           .publish();
 
   private double lastTimestampSeconds = 0;
-  private boolean visionReset = false;
   private Pose2d lastFieldPose = null;
   private CommandSwerveDrivetrain drivetrain;
 
@@ -312,7 +311,7 @@ public class VisionSubsystem extends SubsystemBase {
       Transform3d cameraTransform3d) {
 
     if (estimate == null || estimate.tagCount <= 0) return;
-    visionReset = false;
+    boolean visionReset = false;
 
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
     if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
@@ -408,14 +407,15 @@ public class VisionSubsystem extends SubsystemBase {
           java.util.Optional.of(estimate.pose3d.toPose2d()));
     }
 
-    maybeResetToVision(
-        visionPose2d,
-        maxAmbiguity,
-        estimate.tagCount,
-        spread,
-        camera.getName(),
-        underDefense,
-        estimate.isMegaTag2);
+    visionReset =
+        maybeResetToVision(
+            visionPose2d,
+            maxAmbiguity,
+            estimate.tagCount,
+            spread,
+            camera.getName(),
+            underDefense,
+            estimate.isMegaTag2);
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
@@ -614,7 +614,7 @@ public class VisionSubsystem extends SubsystemBase {
    *
    * <p>Heading is always preserved — resetTranslation avoids fighting the gyro.
    */
-  private void maybeResetToVision(
+  private boolean maybeResetToVision(
       Pose2d visionPose,
       double maxAmbiguity,
       int tagCount,
@@ -625,7 +625,8 @@ public class VisionSubsystem extends SubsystemBase {
 
     double now = Timer.getFPGATimestamp();
     if (now - lastResetTimestampMT2 < VisionConstants.RESET_COOLDOWN && isMegaTag2
-        || now - lastResetTimestampMT1 < VisionConstants.RESET_COOLDOWN) return;
+        || now - lastResetTimestampMT1 < VisionConstants.RESET_COOLDOWN && !isMegaTag2)
+      return false;
 
     Pose2d odomPose = drivetrain.getState().Pose;
     boolean visionTrusted =
@@ -641,10 +642,9 @@ public class VisionSubsystem extends SubsystemBase {
       } else {
         lastResetTimestampMT1 = now;
       }
-      visionReset = true;
       SmartDashboard.putString(
           "/vision/" + cameraName + "_rejectReason", "odometry-reset-offfield");
-      return;
+      return true;
     }
 
     // (b) Defense behavior — high-confidence vision disagrees with drifted odometry.
@@ -670,10 +670,11 @@ public class VisionSubsystem extends SubsystemBase {
               "/vision/" + cameraName + "_rejectReason", "odometry-reset-defense");
           SmartDashboard.putNumber(
               "/vision/" + cameraName + "_defenseResetDisagreement", disagreement);
-          visionReset = true;
+          return true;
         }
       }
     }
+    return false;
   }
 
   // Std dev computation — MT1
