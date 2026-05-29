@@ -26,7 +26,6 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
@@ -144,12 +143,18 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putData(CommandScheduler.getInstance());
 
+    // PATHPLANNER STUFF
+    /*if (DRIVEBASE_ENABLED) {
+         AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
+       }
+       PathPlannerLogic.init(subsystems);
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      // PathPlannerLogic.initCommandsAndPaths(true);
+         AutoLogic.initCommandsAndPaths(false);
+         AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
-
-      // CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
-    }
+         AutoLogic.initSmartDashBoard();
+         CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+       } */
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
     logger = new DriveStateSignalLogger();
@@ -281,6 +286,9 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    /*  if (AutoLogic.getSelectedAuto() != null) {
+       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+    } */
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
 
     if (Robot.isSimulation()) {
