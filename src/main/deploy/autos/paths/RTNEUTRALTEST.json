@@ -67,9 +67,9 @@
     },
     {
       "type": "translation",
-      "x_meters": 5.752770359537044,
-      "y_meters": 0.5522805885387108,
-      "intermediate_handoff_radius_meters": 0.5
+      "x_meters": 6.314856689859376,
+      "y_meters": 0.70106814656521,
+      "intermediate_handoff_radius_meters": 0.37
     },
     {
       "type": "waypoint",
@@ -85,7 +85,7 @@
     }
   ],
   "constraints": {
-    "end_translation_tolerance_meters": 0.05,
+    "end_translation_tolerance_meters": 0.02,
     "max_velocity_meters_per_sec": [
       {
         "value": 2.5,
