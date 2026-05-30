@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.lib.BLine.BLineCommands;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
@@ -236,7 +237,7 @@ public class BLineLogic {
   }
 
   public static Command buildRTNeutralAuto() {
-    return Commands.sequence(
+    return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildAndSetHeading(new Path("RTNEUTRALTEST")),
         launcherCommand(4));
@@ -244,7 +245,7 @@ public class BLineLogic {
 
   public static Command buildRTNeutralTestingAuto() {
 
-    return Commands.sequence(
+    return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildAndSetHeading(new Path("RTNEUTRAL")),
         //  launcherCommand(3.5),
