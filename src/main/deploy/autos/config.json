@@ -8,7 +8,7 @@
       "enabled": true,
       "distance_meters": 0.207,
       "side": "back",
-      "default_state": "shown",
+      "default_state": "hidden",
       "show_on_event_keys": [
         "intake"
       ],
