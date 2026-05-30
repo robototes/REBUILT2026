@@ -78,14 +78,14 @@ public class BLineLogic {
 
     if (pathsInitialized) return;
 
-    defaultPath = new BLinePath("test1", "test1");
+    defaultPath = new BLinePath("test1", "test1", "LT");
 
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNeutral", "RTNeutral"),
-            new BLinePath("Sample 2", "sample2"),
-            new BLinePath("Sample 5", "Sample 5"));
+            new BLinePath("RTNeutral", "RTNeutral", "RT"),
+            new BLinePath("RTRBNEUTRAL", "RTRBNEUTRAL", "RT"),
+            new BLinePath("Sample 5", "Sample 5", "Center"));
 
     autos.clear();
     autos.addAll(rebuiltPaths);
@@ -95,11 +95,31 @@ public class BLineLogic {
     namesToAuto.clear();
     for (List<BLinePath> list : commandsMap.values()) {
       for (BLinePath auto : list) {
+        handleStartingPoses(auto);
         namesToAuto.put(auto.getDisplayName(), auto);
       }
     }
 
     pathsInitialized = true;
+  }
+
+  public static void handleStartingPoses(BLinePath path) {
+    switch (path.getStartingPosName()) {
+      case "RT":
+        path.setStartPose2d(StartPosition.RIGHT_TRENCH);
+        break;
+      case "LT":
+        path.setStartPose2d(StartPosition.LEFT_TRENCH);
+        break;
+
+      case "Center":
+        path.setStartPose2d(StartPosition.CENTER);
+        break;
+
+      default:
+        path.setStartPose2d(StartPosition.MISC);
+        break;
+    }
   }
 
   public static void configure(Subsystems s) {
@@ -218,7 +238,8 @@ public class BLineLogic {
   public static Command buildRTNeutralAuto() {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildAndSetHeading(new Path("RTNEUTRALTEST")), launcherCommand(4));
+        buildAndSetHeading(new Path("RTNEUTRALTEST")),
+        launcherCommand(4));
   }
 
   public static Command buildRTNeutralTestingAuto() {
@@ -226,9 +247,9 @@ public class BLineLogic {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildAndSetHeading(new Path("RTNEUTRAL")),
-      //  launcherCommand(3.5),
+        //  launcherCommand(3.5),
         buildAndSetHeading(new Path("RTRBNEUTRAL")),
-            launcherCommand());
+        launcherCommand());
   }
 
   private static Command buildAndSetHeading(Path path) {
@@ -236,6 +257,19 @@ public class BLineLogic {
     return Commands.runOnce(
             () -> s.drivebaseSubsystem.resetRotation(path.getInitialModuleDirection()))
         .andThen(pathBuilder.build(path));
+  }
+
+  public static Command handleAutos() {
+    switch (getSelectedAutoName()) {
+      case "RTNeutral":
+        return buildRTNeutralAuto();
+
+      case "RTRBNEUTRAL":
+        return buildRTNeutralTestingAuto();
+
+      default:
+        return pathBuilder.build(defaultPath.getPath());
+    }
   }
 
   private static void updateInitialHeading() {

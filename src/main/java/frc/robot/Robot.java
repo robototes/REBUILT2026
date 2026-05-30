@@ -290,7 +290,7 @@ public class Robot extends TimedRobot {
       robotSim.resetFuelSim();
     }
 
-    CommandScheduler.getInstance().schedule(BLineLogic.buildRTNeutralTestingAuto());
+    CommandScheduler.getInstance().schedule(BLineLogic.handleAutos());
     double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
     if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
