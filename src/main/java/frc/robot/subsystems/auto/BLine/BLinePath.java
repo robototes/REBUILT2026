@@ -11,10 +11,10 @@ public class BLinePath {
   private Pose2d startPose;
   private final boolean vision;
   private final Path path;
-  private  String autoName;
+  private String autoName;
 
-  public BLinePath(String displayName,String autoName, String startingPosName) {
-    this(displayName, autoName,startingPosName, false);
+  public BLinePath(String displayName, String autoName, String startingPosName) {
+    this(displayName, autoName, startingPosName, false);
   }
 
   public BLinePath(String displayName, String autoName, String startingPosName, boolean vision) {
