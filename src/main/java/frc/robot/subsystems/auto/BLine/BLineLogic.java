@@ -226,7 +226,7 @@ public class BLineLogic {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildAndSetHeading(new Path("RTNEUTRAL")),
-        launcherCommand(3.5),
+      //  launcherCommand(3.5),
         buildAndSetHeading(new Path("RTRBNEUTRAL")),
             launcherCommand());
   }
