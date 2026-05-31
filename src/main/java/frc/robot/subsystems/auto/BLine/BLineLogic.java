@@ -84,13 +84,13 @@ public class BLineLogic {
 
     if (pathsInitialized) return;
 
-    defaultPath = new BLinePath("test1", "test1", "LT");
+    defaultPath = new BLinePath("test1", "test1", "LT", 5.72);
 
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNeutral", "RTNeutral", "RT"),
-            new BLinePath("RTRBNEUTRAL", "RTNeutral", "RT"));
+            new BLinePath("RTNeutral", "RTNeutral", "RT", 5.22),
+            new BLinePath("RTRBNEUTRAL", "RTNeutral", "RT", 8.62));
 
     autos.clear();
     autos.addAll(rebuiltPaths);

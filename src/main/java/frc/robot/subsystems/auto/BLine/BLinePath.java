@@ -11,18 +11,25 @@ public class BLinePath {
   private Pose2d startPose;
   private final boolean vision;
   private final Path path;
+  private double estimatedTime;
   private String autoName;
 
-  public BLinePath(String displayName, String autoName, String startingPosName) {
-    this(displayName, autoName, startingPosName, false);
+  public BLinePath(
+      String displayName, String autoName, String startingPosName, double estimatedTime) {
+    this(displayName, autoName, startingPosName, false, estimatedTime);
   }
 
-  public BLinePath(String displayName, String autoName, String startingPosName, boolean vision) {
+  public BLinePath(
+      String displayName,
+      String autoName,
+      String startingPosName,
+      boolean vision,
+      double estimate) {
     this.displayName = displayName;
     this.startingPosName = startingPosName;
     this.vision = vision;
     this.autoName = autoName;
-
+    this.estimatedTime = estimate;
     this.path = new Path(autoName);
     this.startPose = path.getStartPose();
 
@@ -33,6 +40,10 @@ public class BLinePath {
 
   public String getDisplayName() {
     return displayName;
+  }
+
+  public double autoTotalTime() {
+    return estimatedTime;
   }
 
   public String getAutoName() {

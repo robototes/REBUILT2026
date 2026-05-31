@@ -33,6 +33,7 @@ public class BLineAutonomousField {
 
     speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
 
+    @SuppressWarnings("static-access")
     BLineAutonomousField autonomousField =
         new BLineAutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
@@ -42,8 +43,10 @@ public class BLineAutonomousField {
     addPeriodic.accept(
         () -> {
           autonomousField.update(BLineLogic.getSelectedAutoName());
+          BLineLogic.getSelectedAutoPath();
           SmartDashboard.putNumber(
-              "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
+              "Est. Time (s)",
+              Math.round(BLineLogic.getSelectedAutoPath().autoTotalTime() * 100.0) / 100.0);
         },
         UPDATE_RATE);
   }
@@ -172,12 +175,5 @@ public class BLineAutonomousField {
     if (autoData != null) {
       fieldPoseStart.setRobotPose(autoData.getStartingPose());
     }
-  }
-
-  public double autoTotalTime() {
-    if (autoData == null) {
-      return 0;
-    }
-    return autoData.getRunTime();
   }
 }

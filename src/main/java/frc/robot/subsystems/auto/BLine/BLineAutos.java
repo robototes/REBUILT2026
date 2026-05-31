@@ -12,7 +12,6 @@ public class BLineAutos {
 
   private final List<Path> paths;
   private final Pose2d startingPose;
-  private final double estimatedDuration;
 
   public BLineAutos(String... pathNames) {
     List<Path> loaded = new ArrayList<>();
@@ -37,7 +36,6 @@ public class BLineAutos {
     for (Path path : this.paths) {
       totalMeters += arcLength(path.getTranslations());
     }
-    this.estimatedDuration = totalMeters / ASSUMED_SPEED_MPS;
   }
 
   private static double arcLength(List<Translation2d> pts) {
@@ -54,9 +52,5 @@ public class BLineAutos {
 
   public Pose2d getStartingPose() {
     return startingPose;
-  }
-
-  public double getRunTime() {
-    return estimatedDuration;
   }
 }
