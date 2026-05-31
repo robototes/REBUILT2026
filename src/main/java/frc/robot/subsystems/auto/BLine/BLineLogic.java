@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -16,6 +17,7 @@ import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.lib.BLine.BLineCommands;
+import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
@@ -29,6 +31,8 @@ import java.util.Map;
 public class BLineLogic {
 
   private static Subsystems s;
+  public static Field2d field = new Field2d();
+  public static Field2d fieldPoseStart = new Field2d();
 
   public enum StartPosition {
     LEFT_TRENCH("Left Trench", new Pose2d(4.013, 7.597, Rotation2d.fromDegrees(90))),
@@ -165,13 +169,34 @@ public class BLineLogic {
 
     autoDelayEntry.setDouble(0.0);
 
+    // Replace your two onChange blocks and the lone drawPath call with this:
+
     startPositionChooser.onChange(
         v -> {
           filterAutos(gameObjects.getSelected());
           updateInitialHeading();
+          refreshFieldDisplay();
         });
 
-    autoChooser.onChange(v -> updateInitialHeading());
+    autoChooser.onChange(
+        v -> {
+          updateInitialHeading();
+          refreshFieldDisplay();
+        });
+
+    // Initial draw
+    refreshFieldDisplay();
+  }
+
+  private static void refreshFieldDisplay() {
+    BLinePath selected = getSelectedAutoPath();
+    if (selected == null || selected.getPath() == null) return;
+
+    fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
+
+    SmartDashboard.putData("Selected auto", field);
+    SmartDashboard.putData("Start pose", fieldPoseStart);
+    BLineField.drawPath(field, selected.getPath());
   }
 
   // ========================= AUTOS FILTERING =========================
