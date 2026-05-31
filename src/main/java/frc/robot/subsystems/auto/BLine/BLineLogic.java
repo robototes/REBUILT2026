@@ -67,6 +67,7 @@ public class BLineLogic {
   private static boolean pathsInitialized = false;
 
   public static FollowPath.Builder pathBuilder;
+  private static FollowPath.Builder continuingPathBuilder;
   private static Command bLineLaunching;
 
   // ========================= INIT =========================
@@ -124,20 +125,23 @@ public class BLineLogic {
 
   public static void configure(Subsystems s) {
 
-    pathBuilder =
-        new FollowPath.Builder(
-                s.drivebaseSubsystem,
-                () -> s.drivebaseSubsystem.getState().Pose,
-                () -> s.drivebaseSubsystem.getState().Speeds,
-                (speeds) ->
-                    s.drivebaseSubsystem.setControl(
-                        new SwerveRequest.ApplyRobotSpeeds()
-                            .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
-                new PIDController(3.0, 0.0, 0.0),
-                new PIDController(5.0, 0.0, 0.0),
-                new PIDController(2.0, 0.0, 0.0))
-            .withDefaultShouldFlip()
-            .withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
+    pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
+    continuingPathBuilder = createPathBuilder(s);
+  }
+
+  private static FollowPath.Builder createPathBuilder(Subsystems s) {
+    return new FollowPath.Builder(
+            s.drivebaseSubsystem,
+            () -> s.drivebaseSubsystem.getState().Pose,
+            () -> s.drivebaseSubsystem.getState().Speeds,
+            (speeds) ->
+                s.drivebaseSubsystem.setControl(
+                    new SwerveRequest.ApplyRobotSpeeds()
+                        .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
+            new PIDController(3.0, 0.0, 0.0),
+            new PIDController(5.0, 0.0, 0.0),
+            new PIDController(2.0, 0.0, 0.0))
+        .withDefaultShouldFlip();
   }
 
   // ========================= LOGGING =========================
@@ -232,13 +236,14 @@ public class BLineLogic {
 
     BLinePath path = getSelectedAutoPath();
     s.drivebaseSubsystem.resetRotation(path.getPath().getInitialModuleDirection());
-    return Commands.waitSeconds(delay).andThen(pathBuilder.build(path.getPath()));
+
+    return Commands.waitSeconds(delay).andThen(buildPath(path.getPath(), true));
   }
 
   public static Command buildRTNeutralAuto() {
-    return BLineCommands.sequence(
+    return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildAndSetHeading(new Path("RTNEUTRALTEST")),
+        buildPath(new Path("RTNeutral"), true),
         launcherCommand(4));
   }
 
@@ -246,17 +251,14 @@ public class BLineLogic {
 
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildAndSetHeading(new Path("RTNEUTRAL")),
-        //  launcherCommand(3.5),
-        buildAndSetHeading(new Path("RTRBNEUTRAL")),
+        buildPath(new Path("RTNeutral"), true),
+        launcherCommand(4.5),
+        buildPath(new Path("RTRBNEUTRAL"), false),
         launcherCommand());
   }
 
-  private static Command buildAndSetHeading(Path path) {
-
-    return Commands.runOnce(
-            () -> s.drivebaseSubsystem.resetRotation(path.getInitialModuleDirection()))
-        .andThen(pathBuilder.build(path));
+  private static Command buildPath(Path path, boolean resetPose) {
+    return (resetPose ? pathBuilder : continuingPathBuilder).build(path);
   }
 
   public static Command handleAutos() {
