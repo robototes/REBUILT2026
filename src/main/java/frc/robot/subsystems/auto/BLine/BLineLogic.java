@@ -4,6 +4,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -89,8 +90,12 @@ public class BLineLogic {
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNeutral", "RTNeutral", "RT"),
-            new BLinePath("RTRBNEUTRAL", "RTRBNEUTRAL", "RT"));
+            new BLinePath("RTNeutral", "RTNeutral","RT"),
+            new BLinePath(
+  "RTRBNEUTRAL",
+  "RTNeutral",
+"RT")
+);
 
     autos.clear();
     autos.addAll(rebuiltPaths);
@@ -169,7 +174,7 @@ public class BLineLogic {
 
     autoDelayEntry.setDouble(0.0);
 
-    // Replace your two onChange blocks and the lone drawPath call with this:
+
 
     startPositionChooser.onChange(
         v -> {
@@ -184,8 +189,10 @@ public class BLineLogic {
           refreshFieldDisplay();
         });
 
-    // Initial draw
+
     refreshFieldDisplay();
+
+
   }
 
   private static void refreshFieldDisplay() {
@@ -196,8 +203,15 @@ public class BLineLogic {
 
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
-    BLineField.drawPath(field, selected.getPath());
-  }
+    BLineField.drawPath(field, "Selected auto", getSelectedAutoPath().getPath());
+
+}
+
+
+
+
+
+
 
   // ========================= AUTOS FILTERING =========================
 
