@@ -79,6 +79,9 @@ dependencies {
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
 
+    // CTRE Phoenix 6 Java bindings (provides com.ctre.phoenix6.swerve.* classes)
+    implementation 'com.ctre.phoenix6:wpiapi-java:26.3.0'
+
     roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
     roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)
 
