@@ -85,8 +85,7 @@ public class BLineLogic {
         List.of(
             defaultPath,
             new BLinePath("RTNeutral", "RTNeutral", "RT"),
-            new BLinePath("RTRBNEUTRAL", "RTRBNEUTRAL", "RT"),
-            new BLinePath("Sample 5", "Sample 5", "Center"));
+            new BLinePath("RTRBNEUTRAL", "RTRBNEUTRAL", "RT"));
 
     autos.clear();
     autos.addAll(rebuiltPaths);
