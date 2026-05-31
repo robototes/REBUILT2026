@@ -4,7 +4,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -39,7 +38,7 @@ public class BLineLogic {
     LEFT_TRENCH("Left Trench", new Pose2d(4.013, 7.597, Rotation2d.fromDegrees(90))),
     CENTER("Center", new Pose2d(3.600, 4.035, Rotation2d.fromDegrees(0))),
     RIGHT_TRENCH("Right Trench", new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90))),
-    MISC("Misc", null);
+    MISC("Misc", new Pose2d());
 
     public final String title;
     public final Pose2d startPose;
@@ -90,12 +89,8 @@ public class BLineLogic {
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNeutral", "RTNeutral","RT"),
-            new BLinePath(
-  "RTRBNEUTRAL",
-  "RTNeutral",
-"RT")
-);
+            new BLinePath("RTNeutral", "RTNeutral", "RT"),
+            new BLinePath("RTRBNEUTRAL", "RTNeutral", "RT"));
 
     autos.clear();
     autos.addAll(rebuiltPaths);
@@ -174,8 +169,6 @@ public class BLineLogic {
 
     autoDelayEntry.setDouble(0.0);
 
-
-
     startPositionChooser.onChange(
         v -> {
           filterAutos(gameObjects.getSelected());
@@ -189,10 +182,7 @@ public class BLineLogic {
           refreshFieldDisplay();
         });
 
-
     refreshFieldDisplay();
-
-
   }
 
   private static void refreshFieldDisplay() {
@@ -204,14 +194,7 @@ public class BLineLogic {
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
     BLineField.drawPath(field, "Selected auto", getSelectedAutoPath().getPath());
-
-}
-
-
-
-
-
-
+  }
 
   // ========================= AUTOS FILTERING =========================
 

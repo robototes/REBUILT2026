@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.BLine.BLineAutonomousField;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
@@ -127,6 +128,11 @@ public class Robot extends TimedRobot {
       BLineLogic.configure(subsystems);
 
       BLineLogic.initSmartDashboard();
+      BLineAutonomousField.initSmartDashBoard(
+          () -> "Autos", // tab name
+          0, // column (unused, just pass 0)
+          0, // row (unused, just pass 0)
+          this::addPeriodic);
     }
 
     CommandScheduler.getInstance()
