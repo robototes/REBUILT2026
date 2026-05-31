@@ -24,15 +24,15 @@ public class GetTargetFromPose {
   private static Pose2d blueHub =
       aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
 
-  private static Translation2d pointLeftFieldTop = new Translation2d(2, 6);
-  private static Translation2d pointLeftFieldBottom = new Translation2d(2, 2);
-  private static Translation2d pointRightFieldTop = new Translation2d(14, 6);
-  private static Translation2d pointRightFieldBottom = new Translation2d(14, 2);
+  private static final Translation2d pointLeftFieldTop = new Translation2d(2, 6);
+  private static final Translation2d pointLeftFieldBottom = new Translation2d(2, 2);
+  private static final Translation2d pointRightFieldTop = new Translation2d(14, 6);
+  private static final Translation2d pointRightFieldBottom = new Translation2d(14, 2);
 
-  private static double fieldLength = Units.inchesToMeters(651.2);
-  private static double fieldWidth = Units.inchesToMeters(317.7);
-  private static double allianceLineX = Units.inchesToMeters(158.6);
-  private static double robotOffset = Units.inchesToMeters(15);
+  private static final double fieldLength = Units.inchesToMeters(651.2);
+  private static final double fieldWidth = Units.inchesToMeters(317.7);
+  private static final double allianceLineX = Units.inchesToMeters(158.6);
+  private static final double robotOffset = Units.inchesToMeters(15);
 
   // BALLING INSTRUCTIONS
   // ONLY USE THIS FOR A BASKETBALL HOOP. If you want to score into a cardboard box dont use this
@@ -41,8 +41,8 @@ public class GetTargetFromPose {
   // right corner of the feild with the climb side pointing off the court and the intake pointing
   // towards the length of the court
   public static NtTunableBoolean BALLING = new NtTunableBoolean("/Balling", false);
-  private static Translation2d BALLING_POSE = new Translation2d(1, 1); // TODO
-  private static Pose2d RIGHT_BASKETBALL_COURT_CORNER = new Pose2d(1, 1, new Rotation2d()); // TODO
+  private static Translation2d BALLING_POSE = new Translation2d(-1.22, -7.62); // TODO
+  private static Pose2d RIGHT_BASKETBALL_COURT_CORNER = new Pose2d(0, 0, new Rotation2d()); // TODO
 
   public static Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
     if (BALLING.get()) {

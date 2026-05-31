@@ -134,7 +134,7 @@ public class Controls {
     }
     connected(indexingTestController)
         .and(indexingTestController.leftTrigger())
-        .whileTrue(s.indexerSubsystem.runIndexer());
+        .whileTrue(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed()));
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {

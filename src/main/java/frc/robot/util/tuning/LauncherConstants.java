@@ -85,11 +85,14 @@ public class LauncherConstants {
   private static final InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
 
+  private static final InterpolatingDoubleTreeMap flywheelMapBalling =
+      new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap hoodMapBalling = new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap timeMapBalling = new InterpolatingDoubleTreeMap();
+
   static {
     LauncherDistanceDataPoint[] distanceData =
-        GetTargetFromPose.BALLING.get()
-            ? ballingDistanceData
-            : RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
@@ -97,6 +100,24 @@ public class LauncherConstants {
       maxTime = Math.max(maxTime, point.time);
       minTime = Math.min(minTime, point.time);
     }
+
+    for (var point : ballingDistanceData) {
+      flywheelMap.put(point.distance, point.flywheelPower);
+      hoodMap.put(point.distance, point.hoodAngle);
+      timeMap.put(point.distance, point.time);
+    }
+  }
+
+  private static InterpolatingDoubleTreeMap activeFlywheelMap() {
+    return GetTargetFromPose.BALLING.get() ? flywheelMapBalling : flywheelMap;
+  }
+
+  private static InterpolatingDoubleTreeMap activeHoodMap() {
+    return GetTargetFromPose.BALLING.get() ? hoodMapBalling : hoodMap;
+  }
+
+  private static InterpolatingDoubleTreeMap activeTimeMap() {
+    return GetTargetFromPose.BALLING.get() ? timeMapBalling : timeMap;
   }
 
   // public static void update(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
@@ -115,7 +136,7 @@ public class LauncherConstants {
   // }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
-    return flywheelMap.get(distance);
+    return activeFlywheelMap().get(distance);
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
@@ -146,7 +167,7 @@ public class LauncherConstants {
   }
 
   public static double getHoodAngleFromDistance(double distance) {
-    return hoodMap.get(distance /*+ distanceOffset*/);
+    return activeHoodMap().get(distance /*+ distanceOffset*/);
   }
 
   public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot) {
@@ -155,7 +176,7 @@ public class LauncherConstants {
   }
 
   public static double getTimeFromDistance(double distance) {
-    return timeMap.get(distance /*+ distanceOffset*/);
+    return activeTimeMap().get(distance /*+ distanceOffset*/);
   }
 
   public static double minTimeOfFlight() {
