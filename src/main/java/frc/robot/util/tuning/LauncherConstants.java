@@ -26,6 +26,8 @@ public class LauncherConstants {
       table.getStructTopic("Turret Pose", Pose2d.struct).publish();
   private static final DoublePublisher turretToHubDistance =
       table.getDoubleTopic("Turret to hub distance").publish();
+  private static final DoublePublisher turretToTargetDistance =
+      table.getDoubleTopic("Turret to target distance").publish();
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
@@ -148,6 +150,9 @@ public class LauncherConstants {
     turretPose.set(result);
     distToHub = AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm();
     turretToHubDistance.set(distToHub);
+    turretToTargetDistance.set(
+        GetTargetFromPose.getTargetLocation(result).minus(result.getTranslation()).getNorm());
+
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
