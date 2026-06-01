@@ -26,7 +26,7 @@
     },
     {
       "type": "event_trigger",
-      "t_ratio": 0.45,
+      "t_ratio": 0.0,
       "lib_key": "intake"
     },
     {
@@ -67,8 +67,8 @@
     },
     {
       "type": "translation",
-      "x_meters": 6.2229,
-      "y_meters": 0.56521,
+      "x_meters": 6.41431,
+      "y_meters": 0.64523,
       "intermediate_handoff_radius_meters": 0.5
     },
     {
