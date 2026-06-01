@@ -17,23 +17,17 @@ public class BLinePath {
   private Pose2d startPose;
 
   // Single path constructor
-  public BLinePath(
-      String displayName, String autoName, String startingPosName) {
+  public BLinePath(String displayName, String autoName, String startingPosName) {
     this(displayName, startingPosName, false, autoName);
   }
 
-
   // Multi-path constructor
-  public BLinePath(
-      String displayName, String startingPosName,  String... pathNames) {
+  public BLinePath(String displayName, String startingPosName, String... pathNames) {
     this(displayName, startingPosName, false, pathNames);
   }
 
   public BLinePath(
-      String displayName,
-      String startingPosName,
-      boolean vision,
-      String... pathNames) {
+      String displayName, String startingPosName, boolean vision, String... pathNames) {
     this.displayName = displayName;
     this.startingPosName = startingPosName;
 
@@ -55,8 +49,6 @@ public class BLinePath {
   public String getStartingPosName() {
     return startingPosName;
   }
-
-
 
   public Pose2d getStartPose2d() {
     return startPose;

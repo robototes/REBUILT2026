@@ -11,13 +11,11 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.lib.BLine.BLineCommands;
-import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
@@ -72,7 +70,6 @@ public class BLineLogic {
 
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
-  private static Command bLineLaunching;
 
   // ========================= INIT =========================
 
@@ -88,8 +85,8 @@ public class BLineLogic {
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNeutral", "RTNeutral","RT"),
-            new BLinePath("RTRBNEUTRAL", "RT",  "RTNeutral","RTRBNEUTRAL"));
+            new BLinePath("RTNeutral", "RTNeutral", "RT"),
+            new BLinePath("RTRBNEUTRAL", "RT", "RTNeutral", "RTRBNEUTRAL"));
     autos.clear();
     autos.addAll(rebuiltPaths);
 
@@ -193,7 +190,6 @@ public class BLineLogic {
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
   }
-
 
   // ========================= AUTOS FILTERING =========================
 
@@ -355,22 +351,11 @@ public class BLineLogic {
     return Commands.none().withName("Auto Climb Command");
   }
 
-  public static void cancelCommand() {
-    CommandScheduler.getInstance().cancel(bLineLaunching);
-  }
-
   private static void registerCommands() {
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
 
-      if (Robot.isSimulation()) {
-        bLineLaunching = RobotSim.launch(s, 1);
-        FollowPath.registerEventTrigger(
-            "launch", bLineLaunching.andThen(Commands.print("LAUNCH FINISHED")));
-      } else {
-        bLineLaunching = launcherCommand();
-        FollowPath.registerEventTrigger("launch", bLineLaunching);
-      }
+      // TODO ADD LAUNCHER STUFF FOR SOTM?
     }
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
