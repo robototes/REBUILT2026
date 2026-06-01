@@ -7,6 +7,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.BLine.Path;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,9 @@ public class BLineAutonomousField {
     addPeriodic.accept(
         () -> {
           autonomousField.update(BLineLogic.getSelectedAutoName());
+          SmartDashboard.putNumber(
+              "Est. Time (s)",
+              Math.round(BLineLogic.getSelectedAutoPath().autoTotalTime() * 100.0) / 100.0);
         },
         UPDATE_RATE);
   }
