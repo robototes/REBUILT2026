@@ -318,7 +318,7 @@ public class BLineLogic {
 
     Pose2d start = selected.getPath().getStartPose();
 
-    SmartDashboard.putNumber("Initial Heading", start.getRotation().getDegrees());
+    SmartDashboard.putNumber("Initial Heading", Math.round(start.getRotation().getDegrees()));
   }
 
   public static Command intakeCommand() {
