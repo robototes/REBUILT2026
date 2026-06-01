@@ -192,20 +192,8 @@ public class BLineLogic {
     fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
-
-    List<Path> allPaths = selected.getAllPaths();
-
-    for (int i = 0; i < allPaths.size(); i++) {
-      BLineField.drawPath(field, "AutoPart" + i, allPaths.get(i));
-    }
-
-    // overwrite stale slots from a previously longer auto
-    for (int i = allPaths.size(); i < lastPathCount; i++) {
-      BLineField.drawPath(field, "AutoPart" + i, allPaths.get(0));
-    }
-
-    lastPathCount = allPaths.size();
   }
+
 
   // ========================= AUTOS FILTERING =========================
 
