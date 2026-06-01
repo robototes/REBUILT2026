@@ -11,32 +11,32 @@ public class BLinePath {
   private final String displayName;
   private final String startingPosName;
   private final boolean vision;
-  private final double estimatedTime;
+
   private final Path path;
   private final List<Path> allPaths;
   private Pose2d startPose;
 
   // Single path constructor
   public BLinePath(
-      String displayName, String autoName, String startingPosName, double estimatedTime) {
-    this(displayName, startingPosName, estimatedTime, false, autoName);
+      String displayName, String autoName, String startingPosName) {
+    this(displayName, startingPosName, false, autoName);
   }
+
 
   // Multi-path constructor
   public BLinePath(
-      String displayName, String startingPosName, double estimatedTime, String... pathNames) {
-    this(displayName, startingPosName, estimatedTime, false, pathNames);
+      String displayName, String startingPosName,  String... pathNames) {
+    this(displayName, startingPosName, false, pathNames);
   }
 
   public BLinePath(
       String displayName,
       String startingPosName,
-      double estimatedTime,
       boolean vision,
       String... pathNames) {
     this.displayName = displayName;
     this.startingPosName = startingPosName;
-    this.estimatedTime = estimatedTime;
+
     this.vision = vision;
 
     List<Path> loaded = new ArrayList<>();
@@ -56,9 +56,7 @@ public class BLinePath {
     return startingPosName;
   }
 
-  public double autoTotalTime() {
-    return estimatedTime;
-  }
+
 
   public Pose2d getStartPose2d() {
     return startPose;

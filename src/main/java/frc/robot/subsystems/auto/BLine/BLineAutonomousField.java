@@ -40,9 +40,7 @@ public class BLineAutonomousField {
     addPeriodic.accept(
         () -> {
           autonomousField.update(BLineLogic.getSelectedAutoName());
-          SmartDashboard.putNumber(
-              "Est. Time (s)",
-              Math.round(BLineLogic.getSelectedAutoPath().autoTotalTime() * 100.0) / 100.0);
+        
         },
         UPDATE_RATE);
   }

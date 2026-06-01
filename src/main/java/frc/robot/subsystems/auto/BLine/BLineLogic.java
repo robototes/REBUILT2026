@@ -83,13 +83,13 @@ public class BLineLogic {
     registerCommands();
 
     if (pathsInitialized) return;
-    defaultPath = new BLinePath("test1", "LT", 5.72, "test1");
+    defaultPath = new BLinePath("test1", "test1", "LT");
 
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNeutral", "RT", 5.22, "RTNeutral"),
-            new BLinePath("RTRBNEUTRAL", "RT", 8.62, "RTNeutral", "RTRBNEUTRAL"));
+            new BLinePath("RTNeutral", "RTNeutral","RT"),
+            new BLinePath("RTRBNEUTRAL", "RT",  "RTNeutral","RTRBNEUTRAL"));
     autos.clear();
     autos.addAll(rebuiltPaths);
 
@@ -312,13 +312,13 @@ public class BLineLogic {
     BLinePath selected = getSelectedAutoPath();
 
     if (selected == null || selected.getPath() == null) {
-      SmartDashboard.putNumber("Initial Heading", 0.0);
+      SmartDashboard.putNumber("Initial Heading(Deg)", 0.0);
       return;
     }
 
     Pose2d start = selected.getPath().getStartPose();
 
-    SmartDashboard.putNumber("Initial Heading", Math.round(start.getRotation().getDegrees()));
+    SmartDashboard.putNumber("Initial Heading(Deg)", Math.round(start.getRotation().getDegrees()));
   }
 
   public static Command intakeCommand() {
