@@ -83,15 +83,13 @@ public class BLineLogic {
     registerCommands();
 
     if (pathsInitialized) return;
-
-    defaultPath = new BLinePath("test1", "test1", "LT", 5.72);
+    defaultPath = new BLinePath("test1", "LT", 5.72, "test1");
 
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("RTNeutral", "RTNeutral", "RT", 5.22),
-            new BLinePath("RTRBNEUTRAL", "RTNeutral", "RT", 8.62));
-
+            new BLinePath("RTNeutral", "RT", 5.22, "RTNeutral"),
+            new BLinePath("RTRBNEUTRAL", "RT", 8.62, "RTNeutral", "RTRBNEUTRAL"));
     autos.clear();
     autos.addAll(rebuiltPaths);
 
@@ -185,15 +183,28 @@ public class BLineLogic {
     refreshFieldDisplay();
   }
 
-  private static void refreshFieldDisplay() {
+  private static int lastPathCount = 0;
+
+  public static void refreshFieldDisplay() {
     BLinePath selected = getSelectedAutoPath();
-    if (selected == null || selected.getPath() == null) return;
+    if (selected == null) return;
 
     fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
-
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
-    BLineField.drawPath(field, "Selected auto", getSelectedAutoPath().getPath());
+
+    List<Path> allPaths = selected.getAllPaths();
+
+    for (int i = 0; i < allPaths.size(); i++) {
+      BLineField.drawPath(field, "AutoPart" + i, allPaths.get(i));
+    }
+
+    // overwrite stale slots from a previously longer auto
+    for (int i = allPaths.size(); i < lastPathCount; i++) {
+      BLineField.drawPath(field, "AutoPart" + i, allPaths.get(0));
+    }
+
+    lastPathCount = allPaths.size();
   }
 
   // ========================= AUTOS FILTERING =========================

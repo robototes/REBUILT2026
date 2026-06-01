@@ -7,8 +7,6 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.BLine.Path;
 import java.util.List;
 import java.util.Optional;
@@ -17,10 +15,12 @@ import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 
 public class BLineAutonomousField {
-  private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
-  private static final double UPDATE_RATE = 0.05;
 
+  private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
+  private static final double UPDATE_RATE = 0.02;
   private static final double ASSUMED_SPEED_MPS = 3.0;
+
+  /* ---------------- NetworkTables init ---------------- */
 
   public static void initSmartDashBoard(
       Supplier<String> tabName,
@@ -33,33 +33,28 @@ public class BLineAutonomousField {
 
     speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
 
-    @SuppressWarnings("static-access")
     BLineAutonomousField autonomousField =
         new BLineAutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
-
-    SmartDashboard.putData("Selected auto", autonomousField.getField());
-    SmartDashboard.putData("Start pose", autonomousField.getStartPose());
 
     addPeriodic.accept(
         () -> {
           autonomousField.update(BLineLogic.getSelectedAutoName());
-          BLineLogic.getSelectedAutoPath();
-          SmartDashboard.putNumber(
-              "Est. Time (s)",
-              Math.round(BLineLogic.getSelectedAutoPath().autoTotalTime() * 100.0) / 100.0);
         },
         UPDATE_RATE);
   }
 
-  private final Field2d field = new Field2d();
-  private final Field2d fieldPoseStart = new Field2d();
+  /* ---------------- Path data ---------------- */
 
-  private BLineAutos autoData;
-  private List<Path> paths;
+  private List<Path> paths = List.of();
   private int pathIndex = 0;
+  private Pose2d startingPose = Pose2d.kZero;
+
+  /* ---------------- Polylines  ---------------- */
 
   private List<Translation2d> currentTranslations = List.of();
   private double currentPathLength = 1e-9;
+
+  /* ---------------- Time / distance ---------------- */
 
   private final DoubleSupplier speedMultiplier;
   private double lastFPGATime;
@@ -67,6 +62,7 @@ public class BLineAutonomousField {
 
   private Optional<String> lastName = Optional.empty();
 
+  /* ---------------- Constructors ---------------- */
   public BLineAutonomousField() {
     this(() -> 1.0);
   }
@@ -79,13 +75,7 @@ public class BLineAutonomousField {
     this.speedMultiplier = speedMultiplier;
   }
 
-  public Field2d getField() {
-    return field;
-  }
-
-  public Field2d getStartPose() {
-    return fieldPoseStart;
-  }
+  /* ---------------- Geometry helpers ---------------- */
 
   private static double arcLength(List<Translation2d> pts) {
     double total = 0;
@@ -120,7 +110,7 @@ public class BLineAutonomousField {
   }
 
   private void refreshCurrentPath() {
-    if (paths == null || paths.isEmpty()) {
+    if (paths.isEmpty()) {
       currentTranslations = List.of();
       currentPathLength = 1e-9;
       return;
@@ -128,6 +118,8 @@ public class BLineAutonomousField {
     currentTranslations = paths.get(pathIndex).getTranslations();
     currentPathLength = Math.max(arcLength(currentTranslations), 1e-9);
   }
+
+  /* ---------------- Pose update ---------------- */
 
   public Pose2d getUpdatedPose(String autoName) {
     if (autoName == null) return Pose2d.kZero;
@@ -137,8 +129,11 @@ public class BLineAutonomousField {
 
     if (lastName.isEmpty() || !lastName.get().equals(autoName)) {
       lastName = Optional.of(autoName);
-      autoData = new BLineAutos(autoName);
-      paths = autoData.getPaths();
+
+      BLinePath selected = BLineLogic.getSelectedAutoPath();
+      paths = (selected != null) ? selected.getAllPaths() : List.of();
+      startingPose = BLineLogic.getSelectedAutoStartingPose();
+
       pathIndex = 0;
       distanceAlongCurrentPath = 0;
       lastFPGATime = fpgaTime;
@@ -146,7 +141,7 @@ public class BLineAutonomousField {
     }
 
     if (paths.isEmpty()) {
-      return autoData.getStartingPose();
+      return startingPose;
     }
 
     distanceAlongCurrentPath += (fpgaTime - lastFPGATime) * speed * ASSUMED_SPEED_MPS;
@@ -164,6 +159,8 @@ public class BLineAutonomousField {
     return samplePolyline(currentTranslations, distanceAlongCurrentPath);
   }
 
+  /* ---------------- Periodic update ---------------- */
+
   public void update(String autoName) {
     if (DriverStation.isEnabled()) {
       lastName = Optional.empty();
@@ -171,9 +168,7 @@ public class BLineAutonomousField {
     }
     if (autoName == null) return;
 
-    field.setRobotPose(getUpdatedPose(autoName));
-    if (autoData != null) {
-      fieldPoseStart.setRobotPose(autoData.getStartingPose());
-    }
+    BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
+    BLineLogic.fieldPoseStart.setRobotPose(startingPose);
   }
 }

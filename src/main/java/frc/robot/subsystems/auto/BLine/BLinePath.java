@@ -3,50 +3,52 @@ package frc.robot.subsystems.auto.BLine;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.BLine.BLineLogic.StartPosition;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BLinePath {
 
   private final String displayName;
-  private String startingPosName;
-  private Pose2d startPose;
+  private final String startingPosName;
   private final boolean vision;
+  private final double estimatedTime;
   private final Path path;
-  private double estimatedTime;
-  private String autoName;
+  private final List<Path> allPaths;
+  private Pose2d startPose;
 
+  // Single path constructor
   public BLinePath(
       String displayName, String autoName, String startingPosName, double estimatedTime) {
-    this(displayName, autoName, startingPosName, false, estimatedTime);
+    this(displayName, startingPosName, estimatedTime, false, autoName);
+  }
+
+  // Multi-path constructor
+  public BLinePath(
+      String displayName, String startingPosName, double estimatedTime, String... pathNames) {
+    this(displayName, startingPosName, estimatedTime, false, pathNames);
   }
 
   public BLinePath(
       String displayName,
-      String autoName,
       String startingPosName,
+      double estimatedTime,
       boolean vision,
-      double estimate) {
+      String... pathNames) {
     this.displayName = displayName;
     this.startingPosName = startingPosName;
+    this.estimatedTime = estimatedTime;
     this.vision = vision;
-    this.autoName = autoName;
-    this.estimatedTime = estimate;
-    this.path = new Path(autoName);
-    this.startPose = path.getStartPose();
 
-    if (startPose == null) {
-      throw new IllegalStateException("Path missing start pose: " + startingPosName);
+    List<Path> loaded = new ArrayList<>();
+    for (String name : pathNames) {
+      loaded.add(new Path(name));
     }
+    this.allPaths = List.copyOf(loaded);
+    this.path = this.allPaths.get(0);
+    this.startPose = this.path.getStartPose();
   }
 
   public String getDisplayName() {
-    return displayName;
-  }
-
-  public double autoTotalTime() {
-    return estimatedTime;
-  }
-
-  public String getAutoName() {
     return displayName;
   }
 
@@ -54,13 +56,15 @@ public class BLinePath {
     return startingPosName;
   }
 
-  public Pose2d getStartPose2d() {
+  public double autoTotalTime() {
+    return estimatedTime;
+  }
 
+  public Pose2d getStartPose2d() {
     return startPose;
   }
 
   public Pose2d setStartPose2d(StartPosition pos) {
-
     startPose = pos.startPose;
     return startPose;
   }
@@ -71,5 +75,9 @@ public class BLinePath {
 
   public Path getPath() {
     return path;
+  }
+
+  public List<Path> getAllPaths() {
+    return allPaths;
   }
 }
