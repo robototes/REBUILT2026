@@ -26,7 +26,7 @@
     },
     {
       "type": "event_trigger",
-      "t_ratio": 0.45,
+      "t_ratio": 0.4,
       "lib_key": "intake"
     },
     {

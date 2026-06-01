@@ -84,6 +84,11 @@
       "intermediate_handoff_radius_meters": 0.3
     },
     {
+      "type": "event_trigger",
+      "t_ratio": 0.8,
+      "lib_key": "launch"
+    },
+    {
       "type": "waypoint",
       "translation_target": {
         "x_meters": 3.55,

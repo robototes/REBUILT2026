@@ -13,10 +13,15 @@
       }
     },
     {
+      "type": "event_trigger",
+      "t_ratio": 0.8,
+      "lib_key": "cancel"
+    },
+    {
       "type": "translation",
-      "x_meters": 3.02494,
-      "y_meters": 1.32727,
-      "intermediate_handoff_radius_meters": 0.6
+      "x_meters": 3.19373,
+      "y_meters": 2.05349,
+      "intermediate_handoff_radius_meters": 0.28
     },
     {
       "type": "translation",
@@ -87,6 +92,11 @@
         "value": 2.5,
         "start_ordinal": 4,
         "end_ordinal": 4
+      },
+      {
+        "value": 1.0,
+        "start_ordinal": 1,
+        "end_ordinal": 1
       }
     ]
   }

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BLineLogic {
 
@@ -67,7 +68,7 @@ public class BLineLogic {
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
 
   private static boolean pathsInitialized = false;
-
+private static Command bLineLaunching;
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
 
@@ -268,9 +269,9 @@ public class BLineLogic {
 
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("RTNeutral"), true),
-        launcherCommand(4.5),
-        buildPath(new Path("RTRBNEUTRAL"), false),
+        buildPath(new Path("RTNEUTRALTEST"), true),
+
+        buildPath(new Path("RTRBNEUTRALTEST"), false),
         launcherCommand());
   }
 
@@ -352,13 +353,30 @@ public class BLineLogic {
   }
 
   private static void registerCommands() {
-
+    AtomicBoolean launchAllowed = new AtomicBoolean(true);
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
 
-      // TODO ADD LAUNCHER STUFF FOR SOTM?
+      if (Robot.isSimulation()) {
+        bLineLaunching = RobotSim.launch(s, 30);
+        FollowPath.registerEventTrigger(
+            "launch",
+            Commands.runOnce(() -> launchAllowed.set(true))
+                .andThen(
+                    RobotSim.launch(s, 30)
+                        .until(
+                            () -> {
+                              return launchAllowed.get();
+                            }))
+                .andThen(Commands.print("LAUNCH FINISHED")));
+      } else {
+        bLineLaunching = launcherCommand();
+        FollowPath.registerEventTrigger("launch", bLineLaunching);
+      }
     }
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
     FollowPath.registerEventTrigger("climb", climbCommand());
+    FollowPath.registerEventTrigger(
+        "cancel", Commands.runOnce(() -> launchAllowed.set(false)));
   }
 }
