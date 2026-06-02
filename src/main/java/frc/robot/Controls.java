@@ -182,8 +182,7 @@ public class Controls {
     // Joystick +X is right
     // Robot +angle is CCW (left)
     double input = MathUtil.applyDeadband(-driverController.getRightX(), JOYSTICK_DEADBAND);
-    double DRIVE_INPUT_SCALE = slowMode.slowFactor();
-    return input * MaxSpeed * DRIVE_INPUT_SCALE;
+    return input * MaxSpeed * slowMode.slowFactor();
   }
 
   private void configureDrivebaseBindings() {
