@@ -173,8 +173,7 @@ public class Controls {
     // Joystick +X is right
     // Robot +Y is left
     double input = MathUtil.applyDeadband(-driverController.getLeftX(), JOYSTICK_DEADBAND);
-    double DRIVE_INPUT_SCALE = slowMode.slowFactor();
-    return input * MaxSpeed * DRIVE_INPUT_SCALE;
+    return input * MaxSpeed * slowMode.slowFactor();
   }
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
