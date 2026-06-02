@@ -10,6 +10,7 @@ import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.util.datalog.DataLogReader;
 import edu.wpi.first.util.datalog.DataLogRecord;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj.simulation.SimHooks;
 import java.io.Closeable;
 import java.io.IOException;
@@ -49,6 +50,15 @@ public class LogReplayManager implements Closeable {
     "NT:limelight-c/",
     "NT:/DriveState/",
     "NT:DriveState/",
+  };
+
+  /**
+   * Driver Station boolean state entries from the wpilog (written by {@code
+   * DriverStation.startDataLog}). These drive {@link DriverStationSim} instead of being republished
+   * to NetworkTables.
+   */
+  private static final String[] DS_STATE_ENTRIES = {
+    "DS:enabled", "DS:autonomous", "DS:test", "DS:estop",
   };
 
   /**
@@ -162,6 +172,11 @@ public class LogReplayManager implements Closeable {
         return true;
       }
     }
+    for (String dsEntry : DS_STATE_ENTRIES) {
+      if (name.equals(dsEntry)) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -196,6 +211,11 @@ public class LogReplayManager implements Closeable {
     System.out.println("+==============================================================+");
 
     SimHooks.pauseTiming();
+
+    // Attach a synthetic Driver Station so DS state changes (enabled/autonomous/test) actually
+    // take effect when we replay them.
+    DriverStationSim.setDsAttached(true);
+    DriverStationSim.notifyNewData();
 
     firstLogTimestamp = entries.get(0).timestampMicros;
     fpgaTimeAtStart = RobotController.getFPGATime();
@@ -241,6 +261,28 @@ public class LogReplayManager implements Closeable {
   }
 
   // ---- DriveState deserialization ----
+
+  /**
+   * Apply a DS:* boolean state entry to {@link DriverStationSim}. This is what makes the replayed
+   * robot transition between disabled, autonomous, and teleop just like it did during the match.
+   */
+  private void feedDriverStationState(ReplayEntry entry) {
+    if (!entry.type.equals("boolean")) {
+      return;
+    }
+    boolean value = entry.record.getBoolean();
+    switch (entry.ntKey) {
+      case "DS:enabled" -> DriverStationSim.setEnabled(value);
+      case "DS:autonomous" -> DriverStationSim.setAutonomous(value);
+      case "DS:test" -> DriverStationSim.setTest(value);
+      case "DS:estop" -> DriverStationSim.setEStop(value);
+      default -> {
+        return;
+      }
+    }
+    // DS state changes don't take effect until we tell the HAL there's new DS data.
+    DriverStationSim.notifyNewData();
+  }
 
   /** Feed a DriveState log entry into the replay pose estimator. */
   private void feedDriveState(String entryName, ReplayEntry entry) {
@@ -297,6 +339,12 @@ public class LogReplayManager implements Closeable {
 
   /** Publish a single log entry into NetworkTables, and feed DriveState entries to the replay. */
   private void publishEntry(ReplayEntry entry) {
+    // Driver Station state entries don't live in NetworkTables -- route them to DriverStationSim.
+    if (entry.ntKey.startsWith("DS:")) {
+      feedDriverStationState(entry);
+      return;
+    }
+
     String ntPath = toNTPath(entry.ntKey);
     int lastSlash = ntPath.lastIndexOf('/');
     if (lastSlash < 0) {
