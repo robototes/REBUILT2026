@@ -105,7 +105,7 @@ public class Controls {
   private static final double JOYSTICK_DEADBAND = 0.1;
   private static final double SWERVE_DEADBAND = 0.001;
 
-  private slowMode slowMode = new slowMode();
+  private final SlowMode slowMode = new SlowMode();
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
