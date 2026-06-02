@@ -261,7 +261,8 @@ public class BLineLogic {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildPath(new Path("RTNeutral"), true),
-        launcherCommand(4));
+        launcherCommand(1),
+        buildPath(new Path("RTNeutral"), false));
   }
 
   public static Command buildRTNeutralTestingAuto() {
