@@ -34,7 +34,6 @@ import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
@@ -190,7 +189,7 @@ public class Controls {
       return;
     }
 
-    readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
+    // readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
 
     connected(launcherTuningController)
         .and(launcherTuningController.y())
@@ -234,7 +233,7 @@ public class Controls {
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
       // In simulation, inject drift with POV-right to test vision correction
-      driverController
+      visionTestController
           .povRight()
           .onTrue(
               s.drivebaseSubsystem
@@ -242,7 +241,7 @@ public class Controls {
                   .withName("Inject Drift"));
 
       // POV-left resets robot to the starting pose of the selected auto
-      driverController
+      visionTestController
           .povLeft()
           .onTrue(
               s.drivebaseSubsystem
