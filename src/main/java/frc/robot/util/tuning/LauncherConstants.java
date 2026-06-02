@@ -152,7 +152,6 @@ public class LauncherConstants {
     turretToHubDistance.set(distToHub);
     turretToTargetDistance.set(
         GetTargetFromPose.getTargetLocation(result).minus(result.getTranslation()).getNorm());
-
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
