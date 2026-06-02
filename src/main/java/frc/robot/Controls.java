@@ -37,7 +37,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
-import frc.robot.util.slowMode;
+import frc.robot.util.SlowMode;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
 import java.util.Optional;
 
