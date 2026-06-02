@@ -165,8 +165,7 @@ public class Controls {
     // Joystick +Y is back
     // Robot +X is forward
     double input = MathUtil.applyDeadband(-driverController.getLeftY(), JOYSTICK_DEADBAND);
-    double DRIVE_INPUT_SCALE = slowMode.slowFactor();
-    return input * MaxSpeed * DRIVE_INPUT_SCALE;
+    return input * MaxSpeed * slowMode.slowFactor();
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
