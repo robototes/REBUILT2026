@@ -5,20 +5,23 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import java.util.function.BooleanSupplier;
 
-public class slowMode {
-  private NetworkTable table = NetworkTableInstance.getDefault().getTable("SlowMode");
-  private NetworkTableEntry slowModeEntry;
+public class SlowMode {
+  private static final double SLOW_FACTOR = 0.1;
+  private static final double DEFAULT_FACTOR = 1.0;
+  private final NetworkTable table = NetworkTableInstance.getDefault().getTable("SlowMode");
+  private final NetworkTableEntry slowModeEntry;
 
-  public slowMode() {
+  public SlowMode() {
     slowModeEntry = table.getEntry("slowMode");
     slowModeEntry.setBoolean(false);
   }
 
-  public BooleanSupplier isSlowMode() {
-    return () -> slowModeEntry.getBoolean(true);
+  public boolean isSlowMode() {
+    return slowModeEntry.getBoolean(false);
   }
 
   public double slowFactor() {
-    return (isSlowMode().getAsBoolean()) ? 0.1 : 1.0;
+    return isSlowMode() ? SLOW_FACTOR : DEFAULT_FACTOR;
   }
+}
 }
