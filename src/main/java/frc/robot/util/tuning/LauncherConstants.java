@@ -104,9 +104,9 @@ public class LauncherConstants {
     }
 
     for (var point : ballingDistanceData) {
-      flywheelMap.put(point.distance, point.flywheelPower);
-      hoodMap.put(point.distance, point.hoodAngle);
-      timeMap.put(point.distance, point.time);
+      flywheelMapBalling.put(point.distance, point.flywheelPower);
+      hoodMapBalling.put(point.distance, point.hoodAngle);
+      timeMapBalling.put(point.distance, point.time);
     }
   }
 
