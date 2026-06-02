@@ -124,6 +124,14 @@ public class ReplaySwerveDriveState {
   }
 
   /**
+   * @return the most recently logged heading (from the logged Pose entry). Used as the gyro reading
+   *     when feeding logged module positions into the pose estimator.
+   */
+  public Rotation2d getLastHeading() {
+    return lastHeading;
+  }
+
+  /**
    * Add a vision measurement to the pose estimator.
    *
    * @param visionPose the vision-measured pose

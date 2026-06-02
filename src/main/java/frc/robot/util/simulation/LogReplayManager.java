@@ -69,6 +69,9 @@ public class LogReplayManager implements Closeable {
   private final Map<Integer, DataLogRecord.StartRecordData> entryIdToStart = new HashMap<>();
   private final Map<String, Object> publishers = new HashMap<>();
 
+  /** Names that have already produced an exception; suppresses repeated log spam. */
+  private final java.util.Set<String> warnedEntries = new java.util.HashSet<>();
+
   /** Index of the next entry to publish. */
   private int nextIndex = 0;
 
@@ -246,12 +249,11 @@ public class LogReplayManager implements Closeable {
       case "ModulePositions":
         if (entry.type.startsWith("struct:")) {
           var positions = ReplaySwerveDriveState.deserializeModulePositions(entry.record);
-          // We need a heading to update odometry. Use the last known heading.
-          // The Pose entry usually arrives in the same batch, so the heading is current.
+          // Use the heading from the most recent logged Pose (cached in the replay state).
+          // Do NOT use the estimator's own output here -- that closes a feedback loop and
+          // causes the pose to drift.
           replayDriveState.updateOdometry(
-              positions,
-              replayDriveState.toSwerveDriveState().Pose.getRotation(),
-              timestampSeconds);
+              positions, replayDriveState.getLastHeading(), timestampSeconds);
         }
         break;
       case "Pose":
@@ -308,7 +310,7 @@ public class LogReplayManager implements Closeable {
       try {
         feedDriveState(entryName, entry);
       } catch (Exception e) {
-        // Silently skip deserialization errors
+        warnOnce("feedDriveState:" + entryName, e);
       }
     }
 
@@ -340,7 +342,21 @@ public class LogReplayManager implements Closeable {
           break;
       }
     } catch (Exception e) {
-      // Silently skip entries that can't be decoded
+      warnOnce("publish:" + entry.ntKey, e);
+    }
+  }
+
+  /** Log a problem with a given entry once, then stay quiet about it. */
+  private void warnOnce(String key, Exception e) {
+    if (warnedEntries.add(key)) {
+      System.err.println(
+          "[LogReplay] Skipping "
+              + key
+              + " due to "
+              + e.getClass().getSimpleName()
+              + ": "
+              + e.getMessage()
+              + " (further occurrences suppressed)");
     }
   }
 

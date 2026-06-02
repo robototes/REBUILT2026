@@ -9,9 +9,7 @@ import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
@@ -363,13 +361,10 @@ public class Robot extends TimedRobot {
   public void simulationInit() {
     subsystems.hood.zero();
     if (logReplayManager != null && subsystems.drivebaseSubsystem != null) {
+      // Use the drivetrain's own kinematics so module locations stay in sync with
+      // the tuner constants (don't hand-code module positions here).
       var replayDriveState =
-          new ReplaySwerveDriveState(
-              new SwerveDriveKinematics(
-                  new Translation2d(Units.inchesToMeters(9.375), Units.inchesToMeters(12.375)),
-                  new Translation2d(Units.inchesToMeters(9.375), Units.inchesToMeters(-12.375)),
-                  new Translation2d(Units.inchesToMeters(-9.375), Units.inchesToMeters(12.375)),
-                  new Translation2d(Units.inchesToMeters(-9.375), Units.inchesToMeters(-12.375))));
+          new ReplaySwerveDriveState(subsystems.drivebaseSubsystem.getKinematics());
       logReplayManager.setReplayDriveState(replayDriveState);
       subsystems.drivebaseSubsystem.setReplayState(replayDriveState);
       logReplayManager.initReplay();
