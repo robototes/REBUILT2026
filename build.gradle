@@ -20,6 +20,7 @@ def getProjectBooleanProperty(String name, boolean defaultValue = false) {
 }
 
 def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
+def HIGH_FIDELITY_VISION = getProjectBooleanProperty('highFidelityVision')
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -105,18 +106,9 @@ test {
 wpi.sim.addGui().defaultEnabled = true
 wpi.sim.addDriverstation()
 
-// Log replay support: pass -PlogreplayFile=path/to/file.wpilog to enable
-// Example: ./gradlew simulateJava -PlogreplayFile=logs/FRC_TBD_aad4a9c614288d68.wpilog
+// Log replay support: pass -PlogreplayFile=path/to/file.wpilog to enable.
 if (project.hasProperty('logreplayFile')) {
     wpi.sim.envVar("LOGREPLAY_FILE", project.property('logreplayFile').toString())
-}
-
-// Also apply env var to any JavaExec tasks (fallback for versions where wpi.sim.envVar
-// doesn't propagate to the native launcher)
-tasks.withType(JavaExec).configureEach {
-    if (project.hasProperty('logreplayFile')) {
-        environment 'LOGREPLAY_FILE', project.property('logreplayFile').toString()
-    }
 }
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
@@ -141,7 +133,18 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
 
-// Log diagnostic task: ./gradlew logDiagnostic -PlogreplayFile=path/to/file.wpilog
+// Increase memory and heap specifically for the robot simulator
+tasks.withType(JavaExec).configureEach {
+    if (project.hasProperty('logreplayFile')) {
+        environment 'LOGREPLAY_FILE', project.property('logreplayFile').toString()
+        systemProperty 'logreplay.file', project.property('logreplayFile').toString()
+    }
+    if (name.toLowerCase().contains("simulate")) {
+        jvmArgs "-Xmx2G", "-Xms2G"
+        systemProperty 'highFidelityVision', HIGH_FIDELITY_VISION
+    }
+}
+
 tasks.register('logDiagnostic', JavaExec) {
     dependsOn 'compileJava'
     classpath = sourceSets.main.runtimeClasspath
@@ -155,7 +158,7 @@ tasks.register('logDiagnostic', JavaExec) {
 spotless {
     format "misc", {
         target "*"
-        targetExclude "simgui*.json", "**/build/**", "**/build-*/**", "**/bin/**", "/.*", "WPILib-License.md", "gradlew", "networktables.json", "networktables.json.bck"
+        targetExclude "simgui*.json", "**/build/**", "**/build-*/**", "**/bin/**", "/.*", "WPILib-License.md", "gradlew", "networktables.json", "networktables.json.bck", "*.png"
         toggleOffOn()
         endWithNewline()
         trimTrailingWhitespace()
@@ -170,3 +173,81 @@ spotless {
         trimTrailingWhitespace()
     }
 }
+
+
+tasks.register("generateBuildInfo") {
+    doLast {
+        def execOps = services.get(ExecOperations)
+
+        def deployDir = file("src/main/deploy")
+        deployDir.mkdirs()
+        def buildInfoFile = new File(deployDir, "build-info.txt")
+
+        buildInfoFile.text = """
+            |### Project path
+            |${project.projectDir}
+            |### Commit hash
+            |${getGitHash(execOps)}
+            |### Refs to latest commit
+            |${getGitBranch(execOps)}
+            |### Commit time
+            |${getGitCommitTime(execOps)}
+            |### Commit message
+            |${getGitCommitMessage(execOps)}
+            |### Remotes
+            |${getGitRemotes(execOps)}
+            |### Changed files
+            |${getGitChangedFiles(execOps)}
+            |### Untracked files
+            |${getGitUntrackedFiles(execOps)}
+            |### (END)
+        """.stripMargin().trim()
+    }
+}
+
+def getGitBranch(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['rev-parse', '--abbrev-ref', 'HEAD'])
+}
+
+def getGitCommitTime(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['log', '-1', '--format=%cd'])
+}
+
+def getGitCommitMessage(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['log', '-1', '--format=%s'])
+}
+
+def getGitRemotes(ExecOperations execOps) {
+    return executeGitCommand(execOps, ['remote', '-v'])
+}
+
+def getGitChangedFiles(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['diff', '--name-only'])
+    return out.isEmpty() ? "None" : out
+}
+
+def getGitUntrackedFiles(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['ls-files', '--others', '--exclude-standard'])
+    return out.isEmpty() ? "None" : out
+}
+
+def getGitHash(ExecOperations execOps) {
+    def out = executeGitCommand(execOps, ['rev-parse', '--short', 'HEAD'])
+    return out.isEmpty() ? "None" : out
+}
+
+def executeGitCommand(ExecOperations execOps, List<String> args) {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        execOps.exec {
+            commandLine = ['git'] + args
+            standardOutput = stdout
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "Unknown/Error"
+    }
+}
+
+// Make sure the build info is generated before Java compiles and before static files are deployed
+processResources.dependsOn generateBuildInfo

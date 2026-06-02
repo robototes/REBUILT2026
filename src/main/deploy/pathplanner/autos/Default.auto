@@ -15,12 +15,6 @@
           "data": {
             "name": "launch"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stow"
-          }
         }
       ]
     }

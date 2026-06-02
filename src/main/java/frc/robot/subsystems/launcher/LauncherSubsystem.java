@@ -1,15 +1,16 @@
 package frc.robot.subsystems.launcher;
 
-import edu.wpi.first.math.geometry.Translation2d;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
-import frc.robot.subsystems.LaunchCalculator;
-import frc.robot.subsystems.LaunchCalculator.LaunchingParameters;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 
@@ -20,7 +21,20 @@ public class LauncherSubsystem extends SubsystemBase {
 
   private final DoublePublisher hoodGoalPub;
   private final DoublePublisher flywheelGoalPub;
+  private final BooleanPublisher hoodBooleanPub;
+  private final BooleanPublisher turretBooleanPub;
+  private final BooleanPublisher flywheelBooleanPub;
+  private final BooleanPublisher notGoingToBeUnderTrenchPub;
+  private final BooleanPublisher notUnderClimbPub;
+
+  private boolean turretAtTarget;
+  private boolean hoodAtTarget;
+  private boolean flywheelAtTarget;
+  private boolean notUunderClimb;
+  private boolean notGoingToBeUnderTrench;
+
   private LaunchingParameters launchParameters;
+  private final double MIN_FAR_DIST = 6; // Meters
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -30,19 +44,27 @@ public class LauncherSubsystem extends SubsystemBase {
     hoodGoalPub.set(0.0);
     flywheelGoalPub = nt.getDoubleTopic("/AutoAim/flywheelGoal").publish();
     flywheelGoalPub.set(0.0);
+    hoodBooleanPub = nt.getBooleanTopic("/AutoAim/hoodAtTarget").publish();
+    turretBooleanPub = nt.getBooleanTopic("/AutoAim/turretAtTarget").publish();
+    flywheelBooleanPub = nt.getBooleanTopic("/AutoAim/flywheelAtTarget").publish();
+    notUnderClimbPub = nt.getBooleanTopic("/AutoAim/NotUnderClimb").publish();
+    notGoingToBeUnderTrenchPub = nt.getBooleanTopic("/AutoAim/NotUnderTrench").publish();
+    hoodBooleanPub.set(false);
+    turretBooleanPub.set(false);
+    flywheelBooleanPub.set(false);
+    notUnderClimbPub.set(false);
+    notGoingToBeUnderTrenchPub.set(false);
   }
 
-  public Command launcherAimCommand(CommandSwerveDrivetrain drive) {
+  public Command launcherAimCommand() {
     return Commands.run(
             () -> {
-              Translation2d targetPose = GetTargetFromPose.getTargetLocation(drive);
-
-              hoodGoal =
-                  LauncherConstants.getHoodAngleFromPose2d(
-                      targetPose, drive.getReplayableState().Pose);
-              flywheelsGoal =
-                  LauncherConstants.getFlywheelSpeedFromPose2d(
-                      targetPose, drive.getReplayableState().Pose);
+              LaunchingParameters para =
+                  LaunchCalculator.getInstance()
+                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
+              this.launchParameters = para;
+              hoodGoal = para.targetHood();
+              flywheelsGoal = para.targetFlywheels();
 
               hoodGoalPub.set(hoodGoal);
               flywheelGoalPub.set(flywheelsGoal);
@@ -53,31 +75,51 @@ public class LauncherSubsystem extends SubsystemBase {
         .withName("Launcher Aim Command");
   }
 
-  // Will use after week 1
-  public Command launcherAimCommandV2() {
-    return Commands.run(
-            () -> {
-              LaunchingParameters para =
-                  LaunchCalculator.getInstance()
-                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
-              this.launchParameters = para;
-              hoodGoal = para.targetHood();
-              flywheelsGoal = para.targetFlywheels();
-
-              s.hood.setHoodPosition(hoodGoal);
-              s.flywheels.setVelocityRPS(flywheelsGoal);
-            })
-        .withName("Launcher Aim Command V2");
-  }
-
   // TODO: add tolerance range calculation
   public boolean isAtTarget() {
     if (launchParameters == null) {
       return false;
     }
-    return s.flywheels.atTargetVelocity(flywheelsGoal, s.flywheels.FLYWHEEL_TOLERANCE)
-        && s.hood.atTargetPosition()
-        && !LaunchCalculator.isCloseToTrench(launchParameters.turretPose());
+    SwerveDriveState driveState = s.drivebaseSubsystem.getState();
+    Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
+    double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
+    double distanceToTarget =
+        GetTargetFromPose.getTargetLocation(turretPose).getDistance(turretPose.getTranslation());
+
+    if (distanceToTarget >= MIN_FAR_DIST) {
+      flywheelTolerance = 30;
+    }
+
+    flywheelAtTarget = s.flywheels.atTargetVelocity(flywheelsGoal, flywheelTolerance);
+    flywheelBooleanPub.set(flywheelAtTarget);
+
+    hoodAtTarget = s.hood.atTargetPosition();
+    hoodBooleanPub.set(hoodAtTarget);
+
+    turretAtTarget =
+        s.turretSubsystem.atTarget(
+            () ->
+                Math.min(
+                    Units.degreesToRadians(20),
+                    Math.max(
+                        Units.degreesToRadians(4),
+                        Math.atan(0.3 / LauncherConstants.distToHub()))));
+    turretBooleanPub.set(turretAtTarget);
+
+    notUunderClimb =
+        !LaunchCalculator.isUnderClimb(
+            driveState.Pose.transformBy(LauncherConstants.turretTransform()));
+    notUnderClimbPub.set(notUunderClimb);
+
+    notGoingToBeUnderTrench =
+        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
+    notGoingToBeUnderTrenchPub.set(notGoingToBeUnderTrench);
+
+    return flywheelAtTarget
+        && hoodAtTarget
+        && turretAtTarget
+        && notUunderClimb
+        && notGoingToBeUnderTrench;
   }
 
   public boolean isHoodAtTarget() {
@@ -88,17 +130,12 @@ public class LauncherSubsystem extends SubsystemBase {
     return s.hood.zeroHoodCommand();
   }
 
-  public Command stowCommand() {
-    return Commands.parallel(s.hood.hoodPositionCommand(0.0), s.flywheels.stopCommand())
-        .withName("Stow Launcher Command");
-  }
-
   public Command rawStowCommand() {
     hoodGoal = 0;
     flywheelsGoal = 0;
     return Commands.parallel(
             Commands.runOnce(() -> s.hood.setHoodPosition(0)),
-            Commands.runOnce(() -> s.flywheels.stopVoid()))
+            Commands.runOnce(() -> s.flywheels.stop()))
         .withName("Raw Stow Command");
   }
 }

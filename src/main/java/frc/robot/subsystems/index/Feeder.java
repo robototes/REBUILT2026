@@ -1,6 +1,7 @@
 package frc.robot.subsystems.index;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -10,9 +11,15 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.DoubleLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
@@ -31,12 +38,20 @@ public class Feeder extends SubsystemBase {
   private final TalonFX feedMotor;
   private final FlywheelSim motorSim;
 
+  // Status signals and logging
+  private final StatusSignal<AngularVelocity> feederRPS;
+  private final DoubleLogEntry statorCurrentLog;
+  private final DoubleLogEntry supplyCurrentLog;
+  private final StatusSignal<Current> statorCurrent;
+  private final StatusSignal<Current> supplyCurrent;
+
   public Feeder() {
     feedMotor =
         new TalonFX(
             Hardware.FEEDER_MOTOR_ID,
             (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     feederConfig();
+    feedMotor.clearStickyFaults();
 
     if (RobotBase.isSimulation()) {
       LinearSystem feedMotorSystem =
@@ -50,6 +65,12 @@ public class Feeder extends SubsystemBase {
     } else {
       motorSim = null;
     }
+    feederRPS = feedMotor.getVelocity();
+    DataLog log = DataLogManager.getLog();
+    statorCurrentLog = new DoubleLogEntry(log, "/FeederLogs/statorCurrent");
+    supplyCurrentLog = new DoubleLogEntry(log, "/FeederLogs/supplyCurrent");
+    statorCurrent = feedMotor.getStatorCurrent();
+    supplyCurrent = feedMotor.getSupplyCurrent();
   }
 
   public void feederConfig() {
@@ -62,10 +83,10 @@ public class Feeder extends SubsystemBase {
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // enabling current limits
-    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 80;
+    talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 120;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
 
-    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 40;
+    talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 80;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
 
@@ -83,6 +104,14 @@ public class Feeder extends SubsystemBase {
     }
   }
 
+  public void setVelocity(double rps) {
+    if (TUNABLE_ENABLE.get()) {
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+    } else {
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
+    }
+  }
+
   public void stopMotor() {
     feedMotor.stopMotor();
   }
@@ -91,5 +120,15 @@ public class Feeder extends SubsystemBase {
   public void simulationPeriodic() {
     motorSim.setInput(feedMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod);
+  }
+
+  @Override
+  public void periodic() {
+    StatusSignal.refreshAll(statorCurrent, supplyCurrent, feederRPS);
+    // Log on NT at all times
+    SmartDashboard.putNumber("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
+    // Log stuff
+    statorCurrentLog.append(statorCurrent.getValueAsDouble());
+    supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
   }
 }

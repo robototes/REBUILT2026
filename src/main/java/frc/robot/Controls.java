@@ -3,11 +3,11 @@ package frc.robot;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
@@ -29,14 +29,16 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
+import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoDriveRotate;
-import frc.robot.subsystems.auto.FuelAutoAlign;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import frc.robot.util.tuning.WheelRadiusCharacterization;
+import java.util.Optional;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -47,6 +49,7 @@ import frc.robot.util.robotType.RobotTypesEnum;
 public class Controls {
   // The robot's subsystems and commands are defined here...
   private final Subsystems s;
+  private final SimWrapper m_simWrapper;
 
   // Controller Ports
   private static final int DRIVER_CONTROLLER_PORT = 0;
@@ -86,6 +89,9 @@ public class Controls {
   private LEDMode ledsMode = LEDMode.DEFAULT;
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
 
+  public static boolean turretKillActive = false;
+  public static boolean turretSkipped = false;
+
   public static final double MaxSpeed =
       (RobotType.TYPE == RobotTypesEnum.ALPHA)
           ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
@@ -95,26 +101,29 @@ public class Controls {
       RotationsPerSecond.of(0.75)
           .in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
-  private final double driveInputScale = 1;
+  private static final double DRIVE_INPUT_SCALE = 1;
+  private static final double JOYSTICK_DEADBAND = 0.1;
+  private static final double SWERVE_DEADBAND = 0.001;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
-          .withDeadband(0.0001)
-          .withRotationalDeadband(0.0001)
+          .withDeadband(SWERVE_DEADBAND)
+          .withRotationalDeadband(SWERVE_DEADBAND)
           .withDriveRequestType(DriveRequestType.Velocity);
 
-  private final Telemetry logger = new Telemetry(MaxSpeed);
+  private Trigger readyToShoot = new Trigger(() -> false);
+  private Trigger turretAtZero = new Trigger(() -> false);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public Controls(Subsystems subsystems) {
+  public Controls(Subsystems subsystems, SimWrapper simWrapper) {
     // Configure the trigger bindings
     s = subsystems;
+    m_simWrapper = simWrapper;
     configureDrivebaseBindings();
     configureLauncherBindings();
     configureIndexingBindings();
     configureIntakeBindings();
-    configureAutoAlignBindings();
     configureVisionBindings();
     configureTurretBindings();
     configureLedBindings();
@@ -154,24 +163,24 @@ public class Controls {
   private double getDriveX() {
     // Joystick +Y is back
     // Robot +X is forward
-    double input = MathUtil.applyDeadband(-driverController.getLeftY(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double input = MathUtil.applyDeadband(-driverController.getLeftY(), JOYSTICK_DEADBAND);
+    return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
   private double getDriveY() {
     // Joystick +X is right
     // Robot +Y is left
-    double input = MathUtil.applyDeadband(-driverController.getLeftX(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double input = MathUtil.applyDeadband(-driverController.getLeftX(), JOYSTICK_DEADBAND);
+    return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
   private double getDriveRotate() {
     // Joystick +X is right
     // Robot +angle is CCW (left)
-    double input = MathUtil.applyDeadband(-driverController.getRightX(), 0.1);
-    return input * MaxSpeed * driveInputScale;
+    double input = MathUtil.applyDeadband(-driverController.getRightX(), JOYSTICK_DEADBAND);
+    return input * MaxSpeed * DRIVE_INPUT_SCALE;
   }
 
   private void configureDrivebaseBindings() {
@@ -180,6 +189,12 @@ public class Controls {
       return;
     }
 
+    // readyToShoot = GetTargetFromPose.autoShoot(s.drivebaseSubsystem);
+
+    connected(launcherTuningController)
+        .and(launcherTuningController.y())
+        .whileTrue(
+            WheelRadiusCharacterization.wheelRadiusCharacterizationCommand(s.drivebaseSubsystem));
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
 
@@ -203,33 +218,45 @@ public class Controls {
     // driverController.x().whileTrue(s.drivebaseSubsystem.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on back button press
+    // driverController
+    //     .back()
+    //     .onTrue(
+    //         s.drivebaseSubsystem
+    //             .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
+    //             .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
+    //             .withName("Reset gyro"));
+
+    driverController
+        .a()
+        .whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
+
+    // $VISIONSIM - Bumper buttons
+    if (Robot.isSimulation()) {
+      // In simulation, inject drift with POV-right to test vision correction
+      visionTestController
+          .povRight()
+          .onTrue(
+              s.drivebaseSubsystem
+                  .runOnce(() -> m_simWrapper.injectDrift(0.5, 15.0))
+                  .withName("Inject Drift"));
+
+      // POV-left resets robot to the starting pose of the selected auto
+      visionTestController
+          .povLeft()
+          .onTrue(
+              s.drivebaseSubsystem
+                  .runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero))
+                  .withName("Reset to Start Pose"));
+    }
+
+    // reset pose incase vision is bugging
     driverController
         .back()
         .onTrue(
             s.drivebaseSubsystem
-                .runOnce(() -> s.drivebaseSubsystem.seedFieldCentric())
-                .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
-                .withName("Reset gyro"));
-
-    // logging the telemetry
-    s.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
-
-    // reset pose incase vision is bugging
-    driverController
-        .rightBumper()
-        .onTrue(
-            s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
-  }
-
-  private void configureAutoAlignBindings() {
-    if (s.detectionSubsystem == null) {
-      DataLogManager.log("Game piece detection is disabled");
-      return;
-    }
-    connected(visionTestController)
-        .and(visionTestController.rightBumper())
-        .whileTrue(FuelAutoAlign.autoAlign(this, s));
+                .runOnce(
+                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
+                .withName("Reset to Hub"));
   }
 
   private void configureLauncherBindings() {
@@ -241,63 +268,80 @@ public class Controls {
 
     driverController
         .rightTrigger()
+        .or(readyToShoot)
+        .and(driverController.rightBumper().negate())
         .whileTrue(
             Commands.parallel(
-                AutoDriveRotate.autoRotate(s.drivebaseSubsystem, ()-> driverController.getLeftX(), ()-> driverController.getLeftY()),
-                s.launcherSubsystem.launcherAimCommandV2(),
-                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
-                Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                    .andThen(
-                        Commands.parallel(
-                                s.indexerSubsystem.runIndexer(),
-                                Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
-                                Commands.waitSeconds(1)
-                                    .andThen(
-                                        Commands.runOnce(
-                                            () ->
-                                                intakeMode =
-                                                    driverController.leftTrigger().getAsBoolean()
-                                                        ? IntakeMode.INTAKE
-                                                        : IntakeMode.LAUNCH)))
-                            .onlyWhile(() -> s.launcherSubsystem.isAtTarget()))
-                    .repeatedly()))
+                    Commands.either(
+                        AutoDriveRotate.autoRotate(
+                            s.drivebaseSubsystem,
+                            () -> getDriveX(),
+                            () -> getDriveY(),
+                            () -> Units.rotationsToDegrees(s.turretSubsystem.getTurretPosition())),
+                        s.drivebaseSubsystem.applyRequest(
+                            () ->
+                                drive
+                                    .withVelocityX(getDriveX())
+                                    .withVelocityY(getDriveY())
+                                    .withRotationalRate(getDriveRotate())),
+                        () -> (turretKillActive && !turretSkipped)),
+                    s.launcherSubsystem.launcherAimCommand(),
+                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
+                    Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                        .andThen(
+                            Commands.parallel(
+                                    s.indexerSubsystem.runIndexer(
+                                        () -> s.flywheels.getTargetSpeed()),
+                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH)
+                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
+                                .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
+                                .andThen(
+                                    Commands.runOnce(
+                                        () -> {
+                                          updateIntakeMode();
+                                          ledsMode = LEDMode.LAUNCHING;
+                                        })))
+                        .repeatedly())
+                .withName("Launching Command"))
         .onFalse(
             s.launcherSubsystem
                 .rawStowCommand()
                 .alongWith(
                     Commands.runOnce(
                         () -> {
-                          ledsMode = LEDMode.DEFAULT;
-                          intakeMode =
-                              driverController.leftTrigger().getAsBoolean()
-                                  ? IntakeMode.INTAKE
-                                  : IntakeMode.DEPLOYED;
-                        })));
+                          updateIntakeMode();
+                        }))
+                .withName("Launching Finished"));
+
     driverController
         .start()
         .onTrue(
             Commands.parallel(
-                    s.launcherSubsystem.zeroSubsystemCommand(),
-                    s.intakePivot.zeroPivot(),
-                    s.turretSubsystem.zeroTurret(),
+                    Commands.either(
+                        Commands.parallel(
+                            s.hood.autoZeroCommand(), s.intakePivot.autoZeroCommand()),
+                        Commands.parallel(
+                            s.launcherSubsystem.zeroSubsystemCommand(),
+                            s.intakePivot.zeroPivot(),
+                            s.turretSubsystem.zeroTurret()),
+                        () -> DriverStation.isEnabled()),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
+                .ignoringDisable(true)
+                .withName("Zero Subsystems"));
+
+    driverController
+        .x()
+        .onTrue(
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
+                .withName("Enable Alliance Win Override")
                 .ignoringDisable(true));
 
-    // driverController
-    //     .start()
-    //     .onTrue(
-    //         Commands.parallel(
-    //                 s.hood.autoZeroCommand(),
-    //                 s.intakePivot.autoZeroCommand(),
-    //                 s.turretSubsystem.autoZeroCommand(),
-    //                 s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2)));
-
-    if (s.flywheels.TUNER_CONTROLLED.get()) {
-      connected(launcherTuningController)
-          .and(launcherTuningController.leftBumper())
-          .onTrue(s.flywheels.suppliedSetVelocityCommand(() -> s.flywheels.targetVelocity.get()));
-      launcherTuningController.a().whileTrue(Commands.parallel(s.indexerSubsystem.runIndexer()));
-    }
+    driverController
+        .b()
+        .onTrue(
+            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
+                .withName("Disable Alliance Win Override")
+                .ignoringDisable(true));
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
@@ -308,6 +352,22 @@ public class Controls {
     connected(launcherTuningController)
         .and(launcherTuningController.y())
         .onTrue(s.flywheels.setVelocityCommand(60));
+  }
+
+  private void updateIntakeMode() {
+    if (driverController.leftTrigger().getAsBoolean()) {
+      intakeMode = IntakeMode.INTAKE;
+      ledsMode = LEDMode.INTAKE;
+    } else if (driverController.leftBumper().getAsBoolean()) {
+      intakeMode = IntakeMode.EXTAKE;
+    } else if ((driverController.rightTrigger().getAsBoolean() || readyToShoot.getAsBoolean())
+        && s.launcherSubsystem.isAtTarget()) {
+      intakeMode = IntakeMode.LAUNCH;
+      s.intakePivot.restartTimer();
+    } else {
+      intakeMode = IntakeMode.DEPLOYED;
+      ledsMode = LEDMode.DEFAULT;
+    }
   }
 
   private void configureIntakeBindings() {
@@ -325,40 +385,38 @@ public class Controls {
                     case RETRACTED -> s.intakeSubsystem.retractPivot();
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
-                    case INTAKE -> s.intakeSubsystem.smartIntake();
+                    case INTAKE ->
+                        s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },
                 s.intakeSubsystem)
             .withName("Intake Default Command"));
-
     driverController
         .leftTrigger()
         .whileTrue(
             Commands.runOnce(
-                () -> {
-                  intakeMode = IntakeMode.INTAKE;
-                  ledsMode = LEDMode.INTAKE;
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  intakeMode =
-                      driverController.rightTrigger().getAsBoolean()
-                          ? IntakeMode.LAUNCH
-                          : IntakeMode.DEPLOYED;
-                  ledsMode = LEDMode.DEFAULT;
-                }));
-    driverController.povUp().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
-    driverController.povDown().onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+                    () -> {
+                      updateIntakeMode();
+                    })
+                .withName("Intaking"))
+        .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));
+    driverController
+        .povUp()
+        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
+    driverController
+        .povDown()
+        .onTrue(
+            Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED).withName("Retract Intake"));
     driverController
         .leftBumper()
-        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE))
-        .onFalse(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
+        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE).withName("Extaking"))
+        .onFalse(
+            Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Extaking Finished"));
 
     connected(intakeTestController)
         .and(intakeTestController.a())
-        .onTrue(Commands.runOnce(() -> s.intakeSubsystem.runRollers()));
+        .whileTrue(Commands.run(() -> s.intakeSubsystem.runRollers()));
     connected(intakeTestController)
         .and(intakeTestController.x())
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED));
@@ -413,8 +471,35 @@ public class Controls {
     if (s.turretSubsystem == null) {
       return;
     }
+    turretAtZero = new Trigger(() -> s.turretSubsystem.atLimitSwitch());
 
-    s.turretSubsystem.setDefaultCommand(s.turretSubsystem.rotateToTargetWithCalc());
+    s.turretSubsystem.setDefaultCommand(
+        s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
+
+    (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
+        .or(driverController.povLeft())
+        .onTrue(
+            Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
+                .withName("Zero Turret on Limit Switch"));
+
+    driverController
+        .y()
+        .toggleOnTrue(
+            s.turretSubsystem
+                .run(
+                    () ->
+                        s.turretSubsystem.setTurretRawPosition(
+                            s.turretSubsystem.getTurretPosition()))
+                .withName("Turret Kill — Hold Position"))
+        .onTrue(
+            Commands.runOnce(() -> turretKillActive = !turretKillActive)
+                .withName("Toggle Turret Kill"));
+    driverController
+        .povRight()
+        .onTrue(
+            Commands.runOnce(() -> turretSkipped = !turretSkipped)
+                .withName("Toggle Turret Skipped"));
+
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
@@ -448,8 +533,10 @@ public class Controls {
     connected(turretTestController)
         .and(turretTestController.rightBumper())
         .onTrue(
-            s.drivebaseSubsystem.runOnce(
-                () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub)));
+            s.drivebaseSubsystem
+                .runOnce(
+                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
+                .withName("Reset to Hub"));
     driverController
         .rightStick()
         .whileTrue(
@@ -462,19 +549,15 @@ public class Controls {
       return;
     }
     s.ledSubsystem.setDefaultCommand(
-        Commands.run(() -> s.ledSubsystem.setMode(ledsMode), s.ledSubsystem)
+        Commands.run(
+                () -> {
+                  if (RobotState.isTeleop()) {
+                    s.ledSubsystem.setMode(ledsMode);
+                  }
+                },
+                s.ledSubsystem)
             .withName("LED Default Command"));
 
-    Trigger shiftWarning =
-        new Trigger(
-            () -> {
-              if (RobotState.isAutonomous()) return false;
-
-              var shiftInfo = HubShiftUtil.getOfficialShiftInfo();
-
-              return shiftInfo.remainingTime() <= 4.0;
-            });
-
-    shiftWarning.onTrue(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 5, 0.1));
+    readyToShoot.onFalse(s.ledSubsystem.flashCommand(LEDSubsystem.CLIMB_COLOR, 30, 0.1));
   }
 }

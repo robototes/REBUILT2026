@@ -7,8 +7,16 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.WebServer;
+import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -16,22 +24,29 @@ import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
+import frc.robot.sim.ShowVisionOnField;
+import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
+import frc.robot.util.DriveStateNtLogger;
+import frc.robot.util.DriveStateSignalLogger;
+import frc.robot.util.GCMonitor;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.simulation.LogReplayManager;
+import frc.robot.util.simulation.ReplaySwerveDriveState;
 import frc.robot.util.simulation.RobotSim;
+import frc.robot.util.tuning.LauncherConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -44,8 +59,6 @@ public class Robot extends TimedRobot {
   public final Subsystems subsystems;
   private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
-  private final int VIEWFINDER_PIPELINE = 1;
-  private final int GAMEPIECE_PIPELINE = 2;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
   private final double MAX_TIME_RECORD = 165;
@@ -53,7 +66,14 @@ public class Robot extends TimedRobot {
   private final RobotSim robotSim;
   private final LogReplayManager logReplayManager;
   private final Mechanism2d mechanismRobot;
-  private final double BROWNOUT_VOLTAGE = 6; // Limelight's minimum operating voltage is 3.3volts
+  private final SimWrapper m_simWrapper;
+  private static final double BROWNOUT_VOLTAGE = 7.0;
+  private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
+  private final DriveStateNtLogger driveBaseSim;
+  private final DriveStateSignalLogger logger;
+
+  // Cached time for robot.periodic()
+  private double LAST_TIME = 0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -66,13 +86,15 @@ public class Robot extends TimedRobot {
 
     // logging
     if (RobotBase.isReal()) {
-      DataLogManager.start();
+      DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     LiveWindow.enableTelemetry(PDH);
     BuildInfo.logBuildInfo();
+    // Start GC monitor to count garbage collections and publish to SmartDashboard
+    frc.robot.util.GCMonitor.start();
 
     // Set brownout Voltage
     RobotController.setBrownoutVoltage(BROWNOUT_VOLTAGE);
@@ -82,7 +104,24 @@ public class Robot extends TimedRobot {
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     SmartDashboard.putData("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
-    controls = new Controls(subsystems);
+
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation()) {
+      m_simWrapper = new SimWrapper(subsystems.drivebaseSubsystem, this::resetRobotPose);
+    } else {
+      m_simWrapper = null;
+    }
+
+    // $VISIONSIM - Wrapper for sim features
+    if (Robot.isSimulation() && m_simWrapper != null) {
+      ShowVisionOnField showVisionOnField =
+          new ShowVisionOnField(null, m_simWrapper.getSimDebugField());
+      if (subsystems.visionSubsystem != null) {
+        subsystems.visionSubsystem.setShowVisionOnField(showVisionOnField);
+      }
+    }
+
+    controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
@@ -112,13 +151,27 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(CommandScheduler.getInstance());
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      AutoLogic.registerCommands(true);
+      AutoLogic.initCommandsAndPaths(false);
       AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
       AutoLogic.initSmartDashBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+
+    logger = new DriveStateSignalLogger();
+    subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+    driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
+
+    // Explicitly register struct schemas with the DataLog
+    if (RobotBase.isReal()) {
+      DataLog log = DataLogManager.getLog();
+      log.addSchema(Pose2d.struct);
+      log.addSchema(Pose3d.struct);
+      log.addSchema(ChassisSpeeds.struct);
+      log.addSchema(SwerveModuleState.struct);
+      log.addSchema(SwerveModulePosition.struct);
+    }
   }
 
   /**
@@ -130,105 +183,130 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    // Resume logging every X seconds
+    double time = Timer.getFPGATimestamp();
+    if (time - LAST_TIME >= 1) {
+      LAST_TIME = time;
+      DataLogManager.getLog().resume();
+    }
 
-    // Publish log replay data into NT before anything reads from it
+    // $VISIONSIM - Wrapper for sim features
     if (logReplayManager != null) {
       logReplayManager.updateReplay();
+    } else if (Robot.isSimulation() && m_simWrapper != null) {
+      // NOTE: We run the vision period FIRST in robotPeriodic, since it updates
+      // NetworkTables with the limelight data, in-case any code in this loop
+      // needs that info and doesnt want it delayed 20ms.
+      m_simWrapper.robotPeriodic();
     }
+
+    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
+      subsystems.visionSubsystem.update();
+    }
+    // var robotState = subsystems.drivebaseSubsystem.getState();
+    // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
 
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
-    if (subsystems.detectionSubsystem != null) {
-      subsystems.detectionSubsystem.update();
-    }
-    // var robotState = subsystems.drivebaseSubsystem.getState();
-    // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
     CommandScheduler.getInstance().run();
+    driveBaseSim.update();
+    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getReplayableState().Pose);
+
+    SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
     CommandScheduler.getInstance().cancelAll();
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+    if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+        LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
-        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+        LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_B, THROTTLE_ON);
       }
-    }
-    if (subsystems.visionSubsystem != null && RobotType.isAlpha()) {
-      // && subsystems.visionSubsystem.limelightcOnline) {
-      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
-    }
-    if (subsystems.detectionSubsystem != null) {
-      subsystems.detectionSubsystem.fuelPose3d = null;
-      // Throttle to reduce heat
-      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_ON);
-      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_C, THROTTLE_ON);
+      }
     }
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.coastTurret();
     }
     CommandScheduler.getInstance()
         .cancelAll(); // Prevent auto commands from persisting past auto or during testing.
+    Controls.turretKillActive = false;
   }
 
   @Override
   public void disabledExit() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+    if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_A, false);
       }
       if (subsystems.visionSubsystem.limelightbOnline) {
         setupLimelightForAprilTags(Hardware.LIMELIGHT_B, false);
       }
-    }
-    if (subsystems.visionSubsystem != null
-        && RobotType.isAlpha()
-        && subsystems.visionSubsystem.limelightcOnline) {
-      setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
-    }
-    if (subsystems.detectionSubsystem != null) {
-      // get rid of throttle to get rid of throttle "glazing"
-      // LimelightHelpers.SetThrottle(Hardware.LIMELIGHT_A, THROTTLE_OFF);
-      // LimelightHelpers.setPipelineIndex(Hardware.LIMELIGHT_A, GAMEPIECE_PIPELINE);
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_C, false);
+      }
     }
 
     if (subsystems.turretSubsystem != null) {
       subsystems.turretSubsystem.brakeTurret();
     }
+
+    // Zero hood before moving to autonomous or teleop
+    if (subsystems.hood != null) {
+      if (subsystems.hood.isHoodZeroed()) {
+        subsystems.hood.setHoodPosition(0);
+      } else {
+        DriverStation.reportWarning(
+            "Attempted to set hood position although it hasn't been zeroed", false);
+      }
+    }
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    if (subsystems.visionSubsystem != null) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_A, true);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_B, true);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        setupLimelightForAprilTags(Hardware.LIMELIGHT_C, true);
+        LimelightHelpers.setRewindEnabled(Hardware.LIMELIGHT_C, true);
+      }
+    }
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    // subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
     if (AutoLogic.getSelectedAuto() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
+      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
+      if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_A, true);
-          supplyRobotYawToLimelight(
-              Hardware.LIMELIGHT_A, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          setupLimelightForAprilTags(Hardware.LIMELIGHT_B, true);
-          supplyRobotYawToLimelight(
-              Hardware.LIMELIGHT_B, SmartDashboard.getNumber("/Selected auto/Robot/2", 0));
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
+        }
+        if (subsystems.visionSubsystem.limelightcOnline) {
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
         }
       }
     }
@@ -237,18 +315,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_A,
-            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
-      }
-      if (subsystems.visionSubsystem.limelightbOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_B,
-            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
-      }
-    }
+    supplyYawToAllLimelights();
   }
 
   @Override
@@ -258,31 +325,23 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+
+    if (subsystems.visionSubsystem != null) {
+      subsystems.visionSubsystem.update();
+    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
 
   @Override
   public void teleopPeriodic() {
-    if (subsystems.visionSubsystem != null && !RobotType.isAlpha()) {
-      if (subsystems.visionSubsystem.limelightaOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_A,
-            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
-      }
-      if (subsystems.visionSubsystem.limelightbOnline) {
-        supplyRobotYawToLimelight(
-            Hardware.LIMELIGHT_B,
-            subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees());
-      }
-    }
+    supplyYawToAllLimelights();
   }
 
   /** This function is called once when teleop mode is exited. */
   @Override
   public void teleopExit() {
-    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
-    LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+    limelightsRecord();
   }
 
   @Override
@@ -300,20 +359,13 @@ public class Robot extends TimedRobot {
   public void simulationInit() {
     subsystems.hood.zero();
     if (logReplayManager != null && subsystems.drivebaseSubsystem != null) {
-      // Create the replay pose estimator using module locations from tuner constants.
-      // These must match the module positions defined in CompTunerConstants.
-      var kinematics =
-          new edu.wpi.first.math.kinematics.SwerveDriveKinematics(
-              new edu.wpi.first.math.geometry.Translation2d(
-                  Units.inchesToMeters(9.375), Units.inchesToMeters(12.375)),
-              new edu.wpi.first.math.geometry.Translation2d(
-                  Units.inchesToMeters(9.375), Units.inchesToMeters(-12.375)),
-              new edu.wpi.first.math.geometry.Translation2d(
-                  Units.inchesToMeters(-9.375), Units.inchesToMeters(12.375)),
-              new edu.wpi.first.math.geometry.Translation2d(
-                  Units.inchesToMeters(-9.375), Units.inchesToMeters(-12.375)));
-      frc.robot.util.simulation.ReplaySwerveDriveState replayDriveState =
-          new frc.robot.util.simulation.ReplaySwerveDriveState(kinematics);
+      var replayDriveState =
+          new ReplaySwerveDriveState(
+              new SwerveDriveKinematics(
+                  new Translation2d(Units.inchesToMeters(9.375), Units.inchesToMeters(12.375)),
+                  new Translation2d(Units.inchesToMeters(9.375), Units.inchesToMeters(-12.375)),
+                  new Translation2d(Units.inchesToMeters(-9.375), Units.inchesToMeters(12.375)),
+                  new Translation2d(Units.inchesToMeters(-9.375), Units.inchesToMeters(-12.375))));
       logReplayManager.setReplayDriveState(replayDriveState);
       subsystems.drivebaseSubsystem.setReplayState(replayDriveState);
       logReplayManager.initReplay();
@@ -323,27 +375,72 @@ public class Robot extends TimedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
+    // $VISIONSIM - Wrapper for sim features
+    if (m_simWrapper != null) {
+      m_simWrapper.simulationPeriodic();
+    }
+
     robotSim.updateFuelSim();
   }
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
       LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
-      // Throttle to reduce heat
-      LimelightHelpers.SetThrottle(limelightName, THROTTLE_ON);
       // seed internal limelight imu for mt2
-      LimelightHelpers.SetIMUMode(limelightName, 1);
+      LimelightHelpers.SetIMUMode(limelightName, 0);
       LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
 
     } else {
       // get rid of throttle to get rid of throttle "glazing"
       LimelightHelpers.SetThrottle(limelightName, THROTTLE_OFF);
       // Limelight Use internal IMU + external IMU
-      LimelightHelpers.SetIMUMode(limelightName, 4);
+      LimelightHelpers.SetIMUMode(limelightName, 0);
+    }
+  }
+
+  private void supplyYawToAllLimelights() {
+    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
+      double heading =
+          subsystems.drivebaseSubsystem.getReplayableState().Pose.getRotation().getDegrees();
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, heading);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, heading);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, heading);
+      }
+    }
+  }
+
+  public void limelightsRecord() {
+    if (subsystems.visionSubsystem != null) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_A, MAX_TIME_RECORD);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_B, MAX_TIME_RECORD);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        LimelightHelpers.triggerRewindCapture(Hardware.LIMELIGHT_C, MAX_TIME_RECORD);
+      }
     }
   }
 
   private void supplyRobotYawToLimelight(String limelightName, double heading) {
     LimelightHelpers.SetRobotOrientation(limelightName, heading, 0, 0, 0, 0, 0);
+  }
+
+  /** Only used in simulation to reset robot pose */
+  private void resetRobotPose(Pose2d pose) {
+    if (Robot.isSimulation()) {
+      System.out.println("Robot pose reset to: " + pose);
+
+      subsystems.drivebaseSubsystem.resetPose(pose);
+
+      // $VISIONSIM - Clean reset
+      m_simWrapper.resetSimPose(pose);
+    }
   }
 }

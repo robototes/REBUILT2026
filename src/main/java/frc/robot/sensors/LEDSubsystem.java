@@ -1,5 +1,6 @@
 package frc.robot.sensors;
 
+import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
@@ -42,6 +43,7 @@ public class LEDSubsystem extends SubsystemBase {
 
   private final CANdle candle = new CANdle(CAN_ID);
   private final SolidColor solidController = new SolidColor(0, END_INDEX);
+  private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
   private final RainbowAnimation rainbowAnimation =
       new RainbowAnimation(0, END_INDEX).withSlot(SLOT);
 
@@ -92,6 +94,23 @@ public class LEDSubsystem extends SubsystemBase {
     alternatingColorsPub.set("A:None | B:None");
   }
 
+  private void publishState() {
+    currentPatternPub.set(currentPattern.name());
+    currentModePub.set(currentMode != null ? currentMode.name() : "NONE");
+
+    if (currentPattern == LEDPattern.SOLID) {
+      currentColorPub.set(primaryColor.toHexString());
+      alternatingColorsPub.set("A:None | B:None");
+    } else if (currentPattern == LEDPattern.ALTERNATE) {
+      currentColorPub.set("NONE");
+      alternatingColorsPub.set(
+          "A:" + primaryColor.toHexString() + " | B:" + secondaryColor.toHexString());
+    } else {
+      currentColorPub.set("NONE");
+      alternatingColorsPub.set("A:None | B:None");
+    }
+  }
+
   public void setHardwareColor(RGBWColor color, double brightness) {
     RGBWColor scaled = color.scaleBrightness(brightness);
 
@@ -113,16 +132,16 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   private void setSolid(RGBWColor color) {
+    candle.setControl(emptyAnimation);
     currentPattern = LEDPattern.SOLID;
     primaryColor = color;
-    setHardwareColor(color);
 
-    currentPatternPub.set("SOLID");
-    currentColorPub.set(color.toHexString());
-    alternatingColorsPub.set("A:None | B:None");
+    setHardwareColor(color);
+    publishState();
   }
 
   private void setAlternating(RGBWColor a, RGBWColor b, double interval) {
+    candle.setControl(emptyAnimation);
     currentPattern = LEDPattern.ALTERNATE;
 
     primaryColor = a;
@@ -132,22 +151,14 @@ public class LEDSubsystem extends SubsystemBase {
     showingPrimary = true;
     lastToggleTime = Timer.getFPGATimestamp();
 
-    currentPatternPub.set("ALTERNATING");
-    currentColorPub.set(a.toHexString());
-    alternatingColorsPub.set("A:" + a.toHexString() + " | B:" + b.toHexString());
-
     setHardwareColor(a);
+    publishState();
   }
 
   private void setRainbow() {
     currentPattern = LEDPattern.RAINBOW;
-
-    // Update publishers
-    currentPatternPub.set("RAINBOW");
-    currentColorPub.set("NONE");
-    alternatingColorsPub.set("A:None | B:None");
-
     candle.setControl(rainbowAnimation);
+    publishState();
   }
 
   public void setMode(LEDMode mode) {
@@ -165,7 +176,7 @@ public class LEDSubsystem extends SubsystemBase {
       case RAINBOW -> setRainbow();
     }
 
-    currentModePub.set(mode.toString());
+    publishState();
   }
 
   public Command flashCommand(RGBWColor color, int times, double interval) {
@@ -188,7 +199,9 @@ public class LEDSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     if (RobotState.isDisabled()) {
-      setMode(LEDMode.DISABLED);
+      if (currentMode != LEDMode.DISABLED) {
+        setMode(LEDMode.DISABLED);
+      }
       return;
     }
 

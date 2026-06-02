@@ -1,6 +1,9 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 public class IntakeSubsystem extends SubsystemBase {
   public enum IntakeMode {
@@ -25,6 +28,11 @@ public class IntakeSubsystem extends SubsystemBase {
     intakePivot.setPivotPosition(intakePivot.getPivotTargetPosition());
   }
 
+  public void runRollers(DoubleSupplier rps) {
+    intakeRollers.runRollers(rps.getAsDouble());
+    intakePivot.setPivotPosition(intakePivot.getPivotTargetPosition());
+  }
+
   public void deployPivot() {
     intakePivot.setPivotPosition(IntakePivot.DEPLOYED_POS);
     intakeRollers.stopMotor();
@@ -36,17 +44,23 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   public void intakeWhileLaunch() {
-    intakePivot.setPivotPosition(IntakePivot.LAUNCH_POS);
+    intakePivot.oscillatePivot();
     intakeRollers.runRollers(intakeRollers.AGITATE_RPS);
   }
 
   public void smartIntake() {
-    if (intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
-      runRollers();
-    } else {
+    if (!intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
       deployPivot();
-      runRollers();
     }
+    runRollers();
+  }
+
+  public void smartIntake(Supplier<ChassisSpeeds> speeds) {
+    if (!intakePivot.isAtTarget(5, IntakePivot.DEPLOYED_POS)) {
+      deployPivot();
+    }
+    var s = speeds.get();
+    runRollers(() -> Math.hypot(s.vxMetersPerSecond, s.vyMetersPerSecond) * 6 + 50);
   }
 
   public void extakeIntake() {
