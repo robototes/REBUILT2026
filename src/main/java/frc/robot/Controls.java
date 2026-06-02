@@ -233,7 +233,7 @@ public class Controls {
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
       // In simulation, inject drift with POV-right to test vision correction
-      driverController
+      visionTestController
           .povRight()
           .onTrue(
               s.drivebaseSubsystem
@@ -241,7 +241,7 @@ public class Controls {
                   .withName("Inject Drift"));
 
       // POV-left resets robot to the starting pose of the selected auto
-      driverController
+      visionTestController
           .povLeft()
           .onTrue(
               s.drivebaseSubsystem
