@@ -211,7 +211,11 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    driveBaseSim.update();
+    // Skip the live DriveState NT publisher when replaying a log: it would race
+    // the LogReplayManager and overwrite the replayed Pose/Speeds/ModuleStates.
+    if (logReplayManager == null) {
+      driveBaseSim.update();
+    }
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getReplayableState().Pose);
 
     SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
@@ -376,7 +380,10 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {
     // $VISIONSIM - Wrapper for sim features
-    if (m_simWrapper != null) {
+    // When log replay is active, skip the simulated vision/ground-truth pipeline:
+    // it would publish synthetic Limelight data and a GroundTruthPose into the
+    // same NT tables the LogReplayManager is feeding from the wpilog.
+    if (m_simWrapper != null && logReplayManager == null) {
       m_simWrapper.simulationPeriodic();
     }
 
