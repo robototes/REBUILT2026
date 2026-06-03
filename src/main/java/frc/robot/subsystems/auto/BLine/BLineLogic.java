@@ -181,8 +181,6 @@ public class BLineLogic {
     refreshFieldDisplay();
   }
 
-  private static int lastPathCount = 0;
-
   public static void refreshFieldDisplay() {
     BLinePath selected = getSelectedAutoPath();
     if (selected == null) return;
