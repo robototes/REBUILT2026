@@ -68,7 +68,7 @@ public class BLineLogic {
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
 
   private static boolean pathsInitialized = false;
-private static Command bLineLaunching;
+  private static Command bLineLaunching;
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
 
@@ -270,7 +270,6 @@ private static Command bLineLaunching;
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildPath(new Path("RTNEUTRALTEST"), true),
-
         buildPath(new Path("RTRBNEUTRALTEST"), false),
         launcherCommand());
   }
@@ -365,7 +364,7 @@ private static Command bLineLaunching;
                     RobotSim.launch(s, 30)
                         .until(
                             () -> {
-                              return launchAllowed.get();
+                              return launchAllowed.get() == false;
                             }))
                 .andThen(Commands.print("LAUNCH FINISHED")));
       } else {
@@ -376,7 +375,6 @@ private static Command bLineLaunching;
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
     FollowPath.registerEventTrigger("climb", climbCommand());
-    FollowPath.registerEventTrigger(
-        "cancel", Commands.runOnce(() -> launchAllowed.set(false)));
+    FollowPath.registerEventTrigger("cancel", Commands.runOnce(() -> launchAllowed.set(false)));
   }
 }

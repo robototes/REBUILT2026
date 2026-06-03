@@ -14,6 +14,11 @@
     },
     {
       "type": "event_trigger",
+      "t_ratio": 0.0,
+      "lib_key": "launch"
+    },
+    {
+      "type": "event_trigger",
       "t_ratio": 0.8,
       "lib_key": "cancel"
     },
