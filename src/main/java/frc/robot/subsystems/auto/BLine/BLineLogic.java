@@ -260,7 +260,7 @@ public class BLineLogic {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildPath(new Path("RTNeutral"), true),
-        launcherCommand(1),
+        launcherCommand(4),
         buildPath(new Path("RTNeutral"), false));
   }
 
@@ -268,8 +268,9 @@ public class BLineLogic {
 
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("RTNEUTRALTEST"), true),
-        buildPath(new Path("RTRBNEUTRALTEST"), false),
+        buildPath(new Path("RTNeutral"), true),
+          launcherCommand(4),
+        buildPath(new Path("RTRBNEUTRAL"), false),
         launcherCommand());
   }
 
@@ -294,10 +295,7 @@ public class BLineLogic {
 
     BLinePath selected = getSelectedAutoPath();
 
-    if (selected == null || selected.getPath() == null) {
-      SmartDashboard.putNumber("Initial Heading(Deg)", 0.0);
-      return;
-    }
+
 
     Pose2d start = selected.getPath().getStartPose();
 
