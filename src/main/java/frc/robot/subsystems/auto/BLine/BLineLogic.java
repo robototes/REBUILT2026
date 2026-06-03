@@ -364,7 +364,7 @@ public class BLineLogic {
                     RobotSim.launch(s, 30)
                         .until(
                             () -> {
-                              return launchAllowed.get() == false;
+                              return !launchAllowed.get();
                             }))
                 .andThen(Commands.print("LAUNCH FINISHED")));
       } else {
