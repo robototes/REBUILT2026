@@ -80,7 +80,7 @@ public class LauncherConstants {
 
   // TODO
   public static final LauncherDistanceDataPoint[] ballingDistanceData = {
-    new LauncherDistanceDataPoint(1, 1, 1, 1)
+    new LauncherDistanceDataPoint(1.8, 2.4,60, 1)
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();

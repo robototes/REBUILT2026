@@ -41,7 +41,7 @@ public class GetTargetFromPose {
   // right corner of the feild with the climb side pointing off the court and the intake pointing
   // towards the length of the court
   public static NtTunableBoolean BALLING = new NtTunableBoolean("/Balling", false);
-  private static Translation2d BALLING_POSE = new Translation2d(-1.22, -7.62); // TODO
+  private static Translation2d BALLING_POSE = new Translation2d(-0.9779, -0.2286); // TODO
   private static Pose2d RIGHT_BASKETBALL_COURT_CORNER = new Pose2d(0, 0, new Rotation2d()); // TODO
 
   public static Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
