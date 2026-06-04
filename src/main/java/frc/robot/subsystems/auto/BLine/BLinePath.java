@@ -11,17 +11,12 @@ public class BLinePath {
   private final String displayName;
   private final String startingPosName;
   private final boolean vision;
-
   private final Path path;
   private final List<Path> allPaths;
+
+  private StartPosition positionType;
   private Pose2d startPose;
 
-  // Single path constructor
-  public BLinePath(String displayName, String autoName, String startingPosName) {
-    this(displayName, startingPosName, false, autoName);
-  }
-
-  // Multi-path constructor
   public BLinePath(String displayName, String startingPosName, String... pathNames) {
     this(displayName, startingPosName, false, pathNames);
   }
@@ -30,7 +25,6 @@ public class BLinePath {
       String displayName, String startingPosName, boolean vision, String... pathNames) {
     this.displayName = displayName;
     this.startingPosName = startingPosName;
-
     this.vision = vision;
 
     List<Path> loaded = new ArrayList<>();
@@ -51,12 +45,16 @@ public class BLinePath {
   }
 
   public Pose2d getStartPose2d() {
+    if (positionType == StartPosition.TRENCH) {
+      return BLineLogic.getTrenchPose();
+    }
     return startPose;
   }
 
   public Pose2d setStartPose2d(StartPosition pos) {
-    startPose = pos.startPose;
-    return startPose;
+    this.positionType = pos;
+    this.startPose = pos.startPose;
+    return getStartPose2d();
   }
 
   public boolean isVision() {
@@ -69,5 +67,9 @@ public class BLinePath {
 
   public List<Path> getAllPaths() {
     return allPaths;
+  }
+
+  public StartPosition getStartPositionType() {
+    return positionType;
   }
 }
