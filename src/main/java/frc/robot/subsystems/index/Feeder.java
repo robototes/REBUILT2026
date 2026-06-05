@@ -91,8 +91,9 @@ public class Feeder extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
 
-    talonFXConfiguration.Slot0.kV = 11.28 / 92;
-    talonFXConfiguration.Slot0.kP = 0.5;
+    talonFXConfiguration.Slot0.kS = 4.2;
+    talonFXConfiguration.Slot0.kA = 0.5;
+    talonFXConfiguration.Slot0.kP = 10;
 
     cfg.apply(talonFXConfiguration);
   }
