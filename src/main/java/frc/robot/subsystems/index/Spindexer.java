@@ -3,7 +3,7 @@ package frc.robot.subsystems.index;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -36,7 +36,8 @@ public class Spindexer extends SubsystemBase {
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
-  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
+  private final VelocityTorqueCurrentFOC velocityRequest =
+      new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 
   private final FlywheelSim motorSim;
 
@@ -101,18 +102,18 @@ public class Spindexer extends SubsystemBase {
   public void runVelocity() {
     if (TUNABLE_ENABLE.get()) {
       spindexerMotor.setControl(
-          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
+          velocityRequest.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
     } else {
       spindexerMotor.setControl(
-          TARGET_VELOCITY.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
+          velocityRequest.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
     }
   }
 
   public void setVelocity(double rps) {
     if (TUNABLE_ENABLE.get()) {
-      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+      spindexerMotor.setControl(velocityRequest.withVelocity(TARGET_RPS.get()));
     } else {
-      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
+      spindexerMotor.setControl(velocityRequest.withVelocity(rps));
     }
   }
 
