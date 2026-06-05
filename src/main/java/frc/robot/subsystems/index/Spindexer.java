@@ -92,9 +92,9 @@ public class Spindexer extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
-
-    talonFXConfiguration.Slot0.kV = 11.2 / 90.7;
-    talonFXConfiguration.Slot0.kP = 0.6;
+    talonFXConfiguration.Slot0.kA = 0.5;
+    talonFXConfiguration.Slot0.kS = 2.2;
+    talonFXConfiguration.Slot0.kP = 10;
 
     cfg.apply(talonFXConfiguration);
   }
