@@ -109,8 +109,8 @@ public class BLineLogic {
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("Neutral", "RT", "Neutral"),
-            new BLinePath("TESTING", "RT", "Neutral", "BUMPNEUTRAL"));
+            new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
+            new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"));
 
     autos.clear();
     autos.addAll(rebuiltPaths);
@@ -268,20 +268,19 @@ public class BLineLogic {
     return Commands.waitSeconds(delay).andThen(buildPath(path.getPath(), true));
   }
 
-  public static Command buildNeutralAuto() {
+  public static Command buildSingleNeutralAuto() {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("Neutral"), true),
-        launcherCommand(4),
-        buildPath(new Path("Neutral"), false));
+        buildPath(new Path("FirstNeutralTrench"), true),
+        launcherCommand());
   }
 
-  public static Command buildNeutralTestingAuto() {
+  public static Command buildDoubleNeutralAuto() {
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("Neutral"), true),
+        buildPath(new Path("FirstNeutralTrench"), true),
         launcherCommand(4),
-        buildPath(new Path("BUMPNEUTRAL"), false),
+        buildPath(new Path("SecondNeutralTrench"), false),
         launcherCommand());
   }
 
@@ -291,10 +290,10 @@ public class BLineLogic {
 
   public static Command handleAutos() {
     switch (getSelectedAutoName()) {
-      case "Neutral":
-        return buildNeutralAuto();
-      case "BUMPNEUTRAL":
-        return buildNeutralTestingAuto();
+      case "TrenchNeutral":
+        return buildSingleNeutralAuto();
+      case "DoubleTrenchNeutral":
+        return buildDoubleNeutralAuto();
       default:
         return pathBuilder.build(defaultPath.getPath());
     }
