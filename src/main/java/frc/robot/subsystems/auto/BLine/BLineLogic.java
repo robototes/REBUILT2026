@@ -111,7 +111,7 @@ public class BLineLogic {
             defaultPath,
             new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
             new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
-              new BLinePath("BumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench"),
+              new BLinePath("BumpNeutral", "RT", "FirstNeutralBump"),
                        new BLinePath("DoubleBumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench", "SecondNeutralBump"));
 
 

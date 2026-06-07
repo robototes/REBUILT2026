@@ -44,7 +44,7 @@
             "x": 0.0,
             "y": 0.0,
             "width": 1024.0,
-            "height": 896.0,
+            "height": 512.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Selected auto",
@@ -63,9 +63,9 @@
           {
             "title": "Start pose",
             "x": 1024.0,
-            "y": 384.0,
-            "width": 768.0,
-            "height": 512.0,
+            "y": 0.0,
+            "width": 640.0,
+            "height": 384.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Start pose",
@@ -83,48 +83,20 @@
           },
           {
             "title": "Starting Position",
-            "x": 1408.0,
-            "y": 128.0,
-            "width": 384.0,
+            "x": 1152.0,
+            "y": 384.0,
+            "width": 256.0,
             "height": 128.0,
-            "type": "ComboBox Chooser",
+            "type": "Split Button Chooser",
             "properties": {
               "topic": "/SmartDashboard/Starting Position",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Auto Key",
-            "x": 1408.0,
-            "y": 0.0,
-            "width": 512.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Auto Key",
-              "period": 0.06,
-              "data_type": "string",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "Est. Time (s)",
-            "x": 1152.0,
-            "y": 128.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Est. Time (s)",
-              "period": 0.06,
-              "data_type": "double"
+              "period": 0.06
             }
           },
           {
             "title": "Available Auto Variants",
-            "x": 1024.0,
-            "y": 256.0,
+            "x": 256.0,
+            "y": 512.0,
             "width": 768.0,
             "height": 128.0,
             "type": "Split Button Chooser",
@@ -135,8 +107,8 @@
           },
           {
             "title": "Auto Delay",
-            "x": 1280.0,
-            "y": 128.0,
+            "x": 1024.0,
+            "y": 384.0,
             "width": 128.0,
             "height": 128.0,
             "type": "Text Display",
@@ -149,9 +121,9 @@
           },
           {
             "title": "DisplaySpeed",
-            "x": 1024.0,
-            "y": 0.0,
-            "width": 384.0,
+            "x": 0.0,
+            "y": 512.0,
+            "width": 256.0,
             "height": 128.0,
             "type": "Number Slider",
             "properties": {
@@ -165,17 +137,15 @@
             }
           },
           {
-            "title": "Initial Heading",
-            "x": 1024.0,
-            "y": 128.0,
-            "width": 128.0,
+            "title": "Trench Side",
+            "x": 1408.0,
+            "y": 384.0,
+            "width": 256.0,
             "height": 128.0,
-            "type": "Text Display",
+            "type": "Split Button Chooser",
             "properties": {
-              "topic": "/SmartDashboard/Initial Heading",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
+              "topic": "/SmartDashboard/Trench Side",
+              "period": 0.06
             }
           }
         ]
