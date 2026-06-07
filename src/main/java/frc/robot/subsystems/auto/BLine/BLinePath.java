@@ -17,18 +17,18 @@ public class BLinePath {
   private StartPosition positionType;
   private Pose2d startPose;
 
-  public BLinePath(String displayName, String startingPosName, String... pathNames) {
-    this(displayName, startingPosName, false, pathNames);
+  public BLinePath(String displayName, String startingPosName, String... displayedPathNames) {
+    this(displayName, startingPosName, false, displayedPathNames);
   }
 
   public BLinePath(
-      String displayName, String startingPosName, boolean vision, String... pathNames) {
+      String displayName, String startingPosName, boolean vision, String... displayedPathNames) {
     this.displayName = displayName;
     this.startingPosName = startingPosName;
     this.vision = vision;
 
     List<Path> loaded = new ArrayList<>();
-    for (String name : pathNames) {
+    for (String name : displayedPathNames) {
       loaded.add(new Path(name));
     }
     this.allPaths = List.copyOf(loaded);
