@@ -110,7 +110,10 @@ public class BLineLogic {
         List.of(
             defaultPath,
             new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
-            new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"));
+            new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
+              new BLinePath("BumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench"),
+                       new BLinePath("DoubleBumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench", "SecondNeutralBump"));
+
 
     autos.clear();
     autos.addAll(rebuiltPaths);
@@ -268,19 +271,34 @@ public class BLineLogic {
     return Commands.waitSeconds(delay).andThen(buildPath(path.getPath(), true));
   }
 
-  public static Command buildSingleNeutralAuto() {
+  public static Command buildSingleNeutralTrenchAuto() {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildPath(new Path("FirstNeutralTrench"), true),
         launcherCommand());
   }
 
-  public static Command buildDoubleNeutralAuto() {
+  public static Command buildDoubleNeutralTrenchAuto() {
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildPath(new Path("FirstNeutralTrench"), true),
-        launcherCommand(4),
+        launcherCommand(4.5),
         buildPath(new Path("SecondNeutralTrench"), false),
+        launcherCommand());
+  }
+   public static Command buildSingleNeutralBumpAuto() {
+    return Commands.sequence(
+        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+        buildPath(new Path("FirstNeutralBump"), true),
+        launcherCommand());
+  }
+
+  public static Command buildDoubleNeutralBumpAuto() {
+    return BLineCommands.sequence(
+        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+        buildPath(new Path("FirstNeutralBump"), true),
+       buildPath(new Path("BumpToTrench"), false),
+        buildPath(new Path("SecondNeutralBump"), false),
         launcherCommand());
   }
 
@@ -291,9 +309,13 @@ public class BLineLogic {
   public static Command handleAutos() {
     switch (getSelectedAutoName()) {
       case "TrenchNeutral":
-        return buildSingleNeutralAuto();
+        return buildSingleNeutralTrenchAuto();
       case "DoubleTrenchNeutral":
-        return buildDoubleNeutralAuto();
+        return buildDoubleNeutralTrenchAuto();
+           case "BumpNeutral":
+        return buildSingleNeutralBumpAuto();
+      case "DoubleBumpNeutral":
+        return buildDoubleNeutralBumpAuto();
       default:
         return pathBuilder.build(defaultPath.getPath());
     }
