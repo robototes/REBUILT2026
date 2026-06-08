@@ -13,8 +13,8 @@ public class RobotSim {
 
   FuelSim fuelSim;
   public static final double UPDATE_S = 0.02; // 20 ms update rate
-  public static final double SIM_ROBOT_WIDTH_M = 0.8;
-  public static final double SIM_ROBOT_LENGTH_M = 0.8;
+  public static final double SIM_ROBOT_WIDTH_M = 0.937;
+  public static final double SIM_ROBOT_LENGTH_M = 0.781;
   public static final double SIM_ROBOT_BUMPER_HEIGHT = 0.7;
   static DoublePublisher scorePublisher;
 
@@ -33,7 +33,7 @@ public class RobotSim {
         SIM_ROBOT_BUMPER_HEIGHT,
         () -> drive.getState().Pose,
         () -> drive.getState().Speeds);
-    fuelSim.registerIntake(0.1, 0.2, 0.1, 0.746, () -> true);
+    fuelSim.registerIntake(0.1, 2, 0.1, 0.746, () -> true);
     scorePublisher =
         NetworkTableInstance.getDefault()
             .getTable("Fuel Simulation")

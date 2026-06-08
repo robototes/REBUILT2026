@@ -91,6 +91,7 @@
     }
   ],
   "constraints": {
+    "end_translation_tolerance_meters": 0.12,
     "max_velocity_meters_per_sec": [
       {
         "value": 3.0,
