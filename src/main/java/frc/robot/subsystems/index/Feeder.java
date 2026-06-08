@@ -4,7 +4,7 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -33,7 +33,8 @@ public class Feeder extends SubsystemBase {
       new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
-  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
+  private final VelocityTorqueCurrentFOC velocityRequest =
+      new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 
   private final TalonFX feedMotor;
   private final FlywheelSim motorSim;
@@ -90,25 +91,26 @@ public class Feeder extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
 
-    talonFXConfiguration.Slot0.kV = 11.28 / 92;
-    talonFXConfiguration.Slot0.kP = 0.5;
+    talonFXConfiguration.Slot0.kS = 4.2;
+    talonFXConfiguration.Slot0.kA = 0.5;
+    talonFXConfiguration.Slot0.kP = 10;
 
     cfg.apply(talonFXConfiguration);
   }
 
   public void runVelocity() {
     if (TUNABLE_ENABLE.get()) {
-      feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+      feedMotor.setControl(velocityRequest.withVelocity(TARGET_RPS.get()));
     } else {
-      feedMotor.setControl(TARGET_VELOCITY.withVelocity(D_TARGET_RPS));
+      feedMotor.setControl(velocityRequest.withVelocity(D_TARGET_RPS));
     }
   }
 
   public void setVelocity(double rps) {
     if (TUNABLE_ENABLE.get()) {
-      feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
+      feedMotor.setControl(velocityRequest.withVelocity(TARGET_RPS.get()));
     } else {
-      feedMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
+      feedMotor.setControl(velocityRequest.withVelocity(rps));
     }
   }
 

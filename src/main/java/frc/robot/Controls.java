@@ -135,7 +135,7 @@ public class Controls {
     connected(indexingTestController)
         .and(indexingTestController.leftTrigger())
         .whileTrue(
-            s.launcherSubsystem != null
+            s.flywheels != null
                 ? s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())
                 : s.indexerSubsystem.runIndexer());
   }
