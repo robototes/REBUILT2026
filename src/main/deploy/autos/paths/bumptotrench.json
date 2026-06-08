@@ -31,9 +31,9 @@
     },
     {
       "type": "translation",
-      "x_meters": 2.9767,
-      "y_meters": 0.76884,
-      "intermediate_handoff_radius_meters": 0.4
+      "x_meters": 3.01332,
+      "y_meters": 0.68216,
+      "intermediate_handoff_radius_meters": 0.2
     },
     {
       "type": "event_trigger",
@@ -54,15 +54,15 @@
     }
   ],
   "constraints": {
-    "end_translation_tolerance_meters": 0.12,
+    "end_translation_tolerance_meters": 0.09,
     "max_velocity_meters_per_sec": [
       {
-        "value": 1.6,
+        "value": 1.3,
         "start_ordinal": 0,
         "end_ordinal": 0
       },
       {
-        "value": 1.6,
+        "value": 1.3,
         "start_ordinal": 1,
         "end_ordinal": 1
       }
