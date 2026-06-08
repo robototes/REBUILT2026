@@ -406,6 +406,6 @@ public class BLineLogic {
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
     FollowPath.registerEventTrigger("climb", climbCommand());
-    FollowPath.registerEventTrigger("cancel", Commands.runOnce(() -> launchAllowed.set(false)));
+    FollowPath.registerEventTrigger("cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
   }
 }
