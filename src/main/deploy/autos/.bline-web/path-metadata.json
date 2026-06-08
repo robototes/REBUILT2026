@@ -31,19 +31,6 @@
           },
           {
             "key": "max_velocity_meters_per_sec",
-            "value": 3.27,
-            "start_ordinal": 7,
-            "end_ordinal": 7,
-            "source": "auto_velocity",
-            "auto_velocity": {
-              "velocity_safety_factor": 0.9,
-              "acceleration_safety_factor": 0.8,
-              "merge_tolerance_meters_per_sec": 0.3,
-              "input_signature": "{\"pathElements\":[{\"type\":\"waypoint\",\"xMeters\":4.013,\"yMeters\":0.473,\"handoffRadiusMeters\":0.5,\"rotationRadians\":-1.5708,\"profiledRotation\":true},{\"type\":\"waypoint\",\"xMeters\":5.45101,\"yMeters\":0.58991,\"handoffRadiusMeters\":0.4,\"rotationRadians\":-1.5708,\"profiledRotation\":true},{\"type\":\"event_trigger\",\"tRatio\":0},{\"type\":\"waypoint\",\"xMeters\":6.573755148587652,\"yMeters\":0.8214867605289937,\"handoffRadiusMeters\":0.3,\"rotationRadians\":-2.35619,\"profiledRotation\":true},{\"type\":\"translation\",\"xMeters\":7.62013,\"yMeters\":1.40061,\"handoffRadiusMeters\":0.3},{\"type\":\"waypoint\",\"xMeters\":7.779809454259738,\"yMeters\":2.76137685856349,\"handoffRadiusMeters\":0.6,\"rotationRadians\":-1.5708,\"profiledRotation\":true},{\"type\":\"translation\",\"xMeters\":6.958438065219933,\"yMeters\":2.6234522215077574,\"handoffRadiusMeters\":0.6},{\"type\":\"translation\",\"xMeters\":5.614032533314306,\"yMeters\":2.5002326599980744,\"handoffRadiusMeters\":0.35},{\"type\":\"waypoint\",\"xMeters\":3.38,\"yMeters\":2.28,\"handoffRadiusMeters\":0.25,\"rotationRadians\":-1.5708,\"profiledRotation\":true}],\"scalarConstraints\":{\"maxVelocityMps\":null,\"maxAccelerationMps2\":null,\"maxVelocityDegPerSec\":null,\"maxAccelerationDegPerSec\":null},\"rotationRangedConstraints\":[],\"config\":{\"maxVelocityMps\":4.5,\"maxAccelerationMps2\":6,\"handoffRadiusMeters\":0.2,\"maxVelocityDegPerSec\":720,\"maxAccelerationDegPerSec\":1500,\"autoVelocityVelocitySafetyFactor\":0.9,\"autoVelocityAccelerationSafetyFactor\":0.8},\"options\":{\"velocitySafetyFactor\":0.9,\"accelerationSafetyFactor\":0.8,\"sampleStepMeters\":null}}"
-            }
-          },
-          {
-            "key": "max_velocity_meters_per_sec",
             "value": 4.05,
             "start_ordinal": 8,
             "end_ordinal": 8,
