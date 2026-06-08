@@ -37,9 +37,10 @@ public class GetTargetFromPose {
   // BALLING INSTRUCTIONS
   // ONLY USE THIS FOR A BASKETBALL HOOP. If you want to score into a cardboard box dont use this
   // instead just zero infront of the box and the robot will score normally into the box
-  // Switch to red alliance then go into advantage scope to turn on "Balling". After that go to the
-  // right corner of the feild with the climb side pointing off the court and the intake pointing
-  // towards the length of the court
+  // Switch to red alliance (I did this from behind this the hoop if you are doing it from the front
+  // use blue) then go into advantage scope to turn on "Balling". After that go to the
+  // center grey line of the court and then line up the bumper gap with the gray line and the turret
+  // side of the robot on the edge of the thick black line
   public static NtTunableBoolean BALLING = new NtTunableBoolean("/Balling", false);
   private static Translation2d BALLING_POSE = new Translation2d(-0.9779, -0.2286);
   private static Pose2d RIGHT_BASKETBALL_COURT_CORNER = new Pose2d(0, 0, new Rotation2d());

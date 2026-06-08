@@ -78,6 +78,8 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(8, 9, 90, 1.53)
   };
 
+  // These "work" but if you ever want to do this again I reccommend redoing the data map and add
+  // more points to shoot closer to the hoop
   public static final LauncherDistanceDataPoint[] ballingDistanceData = {
     new LauncherDistanceDataPoint(5.720, 5.7, 82, 1),
     new LauncherDistanceDataPoint(4.354, 5, 70, 1),
