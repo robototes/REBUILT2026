@@ -36,6 +36,7 @@ public class IndexerSubsystem extends SubsystemBase {
           double fRPS = flywheelRPS.getAsDouble() * 1.12 + 15;
           double sRPS = Math.min(fRPS * 1.5, 70);
           if (GetTargetFromPose.BALLING.get()) {
+            // Feeding speed reduced for balling so balls dont hit each other mid air
             fRPS /= 2;
             sRPS /= 2;
           }
