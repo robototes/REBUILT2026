@@ -11,6 +11,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
@@ -25,6 +26,8 @@ public class LauncherConstants {
       table.getStructTopic("Turret Pose", Pose2d.struct).publish();
   private static final DoublePublisher turretToHubDistance =
       table.getDoubleTopic("Turret to hub distance").publish();
+  private static final DoublePublisher turretToTargetDistance =
+      table.getDoubleTopic("Turret to target distance").publish();
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
@@ -75,9 +78,23 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(8, 9, 90, 1.53)
   };
 
+  // These "work" but if you ever want to do this again I reccommend redoing the data map and add
+  // more points to shoot closer to the hoop
+  public static final LauncherDistanceDataPoint[] ballingDistanceData = {
+    new LauncherDistanceDataPoint(5.720, 5.7, 82, 1),
+    new LauncherDistanceDataPoint(4.354, 5, 70, 1),
+    new LauncherDistanceDataPoint(3.119, 3.7, 63, 1),
+    new LauncherDistanceDataPoint(2.319, 2.8, 60, 1)
+  };
+
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
+
+  private static final InterpolatingDoubleTreeMap flywheelMapBalling =
+      new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap hoodMapBalling = new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap timeMapBalling = new InterpolatingDoubleTreeMap();
 
   static {
     LauncherDistanceDataPoint[] distanceData =
@@ -89,6 +106,24 @@ public class LauncherConstants {
       maxTime = Math.max(maxTime, point.time);
       minTime = Math.min(minTime, point.time);
     }
+
+    for (var point : ballingDistanceData) {
+      flywheelMapBalling.put(point.distance, point.flywheelPower);
+      hoodMapBalling.put(point.distance, point.hoodAngle);
+      timeMapBalling.put(point.distance, point.time);
+    }
+  }
+
+  private static InterpolatingDoubleTreeMap activeFlywheelMap() {
+    return GetTargetFromPose.BALLING.get() ? flywheelMapBalling : flywheelMap;
+  }
+
+  private static InterpolatingDoubleTreeMap activeHoodMap() {
+    return GetTargetFromPose.BALLING.get() ? hoodMapBalling : hoodMap;
+  }
+
+  private static InterpolatingDoubleTreeMap activeTimeMap() {
+    return GetTargetFromPose.BALLING.get() ? timeMapBalling : timeMap;
   }
 
   // public static void update(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
@@ -107,7 +142,7 @@ public class LauncherConstants {
   // }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
-    return flywheelMap.get(distance);
+    return activeFlywheelMap().get(distance);
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
@@ -119,6 +154,8 @@ public class LauncherConstants {
     turretPose.set(result);
     distToHub = AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm();
     turretToHubDistance.set(distToHub);
+    turretToTargetDistance.set(
+        GetTargetFromPose.getTargetLocation(result).minus(result.getTranslation()).getNorm());
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
@@ -138,7 +175,7 @@ public class LauncherConstants {
   }
 
   public static double getHoodAngleFromDistance(double distance) {
-    return hoodMap.get(distance /*+ distanceOffset*/);
+    return activeHoodMap().get(distance /*+ distanceOffset*/);
   }
 
   public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot) {
@@ -147,7 +184,7 @@ public class LauncherConstants {
   }
 
   public static double getTimeFromDistance(double distance) {
-    return timeMap.get(distance /*+ distanceOffset*/);
+    return activeTimeMap().get(distance /*+ distanceOffset*/);
   }
 
   public static double minTimeOfFlight() {
