@@ -8,13 +8,8 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -33,7 +28,7 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.Misc.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
-import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
@@ -76,15 +71,6 @@ public class Controls {
 
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
-
-  AprilTagFieldLayout aprilTagFieldLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
-  // Robot with bumpers is 36.875 inches by 30.750 inches
-  Transform2d robotOffsetFromTag =
-      new Transform2d(
-          new Translation2d(Units.inchesToMeters(30.750 / 2), 0), Rotation2d.fromDegrees(180));
-  Pose2d redHub = aprilTagFieldLayout.getTagPose(10).get().toPose2d().plus(robotOffsetFromTag);
-  Pose2d blueHub = aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
 
   private LEDMode ledsMode = LEDMode.DEFAULT;
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
@@ -148,7 +134,10 @@ public class Controls {
     }
     connected(indexingTestController)
         .and(indexingTestController.leftTrigger())
-        .whileTrue(s.indexerSubsystem.runIndexer());
+        .whileTrue(
+            s.flywheels != null
+                ? s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())
+                : s.indexerSubsystem.runIndexer());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -233,7 +222,7 @@ public class Controls {
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
       // In simulation, inject drift with POV-right to test vision correction
-      driverController
+      visionTestController
           .povRight()
           .onTrue(
               s.drivebaseSubsystem
@@ -241,7 +230,7 @@ public class Controls {
                   .withName("Inject Drift"));
 
       // POV-left resets robot to the starting pose of the selected auto
-      driverController
+      visionTestController
           .povLeft()
           .onTrue(
               s.drivebaseSubsystem
@@ -254,8 +243,7 @@ public class Controls {
         .back()
         .onTrue(
             s.drivebaseSubsystem
-                .runOnce(
-                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
+                .runOnce(() -> s.drivebaseSubsystem.resetPose(GetTargetFromPose.getRestPose()))
                 .withName("Reset to Hub"));
   }
 
@@ -534,8 +522,7 @@ public class Controls {
         .and(turretTestController.rightBumper())
         .onTrue(
             s.drivebaseSubsystem
-                .runOnce(
-                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
+                .runOnce(() -> s.drivebaseSubsystem.resetPose(GetTargetFromPose.getRestPose()))
                 .withName("Reset to Hub"));
     driverController
         .rightStick()
