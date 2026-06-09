@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import frc.robot.Motors;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
@@ -21,8 +22,8 @@ import frc.robot.util.tuning.NtTunableDouble;
 
 public class IntakeRollers extends SubsystemBase {
   // motors
-  private final TalonFX leftRoller;
-  private final TalonFX rightRoller;
+  private final Motors leftRoller;
+  private final Motors rightRoller;
 
   // networktables and sim
   private DoubleTopic leftRollerTopic;
@@ -43,16 +44,32 @@ public class IntakeRollers extends SubsystemBase {
   private final StatusSignal<AngularVelocity> SS_roller1;
   private final StatusSignal<AngularVelocity> SS_roller2;
 
+  // configurations
+  private static final double kP = RobotType.isAlpha() ? 5.0 : 4.0;
+  private static final double kS = RobotType.isAlpha() ? 5.0 : 1.0;
+  private static final double kA = 0.2;
+  private static final double statorCurrentLimit = 80;
+  private static final double supplyCurrentLimit = 40;
+  private static final boolean statorCurrentLimitEnable = true;
+  private static final boolean supplyCurrentLimitEnable = true;
+  private static final NeutralModeValue neutralMode = NeutralModeValue.Coast;
+  private static final InvertedValue inverted = InvertedValue.CounterClockwise_Positive;
+
   public IntakeRollers() {
     // define motors and configs
-    leftRoller =
-        new TalonFX(
-            Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
-    rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
-    motorConfigs();
-    leftRoller.clearStickyFaults();
-    rightRoller.clearStickyFaults();
+    Motors.MotorConfigs rollerConfigs =
+        new Motors.MotorConfigs(
+            kP,
+            kS,
+            kA,
+            neutralMode,
+            inverted,
+            statorCurrentLimit,
+            supplyCurrentLimit,
+            statorCurrentLimitEnable,
+            supplyCurrentLimitEnable);
+    leftRoller = new Motors(Hardware.INTAKE_MOTOR_ONE_ID, rollerConfigs);
+    rightRoller = new Motors(Hardware.INTAKE_MOTOR_TWO_ID, rollerConfigs);
     networktables();
 
     // sim creator
@@ -62,27 +79,6 @@ public class IntakeRollers extends SubsystemBase {
 
     SS_roller1 = leftRoller.getVelocity();
     SS_roller2 = rightRoller.getVelocity();
-  }
-
-  // roller configs
-  private void motorConfigs() {
-    var talonFXConfigs = new TalonFXConfiguration();
-    talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast; // KEEP TS AT COAST
-    talonFXConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
-    talonFXConfigs.CurrentLimits.StatorCurrentLimit = 80;
-    talonFXConfigs.CurrentLimits.SupplyCurrentLimit = 40;
-    talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
-    talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
-
-    talonFXConfigs.Slot0.kP = RobotType.isAlpha() ? 5.0 : 4.0;
-    talonFXConfigs.Slot0.kS = RobotType.isAlpha() ? 5.0 : 1.0;
-    talonFXConfigs.Slot0.kA = 0.2;
-
-    // configurator
-    leftRoller.getConfigurator().apply(talonFXConfigs);
-    talonFXConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    rightRoller.getConfigurator().apply(talonFXConfigs);
   }
 
   // configure networktables

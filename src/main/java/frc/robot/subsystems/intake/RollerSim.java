@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Motors;
 import frc.robot.util.simulation.RobotSim;
 
 public class RollerSim extends SubsystemBase {
@@ -33,7 +34,7 @@ public class RollerSim extends SubsystemBase {
       LinearSystemId.createFlywheelSystem(
           DCMotor.getKrakenX60(1), 0.002, ROLLERS_GEAR_RATIO); // idk how to calculate MOI
 
-  public RollerSim(TalonFX leftRoller, TalonFX rightRoller) {
+  public RollerSim(Motors leftRoller, Motors rightRoller) {
     if (!RobotBase.isSimulation()) {
       throw new IllegalStateException("This is not sim what are you doing");
     }

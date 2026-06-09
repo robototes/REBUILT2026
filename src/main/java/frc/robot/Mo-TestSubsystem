@@ -1,0 +1,18 @@
+package frc.robot;
+
+import frc.robot.Motors;
+
+public class Mo-TestSubsystem {
+    private final Motors motor1;
+    private final Motors motor2;
+
+    public Mo-TestSubsystem() {
+        motor1 = new Motors(1);
+        motor2 = new Motors(2);
+        velocityRequest = Motors.velocityRequest;
+    }
+    public void runMotors(double speed) {
+        motor1.setControl(speed);
+        motor2.setControl(speed);
+    }
+}
