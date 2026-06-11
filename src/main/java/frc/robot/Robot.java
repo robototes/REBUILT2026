@@ -127,6 +127,7 @@ public class Robot extends TimedRobot {
       BLineLogic.init(subsystems);
       BLineLogic.configure(subsystems);
 
+
       BLineLogic.initSmartDashboard();
       BLineAutonomousField.initSmartDashBoard(
           () -> "Autos", // tab name
@@ -177,7 +178,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    // Resume logging every X seconds
+    SmartDashboard.putBoolean("Is Beached",
+   subsystems.drivebaseSubsystem.isBeached(30));
+
+  SmartDashboard.putString("Recovery Debug",
+    "Beached: " + subsystems.drivebaseSubsystem.isBeached(30));
+    //Resume logging every X seconds
     double time = Timer.getFPGATimestamp();
     if (time - LAST_TIME >= 1) {
       LAST_TIME = time;
