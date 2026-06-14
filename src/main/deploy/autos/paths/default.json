@@ -15,43 +15,13 @@
     {
       "type": "event_trigger",
       "t_ratio": 0.5,
-      "lib_key": "override"
+      "lib_key": "launch"
     },
     {
       "type": "waypoint",
       "translation_target": {
         "x_meters": 2.5,
         "y_meters": 4.035,
-        "intermediate_handoff_radius_meters": 0.2
-      },
-      "rotation_target": {
-        "rotation_radians": 0.0,
-        "profiled_rotation": true
-      }
-    },
-    {
-      "type": "translation",
-      "x_meters": 3.16823,
-      "y_meters": 6.30565,
-      "intermediate_handoff_radius_meters": 0.2
-    },
-    {
-      "type": "waypoint",
-      "translation_target": {
-        "x_meters": 1.28707,
-        "y_meters": 2.25779,
-        "intermediate_handoff_radius_meters": 0.2
-      },
-      "rotation_target": {
-        "rotation_radians": 0.0,
-        "profiled_rotation": true
-      }
-    },
-    {
-      "type": "waypoint",
-      "translation_target": {
-        "x_meters": 3.65456,
-        "y_meters": 0.69582,
         "intermediate_handoff_radius_meters": 0.2
       },
       "rotation_target": {

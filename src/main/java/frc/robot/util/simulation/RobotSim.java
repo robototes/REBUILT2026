@@ -70,15 +70,19 @@ public class RobotSim {
   }
 
   public static Command launch(Subsystems s, double timeout) {
-    return Commands.run(
-            () ->
-                FuelSim.getInstance()
-                    .launchFuel(
-                        Units.MetersPerSecond.of(6),
-                        Units.Radians.of(s.hood.getHoodPosition()),
-                        Units.Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
-                        Units.Meters.of(1.45)))
-        .withTimeout(timeout)
-        .withName("Auto Launcher Sim Command");
+    if (s.hood != null && s.turretSubsystem != null) {
+      return Commands.run(
+              () ->
+                  FuelSim.getInstance()
+                      .launchFuel(
+                          Units.MetersPerSecond.of(6),
+                          Units.Radians.of(s.hood.getHoodPosition()),
+                          Units.Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                          Units.Meters.of(1.45)))
+          .withTimeout(timeout)
+          .withName("Auto Launcher Sim Command");
+    } else {
+      return Commands.none();
+    }
   }
 }

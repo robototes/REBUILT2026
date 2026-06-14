@@ -7,8 +7,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.Unit;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -24,11 +22,7 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
-import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
-
-import static edu.wpi.first.units.Units.Degree;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,8 +88,9 @@ public class BLineLogic {
 
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
-private static FollowPath follow;
-private static int savedPathIndex;
+  private static FollowPath follow;
+  private static int savedPathIndex;
+
   // ========================= MIRRORING =========================
 
   public static boolean isMirrored() {
@@ -177,7 +172,6 @@ private static int savedPathIndex;
         .withShouldMirror(BLineLogic::isMirrored);
   }
 
-
   // ========================= LOGGING =========================
 
   public static void initSmartDashboard() {
@@ -192,11 +186,6 @@ private static int savedPathIndex;
     gameObjects.setDefaultOption("0", 0);
     filterAutos(0);
 
-
-
-
-
-SmartDashboard.putBoolean("Is Beached", s.drivebaseSubsystem.isBeached(30));
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
     SmartDashboard.putData("Starting Position", startPositionChooser);
@@ -328,27 +317,32 @@ SmartDashboard.putBoolean("Is Beached", s.drivebaseSubsystem.isBeached(30));
   }
 
   private static Command buildPath(Path path, boolean resetPose) {
-    follow =  (resetPose ? pathBuilder : continuingPathBuilder).build(path);
+    follow = (resetPose ? pathBuilder : continuingPathBuilder).build(path);
 
     return follow;
-}
-
-
+  }
 
   public static Command handleAutos() {
-    switch (getSelectedAutoName()) {
-      case "TrenchNeutral":
-        return buildSingleNeutralTrenchAuto();
-      case "DoubleTrenchNeutral":
-        return buildDoubleNeutralTrenchAuto();
-      case "BumpNeutral":
-        return buildSingleNeutralBumpAuto();
-      case "DoubleBumpNeutral":
-        return buildDoubleNeutralBumpAuto();
-      case "BumpNeutralDepot":
-        return buildSingleNeutralBumpDepotAuto();
-      default:
-        return pathBuilder.build(defaultPath.getPath());
+    String selectedAuto = getSelectedAutoName();
+    if (selectedAuto == null) {
+
+      return pathBuilder.build(defaultPath.getPath());
+    } else {
+      switch (getSelectedAutoName()) {
+        case "TrenchNeutral":
+          return buildSingleNeutralTrenchAuto();
+        case "DoubleTrenchNeutral":
+          return buildDoubleNeutralTrenchAuto();
+        case "BumpNeutral":
+          return buildSingleNeutralBumpAuto();
+        case "DoubleBumpNeutral":
+          return buildDoubleNeutralBumpAuto();
+        case "BumpNeutralDepot":
+          return buildSingleNeutralBumpDepotAuto();
+
+        default:
+          return pathBuilder.build(defaultPath.getPath());
+      }
     }
   }
 
@@ -382,16 +376,19 @@ SmartDashboard.putBoolean("Is Beached", s.drivebaseSubsystem.isBeached(30));
   }
 
   public static Command launcherCommand() {
-    return Commands.parallel(
-            Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
-            s.launcherSubsystem.launcherAimCommand(),
-            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
-        .withName("Auto Launcher Command");
+    if (s.launcherSubsystem != null && s.flywheels != null) {
+      return Commands.parallel(
+              Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
+              s.launcherSubsystem.launcherAimCommand(),
+              Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
+                  .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
+          .withName("Auto Launcher Command");
+    }
+    return Commands.none();
   }
 
   public static Command stowCommand() {
-    return s.launcherSubsystem.rawStowCommand();
+    return s.launcherSubsystem != null ? s.launcherSubsystem.rawStowCommand() : Commands.none();
   }
 
   public static Command climbCommand() {
@@ -405,51 +402,51 @@ SmartDashboard.putBoolean("Is Beached", s.drivebaseSubsystem.isBeached(30));
       CommandScheduler.getInstance().cancel(bLineLaunching);
     }
   }
-public static Command recoverCommand() {
+
+  public static Command recoverCommand() {
     SmartDashboard.putString("Recovery Status", "STARTING");
-  s.drivebaseSubsystem.getPigeon2().getSimState().setPitch(47);
-  s.drivebaseSubsystem.getPigeon2().getSimState().setRoll(34);
+    s.drivebaseSubsystem.getPigeon2().getSimState().setPitch(47);
+    s.drivebaseSubsystem.getPigeon2().getSimState().setRoll(34);
 
-  return Commands.sequence(
-    buildPath(
-      StuckOnBallRecovery.getRecoverySegment(
-          () -> s.drivebaseSubsystem.getState().Pose,
-          () -> Rotation2d.fromDegrees(
-              s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()
-          ),
-          () -> Rotation2d.fromDegrees(
-              s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble()
-          )
-      ),
-      true
-    )
-  )
-  .until(() -> !s.drivebaseSubsystem.isBeached(30));
-}
-private static Command recoveryUntilUnbeached() {
-  return recoverCommand()
-    .andThen(resume());  // Resume path after recovery
-}
+    return Commands.sequence(
+            buildPath(
+                StuckOnBallRecovery.getRecoverySegment(
+                    () -> s.drivebaseSubsystem.getState().Pose,
+                    () ->
+                        Rotation2d.fromDegrees(
+                            s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
+                    () ->
+                        Rotation2d.fromDegrees(
+                            s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
+                true))
+        .until(() -> !s.drivebaseSubsystem.isBeached(30));
+  }
 
-private static Command resume() {
+  private static Command recoveryUntilUnbeached() {
+    return recoverCommand().andThen(resume()); // Resume path after recovery
+  }
+
+  private static Command resume() {
     SmartDashboard.putString("Recovery Status", "RESUMING PATH");
-  if (follow == null) {
-    return Commands.none();
+    if (follow == null) {
+      return Commands.none();
+    }
+
+    int i = savedPathIndex;
+
+    var flat = getSelectedAutoPath().getPath().getPathElementsWithConstraintsNoWaypoints();
+    List<Path.PathElement> remaining = new ArrayList<>();
+    remaining.add(
+        new Path.TranslationTarget(s.drivebaseSubsystem.getState().Pose.getTranslation()));
+
+    for (int j = i; j < flat.size(); j++) {
+      remaining.add(flat.get(j).getFirst().copy());
+    }
+
+    Path remainder = new Path(remaining, getSelectedAutoPath().getPath().getPathConstraints());
+    return buildPath(remainder, false);
   }
 
-  int i = savedPathIndex;  // ← Use saved index, not follow's index
-
-  var flat = getSelectedAutoPath().getPath().getPathElementsWithConstraintsNoWaypoints();
-  List<Path.PathElement> remaining = new ArrayList<>();
-  remaining.add(new Path.TranslationTarget(s.drivebaseSubsystem.getState().Pose.getTranslation()));
-
-  for (int j = i; j < flat.size(); j++) {
-    remaining.add(flat.get(j).getFirst().copy());
-  }
-
-  Path remainder = new Path(remaining, getSelectedAutoPath().getPath().getPathConstraints());
-  return buildPath(remainder, false);
-}
   private static void registerCommands() {
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
@@ -468,15 +465,17 @@ private static Command resume() {
     }
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
-       FollowPath.registerEventTrigger("override",
-  Commands.runOnce(() -> {
-    if (follow != null) {
-      savedPathIndex = follow.getCurrentTranslationElementIndex();
-      CommandScheduler.getInstance().schedule(recoveryUntilUnbeached());
-    }
-  })
-);
+    FollowPath.registerEventTrigger(
+        "override",
+        Commands.runOnce(
+            () -> {
+              if (follow != null) {
+                savedPathIndex = follow.getCurrentTranslationElementIndex();
+                CommandScheduler.getInstance().schedule(recoveryUntilUnbeached());
+              }
+            }));
     FollowPath.registerEventTrigger("climb", climbCommand());
-    FollowPath.registerEventTrigger("cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
+    FollowPath.registerEventTrigger(
+        "cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
   }
 }

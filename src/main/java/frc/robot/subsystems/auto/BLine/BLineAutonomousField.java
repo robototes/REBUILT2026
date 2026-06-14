@@ -112,11 +112,11 @@ public class BLineAutonomousField {
   private void refreshCurrentPath() {
     if (paths.isEmpty()) {
       currentTranslations = List.of();
-      currentPathLength = 1e-9;
+      currentPathLength = 0;
       return;
     }
     currentTranslations = paths.get(pathIndex).getTranslations();
-    currentPathLength = Math.max(arcLength(currentTranslations), 1e-9);
+    currentPathLength = Math.max(arcLength(currentTranslations), 0);
   }
 
   /* ---------------- Pose update ---------------- */
