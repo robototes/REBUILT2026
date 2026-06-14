@@ -418,7 +418,7 @@ public class BLineLogic {
                     () ->
                         Rotation2d.fromDegrees(
                             s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
-                true))
+                false))
         .until(() -> !s.drivebaseSubsystem.isBeached(30));
   }
 
