@@ -177,10 +177,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putBoolean("Is Beached", subsystems.drivebaseSubsystem.isBeached(30));
 
-    SmartDashboard.putString(
-        "Recovery Debug", "Beached: " + subsystems.drivebaseSubsystem.isBeached(30));
     // Resume logging every X seconds
     double time = Timer.getFPGATimestamp();
     if (time - LAST_TIME >= 1) {

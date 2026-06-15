@@ -186,6 +186,7 @@ public class BLineLogic {
     gameObjects.setDefaultOption("0", 0);
     filterAutos(0);
 
+SmartDashboard.putData("test unbeacj", recoverCommand());
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
     SmartDashboard.putData("Starting Position", startPositionChooser);
@@ -404,9 +405,7 @@ public class BLineLogic {
   }
 
   public static Command recoverCommand() {
-    SmartDashboard.putString("Recovery Status", "STARTING");
-    s.drivebaseSubsystem.getPigeon2().getSimState().setPitch(47);
-    s.drivebaseSubsystem.getPigeon2().getSimState().setRoll(34);
+
 
     return Commands.sequence(
             buildPath(
@@ -419,7 +418,7 @@ public class BLineLogic {
                         Rotation2d.fromDegrees(
                             s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
                 false))
-        .until(() -> !s.drivebaseSubsystem.isBeached(30));
+        .until(() -> !s.drivebaseSubsystem.isBeached(5));
   }
 
   private static Command recoveryUntilUnbeached() {
@@ -427,7 +426,7 @@ public class BLineLogic {
   }
 
   private static Command resume() {
-    SmartDashboard.putString("Recovery Status", "RESUMING PATH");
+
     if (follow == null) {
       return Commands.none();
     }
