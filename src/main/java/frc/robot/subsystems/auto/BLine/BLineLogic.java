@@ -7,6 +7,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -85,7 +87,7 @@ public class BLineLogic {
   private static boolean pathsInitialized = false;
   private static Command bLineLaunching;
   private static Command bLineSimLaunching;
-
+private static  StructPublisher<Pose2d> recoveryPose;
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
   private static FollowPath follow;
@@ -102,6 +104,10 @@ public class BLineLogic {
 
   public static void init(Subsystems subsystems) {
     s = subsystems;
+    recoveryPose =  NetworkTableInstance.getDefault()
+            .getTable("Autos")
+            .getStructTopic("RecoveryPose", Pose2d.struct)
+            .publish();
 
     registerCommands();
 
@@ -186,7 +192,15 @@ public class BLineLogic {
     gameObjects.setDefaultOption("0", 0);
     filterAutos(0);
 
-SmartDashboard.putData("test unbeacj", recoverCommand());
+
+recoveryPose.set(  StuckOnBallRecovery.getRecoveryPose( s.drivebaseSubsystem.getState().Pose,
+
+                   Rotation2d.fromDegrees(
+                  s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
+
+                Rotation2d.fromDegrees(
+                    s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
+
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
     SmartDashboard.putData("Starting Position", startPositionChooser);
@@ -299,7 +313,15 @@ SmartDashboard.putData("test unbeacj", recoverCommand());
         buildPath(new Path("FirstNeutralBump"), true),
         launcherCommand());
   }
+public static void updateRecoveryPose() {
+  recoveryPose.set(  StuckOnBallRecovery.getRecoveryPose( s.drivebaseSubsystem.getState().Pose,
 
+                   Rotation2d.fromDegrees(
+                  s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
+
+                Rotation2d.fromDegrees(
+                    s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
+}
   public static Command buildDoubleNeutralBumpAuto() {
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),

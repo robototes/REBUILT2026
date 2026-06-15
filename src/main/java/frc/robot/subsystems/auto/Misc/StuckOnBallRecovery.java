@@ -16,12 +16,13 @@ public class StuckOnBallRecovery {
   private static final double RECOVERY_POINT_DISTANCE = 1.5;
 
   // For logging visualization only
+
   public static Pose2d getRecoveryPose(Pose2d robotPose, Rotation2d pitch, Rotation2d roll) {
     var headingToGetUnstuck =
         Rotation2d.fromRadians(Math.atan2(pitch.getRadians(), roll.getRadians()));
     return new Pose2d(
         robotPose
-            .transformBy(new Transform2d(0.0, -RECOVERY_POINT_DISTANCE, Rotation2d.kZero))
+            .transformBy(new Transform2d(0.0, RECOVERY_POINT_DISTANCE, Rotation2d.kZero))
             .rotateAround(robotPose.getTranslation(), headingToGetUnstuck)
             .getTranslation(),
         robotPose.getRotation());
