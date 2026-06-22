@@ -123,8 +123,8 @@ public class Robot extends TimedRobot {
         robotSim = null;
       }
       //  BLINE STUFF
+      BLineLogic.handleInit(subsystems, Robot.isSimulation());
 
-      BLineLogic.init(subsystems);
       BLineLogic.configure(subsystems);
 
       BLineLogic.initSmartDashboard();

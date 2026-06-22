@@ -96,6 +96,16 @@ public class BLineLogic {
   }
 
   // ========================= INIT =========================
+  public static void handleInit(Subsystems subsystems, boolean unitTest) {
+
+    registerCommands();
+
+    if (unitTest) {
+      unitTestInit();
+    } else {
+      init(subsystems);
+    }
+  }
 
   public static void init(Subsystems subsystems) {
     s = subsystems;
@@ -150,6 +160,20 @@ public class BLineLogic {
   public static void configure(Subsystems s) {
     pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
     continuingPathBuilder = createPathBuilder(s);
+  }
+
+  public static void unitTestInit() {
+    defaultPath = new BLinePath("default", "Center", "default");
+
+    rebuiltPaths =
+        List.of(
+            defaultPath,
+            new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
+            new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
+            new BLinePath("BumpNeutral", "RT", "FirstNeutralBump"),
+            new BLinePath(
+                "DoubleBumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench", "SecondNeutralBump"),
+            new BLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump", "BumpDepot"));
   }
 
   private static FollowPath.Builder createPathBuilder(Subsystems s) {
@@ -264,13 +288,47 @@ public class BLineLogic {
   }
 
   // ========================= AUTO EXECUTION =========================
-
+ public static List<Path> getPathsToBuild() {
+    BLinePath selected = getSelectedAutoPath();
+    if (selected == null) {
+        return List.of();
+    }
+    return selected.getAllPaths();  // Path objects already exist, just return them
+}
   public static Command getSelectedAuto() {
     double delay = autoDelayEntry.getDouble(0.0);
-    BLinePath path = getSelectedAutoPath();
-    s.drivebaseSubsystem.resetRotation(path.getPath().getInitialModuleDirection());
-    return Commands.waitSeconds(delay).andThen(buildPath(path.getPath(), true));
+    BLinePath selected = getSelectedAutoPath();
+
+    if (selected == null) {
+        return Commands.none();
+    }
+
+    s.drivebaseSubsystem.resetRotation(selected.getPath().getInitialModuleDirection());
+
+    List<Command> commands = new ArrayList<>();
+    commands.add(Commands.waitSeconds(delay));
+
+    List<Path> paths = getPathsToBuild();
+    for (int i = 0; i < paths.size(); i++) {
+        boolean resetPose = (i == 0);  // Reset pose only on first path
+        commands.add(buildPath(paths.get(i), resetPose));
+    }
+
+    return Commands.sequence(commands.toArray(new Command[0]));
+}
+  public static List<BLinePath> getBLinePaths() {
+    return rebuiltPaths;
   }
+
+  public static List<String> getBLinePathsNames() {
+    List<String> pathsNames = new ArrayList<>();
+    for(BLinePath path :getBLinePaths()) {
+      pathsNames.addAll(path.getDisplayingNames());
+    }
+    return pathsNames;
+
+  }
+
 
   public static Command buildSingleNeutralTrenchAuto() {
     return Commands.sequence(
@@ -318,20 +376,20 @@ public class BLineLogic {
 
   public static Command handleAutos() {
     switch (getSelectedAutoName()) {
-      case "TrenchNeutral":
-        return buildSingleNeutralTrenchAuto();
-      case "DoubleTrenchNeutral":
-        return buildDoubleNeutralTrenchAuto();
-      case "BumpNeutral":
-        return buildSingleNeutralBumpAuto();
-      case "DoubleBumpNeutral":
-        return buildDoubleNeutralBumpAuto();
-      case "BumpNeutralDepot":
-        return buildSingleNeutralBumpDepotAuto();
-      default:
-        return pathBuilder.build(defaultPath.getPath());
+        case "TrenchNeutral":
+            return buildSingleNeutralTrenchAuto();
+        case "DoubleTrenchNeutral":
+            return buildDoubleNeutralTrenchAuto();
+        case "BumpNeutral":
+            return buildSingleNeutralBumpAuto();
+        case "DoubleBumpNeutral":
+            return buildDoubleNeutralBumpAuto();
+        case "BumpNeutralDepot":
+            return buildSingleNeutralBumpDepotAuto();
+        default:
+            return getSelectedAuto();  // Use the new generic builder
     }
-  }
+}
 
   private static void updateInitialHeading() {
     BLinePath selected = getSelectedAutoPath();
@@ -406,6 +464,7 @@ public class BLineLogic {
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
     FollowPath.registerEventTrigger("climb", climbCommand());
-    FollowPath.registerEventTrigger("cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
+    FollowPath.registerEventTrigger(
+        "cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
   }
 }
