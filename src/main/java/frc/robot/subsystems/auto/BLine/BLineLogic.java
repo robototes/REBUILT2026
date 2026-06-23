@@ -288,19 +288,20 @@ public class BLineLogic {
   }
 
   // ========================= AUTO EXECUTION =========================
- public static List<Path> getPathsToBuild() {
+  public static List<Path> getPathsToBuild() {
     BLinePath selected = getSelectedAutoPath();
     if (selected == null) {
-        return List.of();
+      return List.of();
     }
-    return selected.getAllPaths();  // Path objects already exist, just return them
-}
+    return selected.getAllPaths(); // Path objects already exist, just return them
+  }
+
   public static Command getSelectedAuto() {
     double delay = autoDelayEntry.getDouble(0.0);
     BLinePath selected = getSelectedAutoPath();
 
     if (selected == null) {
-        return Commands.none();
+      return Commands.none();
     }
 
     s.drivebaseSubsystem.resetRotation(selected.getPath().getInitialModuleDirection());
@@ -310,25 +311,24 @@ public class BLineLogic {
 
     List<Path> paths = getPathsToBuild();
     for (int i = 0; i < paths.size(); i++) {
-        boolean resetPose = (i == 0);  // Reset pose only on first path
-        commands.add(buildPath(paths.get(i), resetPose));
+      boolean resetPose = (i == 0); // Reset pose only on first path
+      commands.add(buildPath(paths.get(i), resetPose));
     }
 
     return Commands.sequence(commands.toArray(new Command[0]));
-}
+  }
+
   public static List<BLinePath> getBLinePaths() {
     return rebuiltPaths;
   }
 
   public static List<String> getBLinePathsNames() {
     List<String> pathsNames = new ArrayList<>();
-    for(BLinePath path :getBLinePaths()) {
+    for (BLinePath path : getBLinePaths()) {
       pathsNames.addAll(path.getDisplayingNames());
     }
     return pathsNames;
-
   }
-
 
   public static Command buildSingleNeutralTrenchAuto() {
     return Commands.sequence(
@@ -376,20 +376,20 @@ public class BLineLogic {
 
   public static Command handleAutos() {
     switch (getSelectedAutoName()) {
-        case "TrenchNeutral":
-            return buildSingleNeutralTrenchAuto();
-        case "DoubleTrenchNeutral":
-            return buildDoubleNeutralTrenchAuto();
-        case "BumpNeutral":
-            return buildSingleNeutralBumpAuto();
-        case "DoubleBumpNeutral":
-            return buildDoubleNeutralBumpAuto();
-        case "BumpNeutralDepot":
-            return buildSingleNeutralBumpDepotAuto();
-        default:
-            return getSelectedAuto();  // Use the new generic builder
+      case "TrenchNeutral":
+        return buildSingleNeutralTrenchAuto();
+      case "DoubleTrenchNeutral":
+        return buildDoubleNeutralTrenchAuto();
+      case "BumpNeutral":
+        return buildSingleNeutralBumpAuto();
+      case "DoubleBumpNeutral":
+        return buildDoubleNeutralBumpAuto();
+      case "BumpNeutralDepot":
+        return buildSingleNeutralBumpDepotAuto();
+      default:
+        return getSelectedAuto(); // Use the new generic builder
     }
-}
+  }
 
   private static void updateInitialHeading() {
     BLinePath selected = getSelectedAutoPath();

@@ -1,5 +1,6 @@
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
 import java.io.File;
 import java.util.ArrayList;
@@ -20,18 +21,18 @@ public class AutosTest {
     assertNotNull(subfolder, "This folder should not be null.");
 
     if (!subfolder.exists() || !subfolder.isDirectory()) {
-      System.out.println(
-          "⚠️  WARNING: Autos folder does not exist at: " + subfolder.getAbsolutePath());
+      System.out.println("WARNING: Autos folder does not exist at: " + subfolder.getAbsolutePath());
       return;
     }
 
     File[] files = subfolder.listFiles();
     if (files == null || files.length == 0) {
-      System.out.println("⚠️  WARNING: Autos folder is empty");
+      System.out.println("WARNING: Autos folder is empty");
       return;
     }
 
     List<String> validPathNames = BLineLogic.getBLinePathsNames();
+    for (String s : validPathNames) Commands.print(s);
     List<String> unusedFiles = new ArrayList<>();
 
     for (File file : files) {
@@ -42,12 +43,12 @@ public class AutosTest {
     }
 
     if (!unusedFiles.isEmpty()) {
-      System.out.println("⚠️  WARNING: Unused BLine Paths found:");
+      System.out.println("WARNING: Unused BLine Paths found:");
       for (String file : unusedFiles) {
         System.out.println("  - " + file);
       }
     } else {
-      System.out.println("✓ All files in 'autos' folder are used");
+      System.out.println("All files in 'autos' folder are used");
     }
   }
 }

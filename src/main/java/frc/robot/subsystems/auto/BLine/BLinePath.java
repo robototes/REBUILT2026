@@ -13,7 +13,7 @@ public class BLinePath {
   private final boolean vision;
   private final Path path;
   private final List<Path> allPaths;
-  public  List<String> displayedPaths = new ArrayList<>();
+  public List<String> displayedPaths = new ArrayList<>();
   private StartPosition positionType;
   private Pose2d startPose;
 
@@ -41,7 +41,8 @@ public class BLinePath {
   public String getDisplayName() {
     return displayName;
   }
-   public List<String> getDisplayingNames() {
+
+  public List<String> getDisplayingNames() {
     return displayedPaths;
   }
 
