@@ -97,7 +97,6 @@ public class BLineLogic {
 
   // ========================= INIT =========================
 
-
   public static void init(Subsystems subsystems) {
     s = subsystems;
     registerCommands();
@@ -249,6 +248,9 @@ public class BLineLogic {
   // ========================= SELECTION METHODS =========================
 
   public static String getSelectedAutoName() {
+    if (autoChooser.getSelected() == null) {
+      return "Default";
+    }
     return autoChooser.getSelected();
   }
 
@@ -357,6 +359,13 @@ public class BLineLogic {
         launcherCommand());
   }
 
+  public static Command buildDefaultAuto() {
+    return BLineCommands.sequence(
+        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+        buildPath(new Path("Default"), true),
+        launcherCommand());
+  }
+
   private static Command buildPath(Path path, boolean resetPose) {
     if (s == null || pathBuilder == null || continuingPathBuilder == null) {
       return Commands.none();
@@ -377,7 +386,7 @@ public class BLineLogic {
       case "BumpNeutralDepot":
         return buildSingleNeutralBumpDepotAuto();
       default:
-        return getSelectedAuto();
+        return buildDefaultAuto();
     }
   }
 
