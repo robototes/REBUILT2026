@@ -1,14 +1,12 @@
+import frc.robot.subsystems.auto.BLine.BLineLogic;
+import frc.robot.subsystems.auto.BLine.BLinePath;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
-import frc.robot.subsystems.auto.BLine.BLineLogic;
-import frc.robot.subsystems.auto.BLine.BLinePath;
-
 public class AutoFilePathsTest {
-    @Test
+  @Test
   public void validatePathFiles() {
     File[] files = TestConstantsUtils.getAutosFiles();
     if (files == null) return;
