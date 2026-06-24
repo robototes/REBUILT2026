@@ -1,4 +1,5 @@
 import edu.wpi.first.wpilibj.Filesystem;
+import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -15,7 +16,7 @@ public class JSONComparisionTest {
       return;
     }
 
-    List<File> allJsonFiles = TestConstantsUtils.getAllJsonFiles(deployDir);
+    List<File> allJsonFiles = UnitTestHelpers.getAllJsonFiles(deployDir);
 
     if (allJsonFiles.size() < 2) {
       System.out.println("WARNING: Not enough files to compare");

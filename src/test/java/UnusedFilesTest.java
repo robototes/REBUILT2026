@@ -1,4 +1,5 @@
 import frc.robot.subsystems.auto.BLine.BLineLogic;
+import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,14 +8,14 @@ import org.junit.jupiter.api.Test;
 public class UnusedFilesTest {
   @Test
   public void unusedFileNames() {
-    File[] files = TestConstantsUtils.getAutosFiles();
+    File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 
     List<String> validPathNames = BLineLogic.getBLinePathsNames();
     List<String> unusedFiles = new ArrayList<>();
 
     for (File file : files) {
-      String filename = TestConstantsUtils.getFilenamWithoutExtension(file);
+      String filename = UnitTestHelpers.getFilenamWithoutExtension(file);
       if (!validPathNames.contains(filename)) {
         unusedFiles.add(file.getName());
       }

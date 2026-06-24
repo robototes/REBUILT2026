@@ -1,10 +1,12 @@
+package frc.robot.util;
+
 import frc.robot.subsystems.auto.BLine.BLineLogic;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 
-public class TestConstantsUtils {
+public class UnitTestHelpers {
   public static final String PATHS_PATH = "src/main/deploy/autos/paths";
 
   @BeforeEach

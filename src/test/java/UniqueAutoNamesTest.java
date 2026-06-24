@@ -1,3 +1,4 @@
+import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -6,13 +7,13 @@ import org.junit.jupiter.api.Test;
 public class UniqueAutoNamesTest {
   @Test
   public void validateUniqueAutoNames() {
-    File[] files = TestConstantsUtils.getAutosFiles();
+    File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 
     List<String> invalidNames = new ArrayList<>();
 
     for (File file : files) {
-      String filename = TestConstantsUtils.getFilenamWithoutExtension(file);
+      String filename = UnitTestHelpers.getFilenamWithoutExtension(file);
 
       if (filename.startsWith(" ")) {
         invalidNames.add(file.getName() + " (contains leading spaces)");
