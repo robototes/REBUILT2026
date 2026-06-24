@@ -118,21 +118,16 @@ public class Robot extends TimedRobot {
     if (DRIVEBASE_ENABLED) {
       if (Robot.isSimulation()) {
         robotSim = new RobotSim(subsystems.drivebaseSubsystem);
-
       } else {
         robotSim = null;
       }
-      //  BLINE STUFF
-      BLineLogic.handleInit(subsystems, Robot.isSimulation());
 
-      BLineLogic.configure(subsystems);
-
-      BLineLogic.initSmartDashboard();
-      BLineAutonomousField.initSmartDashBoard(
-          () -> "Autos", // tab name
-          0, // column (unused, just pass 0)
-          0, // row (unused, just pass 0)
-          this::addPeriodic);
+      // BLINE STUFF
+      BLineLogic.init(subsystems); // Handling init and unit test cases
+      BLineLogic.configure(subsystems); // configure the autobuilder to run autos
+      BLineLogic.initSmartDashboard(); // Logging
+      BLineAutonomousField.initSmartDashBoard( // Visualization
+          () -> "Autos", 0, 0, this::addPeriodic);
     }
 
     CommandScheduler.getInstance()
@@ -286,6 +281,7 @@ public class Robot extends TimedRobot {
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
 
     if (Robot.isSimulation()) {
+
       robotSim.resetFuelSim();
     }
 

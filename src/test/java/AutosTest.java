@@ -1,6 +1,5 @@
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
 import java.io.File;
 import java.util.ArrayList;
@@ -32,7 +31,6 @@ public class AutosTest {
     }
 
     List<String> validPathNames = BLineLogic.getBLinePathsNames();
-    for (String s : validPathNames) Commands.print(s);
     List<String> unusedFiles = new ArrayList<>();
 
     for (File file : files) {
@@ -44,6 +42,7 @@ public class AutosTest {
 
     if (!unusedFiles.isEmpty()) {
       System.out.println("WARNING: Unused BLine Paths found:");
+
       for (String file : unusedFiles) {
         System.out.println("  - " + file);
       }
