@@ -23,6 +23,7 @@ import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class BLineLogic {
   private static Subsystems s;
   public static Field2d field = new Field2d();
   public static Field2d fieldPoseStart = new Field2d();
-
+private static final List<Pose2d> ALL_START_POSES = StartPosition.getStartPoses();
   private static final Pose2d RIGHT_TRENCH_POSE =
       new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90));
   private static final Pose2d LEFT_TRENCH_POSE =
@@ -51,6 +52,11 @@ public class BLineLogic {
       this.title = title;
       this.startPose = startPose;
     }
+    public static List<Pose2d> getStartPoses() {
+    return Arrays.stream(StartPosition.values())
+        .map(pos -> pos.startPose)
+        .toList();
+}
   }
 
   public enum TrenchSide {
@@ -69,6 +75,9 @@ public class BLineLogic {
       new SendableChooser<>();
   private static final SendableChooser<TrenchSide> trenchSideChooser = new SendableChooser<>();
   private static final DynamicSendableChooser<String> autoChooser = new DynamicSendableChooser<>();
+private static final SendableChooser<String> firstActionChooser = new SendableChooser<>();
+    private static final SendableChooser<String> secondActionChooser = new SendableChooser<>();
+    private static final SendableChooser<String> thirdActionChooser = new SendableChooser<>();
   private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
 
   private static final NetworkTableEntry autoDelayEntry =
@@ -113,17 +122,16 @@ public class BLineLogic {
   }
 
   private static void initializePaths() {
-    defaultPath = new BLinePath("default", "Center", "default");
+    defaultPath = new BLinePath("default", "Center", List.of("DEFAULT"), "default");
 
     rebuiltPaths =
         List.of(
             defaultPath,
-            new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
-            new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
-            new BLinePath("BumpNeutral", "RT", "FirstNeutralBump"),
-            new BLinePath("DoubleBumpNeutral", "RT", "FirstNeutralBump", "SecondNeutralBump"),
-            new BLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump"));
-
+            new BLinePath("TrenchNeutral", "RT", List.of("FIRST", "Second", "THIRD"), "FirstNeutralTrench"),
+            new BLinePath("DoubleTrenchNeutral", "RT", List.of("SECOND"),  "SecondNeutralTrench"),
+            new BLinePath("BumpNeutral", "RT", List.of("FIRST", "SECOND","THIRD"),"FirstNeutralBump"),
+            new BLinePath("DoubleBumpNeutral", "RT", List.of("SECOND"),  "SecondNeutralBump"),
+            new BLinePath("BumpNeutralDepot", "RT", List.of("FIRST"), "FirstNeutralBump"));
     autos.clear();
     autos.addAll(rebuiltPaths);
     commandsMap = Map.of(0, rebuiltPaths);
@@ -132,6 +140,7 @@ public class BLineLogic {
     for (List<BLinePath> list : commandsMap.values()) {
       for (BLinePath auto : list) {
         handleStartingPoses(auto);
+           handleStartingPoses2(auto);
         namesToAuto.put(auto.getDisplayName(), auto);
       }
     }
@@ -146,11 +155,56 @@ public class BLineLogic {
       case "Center":
         path.setStartPose2d(StartPosition.CENTER);
         break;
+
       default:
         path.setStartPose2d(StartPosition.MISC);
         break;
     }
   }
+    public static Command handleAutos2() {
+    String firstSelected = firstActionChooser.getSelected();
+    String secondSelected = secondActionChooser.getSelected();
+    String thirdSelected = thirdActionChooser.getSelected();
+
+    if (firstSelected == null || secondSelected == null || thirdSelected == null) {
+        return Commands.none();
+    }
+
+    // Get the BLinePath objects by name
+    BLinePath firstPath = namesToAuto.get(firstSelected);
+    BLinePath secondPath = namesToAuto.get(secondSelected);
+    BLinePath thirdPath = namesToAuto.get(thirdSelected);
+
+    if (firstPath == null || secondPath == null || thirdPath == null) {
+        return Commands.none();
+    }
+
+    return BLineCommands.sequence(
+        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+        buildPath(firstPath.getPath(), true),
+        buildPath(secondPath.getPath(), false),
+        buildPath(thirdPath.getPath(), false),
+        launcherCommand());
+}
+   public static void handleStartingPoses2(BLinePath path) {
+    if(path == null || path.getSegments().isEmpty()) {
+        return;
+    }
+
+    for (String segment : path.getSegments()) {
+        switch (segment.toUpperCase()) {
+            case "FIRST":
+                firstActionChooser.addOption(path.getDisplayName(), path.getDisplayName());
+                break;
+            case "SECOND":
+                secondActionChooser.addOption(path.getDisplayName(), path.getDisplayName());
+                break;
+            case "THIRD":
+                thirdActionChooser.addOption(path.getDisplayName(), path.getDisplayName());
+                break;
+        }
+    }
+}
 
   public static void configure(Subsystems s) {
     pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
@@ -194,6 +248,9 @@ public class BLineLogic {
     SmartDashboard.putData("Auto Mode", gameObjects);
     SmartDashboard.putData("Available Auto Variants", autoChooser);
     SmartDashboard.putString("Auto Key", keys);
+            SmartDashboard.putData("First Action Auto", firstActionChooser);
+        SmartDashboard.putData("Second Action Auto", secondActionChooser);
+        SmartDashboard.putData("Third Action Auto", thirdActionChooser);
 
     autoDelayEntry.setDouble(0.0);
 

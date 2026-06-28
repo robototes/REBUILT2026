@@ -16,17 +16,18 @@ public class BLinePath {
   private final List<String> displayedPaths; // Make it final
   private StartPosition positionType;
   private Pose2d startPose;
+private final List<String> applicableSegments;
 
-  public BLinePath(String displayName, String startingPosName, String... displayedPathNames) {
-    this(displayName, startingPosName, false, displayedPathNames);
+  public BLinePath(String displayName, String startingPosName, List<String> applicableSegments, String... displayedPathNames) {
+    this(displayName, startingPosName, false, applicableSegments, displayedPathNames);
   }
 
   public BLinePath(
-      String displayName, String startingPosName, boolean vision, String... displayedPathNames) {
+      String displayName, String startingPosName, boolean vision, List<String> applicableSegments, String... displayedPathNames) {
     this.displayName = displayName;
     this.startingPosName = startingPosName;
     this.vision = vision;
-
+    this.applicableSegments = applicableSegments;
     List<Path> loaded = new ArrayList<>();
     List<String> displayedList = new ArrayList<>();
 
@@ -43,6 +44,12 @@ public class BLinePath {
 
   public String getDisplayName() {
     return displayName;
+  }
+    public String getSegment(int index) {
+    return applicableSegments.get(index);
+  }
+   public List<String> getSegments() {
+    return applicableSegments;
   }
 
   public List<String> getDisplayingNames() {
@@ -63,6 +70,10 @@ public class BLinePath {
   public Pose2d setStartPose2d(StartPosition pos) {
     this.positionType = pos;
     this.startPose = pos.startPose;
+    return getStartPose2d();
+  }
+  public Pose2d setStartPose2d(Pose2d pos) {
+    this.startPose= pos;
     return getStartPose2d();
   }
 
