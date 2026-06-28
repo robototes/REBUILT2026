@@ -1,6 +1,56 @@
 {
+  "schema_version": 1,
+  "editor_config": {
+    "gui": {
+      "robot": {
+        "length_meters": 0.78,
+        "width_meters": 0.93
+      },
+      "protrusions": {
+        "enabled": true,
+        "distance_meters": 0.21,
+        "side": "back",
+        "default_state": "shown",
+        "show_on_event_keys": [
+          "intake"
+        ],
+        "hide_on_event_keys": []
+      },
+      "field": {
+        "selected_field_id": "frc2026-rebuilt",
+        "custom_fields": []
+      }
+    },
+    "kinematic_constraints": {
+      "default_auto_velocity_velocity_safety_factor": 1.0,
+      "default_auto_velocity_acceleration_safety_factor": 1.0,
+      "default_auto_velocity_merge_tolerance_meters_per_sec": 0.3
+    }
+  },
+  "active_path_file_name": "sweepbump.json",
+  "active_path_group_id": null,
+  "path_groups": [
+    {
+      "group_id": "group-be48ead2-6d4e-4a08-9787-7ec4fcb2553e",
+      "display_name": "Trench Paths",
+      "path_file_names": [
+        "FirstNeutralTrench.json",
+        "FirstNeutralTrenchFAST.json",
+        "SecondNeutralTrench.json"
+      ]
+    },
+    {
+      "group_id": "group-24f6ec6b-f994-4a13-86c1-eaa4d5454b32",
+      "display_name": "Bump Paths",
+      "path_file_names": [
+        "FirstNeutralBump.json",
+        "SecondNeutralBump.json"
+      ]
+    }
+  ],
   "paths": {
     "FirstNeutralBump.json": {
+      "display_name": "FirstNeutralBump",
       "editor_metadata": {
         "ranged_constraints": [
           {
@@ -45,7 +95,40 @@
         ]
       }
     },
+    "pathgroups.json": {
+      "display_name": "pathgroups",
+      "editor_metadata": null
+    },
+    "FirstNeutralTrench.json": {
+      "display_name": "FirstNeutralTrench",
+      "editor_metadata": null
+    },
+    "neutral.json": {
+      "display_name": "Neutral",
+      "editor_metadata": null
+    },
+    "default.json": {
+      "display_name": "default",
+      "editor_metadata": null
+    },
+    "sweep.json": {
+      "display_name": "Sweep",
+      "editor_metadata": null
+    },
+    "config.json": {
+      "display_name": "config",
+      "editor_metadata": null
+    },
+    "trench.json": {
+      "display_name": "Trench",
+      "editor_metadata": null
+    },
+    "SecondNeutralTrench.json": {
+      "display_name": "SecondNeutralTrench",
+      "editor_metadata": null
+    },
     "SecondNeutralBump.json": {
+      "display_name": "SecondNeutralBump",
       "editor_metadata": {
         "ranged_constraints": [
           {
@@ -102,6 +185,35 @@
           }
         ]
       }
+    },
+    "bumptrench.json": {
+      "display_name": "BumpTrench",
+      "editor_metadata": null
+    },
+    "sweepbump.json": {
+      "display_name": "SweepBump",
+      "editor_metadata": null
+    },
+    "FirstNeutralTrenchFAST.json": {
+      "display_name": "FirstNeutralTrenchFAST",
+      "editor_metadata": null
+    },
+    "bumptotrench.json": {
+      "display_name": "bumptotrench",
+      "editor_metadata": null
+    },
+    "neutralbump.json": {
+      "display_name": "NeutralBump",
+      "editor_metadata": null
+    },
+    "BumpDepot.json": {
+      "display_name": "BumpDepot",
+      "editor_metadata": null
+    },
+    "sweeptrench.json": {
+      "display_name": "SweepTrench",
+      "editor_metadata": null
     }
-  }
+  },
+  "field_assets": {}
 }

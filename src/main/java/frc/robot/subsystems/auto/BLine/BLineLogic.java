@@ -76,8 +76,11 @@ private static final List<Pose2d> ALL_START_POSES = StartPosition.getStartPoses(
   private static final SendableChooser<TrenchSide> trenchSideChooser = new SendableChooser<>();
   private static final DynamicSendableChooser<String> autoChooser = new DynamicSendableChooser<>();
 private static final SendableChooser<String> firstActionChooser = new SendableChooser<>();
-    private static final SendableChooser<String> secondActionChooser = new SendableChooser<>();
-    private static final SendableChooser<String> thirdActionChooser = new SendableChooser<>();
+private static final SendableChooser<String> secondActionChooser = new SendableChooser<>();
+private static final SendableChooser<String> thirdActionChooser = new SendableChooser<>();
+private static final SendableChooser<String> fourthActionChooser = new SendableChooser<>();
+private static final SendableChooser<String> fifthActionChooser = new SendableChooser<>();
+private static final SendableChooser<String> sixthActionChooser = new SendableChooser<>();
   private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
 
   private static final NetworkTableEntry autoDelayEntry =
@@ -124,14 +127,16 @@ private static final SendableChooser<String> firstActionChooser = new SendableCh
   private static void initializePaths() {
     defaultPath = new BLinePath("default", "Center", List.of("DEFAULT"), "default");
 
-    rebuiltPaths =
-        List.of(
-            defaultPath,
-            new BLinePath("TrenchNeutral", "RT", List.of("FIRST", "Second", "THIRD"), "FirstNeutralTrench"),
-            new BLinePath("DoubleTrenchNeutral", "RT", List.of("SECOND"),  "SecondNeutralTrench"),
-            new BLinePath("BumpNeutral", "RT", List.of("FIRST", "SECOND","THIRD"),"FirstNeutralBump"),
-            new BLinePath("DoubleBumpNeutral", "RT", List.of("SECOND"),  "SecondNeutralBump"),
-            new BLinePath("BumpNeutralDepot", "RT", List.of("FIRST"), "FirstNeutralBump"));
+    rebuiltPaths = List.of(
+    defaultPath,
+    new BLinePath("Trench", "RT", List.of("FIRST", "SECOND"), "FirstNeutralTrench"),
+    new BLinePath("Neutral", "RT", List.of("FIRST"), "FirstNeutralTrench"),
+    new BLinePath("NeutralBump", "RT", List.of("FIRST", "SECOND"), "FirstNeutralBump"),
+    new BLinePath("Sweep", "RT", List.of("THIRD"), "BumpDepot"),
+    new BLinePath("BumpTrench", "RT", List.of("SECOND", "THIRD"), "bumptotrench"),
+    new BLinePath("SweepTrench", "RT", List.of("THIRD"), "SecondNeutralTrench"),
+    new BLinePath("SweepBump", "RT", List.of("THIRD"), "SecondNeutralBump")
+);
     autos.clear();
     autos.addAll(rebuiltPaths);
     commandsMap = Map.of(0, rebuiltPaths);
@@ -161,21 +166,28 @@ private static final SendableChooser<String> firstActionChooser = new SendableCh
         break;
     }
   }
-    public static Command handleAutos2() {
+   public static Command handleAutos2() {
     String firstSelected = firstActionChooser.getSelected();
     String secondSelected = secondActionChooser.getSelected();
     String thirdSelected = thirdActionChooser.getSelected();
+    String fourthSelected = fourthActionChooser.getSelected();
+    String fifthSelected = fifthActionChooser.getSelected();
+    String sixthSelected = sixthActionChooser.getSelected();
 
-    if (firstSelected == null || secondSelected == null || thirdSelected == null) {
+    if (firstSelected == null || secondSelected == null || thirdSelected == null ||
+        fourthSelected == null || fifthSelected == null || sixthSelected == null) {
         return Commands.none();
     }
 
-    // Get the BLinePath objects by name
     BLinePath firstPath = namesToAuto.get(firstSelected);
     BLinePath secondPath = namesToAuto.get(secondSelected);
     BLinePath thirdPath = namesToAuto.get(thirdSelected);
+    BLinePath fourthPath = namesToAuto.get(fourthSelected);
+    BLinePath fifthPath = namesToAuto.get(fifthSelected);
+    BLinePath sixthPath = namesToAuto.get(sixthSelected);
 
-    if (firstPath == null || secondPath == null || thirdPath == null) {
+    if (firstPath == null || secondPath == null || thirdPath == null ||
+        fourthPath == null || fifthPath == null || sixthPath == null) {
         return Commands.none();
     }
 
@@ -184,8 +196,12 @@ private static final SendableChooser<String> firstActionChooser = new SendableCh
         buildPath(firstPath.getPath(), true),
         buildPath(secondPath.getPath(), false),
         buildPath(thirdPath.getPath(), false),
+        buildPath(fourthPath.getPath(), false),
+        buildPath(fifthPath.getPath(), false),
+        buildPath(sixthPath.getPath(), false),
         launcherCommand());
 }
+
    public static void handleStartingPoses2(BLinePath path) {
     if(path == null || path.getSegments().isEmpty()) {
         return;
@@ -202,10 +218,20 @@ private static final SendableChooser<String> firstActionChooser = new SendableCh
             case "THIRD":
                 thirdActionChooser.addOption(path.getDisplayName(), path.getDisplayName());
                 break;
+            case "FOURTH":
+                fourthActionChooser.addOption(path.getDisplayName(), path.getDisplayName());
+                break;
+            case "FIFTH":
+                fifthActionChooser.addOption(path.getDisplayName(), path.getDisplayName());
+                break;
+            case "SIXTH":
+                sixthActionChooser.addOption(path.getDisplayName(), path.getDisplayName());
+                break;
+                default:
+                   firstActionChooser.addOption("default", defaultPath.getDisplayName());
         }
+      }
     }
-}
-
   public static void configure(Subsystems s) {
     pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
     continuingPathBuilder = createPathBuilder(s);
@@ -241,6 +267,7 @@ private static final SendableChooser<String> firstActionChooser = new SendableCh
     gameObjects.setDefaultOption("0", 0);
     filterAutos(0);
 
+
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
     SmartDashboard.putData("Starting Position", startPositionChooser);
@@ -248,9 +275,13 @@ private static final SendableChooser<String> firstActionChooser = new SendableCh
     SmartDashboard.putData("Auto Mode", gameObjects);
     SmartDashboard.putData("Available Auto Variants", autoChooser);
     SmartDashboard.putString("Auto Key", keys);
-            SmartDashboard.putData("First Action Auto", firstActionChooser);
-        SmartDashboard.putData("Second Action Auto", secondActionChooser);
-        SmartDashboard.putData("Third Action Auto", thirdActionChooser);
+
+     SmartDashboard.putData("Auto Actions1", firstActionChooser);
+SmartDashboard.putData("Auto Actions2", secondActionChooser);
+SmartDashboard.putData("Auto Actions3", thirdActionChooser);
+SmartDashboard.putData("Auto Actions4", fourthActionChooser);
+SmartDashboard.putData("Auto Actions5", fifthActionChooser);
+SmartDashboard.putData("Auto Actions6", sixthActionChooser);
 
     autoDelayEntry.setDouble(0.0);
 
