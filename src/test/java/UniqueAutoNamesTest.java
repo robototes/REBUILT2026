@@ -1,4 +1,3 @@
-import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.ArrayList;
@@ -8,7 +7,7 @@ import org.junit.jupiter.api.Test;
 public class UniqueAutoNamesTest {
   @Test
   public void validateUniqueAutoNames() {
-    BLineLogic.unitTestInit();
+    UnitTestHelpers.setup();
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 

@@ -27,19 +27,18 @@ public class JSONComparisionTest {
       return;
     }
 
-    HashMap<Integer, File> seenHashes = new HashMap<>();
-
+    HashMap<Integer, File> Hashes = new HashMap<>();
     for (File file : allJsonFiles) {
       Object parsedFile = UnitTestHelpers.JSONtoObject(file);
 
       int hash = parsedFile.hashCode();
 
-      if (!seenHashes.containsKey(hash)) {
+      if (!Hashes.containsKey(hash)) {
 
-        seenHashes.put(hash, file);
+        Hashes.put(hash, file);
       } else {
         System.out.println(
-            seenHashes.get(UnitTestHelpers.JSONtoObject(file).hashCode()).getName()
+            Hashes.get(parsedFile.hashCode()).getName()
                 + " has duplicate file contents with "
                 + file.getName());
       }

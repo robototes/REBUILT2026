@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 public class UnusedFilesTest {
   @Test
   public void unusedFileNames() {
-    BLineLogic.unitTestInit();
+    UnitTestHelpers.setup();
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 
