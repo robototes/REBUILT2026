@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 public class AutoFilePathsTest {
   @Test
   public void validatePathFiles() {
+    BLineLogic.unitTestInit();
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 

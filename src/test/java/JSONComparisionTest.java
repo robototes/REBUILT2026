@@ -1,15 +1,22 @@
-import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.util.struct.parser.ParseException;
+import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.util.UnitTestHelpers;
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class JSONComparisionTest {
+  private final int MINIMUM_FILE_COUNT = 2;
 
+  @SuppressWarnings("unlikely-arg-type")
   @Test
-  public void compareJSONContents() throws IOException {
-    File deployDir = Filesystem.getDeployDirectory();
+  public void compareJSONContents()
+      throws ParseException, ParseException, org.json.simple.parser.ParseException {
+    BLineLogic.unitTestInit();
+    File deployDir = new File(UnitTestHelpers.PATHS_PATH);
 
     if (!deployDir.exists() || !deployDir.isDirectory()) {
       System.out.println("WARNING: Deploy directory not found");
@@ -17,27 +24,43 @@ public class JSONComparisionTest {
     }
 
     List<File> allJsonFiles = UnitTestHelpers.getAllJsonFiles(deployDir);
+    HashMap<String, Integer> contents = new HashMap<>();
+    HashMap<String, File> filesWithDuplicateContents = new HashMap<>();
 
-    if (allJsonFiles.size() < 2) {
+    if (allJsonFiles.size() < MINIMUM_FILE_COUNT) {
       System.out.println("WARNING: Not enough files to compare");
       return;
     }
 
-    // Compare each file with every other file
-    for (int i = 0; i < allJsonFiles.size(); i++) {
-      String content1 = new String(java.nio.file.Files.readAllBytes(allJsonFiles.get(i).toPath()));
+    HashSet<Integer> seenHashes = new HashSet<>();
 
-      for (int j = i + 1; j < allJsonFiles.size(); j++) {
-        String content2 =
-            new String(java.nio.file.Files.readAllBytes(allJsonFiles.get(j).toPath()));
+    for (File file : allJsonFiles) {
+      Object parsedFile = UnitTestHelpers.JSONtoObject(file);
 
-        String file1Name = allJsonFiles.get(i).getName();
-        String file2Name = allJsonFiles.get(j).getName();
+      int hash = parsedFile.hashCode();
 
-        if (content1.equals(content2)) {
-          System.out.println(file1Name + " and " + file2Name + " are IDENTICAL");
-        }
+      if (!seenHashes.contains(hash)) {
+        contents.put(file.getName(), parsedFile.hashCode());
+
+        seenHashes.add(hash);
+      } else {
+
+        filesWithDuplicateContents.put(file.getName(), file);
       }
+    }
+    // STICKLER FOR GRAMMAR
+    if (filesWithDuplicateContents.size() < 1) {
+      System.out.println("No duplicate file contents");
+    } else if (filesWithDuplicateContents.size() > 1) {
+      List<File> iterableContents = new ArrayList<>();
+      iterableContents.addAll(filesWithDuplicateContents.values());
+
+      for (int i = 0; i < iterableContents.size(); i++) {
+        System.out.println(
+            iterableContents.get(i).getName() + " has duplicate file contents with " + contents);
+      }
+    } else {
+      System.out.println(filesWithDuplicateContents.values() + " has duplicate file contents");
     }
   }
 }
