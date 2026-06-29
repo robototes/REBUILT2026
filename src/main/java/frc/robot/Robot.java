@@ -116,7 +116,7 @@ public class Robot extends TimedRobot {
     controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
-      if (Robot.isSimulation()) {
+      if (!Robot.isSimulation()) {
         robotSim = new RobotSim(subsystems.drivebaseSubsystem);
       } else {
         robotSim = null;

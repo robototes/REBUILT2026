@@ -49,18 +49,18 @@ public class JSONComparisionTest {
       }
     }
     // STICKLER FOR GRAMMAR
-    if (filesWithDuplicateContents.size() < 1) {
+    List<File> iterableContents = new ArrayList<>();
+    iterableContents.addAll(filesWithDuplicateContents.values());
+    if (iterableContents.size() < 1) {
       System.out.println("No duplicate file contents");
-    } else if (filesWithDuplicateContents.size() > 1) {
-      List<File> iterableContents = new ArrayList<>();
-      iterableContents.addAll(filesWithDuplicateContents.values());
+    } else if (iterableContents.size() > 1) {
 
       for (int i = 0; i < iterableContents.size(); i++) {
         System.out.println(
-            iterableContents.get(i).getName() + " has duplicate file contents with " + contents);
+            iterableContents.get(i).getName() + " has duplicate file contents with ");
       }
     } else {
-      System.out.println(filesWithDuplicateContents.values() + " has duplicate file contents");
+      System.out.println(iterableContents.get(0).getName() + " has duplicate file contents");
     }
   }
 }
