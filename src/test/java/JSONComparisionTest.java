@@ -4,7 +4,6 @@ import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -24,26 +23,25 @@ public class JSONComparisionTest {
     }
 
     List<File> allJsonFiles = UnitTestHelpers.getAllJsonFiles(deployDir);
-    HashMap<String, Integer> contents = new HashMap<>();
+    HashMap<String, File> contents = new HashMap<>();
     HashMap<String, File> filesWithDuplicateContents = new HashMap<>();
-    HashMap<String, File> fileStringsWithDuplicateContents = new HashMap<>();
 
     if (allJsonFiles.size() < MINIMUM_FILE_COUNT) {
       System.out.println("WARNING: Not enough files to compare");
       return;
     }
 
-    HashSet<Integer> seenHashes = new HashSet<>();
+    HashMap<Integer, File> seenHashes = new HashMap<>();
 
     for (File file : allJsonFiles) {
       Object parsedFile = UnitTestHelpers.JSONtoObject(file);
 
       int hash = parsedFile.hashCode();
 
-      if (!seenHashes.contains(hash)) {
-        contents.put(file.getName(), parsedFile.hashCode());
-        fileStringsWithDuplicateContents.put(file.getName(), file);
-        seenHashes.add(hash);
+      if (!seenHashes.containsKey(hash)) {
+        contents.put(file.getName(), file);
+
+        seenHashes.put(hash, file);
       } else {
 
         filesWithDuplicateContents.put(file.getName(), file);
@@ -53,22 +51,22 @@ public class JSONComparisionTest {
     List<File> iterableContents = new ArrayList<>();
     iterableContents.addAll(filesWithDuplicateContents.values());
     List<File> arrContents = new ArrayList<>();
-    arrContents.addAll(fileStringsWithDuplicateContents.values());
+    arrContents.addAll(contents.values());
+    List<Integer> arrHash = new ArrayList<>();
+    for (File file : seenHashes.values()) {
+      arrHash.add(file.hashCode());
+    }
     if (iterableContents.size() < 1) {
       System.out.println("No duplicate file contents");
-    } else if (iterableContents.size() > 1) {
-
-      for (int i = 0; i < iterableContents.size(); i++) {
-        System.out.println(
-            iterableContents.get(i).getName()
-                + " has duplicate file contents with "
-                + arrContents.get(i).getName());
-      }
     } else {
-      System.out.println(
-          iterableContents.get(0).getName()
-              + " has duplicate file contents with "
-              + arrContents.get(0).getName());
+
+      for (File file : filesWithDuplicateContents.values()) {
+
+        System.out.println(
+            seenHashes.get(UnitTestHelpers.JSONtoObject(file).hashCode()).getName()
+                + " has duplicate file contents with "
+                + file.getName());
+      }
     }
   }
 }
