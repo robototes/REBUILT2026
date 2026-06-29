@@ -26,6 +26,7 @@ public class JSONComparisionTest {
     List<File> allJsonFiles = UnitTestHelpers.getAllJsonFiles(deployDir);
     HashMap<String, Integer> contents = new HashMap<>();
     HashMap<String, File> filesWithDuplicateContents = new HashMap<>();
+    HashMap<String, File> fileStringsWithDuplicateContents = new HashMap<>();
 
     if (allJsonFiles.size() < MINIMUM_FILE_COUNT) {
       System.out.println("WARNING: Not enough files to compare");
@@ -41,7 +42,7 @@ public class JSONComparisionTest {
 
       if (!seenHashes.contains(hash)) {
         contents.put(file.getName(), parsedFile.hashCode());
-
+        fileStringsWithDuplicateContents.put(file.getName(), file);
         seenHashes.add(hash);
       } else {
 
@@ -51,16 +52,23 @@ public class JSONComparisionTest {
     // STICKLER FOR GRAMMAR
     List<File> iterableContents = new ArrayList<>();
     iterableContents.addAll(filesWithDuplicateContents.values());
+    List<File> arrContents = new ArrayList<>();
+    arrContents.addAll(fileStringsWithDuplicateContents.values());
     if (iterableContents.size() < 1) {
       System.out.println("No duplicate file contents");
     } else if (iterableContents.size() > 1) {
 
       for (int i = 0; i < iterableContents.size(); i++) {
         System.out.println(
-            iterableContents.get(i).getName() + " has duplicate file contents with ");
+            iterableContents.get(i).getName()
+                + " has duplicate file contents with "
+                + arrContents.get(i).getName());
       }
     } else {
-      System.out.println(iterableContents.get(0).getName() + " has duplicate file contents");
+      System.out.println(
+          iterableContents.get(0).getName()
+              + " has duplicate file contents with "
+              + arrContents.get(0).getName());
     }
   }
 }
