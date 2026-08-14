@@ -86,8 +86,16 @@ jobs:
               review_content = 'No code changes detected in diff.'
           else:
               system_instruction = os.environ.get('SYSTEM_INSTRUCTION', '')
-              prompt = f'{system_instruction}\n\nDiff:\n{diff_text}'
-              data = json.dumps({'contents': [{'parts': [{'text': prompt}]}]}).encode('utf-8')
+
+              payload = {
+                  "system_instruction": {
+                      "parts": [{"text": system_instruction}]
+                  },
+                  "contents": [
+                      {"parts": [{"text": f"Diff:\n{diff_text}"}]}
+                  ]
+              }
+              data = json.dumps(payload).encode('utf-8')
               req = urllib.request.Request(
                   url,
                   data=data,
@@ -100,7 +108,11 @@ jobs:
               try:
                   with urllib.request.urlopen(req) as res:
                       res_data = json.loads(res.read().decode('utf-8'))
-                      review_content = res_data['candidates'][0]['content']['parts'][0]['text']
+                      candidates = res_data.get('candidates', [])
+                      if candidates and 'content' in candidates[0]:
+                          review_content = candidates[0]['content']['parts'][0]['text']
+                      else:
+                          review_content = f"⚠️ Could not generate review. Response: {res_data}"
               except Exception as e:
                   review_content = f'⚠️ Failed to generate review from Gemini: {e}'
 
