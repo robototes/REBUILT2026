@@ -45,6 +45,10 @@ jobs:
           gh pr diff "$PR_NUM" --repo "${{ github.repository }}" | grep -v "vendordeps/" > pr_diff.txt
           head -c 200000 pr_diff.txt > trimmed_diff.txt
 
+          # Fetch reviewer-rules.md via GitHub API if it exists
+          gh api "repos/${{ github.repository }}/contents/.github/reviewer-rules.md" \
+            -H "Accept: application/vnd.github.raw+json" > rules.txt 2>/dev/null || touch rules.txt
+
       # Step 3: Run Gemini & Post Comment using GitHub CLI
       - name: Post Gemini Review
         env:
