@@ -28,6 +28,7 @@ jobs:
             -f content="eyes"
 
       # Step 2: Fetch PR Diff
+      # Step 2: Fetch PR Diff & Reviewer Rules
       - name: Fetch PR Diff
         id: fetch_diff
         env:
@@ -41,13 +42,13 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUM" >> $GITHUB_ENV
 
-          # Example: Exclude vendordeps and gradle wrapper updates from diff
-          gh pr diff "$PR_NUM" --repo "${{ github.repository }}" | grep -v "vendordeps/" > pr_diff.txt
+          # Fetch actual diff from GH CLI
+          gh pr diff "$PR_NUM" --repo "${{ github.repository }}" > pr_diff.txt
           head -c 200000 pr_diff.txt > trimmed_diff.txt
 
           # Fetch reviewer-rules.md via GitHub API if it exists
           gh api "repos/${{ github.repository }}/contents/.github/reviewer-rules.md" \
-            -H "Accept: application/vnd.github.raw+json" > rules.txt 2>/dev/null || touch rules.txt
+            -H "Accept: application/vnd.github.raw+json" > rules.txt 2>/dev.null || touch rules.txt
 
       # Step 3: Run Gemini & Post Comment using GitHub CLI
       - name: Post Gemini Review
@@ -89,7 +90,13 @@ jobs:
           if not diff_text.strip():
               review_content = 'No code changes detected in diff.'
           else:
+              # Combine default instruction with reviewer-rules.md content
               system_instruction = os.environ.get('SYSTEM_INSTRUCTION', '')
+              if os.path.exists('rules.txt'):
+                  with open('rules.txt', 'r', encoding='utf-8', errors='ignore') as f:
+                      rules_content = f.read().strip()
+                      if rules_content:
+                          system_instruction += f"\n\nTeam Specific Guidelines:\n{rules_content}"
 
               payload = {
                   "system_instruction": {
