@@ -47,7 +47,7 @@ jobs:
 
           # Download PR diff
           gh pr diff "$PR_NUM" --repo "${{ github.repository }}" > pr_diff.txt
-          head -c 20000 pr_diff.txt > trimmed_diff.txt
+          head -c 25000 pr_diff.txt > trimmed_diff.txt
 
           # Fetch reviewer-rules.md if present
           gh api "repos/${{ github.repository }}/contents/.github/reviewer-rules.md" \
