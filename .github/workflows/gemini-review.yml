@@ -1,0 +1,101 @@
+name: Gemini FRC Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+
+jobs:
+  gemini-review:
+    # Run IF:
+    # 1. It's a pull_request event (opened or updated code)
+    # OR
+    # 2. It's a PR comment starting with /gemini
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event.issue.pull_request && startsWith(github.event.comment.body, '/gemini'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      # Step 1: Acknowledge command with eyes reaction (Only if triggered by comment)
+      - name: Acknowledge Command
+        if: ${{ github.event_name == 'issue_comment' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            -d '{"content":"eyes"}'
+
+      # Step 2: Determine PR number & fetch raw diff
+      - name: Fetch PR Diff
+        id: fetch_diff
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract PR number regardless of trigger type
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUM="${{ github.event.pull_request.number }}"
+            PR_URL="${{ github.event.pull_request.url }}"
+          else
+            PR_NUM="${{ github.event.issue.number }}"
+            PR_URL="${{ github.event.issue.pull_request.url }}"
+          fi
+
+          echo "PR_NUMBER=$PR_NUM" >> $GITHUB_ENV
+
+          # Download raw diff via API
+          curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+               -H "Accept: application/vnd.github.v3.diff" \
+               "$PR_URL" > pr_diff.txt
+
+          # Truncate to fit safely in model context
+          head -c 20000 pr_diff.txt > trimmed_diff.txt
+
+      # Step 3: Run Gemini & Post Comment
+      - name: Post Gemini Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          USER_COMMENT: ${{ github.event.comment.body }}
+        run: |
+          SYSTEM_INSTRUCTION="You are a lead mentor for a FIRST Robotics Competition (FRC) programming team. Review the provided code diff for bugs, WPILib best practices, thread safety, and null pointer risks. Keep your feedback encouraging, concise, and educational for high school students."
+
+          # If triggered by /gemini comment, append any additional instructions typed by student
+          if [ "$EVENT_NAME" = "issue_comment" ]; then
+            CUSTOM_INSTRUCTIONS=$(echo "$USER_COMMENT" | sed 's/\/gemini//g')
+            if [ -n "$CUSTOM_INSTRUCTIONS" ]; then
+              SYSTEM_INSTRUCTION="$SYSTEM_INSTRUCTION Specific student request: $CUSTOM_INSTRUCTIONS"
+            fi
+          fi
+
+          # Call Gemini 2.5 Flash API
+          RESPONSE=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "contents": [{
+                "parts": [{
+                  "text": "'"$SYSTEM_INSTRUCTION"'\n\nCode Diff:\n'$(jq -sR . < trimmed_diff.txt)'"
+                }]
+              }]
+            }')
+
+          REVIEW_BODY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "Unable to generate review."')
+
+          # Post comment back to the PR
+          jq -n --arg body "🤖 **Gemini Code Review**
+
+          $REVIEW_BODY" '{body: $body}' | \
+          curl -s -X POST \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments \
+            -d @-
