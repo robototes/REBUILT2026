@@ -18,7 +18,7 @@ jobs:
       issues: write
 
     steps:
-      # Step 1: Acknowledge Command with Reactions API (using gh CLI)
+      # Step 1: Acknowledge Command with Reactions API (if triggered by comment)
       - name: Acknowledge Command
         if: ${{ github.event_name == 'issue_comment' }}
         env:
@@ -27,10 +27,9 @@ jobs:
           gh api "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
             -f content="eyes"
 
-      # Step 2: Fetch PR Diff
-      # Step 2: Fetch PR Diff & Reviewer Rules
-      - name: Fetch PR Diff
-        id: fetch_diff
+      # Step 2: Fetch PR Details, Diff, and Rules
+      - name: Fetch PR Details, Diff, and Rules
+        id: fetch_data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -42,43 +41,39 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUM" >> $GITHUB_ENV
 
-          # Fetch actual diff from GH CLI
+          # Get PR Head Commit SHA (required for inline comments)
+          COMMIT_SHA=$(gh pr view "$PR_NUM" --repo "${{ github.repository }}" --json headRefOid -q .headRefOid)
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+
+          # Download PR diff
           gh pr diff "$PR_NUM" --repo "${{ github.repository }}" > pr_diff.txt
-          head -c 200000 pr_diff.txt > trimmed_diff.txt
+          head -c 20000 pr_diff.txt > trimmed_diff.txt
 
-          # Fetch reviewer-rules.md via GitHub API if it exists
+          # Fetch reviewer-rules.md if present
           gh api "repos/${{ github.repository }}/contents/.github/reviewer-rules.md" \
-            -H "Accept: application/vnd.github.raw+json" > rules.txt 2>/dev.null || touch rules.txt
+            -H "Accept: application/vnd.github.raw+json" > rules.txt 2>/dev/null || touch rules.txt
 
-      # Step 3: Run Gemini & Post Comment using GitHub CLI
-      - name: Post Gemini Review
+      # Step 3: Run Gemini & Post Inline Review Comments
+      - name: Post Inline Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
           USER_COMMENT: ${{ github.event.comment.body }}
         run: |
-          export SYSTEM_INSTRUCTION="You are a lead mentor for an FRC programming team. Review this PR code diff for WPILib best practices, safety, and bugs. Keep feedback clear, educational, and constructive."
-
-          if [ "$EVENT_NAME" = "issue_comment" ]; then
-            EXTRA=$(echo "$USER_COMMENT" | sed 's/\/gemini//g' | xargs)
-            if [ -n "$EXTRA" ]; then
-              export SYSTEM_INSTRUCTION="$SYSTEM_INSTRUCTION Student note: $EXTRA"
-            fi
-          fi
-
-          # Call Gemini API & Write Review
           python3 - << 'EOF'
-          import urllib.request, json, os, sys
+          import urllib.request, urllib.error, json, os, sys, time, subprocess
 
           api_key = os.environ.get('GEMINI_API_KEY', '').strip()
-          if not api_key:
-              print('Warning: GEMINI_API_KEY secret is not set. Skipping review.')
-              with open('review.md', 'w', encoding='utf-8') as f:
-                  f.write('🤖 **Gemini Code Review**: Skipping review (GEMINI_API_KEY secret not accessible on this run).\n')
-              sys.exit(0)
+          pr_number = os.environ.get('PR_NUMBER', '')
+          commit_sha = os.environ.get('COMMIT_SHA', '')
+          repo = os.environ.get('GITHUB_REPOSITORY', '')
 
-          url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent'
+          if not api_key:
+              print('Error: GEMINI_API_KEY secret is not set.')
+              sys.exit(1)
+
+          models_to_try = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.0-flash']
 
           try:
               with open('trimmed_diff.txt', 'r', encoding='utf-8', errors='replace') as f:
@@ -87,26 +82,42 @@ jobs:
               print(f'Error reading diff: {e}')
               sys.exit(1)
 
-          if not diff_text.strip():
-              review_content = 'No code changes detected in diff.'
-          else:
-              # Combine default instruction with reviewer-rules.md content
-              system_instruction = os.environ.get('SYSTEM_INSTRUCTION', '')
-              if os.path.exists('rules.txt'):
-                  with open('rules.txt', 'r', encoding='utf-8', errors='ignore') as f:
-                      rules_content = f.read().strip()
-                      if rules_content:
-                          system_instruction += f"\n\nTeam Specific Guidelines:\n{rules_content}"
+          rules_text = ""
+          if os.path.exists('rules.txt'):
+              with open('rules.txt', 'r', encoding='utf-8', errors='replace') as rf:
+                  content = rf.read().strip()
+                  if content:
+                      rules_text = f"\n\nPROJECT RULES & SKILLS:\n{content}"
 
-              payload = {
-                  "system_instruction": {
-                      "parts": [{"text": system_instruction}]
-                  },
-                  "contents": [
-                      {"parts": [{"text": f"Diff:\n{diff_text}"}]}
-                  ]
-              }
-              data = json.dumps(payload).encode('utf-8')
+          if not diff_text.strip():
+              print('No code changes detected.')
+              sys.exit(0)
+
+          system_prompt = f"""You are a lead mentor for an FRC robotics team reviewing a pull request diff.
+          Provide feedback on WPILib best practices, thread safety, motor safety, logic bugs, and null safety.
+          {rules_text}
+
+          CRITICAL OUTPUT FORMAT:
+          You must respond ONLY with a raw JSON object (no markdown code blocks, no backticks, no extra text) matching this schema:
+          {{
+            "summary": "High-level summary for the PR description",
+            "comments": [
+              {{
+                "path": "path/to/file.java",
+                "line": 42,
+                "body": "Your inline comment or suggestion here."
+              }}
+            ]
+          }}
+
+          NOTE: The 'line' must correspond to a valid line number in the NEW modified file (+ lines in diff). Only comment on lines that need improvement or praise."""
+
+          prompt = f"{system_prompt}\n\nDiff to Review:\n{diff_text}"
+          data = json.dumps({'contents': [{'parts': [{'text': prompt}]}]}).encode('utf-8')
+
+          response_json = None
+          for model in models_to_try:
+              url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
               req = urllib.request.Request(
                   url,
                   data=data,
@@ -115,22 +126,61 @@ jobs:
                       'x-goog-api-key': api_key
                   }
               )
-
               try:
                   with urllib.request.urlopen(req) as res:
                       res_data = json.loads(res.read().decode('utf-8'))
-                      candidates = res_data.get('candidates', [])
-                      if candidates and 'content' in candidates[0]:
-                          review_content = candidates[0]['content']['parts'][0]['text']
-                      else:
-                          review_content = f"⚠️ Could not generate review. Response: {res_data}"
+                      raw_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
+                      # Clean potential markdown wraps from response
+                      if raw_text.startswith("```json"):
+                          raw_text = raw_text[7:]
+                      if raw_text.startswith("```"):
+                          raw_text = raw_text[3:]
+                      if raw_text.endswith("```"):
+                          raw_text = raw_text[:-3]
+                      response_json = json.loads(raw_text.strip())
+                      break
+              except urllib.error.HTTPError as e:
+                  if e.code in [503, 429, 404]:
+                      time.sleep(1)
+                      continue
+                  else:
+                      print(f'HTTP Error {e.code}')
+                      break
               except Exception as e:
-                  review_content = f'⚠️ Failed to generate review from Gemini: {e}'
+                  print(f'Parsing error: {e}')
+                  break
 
-          # Write output to markdown file safely
-          with open('review.md', 'w', encoding='utf-8') as f:
-              f.write('🤖 **Gemini Code Review**\n\n' + review_content + '\n')
+          if not response_json:
+              print('Failed to generate structured review.')
+              sys.exit(0)
+
+          # 1. Post High-level Summary Comment
+          summary = response_json.get('summary', 'PR reviewed.')
+          subprocess.run([
+              'gh', 'pr', 'comment', pr_number,
+              '--repo', repo,
+              '--body', f"🤖 **Gemini Code Review Summary**\n\n{summary}"
+          ])
+
+          # 2. Post Inline Comments
+          comments = response_json.get('comments', [])
+          for c in comments:
+              file_path = c.get('path')
+              line_num = c.get('line')
+              body_msg = c.get('body')
+
+              if file_path and line_num and body_msg:
+                  # Use GitHub REST API for pull request review comments
+                  cmd = [
+                      'gh', 'api',
+                      f'repos/{repo}/pulls/{pr_number}/comments',
+                      '-X', 'POST',
+                      '-f', f'body=🤖 {body_msg}',
+                      '-f', f'commit_id={commit_sha}',
+                      '-f', f'path={file_path}',
+                      '-F', f'line={line_num}',
+                      '-f', 'side=RIGHT'
+                  ]
+                  subprocess.run(cmd)
+
           EOF
-
-          # Post to PR using gh pr comment
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file review.md
