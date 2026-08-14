@@ -17,7 +17,7 @@ public class UnitTestHelpers {
   public static final String PATHS_PATH = "src/main/deploy/autos/paths";
 
   // @BeforeEach
-  public void setup() {
+  public static void setup() {
     BLineLogic.unitTestInit();
   }
 
