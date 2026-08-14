@@ -2,7 +2,7 @@ name: Gemini FRC Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
 
@@ -53,42 +53,59 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           USER_COMMENT: ${{ github.event.comment.body }}
         run: |
-          SYSTEM_INSTRUCTION="You are a lead mentor for an FRC programming team. Review this PR code diff for WPILib best practices, safety, and bugs. Keep feedback clear, educational, and constructive."
+          export SYSTEM_INSTRUCTION="You are a lead mentor for an FRC programming team. Review this PR code diff for WPILib best practices, safety, and bugs. Keep feedback clear, educational, and constructive."
 
           if [ "$EVENT_NAME" = "issue_comment" ]; then
-            EXTRA=$(echo "$USER_COMMENT" | sed 's/\/gemini//g')
+            EXTRA=$(echo "$USER_COMMENT" | sed 's/\/gemini//g' | xargs)
             if [ -n "$EXTRA" ]; then
-              SYSTEM_INSTRUCTION="$SYSTEM_INSTRUCTION Student note: $EXTRA"
+              export SYSTEM_INSTRUCTION="$SYSTEM_INSTRUCTION Student note: $EXTRA"
             fi
           fi
 
-          # Prepare JSON payload safely
-          DIFF_CONTENT=$(jq -sR . < trimmed_diff.txt)
+          # Call Gemini API & Write Review
+          python3 -c "
+import urllib.request, json, os, sys
 
-          # Call Gemini API
-          RESPONSE=$(python3 -c "
-import urllib.request, json, os
+api_key = os.environ.get('GEMINI_API_KEY', '').strip()
+if not api_key:
+    print('Error: GEMINI_API_KEY secret is not set.')
+    sys.exit(1)
 
-api_key = os.environ['GEMINI_API_KEY']
-url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}'
-
-prompt = os.environ['SYSTEM_INSTRUCTION'] + '\n\nDiff:\n' + open('trimmed_diff.txt').read()
-
-data = json.dumps({'contents': [{'parts': [{'text': prompt}]}]}).encode('utf-8')
-req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 
 try:
-    with urllib.request.urlopen(req) as res:
-        res_data = json.loads(res.read().decode())
-        print(res_data['candidates'][0]['content']['parts'][0]['text'])
+    with open('trimmed_diff.txt', 'r', encoding='utf-8', errors='replace') as f:
+        diff_text = f.read()
 except Exception as e:
-    print('Failed to generate review:', e)
-")
+    print(f'Error reading diff: {e}')
+    sys.exit(1)
 
-          # Save output to a markdown file
-          echo "🤖 **Gemini Code Review**" > review.md
-          echo "" >> review.md
-          echo "$RESPONSE" >> review.md
+if not diff_text.strip():
+    review_content = 'No code changes detected in diff.'
+else:
+    system_instruction = os.environ.get('SYSTEM_INSTRUCTION', '')
+    prompt = f'{system_instruction}\n\nDiff:\n{diff_text}'
+    data = json.dumps({'contents': [{'parts': [{'text': prompt}]}]}).encode('utf-8')
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            'Content-Type': 'application/json',
+            'x-goog-api-key': api_key
+        }
+    )
+
+    try:
+        with urllib.request.urlopen(req) as res:
+            res_data = json.loads(res.read().decode('utf-8'))
+            review_content = res_data['candidates'][0]['content']['parts'][0]['text']
+    except Exception as e:
+        review_content = f'⚠️ Failed to generate review from Gemini: {e}'
+
+# Write output to markdown file safely
+with open('review.md', 'w', encoding='utf-8') as f:
+    f.write('🤖 **Gemini Code Review**\n\n' + review_content + '\n')
+"
 
           # Post to PR using gh pr comment
           gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file review.md
