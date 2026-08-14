@@ -41,9 +41,9 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUM" >> $GITHUB_ENV
 
-          # Get raw diff via gh CLI
-          gh pr diff "$PR_NUM" --repo "${{ github.repository }}" > pr_diff.txt
-          head -c 20000 pr_diff.txt > trimmed_diff.txt
+          # Example: Exclude vendordeps and gradle wrapper updates from diff
+          gh pr diff "$PR_NUM" --repo "${{ github.repository }}" | grep -v "vendordeps/" > pr_diff.txt
+          head -c 200000 pr_diff.txt > trimmed_diff.txt
 
       # Step 3: Run Gemini & Post Comment using GitHub CLI
       - name: Post Gemini Review
@@ -68,10 +68,12 @@ jobs:
 
           api_key = os.environ.get('GEMINI_API_KEY', '').strip()
           if not api_key:
-              print('Error: GEMINI_API_KEY secret is not set.')
-              sys.exit(1)
+              print('Warning: GEMINI_API_KEY secret is not set. Skipping review.')
+              with open('review.md', 'w', encoding='utf-8') as f:
+                  f.write('🤖 **Gemini Code Review**: Skipping review (GEMINI_API_KEY secret not accessible on this run).\n')
+              sys.exit(0)
 
-          url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent'
+          url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
           try:
               with open('trimmed_diff.txt', 'r', encoding='utf-8', errors='replace') as f:
