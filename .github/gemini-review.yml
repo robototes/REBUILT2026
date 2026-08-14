@@ -1,0 +1,54 @@
+name: Gemini FRC Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR Diff
+        id: diff
+        run: |
+          # Fetch the diff between the base branch and the PR branch
+          git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+          # Truncate if diff is too large for safety
+          head -c 20000 pr_diff.txt > trimmed_diff.txt
+
+      - name: Post Review with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Send request to Gemini Flash (Free Tier)
+          RESPONSE=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "contents": [{
+                "parts": [{
+                  "text": "You are a lead mentor for a FIRST Robotics Competition (FRC) programming team. Review the following code diff for bugs, WPILib best practices, thread safety, and null pointer risks. Keep your advice encouraging, concise, and focused on helping high school students learn.\n\nCode Diff:\n'$(jq -sR . < trimmed_diff.txt)'"
+                }]
+              }]
+            }')
+
+          # Extract text response from JSON
+          REVIEW_BODY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "No review generated."')
+
+          # Post comment back to GitHub PR
+          jq -n --arg body "$REVIEW_BODY" '{body: $body}' | \
+          curl -s -X POST \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments \
+            -d @-
