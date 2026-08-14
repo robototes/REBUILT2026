@@ -71,7 +71,7 @@ jobs:
               print('Error: GEMINI_API_KEY secret is not set.')
               sys.exit(1)
 
-          url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent'
+          url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent'
 
           try:
               with open('trimmed_diff.txt', 'r', encoding='utf-8', errors='replace') as f:
