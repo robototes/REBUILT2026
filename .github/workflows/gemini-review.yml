@@ -73,7 +73,7 @@ jobs:
                   f.write('🤖 **Gemini Code Review**: Skipping review (GEMINI_API_KEY secret not accessible on this run).\n')
               sys.exit(0)
 
-          url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+          url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent'
 
           try:
               with open('trimmed_diff.txt', 'r', encoding='utf-8', errors='replace') as f:
