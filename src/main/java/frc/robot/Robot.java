@@ -6,7 +6,6 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -27,13 +26,11 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
-import frc.robot.subsystems.auto.AutoBuilderConfig;
-import frc.robot.subsystems.auto.AutoLogic;
-import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.subsystems.auto.BLine.BLineAutonomousField;
+import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -119,14 +116,20 @@ public class Robot extends TimedRobot {
     controls = new Controls(subsystems, m_simWrapper);
 
     if (DRIVEBASE_ENABLED) {
-      AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
+      if (Robot.isSimulation()) {
+        robotSim = new RobotSim(subsystems.drivebaseSubsystem);
+      } else {
+        robotSim = null;
+      }
+
+      // BLINE STUFF
+      BLineLogic.init(subsystems); // Handling init and unit test cases
+      BLineLogic.configure(subsystems); // configure the autobuilder to run autos
+      BLineLogic.initSmartDashboard(); // Logging
+      BLineAutonomousField.initSmartDashBoard( // Visualization
+          () -> "Autos", 0, 0, this::addPeriodic);
     }
-    AutoLogic.init(subsystems);
-    if (Robot.isSimulation()) {
-      robotSim = new RobotSim(subsystems.drivebaseSubsystem);
-    } else {
-      robotSim = null;
-    }
+
     CommandScheduler.getInstance()
         .onCommandInitialize(
             command -> DataLogManager.log("Command initialized: " + command.getName()));
@@ -143,13 +146,6 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putData(CommandScheduler.getInstance());
 
-    if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      AutoLogic.initCommandsAndPaths(false);
-      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
-
-      AutoLogic.initSmartDashBoard();
-      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
-    }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
     logger = new DriveStateSignalLogger();
@@ -281,24 +277,25 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
-    if (AutoLogic.getSelectedAuto() != null) {
-      if (Robot.isSimulation()) {
-        robotSim.resetFuelSim();
-      }
 
-      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
-      if (subsystems.visionSubsystem != null) {
-        if (subsystems.visionSubsystem.limelightaOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
-        }
-        if (subsystems.visionSubsystem.limelightbOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
-        }
-        if (subsystems.visionSubsystem.limelightcOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
-        }
+    subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
+
+    if (Robot.isSimulation()) {
+
+      robotSim.resetFuelSim();
+    }
+
+    CommandScheduler.getInstance().schedule(BLineLogic.handleAutos());
+    double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
+    if (subsystems.visionSubsystem != null) {
+      if (subsystems.visionSubsystem.limelightaOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
+      }
+      if (subsystems.visionSubsystem.limelightbOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
+      }
+      if (subsystems.visionSubsystem.limelightcOnline) {
+        supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
       }
     }
   }

@@ -2,6 +2,10 @@ package frc.robot.util.simulation;
 
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Subsystems;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
 
@@ -9,8 +13,8 @@ public class RobotSim {
 
   FuelSim fuelSim;
   public static final double UPDATE_S = 0.02; // 20 ms update rate
-  public static final double SIM_ROBOT_WIDTH_M = 0.8;
-  public static final double SIM_ROBOT_LENGTH_M = 0.8;
+  public static final double SIM_ROBOT_WIDTH_M = 0.937;
+  public static final double SIM_ROBOT_LENGTH_M = 0.781;
   public static final double SIM_ROBOT_BUMPER_HEIGHT = 0.7;
   static DoublePublisher scorePublisher;
 
@@ -29,7 +33,7 @@ public class RobotSim {
         SIM_ROBOT_BUMPER_HEIGHT,
         () -> drive.getState().Pose,
         () -> drive.getState().Speeds);
-    fuelSim.registerIntake(0.1, 0.2, 0.1, 0.746, () -> true);
+    fuelSim.registerIntake(0.1, 2, 0.1, 0.746, () -> true);
     scorePublisher =
         NetworkTableInstance.getDefault()
             .getTable("Fuel Simulation")
@@ -63,5 +67,18 @@ public class RobotSim {
     fuelSim.updateSim();
     scorePublisher.accept(score);
     fuelHeld.accept(fuelsHeld);
+  }
+
+  public static Command launch(Subsystems s, double timeout) {
+    return Commands.run(
+            () ->
+                FuelSim.getInstance()
+                    .launchFuel(
+                        Units.MetersPerSecond.of(6),
+                        Units.Radians.of(s.hood.getHoodPosition()),
+                        Units.Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
+                        Units.Meters.of(1.45)))
+        .withTimeout(timeout)
+        .withName("Auto Launcher Sim Command");
   }
 }
