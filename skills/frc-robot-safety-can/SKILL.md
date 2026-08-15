@@ -10,7 +10,10 @@ FRC robots handle high-power brushless motors (Kraken X60, Falcon 500, NEO, Vort
 
 ## Key Review Checks
 1. **Current Limiting (Critical):**
-   - Every motor controller configuration (TalonFX / SparkMAX / SparkFlex) **must** explicitly configure a stator/supply current limit (e.g., 30A–40A for drivetrains, 20A–30A for intakes/indexers).
+   - Every motor controller configuration **must** explicitly configure vendor-appropriate current limits:
+     - **CTRE (TalonFX / Kraken / Falcon / TalonSRX):** Configure stator current limits (thermal & torque motor protection) and/or supply current limits (PDH/PDP breaker and brownout protection) via `CurrentLimitsConfigs`.
+     - **REV (Spark MAX / Spark Flex / NEO / Vortex):** Configure smart current limits (e.g., `setSmartCurrentLimit()` or `SparkBaseConfig.smartCurrentLimit()`) and optional secondary current limits.
+   - Ensure limits match the mechanism's physical load (e.g., 30A–40A+ for drivetrains, 20A–30A for intakes/indexers).
 2. **Mechanism Protection:**
    - Check that articulated mechanisms (arms, elevators, wrists) define software soft limits or limit switch configurations to prevent mechanical hard-stops.
    - Verify neutral mode configuration: Elevators and arms should generally be set to `Brake` mode to avoid unpowered dropping.
