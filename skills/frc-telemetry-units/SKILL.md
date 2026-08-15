@@ -1,0 +1,23 @@
+---
+name: frc-telemetry-units
+description: Enforces WPILib Units library usage, structured logging practices, and clean SmartDashboard/AdvantageKit conventions.
+---
+
+# FRC Telemetry, Logging & Units Safety
+
+## Context
+Modern FRC projects prioritize structured telemetry (WPILib `DataLog`, AdvantageKit, or SmartDashboard/NetworkTables) and compile-time dimensional analysis via the WPILib Units library.
+
+## Key Review Checks
+1. **Dimensional Analysis:**
+   - Encourage the use of WPILib Java Units (`Volts.of(...)`, `MetersPerSecond.of(...)`, `Degrees.of(...)`) instead of raw `double` literals to prevent degree/radian or inch/meter conversion bugs.
+2. **Telemetry Overhead:**
+   - Discourage repeated string construction and formatting inside high-frequency `periodic()` loops (e.g., building composite strings for `SmartDashboard.putString()` every 20ms). Prefer dedicated primitive entries, typed NT4 publishers, or `DataLog`/AdvantageKit structured logging to minimize GC pressure.
+   - Distinguish one-time initialization (such as `SmartDashboard.putData()` for `Sendable` choosers and mechanisms) and event-driven logging from tight periodic loops where string concatenation is actually problematic.
+   - Ensure critical values (battery voltage, motor current, subsystem state, pose estimation) are logged consistently for post-match drive team debriefs.
+3. **Magic Numbers:**
+   - Ensure PID constants, gear ratios, wheel diameters, and CAN IDs are isolated inside dedicated `Constants.java` classes or subsystem config records.
+
+## Feedback Tone & Style
+- Praise clean constants organization.
+- Explain dimensional bugs using relatable examples (e.g., *"Mixing radians and degrees is the most common reason swerve modules spin in circles!"*).
