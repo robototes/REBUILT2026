@@ -74,8 +74,8 @@
     {
       "type": "waypoint",
       "translation_target": {
-        "x_meters": 3.39036,
-        "y_meters": 2.47649,
+        "x_meters": 3.38,
+        "y_meters": 2.45,
         "intermediate_handoff_radius_meters": 0.25
       },
       "rotation_target": {
@@ -120,9 +120,9 @@
     ],
     "max_acceleration_meters_per_sec2": [
       {
-        "value": 3.0,
-        "start_ordinal": 7,
-        "end_ordinal": 7
+        "value": 4.0,
+        "start_ordinal": 6,
+        "end_ordinal": 6
       }
     ]
   }
