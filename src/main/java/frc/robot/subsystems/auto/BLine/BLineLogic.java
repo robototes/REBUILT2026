@@ -104,7 +104,7 @@ public class BLineLogic {
 
   // ========================= INIT =========================
 
-  public static void init(Subsystems subsystems) {
+  public static void init(Subsystems subsystems, boolean enableAutoUnbeach) {
     s = subsystems;
     recoveryPose =
         NetworkTableInstance.getDefault()
@@ -112,7 +112,7 @@ public class BLineLogic {
             .getStructTopic("RecoveryPose", Pose2d.struct)
             .publish();
 
-    registerTriggersAndCommands();
+    registerTriggersAndCommands(enableAutoUnbeach);
 
     if (pathsInitialized) return;
 
@@ -516,18 +516,19 @@ public class BLineLogic {
     return buildPath(remainder, false);
   }
 
-  private static void registerTriggersAndCommands() {
-    beachedTrigger =
-        new Trigger(() -> RobotState.isAutonomous() && s.drivebaseSubsystem.isBeached(5));
-    beachedTrigger.onTrue(
-        Commands.runOnce(
-                () -> {
-                  if (follow != null) {
-                    savedPathIndex = follow.getCurrentTranslationElementIndex();
-                  }
-                })
-            .andThen(Commands.defer(() -> recoverCommand().andThen(resume()), Set.of())));
-
+  private static void registerTriggersAndCommands(boolean enableAutoUnbeach) {
+    if (enableAutoUnbeach) {
+      beachedTrigger =
+          new Trigger(() -> RobotState.isAutonomous() && s.drivebaseSubsystem.isBeached(5));
+      beachedTrigger.onTrue(
+          Commands.runOnce(
+                  () -> {
+                    if (follow != null) {
+                      savedPathIndex = follow.getCurrentTranslationElementIndex();
+                    }
+                  })
+              .andThen(Commands.defer(() -> recoverCommand().andThen(resume()), Set.of())));
+    }
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
