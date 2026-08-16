@@ -116,6 +116,16 @@ public class BLineLogic {
 
     if (pathsInitialized) return;
 
+    initializePaths();
+    pathsInitialized = true;
+  }
+
+  public static void unitTestInit() {
+    s = null; // Explicitly set to null for unit tests
+    initializePaths();
+  }
+
+  private static void initializePaths() {
     defaultPath = new BLinePath("default", "Center", "default");
 
     rebuiltPaths =
@@ -124,13 +134,11 @@ public class BLineLogic {
             new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
             new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
             new BLinePath("BumpNeutral", "RT", "FirstNeutralBump"),
-            new BLinePath(
-                "DoubleBumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench", "SecondNeutralBump"),
-            new BLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump", "BumpDepot"));
+            new BLinePath("DoubleBumpNeutral", "RT", "FirstNeutralBump", "SecondNeutralBump"),
+            new BLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump"));
 
     autos.clear();
     autos.addAll(rebuiltPaths);
-
     commandsMap = Map.of(0, rebuiltPaths);
 
     namesToAuto.clear();
@@ -140,8 +148,6 @@ public class BLineLogic {
         namesToAuto.put(auto.getDisplayName(), auto);
       }
     }
-
-    pathsInitialized = true;
   }
 
   public static void handleStartingPoses(BLinePath path) {
@@ -263,6 +269,9 @@ public class BLineLogic {
   // ========================= SELECTION METHODS =========================
 
   public static String getSelectedAutoName() {
+    if (autoChooser.getSelected() == null) {
+      return "Default";
+    }
     return autoChooser.getSelected();
   }
 
@@ -284,12 +293,51 @@ public class BLineLogic {
   }
 
   // ========================= AUTO EXECUTION =========================
+  public static List<Path> getPathsToBuild() {
+    BLinePath selected = getSelectedAutoPath();
+    if (selected == null) {
+      return List.of();
+    }
+    return selected.getAllPaths();
+  }
 
   public static Command getSelectedAuto() {
+    if (s == null) {
+      // Unit test mode - return empty command
+      return Commands.none();
+    }
+
     double delay = autoDelayEntry.getDouble(0.0);
-    BLinePath path = getSelectedAutoPath();
-    s.drivebaseSubsystem.resetRotation(path.getPath().getInitialModuleDirection());
-    return Commands.waitSeconds(delay).andThen(buildPath(path.getPath(), true));
+    BLinePath selected = getSelectedAutoPath();
+
+    if (selected == null) {
+      return Commands.none();
+    }
+
+    s.drivebaseSubsystem.resetRotation(selected.getPath().getInitialModuleDirection());
+
+    List<Command> commands = new ArrayList<>();
+    commands.add(Commands.waitSeconds(delay));
+
+    List<Path> paths = getPathsToBuild();
+    for (int i = 0; i < paths.size(); i++) {
+      boolean resetPose = (i == 0);
+      commands.add(buildPath(paths.get(i), resetPose));
+    }
+
+    return Commands.sequence(commands.toArray(new Command[0]));
+  }
+
+  public static List<BLinePath> getBLinePaths() {
+    return rebuiltPaths;
+  }
+
+  public static List<String> getBLinePathsNames() {
+    List<String> pathsNames = new ArrayList<>();
+    for (BLinePath path : getBLinePaths()) {
+      pathsNames.addAll(path.getDisplayingNames());
+    }
+    return pathsNames;
   }
 
   public static Command buildSingleNeutralTrenchAuto() {
@@ -341,33 +389,34 @@ public class BLineLogic {
         launcherCommand());
   }
 
-  private static Command buildPath(Path path, boolean resetPose) {
-    follow = (resetPose ? pathBuilder : continuingPathBuilder).build(path);
+  public static Command buildDefaultAuto() {
+    return BLineCommands.sequence(
+        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+        buildPath(new Path("Default"), true),
+        launcherCommand());
+  }
 
-    return follow;
+  private static Command buildPath(Path path, boolean resetPose) {
+    if (s == null || pathBuilder == null || continuingPathBuilder == null) {
+      return Commands.none();
+    }
+    return (resetPose ? pathBuilder : continuingPathBuilder).build(path);
   }
 
   public static Command handleAutos() {
-    String selectedAuto = getSelectedAutoName();
-    if (selectedAuto == null) {
-
-      return pathBuilder.build(defaultPath.getPath());
-    } else {
-      switch (getSelectedAutoName()) {
-        case "TrenchNeutral":
-          return buildSingleNeutralTrenchAuto();
-        case "DoubleTrenchNeutral":
-          return buildDoubleNeutralTrenchAuto();
-        case "BumpNeutral":
-          return buildSingleNeutralBumpAuto();
-        case "DoubleBumpNeutral":
-          return buildDoubleNeutralBumpAuto();
-        case "BumpNeutralDepot":
-          return buildSingleNeutralBumpDepotAuto();
-
-        default:
-          return pathBuilder.build(defaultPath.getPath());
-      }
+    switch (getSelectedAutoName()) {
+      case "TrenchNeutral":
+        return buildSingleNeutralTrenchAuto();
+      case "DoubleTrenchNeutral":
+        return buildDoubleNeutralTrenchAuto();
+      case "BumpNeutral":
+        return buildSingleNeutralBumpAuto();
+      case "DoubleBumpNeutral":
+        return buildDoubleNeutralBumpAuto();
+      case "BumpNeutralDepot":
+        return buildSingleNeutralBumpDepotAuto();
+      default:
+        return buildDefaultAuto();
     }
   }
 
@@ -389,7 +438,7 @@ public class BLineLogic {
   }
 
   public static Command launcherCommand(double timeout) {
-    if (Robot.isSimulation()) return RobotSim.launch(s, timeout);
+    if (s == null || Robot.isSimulation()) return RobotSim.launch(s, timeout);
     return Commands.parallel(
             Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
             s.launcherSubsystem.launcherAimCommand(),
@@ -421,6 +470,7 @@ public class BLineLogic {
   }
 
   public static void cancelCommand() {
+    if (s == null) return;
     if (Robot.isSimulation()) {
       CommandScheduler.getInstance().cancel(bLineSimLaunching);
     } else {

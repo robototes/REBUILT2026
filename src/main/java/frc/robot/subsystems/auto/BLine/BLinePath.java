@@ -13,7 +13,7 @@ public class BLinePath {
   private final boolean vision;
   private final Path path;
   private final List<Path> allPaths;
-
+  private final List<String> displayedPaths; // Make it final
   private StartPosition positionType;
   private Pose2d startPose;
 
@@ -28,16 +28,25 @@ public class BLinePath {
     this.vision = vision;
 
     List<Path> loaded = new ArrayList<>();
+    List<String> displayedList = new ArrayList<>();
+
     for (String name : displayedPathNames) {
       loaded.add(new Path(name));
+      displayedList.add(name);
     }
+
     this.allPaths = List.copyOf(loaded);
-    this.path = this.allPaths.get(0);
-    this.startPose = this.path.getStartPose();
+    this.displayedPaths = List.copyOf(displayedList); // Make it immutable
+    this.path = this.allPaths.isEmpty() ? null : this.allPaths.get(0);
+    this.startPose = this.path != null ? this.path.getStartPose() : new Pose2d();
   }
 
   public String getDisplayName() {
     return displayName;
+  }
+
+  public List<String> getDisplayingNames() {
+    return displayedPaths;
   }
 
   public String getStartingPosName() {

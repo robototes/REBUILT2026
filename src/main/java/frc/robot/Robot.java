@@ -118,21 +118,16 @@ public class Robot extends TimedRobot {
     if (DRIVEBASE_ENABLED) {
       if (Robot.isSimulation()) {
         robotSim = new RobotSim(subsystems.drivebaseSubsystem);
-
       } else {
         robotSim = null;
       }
-      //  BLINE STUFF
 
-      BLineLogic.init(subsystems);
-      BLineLogic.configure(subsystems);
-
-      BLineLogic.initSmartDashboard();
-      BLineAutonomousField.initSmartDashBoard(
-          () -> "Autos", // tab name
-          0, // column (unused, just pass 0)
-          0, // row (unused, just pass 0)
-          this::addPeriodic);
+      // BLINE STUFF
+      BLineLogic.init(subsystems); // Handling init and unit test cases
+      BLineLogic.configure(subsystems); // configure the autobuilder to run autos
+      BLineLogic.initSmartDashboard(); // Logging
+      BLineAutonomousField.initSmartDashBoard( // Visualization
+          () -> "Autos", 0, 0, this::addPeriodic);
     }
 
     CommandScheduler.getInstance()
@@ -177,7 +172,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-
     // Resume logging every X seconds
     double time = Timer.getFPGATimestamp();
     if (time - LAST_TIME >= 1) {
@@ -285,10 +279,10 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
 
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
-    if (DRIVEBASE_ENABLED) {
-      if (Robot.isSimulation()) {
-        robotSim.resetFuelSim();
-      }
+
+    if (Robot.isSimulation()) {
+
+      robotSim.resetFuelSim();
     }
 
     CommandScheduler.getInstance().schedule(BLineLogic.handleAutos());
@@ -309,7 +303,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    BLineLogic.updateRecoveryPose();
     supplyYawToAllLimelights();
   }
 
