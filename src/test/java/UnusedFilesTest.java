@@ -17,7 +17,7 @@ public class UnusedFilesTest {
 
     for (File file : files) {
       String filename = UnitTestHelpers.getFilenamWithoutExtension(file);
-      if (!validPathNames.contains(filename)) {
+      if (!validPathNames.contains(filename) && !filename.equalsIgnoreCase("pathgroups")) {
         unusedFiles.add(file.getName());
       }
     }

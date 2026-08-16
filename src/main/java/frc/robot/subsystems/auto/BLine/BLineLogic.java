@@ -134,8 +134,9 @@ public class BLineLogic {
             new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
             new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
             new BLinePath("BumpNeutral", "RT", "FirstNeutralBump"),
-            new BLinePath("DoubleBumpNeutral", "RT", "FirstNeutralBump", "SecondNeutralBump"),
-            new BLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump"));
+            new BLinePath(
+                "DoubleBumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench", "SecondNeutralBump"),
+            new BLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump", "BumpDepot"));
 
     autos.clear();
     autos.addAll(rebuiltPaths);
@@ -391,7 +392,7 @@ public class BLineLogic {
 
   public static Command buildDefaultAuto() {
     return BLineCommands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
+        Commands.waitSeconds(autoDelayEntry.getDouble(1.0)),
         buildPath(new Path("Default"), true),
         launcherCommand());
   }
