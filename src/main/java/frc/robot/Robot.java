@@ -124,8 +124,8 @@ public class Robot extends TimedRobot {
 
       // BLINE STUFF
       BLineLogic.init(
-          subsystems,
-          true); // Handling init and unit test cases, and toggles autounbech feature on or off
+          subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
+      // off
       BLineLogic.configure(subsystems); // configure the autobuilder to run autos
       BLineLogic.initSmartDashboard(); // Logging
       BLineAutonomousField.initSmartDashBoard( // Visualization

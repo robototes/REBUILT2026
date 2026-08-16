@@ -25,6 +25,7 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
+import frc.robot.util.Elastic;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +40,9 @@ public class BLineLogic {
   public static Field2d field = new Field2d();
   public static Field2d fieldPoseStart = new Field2d();
   private static Trigger beachedTrigger;
+
+  private static Boolean enableAutoUnbeach = true;
+  private static Boolean enableLaunchOnTheMove = true;
   private static final Pose2d RIGHT_TRENCH_POSE =
       new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90));
   private static final Pose2d LEFT_TRENCH_POSE =
@@ -94,6 +98,9 @@ public class BLineLogic {
   private static FollowPath.Builder continuingPathBuilder;
   private static FollowPath follow;
   private static int savedPathIndex;
+  private static Elastic.Notification startingPoseNotification;
+  private static Elastic.Notification selectedAutoNotification;
+  private static Elastic.Notification selectedTrenchNotification;
 
   // ========================= MIRRORING =========================
 
@@ -104,7 +111,7 @@ public class BLineLogic {
 
   // ========================= INIT =========================
 
-  public static void init(Subsystems subsystems, boolean enableAutoUnbeach) {
+  public static void init(Subsystems subsystems) {
     s = subsystems;
     recoveryPose =
         NetworkTableInstance.getDefault()
@@ -112,17 +119,37 @@ public class BLineLogic {
             .getStructTopic("RecoveryPose", Pose2d.struct)
             .publish();
 
-    registerTriggersAndCommands(enableAutoUnbeach);
+    registerTriggersAndCommands();
 
     if (pathsInitialized) return;
 
     initializePaths();
+
     pathsInitialized = true;
   }
 
   public static void unitTestInit() {
     s = null; // Explicitly set to null for unit tests
     initializePaths();
+  }
+
+  private static void intializeNotifications() {
+    selectedAutoNotification =
+        new Elastic.Notification(
+            Elastic.NotificationLevel.INFO,
+            "Current Auto  Notification",
+            "You have selected " + getSelectedAutoName());
+    startingPoseNotification =
+        new Elastic.Notification(
+            Elastic.NotificationLevel.INFO,
+            "Current Auto Catagory",
+            "Robot will start at " + startPositionChooser.getSelected().title);
+
+    selectedTrenchNotification =
+        new Elastic.Notification(
+            Elastic.NotificationLevel.INFO,
+            "Current Trench Pose",
+            "Robot will start at " + trenchSideChooser.getSelected().title + " Trench");
   }
 
   private static void initializePaths() {
@@ -216,6 +243,8 @@ public class BLineLogic {
     SmartDashboard.putData("Auto Mode", gameObjects);
     SmartDashboard.putData("Available Auto Variants", autoChooser);
     SmartDashboard.putString("Auto Key", keys);
+    SmartDashboard.putBoolean("Enable SOTM?", enableLaunchOnTheMove);
+    SmartDashboard.putBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
 
     autoDelayEntry.setDouble(0.0);
 
@@ -224,18 +253,24 @@ public class BLineLogic {
           filterAutos(gameObjects.getSelected());
           updateInitialHeading();
           updateFieldDisplay();
+          intializeNotifications();
+          Elastic.sendNotification(startingPoseNotification);
         });
 
     trenchSideChooser.onChange(
         v -> {
           updateInitialHeading();
           updateFieldDisplay();
+          intializeNotifications();
+          Elastic.sendNotification(selectedTrenchNotification);
         });
 
     autoChooser.onChange(
         v -> {
           updateInitialHeading();
           updateFieldDisplay();
+          intializeNotifications();
+          Elastic.sendNotification(selectedAutoNotification);
         });
 
     updateFieldDisplay();
@@ -516,32 +551,51 @@ public class BLineLogic {
     return buildPath(remainder, false);
   }
 
-  private static void registerTriggersAndCommands(boolean enableAutoUnbeach) {
-    if (enableAutoUnbeach) {
-      beachedTrigger =
-          new Trigger(() -> RobotState.isAutonomous() && s.drivebaseSubsystem.isBeached(5));
-      beachedTrigger.onTrue(
-          Commands.runOnce(
-                  () -> {
-                    if (follow != null) {
-                      savedPathIndex = follow.getCurrentTranslationElementIndex();
-                    }
-                  })
-              .andThen(Commands.defer(() -> recoverCommand().andThen(resume()), Set.of())));
-    }
+  private static void registerTriggersAndCommands() {
+    beachedTrigger =
+        new Trigger(
+            () -> {
+              enableAutoUnbeach =
+                  SmartDashboard.getBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
+
+              return enableAutoUnbeach
+                  && RobotState.isAutonomous()
+                  && s.drivebaseSubsystem.isBeached(5);
+            });
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
       if (Robot.isSimulation()) {
         bLineSimLaunching = RobotSim.launch(s, 30);
+
         FollowPath.registerEventTrigger(
             "launch",
-            Commands.runOnce(() -> launchAllowed.set(true))
-                .andThen(bLineSimLaunching.onlyWhile(launchAllowed::get))
-                .andThen(Commands.print("LAUNCH FINISHED")));
+            Commands.defer(
+                () -> {
+                  enableLaunchOnTheMove =
+                      SmartDashboard.getBoolean("Enable SOTM?", enableLaunchOnTheMove);
+
+                  return enableLaunchOnTheMove
+                      ? Commands.runOnce(() -> launchAllowed.set(true))
+                          .andThen(bLineSimLaunching.onlyWhile(launchAllowed::get))
+                          .andThen(Commands.print("LAUNCH FINISHED"))
+                      : Commands.none();
+                },
+                Set.of()));
+
       } else {
         bLineLaunching = launcherCommand();
-        FollowPath.registerEventTrigger("launch", bLineLaunching);
+
+        FollowPath.registerEventTrigger(
+            "launch",
+            Commands.defer(
+                () -> {
+                  enableLaunchOnTheMove =
+                      SmartDashboard.getBoolean("Enable SOTM?", enableLaunchOnTheMove);
+
+                  return enableLaunchOnTheMove ? bLineLaunching : Commands.none();
+                },
+                Set.of()));
       }
     }
 
