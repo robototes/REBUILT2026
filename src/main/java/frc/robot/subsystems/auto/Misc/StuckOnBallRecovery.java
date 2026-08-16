@@ -22,7 +22,7 @@ public class StuckOnBallRecovery {
         Rotation2d.fromRadians(Math.atan2(pitch.getRadians(), roll.getRadians()));
     return new Pose2d(
         robotPose
-            .transformBy(new Transform2d(0.0, RECOVERY_POINT_DISTANCE, Rotation2d.kZero))
+            .transformBy(new Transform2d(RECOVERY_POINT_DISTANCE, 0.0, Rotation2d.kZero))
             .rotateAround(robotPose.getTranslation(), headingToGetUnstuck)
             .getTranslation(),
         robotPose.getRotation());
@@ -34,7 +34,7 @@ public class StuckOnBallRecovery {
     Pose2d target =
         robotPose
             .get()
-            .transformBy(new Transform2d(0.0, -RECOVERY_POINT_DISTANCE, Rotation2d.kZero))
+            .transformBy(new Transform2d(RECOVERY_POINT_DISTANCE, 0.0, Rotation2d.kZero))
             .rotateAround(
                 robotPose.get().getTranslation(),
                 Rotation2d.fromRadians(

@@ -8,13 +8,14 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.util.struct.Struct;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BLineLogic {
@@ -36,7 +38,7 @@ public class BLineLogic {
   private static Subsystems s;
   public static Field2d field = new Field2d();
   public static Field2d fieldPoseStart = new Field2d();
-
+  private static Trigger beachedTrigger;
   private static final Pose2d RIGHT_TRENCH_POSE =
       new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90));
   private static final Pose2d LEFT_TRENCH_POSE =
@@ -87,7 +89,7 @@ public class BLineLogic {
   private static boolean pathsInitialized = false;
   private static Command bLineLaunching;
   private static Command bLineSimLaunching;
-private static  StructPublisher<Pose2d> recoveryPose;
+  private static StructPublisher<Pose2d> recoveryPose;
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
   private static FollowPath follow;
@@ -104,12 +106,13 @@ private static  StructPublisher<Pose2d> recoveryPose;
 
   public static void init(Subsystems subsystems) {
     s = subsystems;
-    recoveryPose =  NetworkTableInstance.getDefault()
+    recoveryPose =
+        NetworkTableInstance.getDefault()
             .getTable("Autos")
             .getStructTopic("RecoveryPose", Pose2d.struct)
             .publish();
 
-    registerCommands();
+    registerTriggersAndCommands();
 
     if (pathsInitialized) return;
 
@@ -192,14 +195,12 @@ private static  StructPublisher<Pose2d> recoveryPose;
     gameObjects.setDefaultOption("0", 0);
     filterAutos(0);
 
-
-recoveryPose.set(  StuckOnBallRecovery.getRecoveryPose( s.drivebaseSubsystem.getState().Pose,
-
-                   Rotation2d.fromDegrees(
-                  s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
-
-                Rotation2d.fromDegrees(
-                    s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
+    recoveryPose.set(
+        StuckOnBallRecovery.getRecoveryPose(
+            s.drivebaseSubsystem.getState().Pose,
+            Rotation2d.fromDegrees(s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
+            Rotation2d.fromDegrees(
+                s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
 
     SmartDashboard.putData("Selected auto", field);
     SmartDashboard.putData("Start pose", fieldPoseStart);
@@ -313,15 +314,16 @@ recoveryPose.set(  StuckOnBallRecovery.getRecoveryPose( s.drivebaseSubsystem.get
         buildPath(new Path("FirstNeutralBump"), true),
         launcherCommand());
   }
-public static void updateRecoveryPose() {
-  recoveryPose.set(  StuckOnBallRecovery.getRecoveryPose( s.drivebaseSubsystem.getState().Pose,
 
-                   Rotation2d.fromDegrees(
-                  s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
+  public static void updateRecoveryPose() {
+    recoveryPose.set(
+        StuckOnBallRecovery.getRecoveryPose(
+            s.drivebaseSubsystem.getState().Pose,
+            Rotation2d.fromDegrees(s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
+            Rotation2d.fromDegrees(
+                s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
+  }
 
-                Rotation2d.fromDegrees(
-                    s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
-}
   public static Command buildDoubleNeutralBumpAuto() {
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
@@ -428,7 +430,6 @@ public static void updateRecoveryPose() {
 
   public static Command recoverCommand() {
 
-
     return Commands.sequence(
             buildPath(
                 StuckOnBallRecovery.getRecoverySegment(
@@ -441,10 +442,6 @@ public static void updateRecoveryPose() {
                             s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
                 false))
         .until(() -> !s.drivebaseSubsystem.isBeached(5));
-  }
-
-  private static Command recoveryUntilUnbeached() {
-    return recoverCommand().andThen(resume()); // Resume path after recovery
   }
 
   private static Command resume() {
@@ -468,7 +465,18 @@ public static void updateRecoveryPose() {
     return buildPath(remainder, false);
   }
 
-  private static void registerCommands() {
+  private static void registerTriggersAndCommands() {
+    beachedTrigger =
+        new Trigger(() -> RobotState.isAutonomous() && s.drivebaseSubsystem.isBeached(5));
+    beachedTrigger.onTrue(
+        Commands.runOnce(
+                () -> {
+                  if (follow != null) {
+                    savedPathIndex = follow.getCurrentTranslationElementIndex();
+                  }
+                })
+            .andThen(Commands.defer(() -> recoverCommand().andThen(resume()), Set.of())));
+
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
@@ -486,15 +494,6 @@ public static void updateRecoveryPose() {
     }
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
-    FollowPath.registerEventTrigger(
-        "override",
-        Commands.runOnce(
-            () -> {
-              if (follow != null) {
-                savedPathIndex = follow.getCurrentTranslationElementIndex();
-                CommandScheduler.getInstance().schedule(recoveryUntilUnbeached());
-              }
-            }));
     FollowPath.registerEventTrigger("climb", climbCommand());
     FollowPath.registerEventTrigger(
         "cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
