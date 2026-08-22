@@ -32,6 +32,7 @@ import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import frc.robot.util.SlowMode;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
 import java.util.Optional;
 
@@ -91,6 +92,7 @@ public class Controls {
   private static final double JOYSTICK_DEADBAND = 0.1;
   private static final double SWERVE_DEADBAND = 0.001;
 
+  private final SlowMode slowMode = new SlowMode();
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive =
       new SwerveRequest.FieldCentric()
@@ -153,7 +155,7 @@ public class Controls {
     // Joystick +Y is back
     // Robot +X is forward
     double input = MathUtil.applyDeadband(-driverController.getLeftY(), JOYSTICK_DEADBAND);
-    return input * MaxSpeed * DRIVE_INPUT_SCALE;
+    return input * MaxSpeed * slowMode.slowFactor();
   }
 
   // takes the Y value from the joystick, and applies a deadband and input scaling
@@ -161,7 +163,7 @@ public class Controls {
     // Joystick +X is right
     // Robot +Y is left
     double input = MathUtil.applyDeadband(-driverController.getLeftX(), JOYSTICK_DEADBAND);
-    return input * MaxSpeed * DRIVE_INPUT_SCALE;
+    return input * MaxSpeed * slowMode.slowFactor();
   }
 
   // takes the rotation value from the joystick, and applies a deadband and input scaling
@@ -169,7 +171,7 @@ public class Controls {
     // Joystick +X is right
     // Robot +angle is CCW (left)
     double input = MathUtil.applyDeadband(-driverController.getRightX(), JOYSTICK_DEADBAND);
-    return input * MaxSpeed * DRIVE_INPUT_SCALE;
+    return input * MaxSpeed * slowMode.slowFactor();
   }
 
   private void configureDrivebaseBindings() {
