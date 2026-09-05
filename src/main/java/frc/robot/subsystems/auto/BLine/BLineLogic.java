@@ -50,10 +50,6 @@ public class BLineLogic {
   private static final Pose2d LEFT_TRENCH_POSE =
       new Pose2d(4.013, 7.597, Rotation2d.fromDegrees(90));
 
-  // ============================================================
-  // ENUMS
-  // ============================================================
-
   public enum StartPosition {
     TRENCH("Trench", new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90))),
 
@@ -94,8 +90,9 @@ public class BLineLogic {
   private static StructPublisher<Pose2d> recoveryPose;
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
+  private static Path currentPath;
   private static FollowPath follow;
-  private static int savedPathIndex;
+  private static int savedPathIndex = -1;
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
@@ -387,11 +384,6 @@ public class BLineLogic {
       return Pose2d.kZero;
     }
 
-    if (selected.getStartPositionType() == StartPosition.TRENCH) {
-
-      return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
-    }
-
     return selected.getStartPose2d();
   }
 
@@ -476,7 +468,7 @@ public class BLineLogic {
       return;
     }
 
-    Pose2d start = selected.getPath().getStartPose();
+    Pose2d start = selected.getStartPose2d();
 
     SmartDashboard.putNumber("Initial Heading(Deg)", Math.round(start.getRotation().getDegrees()));
   }
@@ -505,31 +497,30 @@ public class BLineLogic {
 
       boolean resetPose = i == 0;
 
-      commands.add(buildPath(paths.get(i), resetPose));
+      commands.add(buildPath(paths.get(i), resetPose, true));
     }
 
     return Commands.sequence(commands.toArray(new Command[0]));
   }
 
-  private static Command buildPath(Path path, boolean resetPose) {
+  private static Command buildPath(Path path, boolean resetPose, boolean saveForRecovery) {
 
     if (s == null || pathBuilder == null || continuingPathBuilder == null) {
-
       return Commands.none();
     }
 
-    return (resetPose ? pathBuilder : continuingPathBuilder).build(path);
+    FollowPath command = (resetPose ? pathBuilder : continuingPathBuilder).build(path);
+
+    if (saveForRecovery) {
+      currentPath = path;
+      follow = command;
+    }
+
+    return command;
   }
 
   public static Command handleAutos() {
 
-    /*
-     * The old switch based on autoChooser
-     * is no longer needed.
-     *
-     * The multi-step chooser directly determines
-     * the paths to execute.
-     */
     return getSelectedAuto();
   }
 
@@ -554,10 +545,6 @@ public class BLineLogic {
         .withDefaultShouldFlip()
         .withShouldMirror(BLineLogic::isMirrored);
   }
-
-  // ============================================================
-  // COMMANDS
-  // ============================================================
 
   public static Command intakeCommand() {
 
@@ -623,10 +610,6 @@ public class BLineLogic {
     }
   }
 
-  // ============================================================
-  // RECOVERY
-  // ============================================================
-
   public static void updateRecoveryPose() {
 
     recoveryPose.set(
@@ -649,20 +632,23 @@ public class BLineLogic {
                     () ->
                         Rotation2d.fromDegrees(
                             s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
+                false,
                 false))
         .until(() -> !s.drivebaseSubsystem.isBeached(5));
   }
 
   private static Command resume() {
 
-    if (follow == null) {
+    if (currentPath == null || savedPathIndex < 0) {
       return Commands.none();
     }
 
     int i = savedPathIndex;
 
-    var flat = getSelectedAutoPath().getPath().getPathElementsWithConstraintsNoWaypoints();
+    var flat = currentPath.getPathElementsWithConstraintsNoWaypoints();
+
     List<Path.PathElement> remaining = new ArrayList<>();
+
     remaining.add(
         new Path.TranslationTarget(s.drivebaseSubsystem.getState().Pose.getTranslation()));
 
@@ -670,13 +656,10 @@ public class BLineLogic {
       remaining.add(flat.get(j).getFirst().copy());
     }
 
-    Path remainder = new Path(remaining, getSelectedAutoPath().getPath().getPathConstraints());
-    return buildPath(remainder, false);
-  }
+    Path remainder = new Path(remaining, currentPath.getPathConstraints());
 
-  // ============================================================
-  // TRIGGERS
-  // ============================================================
+    return buildPath(remainder, false, false);
+  }
 
   private static void registerTriggersAndCommands() {
 
@@ -691,7 +674,16 @@ public class BLineLogic {
                   && s.drivebaseSubsystem.isBeached(5);
             });
 
-    beachedTrigger.onTrue(Commands.sequence(recoverCommand(), resume()));
+    beachedTrigger.onTrue(
+        Commands.sequence(
+            Commands.runOnce(
+                () -> {
+                  if (follow != null) {
+                    savedPathIndex = follow.getCurrentTranslationElementIndex();
+                  }
+                }),
+            recoverCommand(),
+            resume()));
 
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
