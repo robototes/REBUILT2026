@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
-import frc.robot.lib.BLine.BLineCommands;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
@@ -83,8 +82,6 @@ public class BLineLogic {
     }
   }
 
-
-  private static final SendableChooser<StartPosition> startPositionChooser = new SendableChooser<>();
   private static final SendableChooser<TrenchSide> trenchSideChooser = new SendableChooser<>();
   private static final List<DynamicSendableChooser<String>> pathChoosers = new ArrayList<>();
   private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
@@ -100,14 +97,14 @@ public class BLineLogic {
   private static FollowPath follow;
   private static int savedPathIndex;
 
-  private static final NetworkTableEntry autoDelayEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
+  private static final NetworkTableEntry autoDelayEntry =
+      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
-
   public static boolean isMirrored() {
 
-    return startPositionChooser.getSelected() == StartPosition.TRENCH
+    return getSelectedAutoPath().getStartPositionType() == StartPosition.TRENCH
         && trenchSideChooser.getSelected() == TrenchSide.LEFT;
   }
 
@@ -120,7 +117,11 @@ public class BLineLogic {
 
     s = subsystems;
 
-    recoveryPose =NetworkTableInstance.getDefault().getTable("Autos").getStructTopic("RecoveryPose", Pose2d.struct).publish();
+    recoveryPose =
+        NetworkTableInstance.getDefault()
+            .getTable("Autos")
+            .getStructTopic("RecoveryPose", Pose2d.struct)
+            .publish();
 
     registerTriggersAndCommands();
 
@@ -140,7 +141,6 @@ public class BLineLogic {
     initializePaths();
   }
 
-
   private static void initializePaths() {
 
     defaultPath = new BLinePath("Default", "default");
@@ -150,7 +150,6 @@ public class BLineLogic {
     namesToAuto.clear();
     pathChoosers.clear();
 
-
     rebuiltPaths.put(
         BLinePaths.FirstNeutralTrench,
         List.of(
@@ -158,10 +157,8 @@ public class BLineLogic {
             BLinePaths.SecondNeutralBump,
             BLinePaths.SecondNeutralTrench));
 
-
     rebuiltPaths.put(
         BLinePaths.FirstNeutralBump, List.of(BLinePaths.BumpToTrench, BLinePaths.BumpDepot));
-
 
     rebuiltPaths.put(
         BLinePaths.SecondNeutralBump, List.of(BLinePaths.BumpToTrench, BLinePaths.BumpDepot));
@@ -170,17 +167,13 @@ public class BLineLogic {
         BLinePaths.BumpToTrench,
         List.of(BLinePaths.FirstNeutralTrench, BLinePaths.SecondNeutralTrench));
 
-
     rebuiltPaths.put(
         BLinePaths.BumpDepot,
         List.of(BLinePaths.FirstNeutralTrench, BLinePaths.SecondNeutralTrench));
 
-
     rebuiltPaths.put(
         BLinePaths.SecondNeutralTrench,
         List.of(BLinePaths.FirstNeutralBump, BLinePaths.SecondNeutralBump));
-
-
 
     for (BLinePath path : rebuiltPaths.keySet()) {
 
@@ -207,11 +200,8 @@ public class BLineLogic {
       }
     }
 
-
     createPathChoosers();
   }
-
-
 
   private static void createPathChoosers() {
     final int MAX_STEPS = 3;
@@ -232,7 +222,6 @@ public class BLineLogic {
     }
   }
 
-
   private static void populateFirstChooser() {
 
     DynamicSendableChooser<String> chooser = pathChoosers.get(0);
@@ -248,14 +237,11 @@ public class BLineLogic {
     }
   }
 
-
   public static void updatePathChoosers() {
-
 
     for (int step = 0; step < pathChoosers.size() - 1; step++) {
 
       BLinePath currentPath = getSelectedPath(step);
-
 
       if (currentPath == null) {
 
@@ -266,7 +252,6 @@ public class BLineLogic {
 
       List<BLinePath> nextPaths = rebuiltPaths.get(currentPath);
 
-
       if (nextPaths == null || nextPaths.isEmpty()) {
 
         clearChoosersAfter(step);
@@ -275,7 +260,6 @@ public class BLineLogic {
       }
 
       DynamicSendableChooser<String> nextChooser = pathChoosers.get(step + 1);
-
 
       nextChooser.clearOptions();
 
@@ -286,7 +270,6 @@ public class BLineLogic {
     }
   }
 
-
   private static void clearChoosersAfter(int step) {
 
     for (int i = step + 1; i < pathChoosers.size(); i++) {
@@ -294,7 +277,6 @@ public class BLineLogic {
       pathChoosers.get(i).clearOptions();
     }
   }
-
 
   private static BLinePath getSelectedPath(int step) {
 
@@ -311,7 +293,6 @@ public class BLineLogic {
 
     return namesToAuto.get(selectedName);
   }
-
 
   public static List<BLinePath> getSelectedPathSequence() {
 
@@ -338,36 +319,20 @@ public class BLineLogic {
     return selectedPaths;
   }
 
-
   public static void filterAutos(int numGameObjects) {
 
     updatePathChoosers();
   }
 
-
   public static void initSmartDashboard() {
-
-    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
-
-    for (StartPosition pos : StartPosition.values()) {
-
-      if (pos != StartPosition.MISC) {
-
-        startPositionChooser.addOption(pos.title, pos);
-      }
-    }
 
     trenchSideChooser.setDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-    SmartDashboard.putData("Starting Position", startPositionChooser);
-
     SmartDashboard.putData("Trench Side", trenchSideChooser);
 
     SmartDashboard.putData("Selected Auto", field);
-
-    SmartDashboard.putData("Start Pose", fieldPoseStart);
 
     SmartDashboard.putString("Auto Key", keys);
 
@@ -376,13 +341,6 @@ public class BLineLogic {
     SmartDashboard.putBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
 
     autoDelayEntry.setDouble(0.0);
-
-    startPositionChooser.onChange(
-        value -> {
-          updatePathChoosers();
-          updateInitialHeading();
-          updateFieldDisplay();
-        });
 
     trenchSideChooser.onChange(
         value -> {
@@ -393,7 +351,6 @@ public class BLineLogic {
     updatePathChoosers();
     updateFieldDisplay();
   }
-
 
   public static void updateFieldDisplay() {
 
@@ -407,7 +364,6 @@ public class BLineLogic {
     if (sequence.isEmpty()) {
       return "Default";
     }
-
 
     return sequence.get(0).getDisplayName();
   }
@@ -431,14 +387,13 @@ public class BLineLogic {
       return Pose2d.kZero;
     }
 
-    if (startPositionChooser.getSelected() == StartPosition.TRENCH) {
+    if (selected.getStartPositionType() == StartPosition.TRENCH) {
 
       return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
     }
 
     return selected.getStartPose2d();
   }
-
 
   public static List<Path> getPathsToBuild() {
 
@@ -453,7 +408,6 @@ public class BLineLogic {
 
     return paths;
   }
-
 
   public static List<BLinePath> getBLinePaths() {
 
@@ -471,7 +425,6 @@ public class BLineLogic {
 
     return names;
   }
-
 
   public static void handleStartingPoses(BLinePath path) {
     List<Pose2d> posses = new ArrayList<>();
@@ -528,7 +481,6 @@ public class BLineLogic {
     SmartDashboard.putNumber("Initial Heading(Deg)", Math.round(start.getRotation().getDegrees()));
   }
 
-
   public static Command getSelectedAuto() {
 
     if (s == null) {
@@ -559,7 +511,6 @@ public class BLineLogic {
     return Commands.sequence(commands.toArray(new Command[0]));
   }
 
-
   private static Command buildPath(Path path, boolean resetPose) {
 
     if (s == null || pathBuilder == null || continuingPathBuilder == null) {
@@ -569,7 +520,6 @@ public class BLineLogic {
 
     return (resetPose ? pathBuilder : continuingPathBuilder).build(path);
   }
-
 
   public static Command handleAutos() {
 
@@ -583,7 +533,6 @@ public class BLineLogic {
     return getSelectedAuto();
   }
 
- 
   public static void configure(Subsystems s) {
     pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
     continuingPathBuilder = createPathBuilder(s);
@@ -704,6 +653,27 @@ public class BLineLogic {
         .until(() -> !s.drivebaseSubsystem.isBeached(5));
   }
 
+  private static Command resume() {
+
+    if (follow == null) {
+      return Commands.none();
+    }
+
+    int i = savedPathIndex;
+
+    var flat = getSelectedAutoPath().getPath().getPathElementsWithConstraintsNoWaypoints();
+    List<Path.PathElement> remaining = new ArrayList<>();
+    remaining.add(
+        new Path.TranslationTarget(s.drivebaseSubsystem.getState().Pose.getTranslation()));
+
+    for (int j = i; j < flat.size(); j++) {
+      remaining.add(flat.get(j).getFirst().copy());
+    }
+
+    Path remainder = new Path(remaining, getSelectedAutoPath().getPath().getPathConstraints());
+    return buildPath(remainder, false);
+  }
+
   // ============================================================
   // TRIGGERS
   // ============================================================
@@ -720,6 +690,8 @@ public class BLineLogic {
                   && RobotState.isAutonomous()
                   && s.drivebaseSubsystem.isBeached(5);
             });
+
+    beachedTrigger.onTrue(Commands.sequence(recoverCommand(), resume()));
 
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
