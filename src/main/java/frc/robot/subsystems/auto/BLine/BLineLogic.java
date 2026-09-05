@@ -334,6 +334,7 @@ public class BLineLogic {
     SmartDashboard.putString("Auto Key", keys);
 
     SmartDashboard.putBoolean("Enable SOTM?", enableLaunchOnTheMove);
+    SmartDashboard.putData("Start Pose", fieldPoseStart);
 
     SmartDashboard.putBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
 
@@ -350,7 +351,6 @@ public class BLineLogic {
   }
 
   public static void updateFieldDisplay() {
-
     fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
   }
 
@@ -362,7 +362,17 @@ public class BLineLogic {
       return "Default";
     }
 
-    return sequence.get(0).getDisplayName();
+    StringBuilder name = new StringBuilder();
+
+    for (BLinePath path : sequence) {
+      if (name.length() > 0) {
+        name.append(" -> ");
+      }
+
+      name.append(path.getDisplayName());
+    }
+
+    return name.toString();
   }
 
   public static BLinePath getSelectedAutoPath() {
