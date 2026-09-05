@@ -25,7 +25,6 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
-import frc.robot.util.Elastic;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,26 +36,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BLineLogic {
 
   private static Subsystems s;
+
   public static Field2d field = new Field2d();
   public static Field2d fieldPoseStart = new Field2d();
+
   private static Trigger beachedTrigger;
 
   private static Boolean enableAutoUnbeach = true;
   private static Boolean enableLaunchOnTheMove = true;
+
   private static final Pose2d RIGHT_TRENCH_POSE =
       new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90));
+
   private static final Pose2d LEFT_TRENCH_POSE =
       new Pose2d(4.013, 7.597, Rotation2d.fromDegrees(90));
 
+  // ============================================================
+  // ENUMS
+  // ============================================================
+
   public enum StartPosition {
     TRENCH("Trench", new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90))),
+
     CENTER("Center", new Pose2d(3.600, 4.035, Rotation2d.fromDegrees(0))),
+
     MISC("Misc", new Pose2d());
 
     public final String title;
     public final Pose2d startPose;
 
     StartPosition(String title, Pose2d startPose) {
+
       this.title = title;
       this.startPose = startPose;
     }
@@ -73,23 +83,14 @@ public class BLineLogic {
     }
   }
 
-  private static final List<BLinePath> autos = new ArrayList<>();
-  private static final SendableChooser<StartPosition> startPositionChooser =
-      new SendableChooser<>();
+
+  private static final SendableChooser<StartPosition> startPositionChooser = new SendableChooser<>();
   private static final SendableChooser<TrenchSide> trenchSideChooser = new SendableChooser<>();
-  private static final DynamicSendableChooser<String> autoChooser = new DynamicSendableChooser<>();
-  private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
-
-  private static final NetworkTableEntry autoDelayEntry =
-      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
-
-  public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
-
-  private static BLinePath defaultPath;
-  private static List<BLinePath> rebuiltPaths = List.of();
-  private static Map<Integer, List<BLinePath>> commandsMap = Map.of();
+  private static final List<DynamicSendableChooser<String>> pathChoosers = new ArrayList<>();
+  private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
+  private static final List<BLinePath> autos = new ArrayList<>();
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
-
+  private static BLinePath defaultPath;
   private static boolean pathsInitialized = false;
   private static Command bLineLaunching;
   private static Command bLineSimLaunching;
@@ -98,30 +99,34 @@ public class BLineLogic {
   private static FollowPath.Builder continuingPathBuilder;
   private static FollowPath follow;
   private static int savedPathIndex;
-  private static Elastic.Notification startingPoseNotification;
-  private static Elastic.Notification selectedAutoNotification;
-  private static Elastic.Notification selectedTrenchNotification;
 
-  // ========================= MIRRORING =========================
+  private static final NetworkTableEntry autoDelayEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
+
+  public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
+
 
   public static boolean isMirrored() {
+
     return startPositionChooser.getSelected() == StartPosition.TRENCH
         && trenchSideChooser.getSelected() == TrenchSide.LEFT;
   }
 
-  // ========================= INIT =========================
+  static Pose2d getTrenchPose() {
+
+    return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
+  }
 
   public static void init(Subsystems subsystems) {
+
     s = subsystems;
-    recoveryPose =
-        NetworkTableInstance.getDefault()
-            .getTable("Autos")
-            .getStructTopic("RecoveryPose", Pose2d.struct)
-            .publish();
+
+    recoveryPose =NetworkTableInstance.getDefault().getTable("Autos").getStructTopic("RecoveryPose", Pose2d.struct).publish();
 
     registerTriggersAndCommands();
 
-    if (pathsInitialized) return;
+    if (pathsInitialized) {
+      return;
+    }
 
     initializePaths();
 
@@ -129,70 +134,456 @@ public class BLineLogic {
   }
 
   public static void unitTestInit() {
-    s = null; // Explicitly set to null for unit tests
+
+    s = null;
+
     initializePaths();
   }
 
-  private static void intializeNotifications() {
-    selectedAutoNotification =
-        new Elastic.Notification(
-            Elastic.NotificationLevel.INFO,
-            "Current Auto  Notification",
-            "You have selected " + getSelectedAutoName());
-    startingPoseNotification =
-        new Elastic.Notification(
-            Elastic.NotificationLevel.INFO,
-            "Current Auto Catagory",
-            "Robot will start at " + startPositionChooser.getSelected().title);
-
-    selectedTrenchNotification =
-        new Elastic.Notification(
-            Elastic.NotificationLevel.INFO,
-            "Current Trench Pose",
-            "Robot will start at " + trenchSideChooser.getSelected().title + " Trench");
-  }
 
   private static void initializePaths() {
-    defaultPath = new BLinePath("default", "Center", "default");
 
-    rebuiltPaths =
-        List.of(
-            defaultPath,
-            new BLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
-            new BLinePath("DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
-            new BLinePath("BumpNeutral", "RT", "FirstNeutralBump"),
-            new BLinePath(
-                "DoubleBumpNeutral", "RT", "FirstNeutralBump", "BumpToTrench", "SecondNeutralBump"),
-            new BLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump", "BumpDepot"));
+    defaultPath = new BLinePath("Default", "default");
 
+    rebuiltPaths.clear();
     autos.clear();
-    autos.addAll(rebuiltPaths);
-    commandsMap = Map.of(0, rebuiltPaths);
-
     namesToAuto.clear();
-    for (List<BLinePath> list : commandsMap.values()) {
-      for (BLinePath auto : list) {
-        handleStartingPoses(auto);
-        namesToAuto.put(auto.getDisplayName(), auto);
+    pathChoosers.clear();
+
+
+    rebuiltPaths.put(
+        BLinePaths.FirstNeutralTrench,
+        List.of(
+            BLinePaths.FirstNeutralBump,
+            BLinePaths.SecondNeutralBump,
+            BLinePaths.SecondNeutralTrench));
+
+
+    rebuiltPaths.put(
+        BLinePaths.FirstNeutralBump, List.of(BLinePaths.BumpToTrench, BLinePaths.BumpDepot));
+
+
+    rebuiltPaths.put(
+        BLinePaths.SecondNeutralBump, List.of(BLinePaths.BumpToTrench, BLinePaths.BumpDepot));
+
+    rebuiltPaths.put(
+        BLinePaths.BumpToTrench,
+        List.of(BLinePaths.FirstNeutralTrench, BLinePaths.SecondNeutralTrench));
+
+
+    rebuiltPaths.put(
+        BLinePaths.BumpDepot,
+        List.of(BLinePaths.FirstNeutralTrench, BLinePaths.SecondNeutralTrench));
+
+
+    rebuiltPaths.put(
+        BLinePaths.SecondNeutralTrench,
+        List.of(BLinePaths.FirstNeutralBump, BLinePaths.SecondNeutralBump));
+
+
+
+    for (BLinePath path : rebuiltPaths.keySet()) {
+
+      if (!autos.contains(path)) {
+        autos.add(path);
+      }
+
+      namesToAuto.put(path.getDisplayName(), path);
+
+      handleStartingPoses(path);
+    }
+
+    for (List<BLinePath> paths : rebuiltPaths.values()) {
+
+      for (BLinePath path : paths) {
+
+        if (!autos.contains(path)) {
+          autos.add(path);
+        }
+
+        namesToAuto.put(path.getDisplayName(), path);
+
+        handleStartingPoses(path);
+      }
+    }
+
+
+    createPathChoosers();
+  }
+
+
+
+  private static void createPathChoosers() {
+    final int MAX_STEPS = 3;
+
+    for (int i = 0; i < MAX_STEPS; i++) {
+
+      DynamicSendableChooser<String> chooser = new DynamicSendableChooser<>();
+
+      pathChoosers.add(chooser);
+
+      SmartDashboard.putData("BLine/Path Step " + (i + 1), chooser);
+    }
+
+    populateFirstChooser();
+    for (DynamicSendableChooser<String> chooser : pathChoosers) {
+
+      chooser.onChange(value -> updatePathChoosers());
+    }
+  }
+
+
+  private static void populateFirstChooser() {
+
+    DynamicSendableChooser<String> chooser = pathChoosers.get(0);
+
+    chooser.clearOptions();
+
+    for (BLinePath path : autos) {
+
+      if (path != BLinePaths.DepotToTrench) {
+
+        chooser.addOption(path.getDisplayName(), path.getDisplayName());
       }
     }
   }
 
+
+  public static void updatePathChoosers() {
+
+
+    for (int step = 0; step < pathChoosers.size() - 1; step++) {
+
+      BLinePath currentPath = getSelectedPath(step);
+
+
+      if (currentPath == null) {
+
+        clearChoosersAfter(step);
+
+        break;
+      }
+
+      List<BLinePath> nextPaths = rebuiltPaths.get(currentPath);
+
+
+      if (nextPaths == null || nextPaths.isEmpty()) {
+
+        clearChoosersAfter(step);
+
+        break;
+      }
+
+      DynamicSendableChooser<String> nextChooser = pathChoosers.get(step + 1);
+
+
+      nextChooser.clearOptions();
+
+      for (BLinePath nextPath : nextPaths) {
+
+        nextChooser.addOption(nextPath.getDisplayName(), nextPath.getDisplayName());
+      }
+    }
+  }
+
+
+  private static void clearChoosersAfter(int step) {
+
+    for (int i = step + 1; i < pathChoosers.size(); i++) {
+
+      pathChoosers.get(i).clearOptions();
+    }
+  }
+
+
+  private static BLinePath getSelectedPath(int step) {
+
+    if (step < 0 || step >= pathChoosers.size()) {
+
+      return null;
+    }
+
+    String selectedName = pathChoosers.get(step).getSelected();
+
+    if (selectedName == null) {
+      return null;
+    }
+
+    return namesToAuto.get(selectedName);
+  }
+
+
+  public static List<BLinePath> getSelectedPathSequence() {
+
+    List<BLinePath> selectedPaths = new ArrayList<>();
+
+    for (int step = 0; step < pathChoosers.size(); step++) {
+
+      BLinePath selected = getSelectedPath(step);
+
+      if (selected == null) {
+        break;
+      }
+
+      selectedPaths.add(selected);
+
+      List<BLinePath> nextPaths = rebuiltPaths.get(selected);
+
+      if (nextPaths == null || nextPaths.isEmpty()) {
+
+        break;
+      }
+    }
+
+    return selectedPaths;
+  }
+
+
+  public static void filterAutos(int numGameObjects) {
+
+    updatePathChoosers();
+  }
+
+
+  public static void initSmartDashboard() {
+
+    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
+
+    for (StartPosition pos : StartPosition.values()) {
+
+      if (pos != StartPosition.MISC) {
+
+        startPositionChooser.addOption(pos.title, pos);
+      }
+    }
+
+    trenchSideChooser.setDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
+
+    trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
+
+    SmartDashboard.putData("Starting Position", startPositionChooser);
+
+    SmartDashboard.putData("Trench Side", trenchSideChooser);
+
+    SmartDashboard.putData("Selected Auto", field);
+
+    SmartDashboard.putData("Start Pose", fieldPoseStart);
+
+    SmartDashboard.putString("Auto Key", keys);
+
+    SmartDashboard.putBoolean("Enable SOTM?", enableLaunchOnTheMove);
+
+    SmartDashboard.putBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
+
+    autoDelayEntry.setDouble(0.0);
+
+    startPositionChooser.onChange(
+        value -> {
+          updatePathChoosers();
+          updateInitialHeading();
+          updateFieldDisplay();
+        });
+
+    trenchSideChooser.onChange(
+        value -> {
+          updateInitialHeading();
+          updateFieldDisplay();
+        });
+
+    updatePathChoosers();
+    updateFieldDisplay();
+  }
+
+
+  public static void updateFieldDisplay() {
+
+    fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
+  }
+
+  public static String getSelectedAutoName() {
+
+    List<BLinePath> sequence = getSelectedPathSequence();
+
+    if (sequence.isEmpty()) {
+      return "Default";
+    }
+
+
+    return sequence.get(0).getDisplayName();
+  }
+
+  public static BLinePath getSelectedAutoPath() {
+
+    BLinePath selected = getSelectedPath(0);
+
+    if (selected == null) {
+      return defaultPath;
+    }
+
+    return selected;
+  }
+
+  public static Pose2d getSelectedAutoStartingPose() {
+
+    BLinePath selected = getSelectedAutoPath();
+
+    if (selected == null) {
+      return Pose2d.kZero;
+    }
+
+    if (startPositionChooser.getSelected() == StartPosition.TRENCH) {
+
+      return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
+    }
+
+    return selected.getStartPose2d();
+  }
+
+
+  public static List<Path> getPathsToBuild() {
+
+    List<Path> paths = new ArrayList<>();
+
+    List<BLinePath> sequence = getSelectedPathSequence();
+
+    for (BLinePath bLinePath : sequence) {
+
+      paths.addAll(bLinePath.getAllPaths());
+    }
+
+    return paths;
+  }
+
+
+  public static List<BLinePath> getBLinePaths() {
+
+    return autos;
+  }
+
+  public static List<String> getBLinePathsNames() {
+
+    List<String> names = new ArrayList<>();
+
+    for (BLinePath path : autos) {
+
+      names.add(path.getDisplayName());
+    }
+
+    return names;
+  }
+
+
   public static void handleStartingPoses(BLinePath path) {
-    switch (path.getStartingPosName()) {
+    List<Pose2d> posses = new ArrayList<>();
+    for (StartPosition s : StartPosition.values()) {
+      posses.add(s.startPose);
+    }
+
+    String startingPosition = null;
+
+    if (posses != null) {
+      if (path.getStartPose2d().nearest(posses).equals(StartPosition.CENTER.startPose)) {
+        startingPosition = "Center";
+      } else if (path.getStartPose2d().nearest(posses).equals(StartPosition.TRENCH.startPose)) {
+        startingPosition = "RT";
+      }
+    }
+
+    if (startingPosition == null) {
+      return;
+    }
+
+    switch (startingPosition) {
       case "RT":
       case "LT":
         path.setStartPose2d(StartPosition.TRENCH);
+
         break;
+
       case "Center":
         path.setStartPose2d(StartPosition.CENTER);
+
         break;
+
       default:
         path.setStartPose2d(StartPosition.MISC);
+
         break;
     }
   }
 
+  private static void updateInitialHeading() {
+
+    BLinePath selected = getSelectedAutoPath();
+
+    if (selected == null || selected.getPath() == null) {
+
+      SmartDashboard.putNumber("Initial Heading(Deg)", 0.0);
+
+      return;
+    }
+
+    Pose2d start = selected.getPath().getStartPose();
+
+    SmartDashboard.putNumber("Initial Heading(Deg)", Math.round(start.getRotation().getDegrees()));
+  }
+
+
+  public static Command getSelectedAuto() {
+
+    if (s == null) {
+      return Commands.none();
+    }
+
+    double delay = autoDelayEntry.getDouble(0.0);
+
+    List<Path> paths = getPathsToBuild();
+
+    if (paths.isEmpty()) {
+      return Commands.none();
+    }
+
+    s.drivebaseSubsystem.resetRotation(paths.get(0).getInitialModuleDirection());
+
+    List<Command> commands = new ArrayList<>();
+
+    commands.add(Commands.waitSeconds(delay));
+
+    for (int i = 0; i < paths.size(); i++) {
+
+      boolean resetPose = i == 0;
+
+      commands.add(buildPath(paths.get(i), resetPose));
+    }
+
+    return Commands.sequence(commands.toArray(new Command[0]));
+  }
+
+
+  private static Command buildPath(Path path, boolean resetPose) {
+
+    if (s == null || pathBuilder == null || continuingPathBuilder == null) {
+
+      return Commands.none();
+    }
+
+    return (resetPose ? pathBuilder : continuingPathBuilder).build(path);
+  }
+
+
+  public static Command handleAutos() {
+
+    /*
+     * The old switch based on autoChooser
+     * is no longer needed.
+     *
+     * The multi-step chooser directly determines
+     * the paths to execute.
+     */
+    return getSelectedAuto();
+  }
+
+ 
   public static void configure(Subsystems s) {
     pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
     continuingPathBuilder = createPathBuilder(s);
@@ -215,266 +606,23 @@ public class BLineLogic {
         .withShouldMirror(BLineLogic::isMirrored);
   }
 
-  // ========================= LOGGING =========================
-
-  public static void initSmartDashboard() {
-    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
-    for (StartPosition pos : StartPosition.values()) {
-      startPositionChooser.addOption(pos.title, pos);
-    }
-
-    trenchSideChooser.setDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
-    trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
-
-    gameObjects.setDefaultOption("0", 0);
-    filterAutos(0);
-
-    recoveryPose.set(
-        StuckOnBallRecovery.getRecoveryPose(
-            s.drivebaseSubsystem.getState().Pose,
-            Rotation2d.fromDegrees(s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
-            Rotation2d.fromDegrees(
-                s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
-
-    SmartDashboard.putData("Selected auto", field);
-    SmartDashboard.putData("Start pose", fieldPoseStart);
-    SmartDashboard.putData("Starting Position", startPositionChooser);
-    SmartDashboard.putData("Trench Side", trenchSideChooser);
-    SmartDashboard.putData("Auto Mode", gameObjects);
-    SmartDashboard.putData("Available Auto Variants", autoChooser);
-    SmartDashboard.putString("Auto Key", keys);
-    SmartDashboard.putBoolean("Enable SOTM?", enableLaunchOnTheMove);
-    SmartDashboard.putBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
-
-    autoDelayEntry.setDouble(0.0);
-
-    startPositionChooser.onChange(
-        v -> {
-          filterAutos(gameObjects.getSelected());
-          updateInitialHeading();
-          updateFieldDisplay();
-          intializeNotifications();
-          Elastic.sendNotification(startingPoseNotification);
-        });
-
-    trenchSideChooser.onChange(
-        v -> {
-          updateInitialHeading();
-          updateFieldDisplay();
-          intializeNotifications();
-          Elastic.sendNotification(selectedTrenchNotification);
-        });
-
-    autoChooser.onChange(
-        v -> {
-          updateInitialHeading();
-          updateFieldDisplay();
-          intializeNotifications();
-          Elastic.sendNotification(selectedAutoNotification);
-        });
-
-    updateFieldDisplay();
-  }
-
-  public static void updateFieldDisplay() {
-    fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
-  }
-
-  static Pose2d getTrenchPose() {
-    return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
-  }
-
-  public static void filterAutos(int numGameObjects) {
-    autoChooser.clearOptions();
-
-    StartPosition selected = startPositionChooser.getSelected();
-    if (selected == null) selected = StartPosition.MISC;
-
-    for (BLinePath auto : autos) {
-      if (selected == StartPosition.MISC) {
-        autoChooser.addOption(auto.getDisplayName(), auto.getDisplayName());
-        continue;
-      }
-
-      if (auto.getStartPositionType() == selected) {
-        autoChooser.addOption(auto.getDisplayName(), auto.getDisplayName());
-      }
-    }
-  }
-
-  // ========================= SELECTION METHODS =========================
-
-  public static String getSelectedAutoName() {
-    if (autoChooser.getSelected() == null) {
-      return "Default";
-    }
-    return autoChooser.getSelected();
-  }
-
-  public static BLinePath getSelectedAutoPath() {
-    String selectedName = autoChooser.getSelected();
-    if (selectedName == null) return defaultPath;
-    return namesToAuto.getOrDefault(selectedName, defaultPath);
-  }
-
-  public static Pose2d getSelectedAutoStartingPose() {
-    BLinePath selected = getSelectedAutoPath();
-    if (selected == null) return Pose2d.kZero;
-
-    if (startPositionChooser.getSelected() == StartPosition.TRENCH) {
-      return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
-    }
-
-    return selected.getStartPose2d();
-  }
-
-  // ========================= AUTO EXECUTION =========================
-  public static List<Path> getPathsToBuild() {
-    BLinePath selected = getSelectedAutoPath();
-    if (selected == null) {
-      return List.of();
-    }
-    return selected.getAllPaths();
-  }
-
-  public static Command getSelectedAuto() {
-    if (s == null) {
-      // Unit test mode - return empty command
-      return Commands.none();
-    }
-
-    double delay = autoDelayEntry.getDouble(0.0);
-    BLinePath selected = getSelectedAutoPath();
-
-    if (selected == null) {
-      return Commands.none();
-    }
-
-    s.drivebaseSubsystem.resetRotation(selected.getPath().getInitialModuleDirection());
-
-    List<Command> commands = new ArrayList<>();
-    commands.add(Commands.waitSeconds(delay));
-
-    List<Path> paths = getPathsToBuild();
-    for (int i = 0; i < paths.size(); i++) {
-      boolean resetPose = (i == 0);
-      commands.add(buildPath(paths.get(i), resetPose));
-    }
-
-    return Commands.sequence(commands.toArray(new Command[0]));
-  }
-
-  public static List<BLinePath> getBLinePaths() {
-    return rebuiltPaths;
-  }
-
-  public static List<String> getBLinePathsNames() {
-    List<String> pathsNames = new ArrayList<>();
-    for (BLinePath path : getBLinePaths()) {
-      pathsNames.addAll(path.getDisplayingNames());
-    }
-    return pathsNames;
-  }
-
-  public static Command buildSingleNeutralTrenchAuto() {
-    return Commands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralTrench"), true),
-        launcherCommand());
-  }
-
-  public static Command buildDoubleNeutralTrenchAuto() {
-    return BLineCommands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralTrench"), true),
-        launcherCommand(4.5),
-        buildPath(new Path("SecondNeutralTrench"), false),
-        launcherCommand());
-  }
-
-  public static Command buildSingleNeutralBumpAuto() {
-    return Commands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralBump"), true),
-        launcherCommand());
-  }
-
-  public static void updateRecoveryPose() {
-    recoveryPose.set(
-        StuckOnBallRecovery.getRecoveryPose(
-            s.drivebaseSubsystem.getState().Pose,
-            Rotation2d.fromDegrees(s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
-            Rotation2d.fromDegrees(
-                s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
-  }
-
-  public static Command buildDoubleNeutralBumpAuto() {
-    return BLineCommands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralBump"), true),
-        buildPath(new Path("BumpToTrench"), false),
-        buildPath(new Path("SecondNeutralBump"), false),
-        launcherCommand());
-  }
-
-  public static Command buildSingleNeutralBumpDepotAuto() {
-    return BLineCommands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralBump"), true),
-        buildPath(new Path("BumpDepot"), false),
-        launcherCommand());
-  }
-
-  public static Command buildDefaultAuto() {
-    return BLineCommands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(1.0)),
-        buildPath(new Path("Default"), true),
-        launcherCommand());
-  }
-
-  private static Command buildPath(Path path, boolean resetPose) {
-    if (s == null || pathBuilder == null || continuingPathBuilder == null) {
-      return Commands.none();
-    }
-    return (resetPose ? pathBuilder : continuingPathBuilder).build(path);
-  }
-
-  public static Command handleAutos() {
-    switch (getSelectedAutoName()) {
-      case "TrenchNeutral":
-        return buildSingleNeutralTrenchAuto();
-      case "DoubleTrenchNeutral":
-        return buildDoubleNeutralTrenchAuto();
-      case "BumpNeutral":
-        return buildSingleNeutralBumpAuto();
-      case "DoubleBumpNeutral":
-        return buildDoubleNeutralBumpAuto();
-      case "BumpNeutralDepot":
-        return buildSingleNeutralBumpDepotAuto();
-      default:
-        return buildDefaultAuto();
-    }
-  }
-
-  private static void updateInitialHeading() {
-    BLinePath selected = getSelectedAutoPath();
-    if (selected == null || selected.getPath() == null) {
-      SmartDashboard.putNumber("Initial Heading(Deg)", 0.0);
-      return;
-    }
-    Pose2d start = selected.getPath().getStartPose();
-    SmartDashboard.putNumber("Initial Heading(Deg)", Math.round(start.getRotation().getDegrees()));
-  }
-
-  // ========================= COMMANDS =========================
+  // ============================================================
+  // COMMANDS
+  // ============================================================
 
   public static Command intakeCommand() {
+
     return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
         .withName("Auto Intake Command");
   }
 
   public static Command launcherCommand(double timeout) {
-    if (s == null || Robot.isSimulation()) return RobotSim.launch(s, timeout);
+
+    if (s == null || Robot.isSimulation()) {
+
+      return RobotSim.launch(s, timeout);
+    }
+
     return Commands.parallel(
             Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
             s.launcherSubsystem.launcherAimCommand(),
@@ -486,7 +634,9 @@ public class BLineLogic {
   }
 
   public static Command launcherCommand() {
+
     if (s.launcherSubsystem != null && s.flywheels != null) {
+
       return Commands.parallel(
               Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
               s.launcherSubsystem.launcherAimCommand(),
@@ -494,24 +644,48 @@ public class BLineLogic {
                   .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
           .withName("Auto Launcher Command");
     }
+
     return Commands.none();
   }
 
   public static Command stowCommand() {
+
     return s.launcherSubsystem != null ? s.launcherSubsystem.rawStowCommand() : Commands.none();
   }
 
   public static Command climbCommand() {
+
     return Commands.none().withName("Auto Climb Command");
   }
 
   public static void cancelCommand() {
-    if (s == null) return;
+
+    if (s == null) {
+      return;
+    }
+
     if (Robot.isSimulation()) {
+
       CommandScheduler.getInstance().cancel(bLineSimLaunching);
+
     } else {
+
       CommandScheduler.getInstance().cancel(bLineLaunching);
     }
+  }
+
+  // ============================================================
+  // RECOVERY
+  // ============================================================
+
+  public static void updateRecoveryPose() {
+
+    recoveryPose.set(
+        StuckOnBallRecovery.getRecoveryPose(
+            s.drivebaseSubsystem.getState().Pose,
+            Rotation2d.fromDegrees(s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
+            Rotation2d.fromDegrees(
+                s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
   }
 
   public static Command recoverCommand() {
@@ -530,28 +704,12 @@ public class BLineLogic {
         .until(() -> !s.drivebaseSubsystem.isBeached(5));
   }
 
-  private static Command resume() {
-
-    if (follow == null) {
-      return Commands.none();
-    }
-
-    int i = savedPathIndex;
-
-    var flat = getSelectedAutoPath().getPath().getPathElementsWithConstraintsNoWaypoints();
-    List<Path.PathElement> remaining = new ArrayList<>();
-    remaining.add(
-        new Path.TranslationTarget(s.drivebaseSubsystem.getState().Pose.getTranslation()));
-
-    for (int j = i; j < flat.size(); j++) {
-      remaining.add(flat.get(j).getFirst().copy());
-    }
-
-    Path remainder = new Path(remaining, getSelectedAutoPath().getPath().getPathConstraints());
-    return buildPath(remainder, false);
-  }
+  // ============================================================
+  // TRIGGERS
+  // ============================================================
 
   private static void registerTriggersAndCommands() {
+
     beachedTrigger =
         new Trigger(
             () -> {
@@ -562,10 +720,13 @@ public class BLineLogic {
                   && RobotState.isAutonomous()
                   && s.drivebaseSubsystem.isBeached(5);
             });
+
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
+
       if (Robot.isSimulation()) {
+
         bLineSimLaunching = RobotSim.launch(s, 30);
 
         FollowPath.registerEventTrigger(
@@ -582,8 +743,8 @@ public class BLineLogic {
                       : Commands.none();
                 },
                 Set.of()));
-
       } else {
+
         bLineLaunching = launcherCommand();
 
         FollowPath.registerEventTrigger(
@@ -600,7 +761,9 @@ public class BLineLogic {
     }
 
     FollowPath.registerEventTrigger("intake", intakeCommand());
+
     FollowPath.registerEventTrigger("climb", climbCommand());
+
     FollowPath.registerEventTrigger(
         "cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
   }
