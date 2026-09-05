@@ -8,6 +8,7 @@ import java.util.List;
 
 public class BLinePath {
 
+  private ShootMode shootMode;
   private final String displayName;
   private final boolean vision;
   private final Path path;
@@ -16,14 +17,30 @@ public class BLinePath {
   private StartPosition positionType;
   private Pose2d startPose;
 
-  public BLinePath(String displayName, String displayedPathName) {
-    this(displayName, false, displayedPathName);
+  public enum ShootMode {
+    NONE,
+    TIMED,
+    UNLIMITED
   }
 
-  public BLinePath(String displayName, boolean vision, String displayedPathName) {
+  // Normal constructor: no shooting
+  public BLinePath(String displayName, String displayedPathName) {
+    this(displayName, false, displayedPathName, ShootMode.NONE);
+  }
 
-    this.displayName = displayName;
+  // Constructor with shooting mode
+  public BLinePath(String displayName, String displayedPathName, ShootMode shootMode) {
+
+    this(displayName, false, displayedPathName, shootMode);
+  }
+
+  // Main constructor
+  public BLinePath(
+      String displayName, boolean vision, String displayedPathName, ShootMode shootMode) {
+
+    this.displayName = displayName + " (" + shootMode.name() + ")";
     this.vision = vision;
+    this.shootMode = shootMode;
 
     List<Path> loaded = new ArrayList<>();
     List<String> displayedList = new ArrayList<>();
@@ -41,6 +58,10 @@ public class BLinePath {
 
   public String getDisplayName() {
     return displayName;
+  }
+
+  public ShootMode getShootMode() {
+    return shootMode;
   }
 
   public List<String> getDisplayingNames() {

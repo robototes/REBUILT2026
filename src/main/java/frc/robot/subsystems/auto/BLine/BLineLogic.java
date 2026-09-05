@@ -24,6 +24,7 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
+import frc.robot.util.Elastic;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,7 +95,13 @@ public class BLineLogic {
   private static Path currentPath;
   private static FollowPath follow;
   private static int savedPathIndex = -1;
+  private static boolean unlimitedAlreadySelected = false;
 
+  private static Elastic.Notification autoTimingWarning =
+      new Elastic.Notification(
+          Elastic.NotificationLevel.WARNING,
+          "LAUNCH COMMAND WARNING",
+          "The Launch command will be called and will not time out.");
   private static final List<NetworkTableEntry> autoDelayEntries = new ArrayList<>();
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
@@ -215,7 +222,16 @@ public class BLineLogic {
     populateFirstChooser();
     for (DynamicSendableChooser<String> chooser : pathChoosers) {
 
-      chooser.onChange(value -> updatePathChoosers());
+      chooser.onChange(
+          value -> {
+            BLinePath selected = getSelectedPath(pathChoosers.indexOf(chooser));
+
+            if (selected != null && selected.getShootMode() == BLinePath.ShootMode.UNLIMITED) {
+              Elastic.sendNotification(autoTimingWarning);
+            }
+
+            updatePathChoosers();
+          });
     }
   }
 
@@ -235,36 +251,50 @@ public class BLineLogic {
   }
 
   public static void updatePathChoosers() {
-
     for (int step = 0; step < pathChoosers.size() - 1; step++) {
 
       BLinePath currentPath = getSelectedPath(step);
 
       if (currentPath == null) {
-
         clearChoosersAfter(step);
-
         break;
       }
 
       List<BLinePath> nextPaths = rebuiltPaths.get(currentPath);
 
       if (nextPaths == null || nextPaths.isEmpty()) {
-
         clearChoosersAfter(step);
-
         break;
       }
 
-      DynamicSendableChooser<String> nextChooser = pathChoosers.get(step + 1);
+      // Check whether an UNLIMITED path has already been selected
+      unlimitedAlreadySelected = false;
 
+      for (int i = 0; i <= step; i++) {
+        BLinePath selectedPath = getSelectedPath(i);
+
+        if (selectedPath != null && selectedPath.getShootMode() == BLinePath.ShootMode.UNLIMITED) {
+          unlimitedAlreadySelected = true;
+          break;
+        }
+      }
+
+      DynamicSendableChooser<String> nextChooser = pathChoosers.get(step + 1);
       nextChooser.clearOptions();
 
       for (BLinePath nextPath : nextPaths) {
 
+        // Don't allow more than one UNLIMITED shooting path
+        if (nextPath.getShootMode() == BLinePath.ShootMode.UNLIMITED && unlimitedAlreadySelected) {
+
+          Elastic.sendNotification(autoTimingWarning);
+          continue;
+        }
+
         nextChooser.addOption(nextPath.getDisplayName(), nextPath.getDisplayName());
       }
 
+      // Always allow removing this step
       nextChooser.addOption("Remove", REMOVE_OPTION);
     }
   }
@@ -491,35 +521,40 @@ public class BLineLogic {
   }
 
   public static Command getSelectedAuto() {
-    if (s == null) {
-      return Commands.none();
-    }
+    if (s == null) return Commands.none();
 
     List<BLinePath> sequence = getSelectedPathSequence();
-
-    if (sequence.isEmpty()) {
-      return Commands.none();
-    }
+    if (sequence.isEmpty()) return Commands.none();
 
     List<Command> commands = new ArrayList<>();
-
     boolean firstPath = true;
 
     for (int step = 0; step < sequence.size(); step++) {
 
-      // Delay before this chooser step
+      // Delay before this BLinePath
       double delay = autoDelayEntries.get(step).getDouble(0.0);
       commands.add(Commands.waitSeconds(delay));
 
-      // Build every Path belonging to this BLinePath
+      // Run every Path contained in this BLinePath
       for (Path path : sequence.get(step).getAllPaths()) {
         commands.add(buildPath(path, firstPath, true));
         firstPath = false;
       }
+
+      // Shoot based on this BLinePath's ShootMode
+      BLinePath.ShootMode shootMode = sequence.get(step).getShootMode();
+
+      if (shootMode == BLinePath.ShootMode.TIMED) {
+        commands.add(launcherCommand(5.0));
+
+      } else if (shootMode == BLinePath.ShootMode.UNLIMITED) {
+        commands.add((launcherCommand(12.0).until(() -> !RobotState.isAutonomous())));
+      }
     }
 
-    // Set the initial rotation before starting the first path
+    // Set the robot's initial rotation from the first path
     List<Path> firstStepPaths = sequence.get(0).getAllPaths();
+
     if (!firstStepPaths.isEmpty()) {
       s.drivebaseSubsystem.resetRotation(firstStepPaths.get(0).getInitialModuleDirection());
     }
