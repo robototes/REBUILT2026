@@ -248,7 +248,6 @@ public class BLineAutonomousField {
   /* ---------------- Periodic update ---------------- */
 
   public void update(String autoName) {
-    
 
     if (DriverStation.isEnabled()) {
       lastName = Optional.empty();
@@ -260,8 +259,6 @@ public class BLineAutonomousField {
     }
 
     BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
-
-
 
     BLineLogic.fieldPoseStart.setRobotPose(startingPose);
   }
