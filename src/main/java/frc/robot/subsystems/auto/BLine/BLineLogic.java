@@ -94,8 +94,7 @@ public class BLineLogic {
   private static FollowPath follow;
   private static int savedPathIndex = -1;
 
-  private static final NetworkTableEntry autoDelayEntry =
-      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
+  private static final List<NetworkTableEntry> autoDelayEntries = new ArrayList<>();
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
 
@@ -322,7 +321,16 @@ public class BLineLogic {
   }
 
   public static void initSmartDashboard() {
+    autoDelayEntries.clear();
 
+    for (int i = 0; i < pathChoosers.size(); i++) {
+      String key = "BLine/Step " + (i + 1) + " Delay";
+
+      SmartDashboard.putNumber(key, 0.0);
+
+      autoDelayEntries.add(
+          NetworkTableInstance.getDefault().getTable("SmartDashboard").getEntry(key));
+    }
     trenchSideChooser.setDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
@@ -337,8 +345,6 @@ public class BLineLogic {
     SmartDashboard.putData("Start Pose", fieldPoseStart);
 
     SmartDashboard.putBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
-
-    autoDelayEntry.setDouble(0.0);
 
     trenchSideChooser.onChange(
         value -> {
@@ -484,30 +490,37 @@ public class BLineLogic {
   }
 
   public static Command getSelectedAuto() {
-
     if (s == null) {
       return Commands.none();
     }
 
-    double delay = autoDelayEntry.getDouble(0.0);
+    List<BLinePath> sequence = getSelectedPathSequence();
 
-    List<Path> paths = getPathsToBuild();
-
-    if (paths.isEmpty()) {
+    if (sequence.isEmpty()) {
       return Commands.none();
     }
 
-    s.drivebaseSubsystem.resetRotation(paths.get(0).getInitialModuleDirection());
-
     List<Command> commands = new ArrayList<>();
 
-    commands.add(Commands.waitSeconds(delay));
+    boolean firstPath = true;
 
-    for (int i = 0; i < paths.size(); i++) {
+    for (int step = 0; step < sequence.size(); step++) {
 
-      boolean resetPose = i == 0;
+      // Delay before this chooser step
+      double delay = autoDelayEntries.get(step).getDouble(0.0);
+      commands.add(Commands.waitSeconds(delay));
 
-      commands.add(buildPath(paths.get(i), resetPose, true));
+      // Build every Path belonging to this BLinePath
+      for (Path path : sequence.get(step).getAllPaths()) {
+        commands.add(buildPath(path, firstPath, true));
+        firstPath = false;
+      }
+    }
+
+    // Set the initial rotation before starting the first path
+    List<Path> firstStepPaths = sequence.get(0).getAllPaths();
+    if (!firstStepPaths.isEmpty()) {
+      s.drivebaseSubsystem.resetRotation(firstStepPaths.get(0).getInitialModuleDirection());
     }
 
     return Commands.sequence(commands.toArray(new Command[0]));

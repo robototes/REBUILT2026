@@ -40,9 +40,9 @@
         "layouts": [
           {
             "title": "BLine",
-            "x": 1024.0,
-            "y": 384.0,
-            "width": 384.0,
+            "x": 0.0,
+            "y": 512.0,
+            "width": 256.0,
             "height": 384.0,
             "type": "List Layout",
             "properties": {
@@ -87,17 +87,60 @@
                   "period": 0.06,
                   "sort_options": false
                 }
+              }
+            ]
+          },
+          {
+            "title": "Delays",
+            "x": 256.0,
+            "y": 512.0,
+            "width": 256.0,
+            "height": 256.0,
+            "type": "List Layout",
+            "properties": {
+              "label_position": "TOP"
+            },
+            "children": [
+              {
+                "title": "Step 1 Delay",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/BLine/Step 1 Delay",
+                  "period": 0.06,
+                  "data_type": "double",
+                  "show_submit_button": true
+                }
               },
               {
-                "title": "Trench Side",
-                "x": 1024.0,
-                "y": 640.0,
-                "width": 256.0,
+                "title": "Step 2 Delay",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
                 "height": 128.0,
-                "type": "Split Button Chooser",
+                "type": "Text Display",
                 "properties": {
-                  "topic": "/SmartDashboard/Trench Side",
-                  "period": 0.06
+                  "topic": "/SmartDashboard/BLine/Step 2 Delay",
+                  "period": 0.06,
+                  "data_type": "double",
+                  "show_submit_button": true
+                }
+              },
+              {
+                "title": "Step 3 Delay",
+                "x": 0.0,
+                "y": 0.0,
+                "width": 128.0,
+                "height": 128.0,
+                "type": "Text Display",
+                "properties": {
+                  "topic": "/SmartDashboard/BLine/Step 3 Delay",
+                  "period": 0.06,
+                  "data_type": "double",
+                  "show_submit_button": true
                 }
               }
             ]
@@ -106,8 +149,8 @@
         "containers": [
           {
             "title": "DisplaySpeed",
-            "x": 1408.0,
-            "y": 384.0,
+            "x": 256.0,
+            "y": 768.0,
             "width": 256.0,
             "height": 128.0,
             "type": "Number Slider",
@@ -147,7 +190,7 @@
             "x": 1024.0,
             "y": 0.0,
             "width": 768.0,
-            "height": 384.0,
+            "height": 512.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Start Pose",
@@ -161,20 +204,6 @@
               "robot_color": 4294198070,
               "trajectory_color": 4294967295,
               "show_robot_outside_widget": true
-            }
-          },
-          {
-            "title": "Auto Delay",
-            "x": 1664.0,
-            "y": 384.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/Autos/Auto Delay",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
             }
           }
         ]
