@@ -77,7 +77,7 @@ public class BLineLogic {
       this.title = title;
     }
   }
-
+  private static final String REMOVE_OPTION = "REMOVE";
   private static final SendableChooser<TrenchSide> trenchSideChooser = new SendableChooser<>();
   private static final List<DynamicSendableChooser<String>> pathChoosers = new ArrayList<>();
   private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
@@ -235,36 +235,40 @@ public class BLineLogic {
 
   public static void updatePathChoosers() {
 
-    for (int step = 0; step < pathChoosers.size() - 1; step++) {
+  for (int step = 0; step < pathChoosers.size() - 1; step++) {
 
-      BLinePath currentPath = getSelectedPath(step);
+    BLinePath currentPath = getSelectedPath(step);
 
-      if (currentPath == null) {
+    if (currentPath == null) {
 
-        clearChoosersAfter(step);
+      clearChoosersAfter(step);
 
-        break;
-      }
-
-      List<BLinePath> nextPaths = rebuiltPaths.get(currentPath);
-
-      if (nextPaths == null || nextPaths.isEmpty()) {
-
-        clearChoosersAfter(step);
-
-        break;
-      }
-
-      DynamicSendableChooser<String> nextChooser = pathChoosers.get(step + 1);
-
-      nextChooser.clearOptions();
-
-      for (BLinePath nextPath : nextPaths) {
-
-        nextChooser.addOption(nextPath.getDisplayName(), nextPath.getDisplayName());
-      }
+      break;
     }
+
+    List<BLinePath> nextPaths = rebuiltPaths.get(currentPath);
+
+    if (nextPaths == null || nextPaths.isEmpty()) {
+
+      clearChoosersAfter(step);
+
+      break;
+    }
+
+    DynamicSendableChooser<String> nextChooser = pathChoosers.get(step + 1);
+
+    nextChooser.clearOptions();
+
+    for (BLinePath nextPath : nextPaths) {
+
+      nextChooser.addOption(
+          nextPath.getDisplayName(),
+          nextPath.getDisplayName());
+    }
+
+    nextChooser.addOption("Remove", REMOVE_OPTION);
   }
+}
 
   private static void clearChoosersAfter(int step) {
 
@@ -275,20 +279,18 @@ public class BLineLogic {
   }
 
   private static BLinePath getSelectedPath(int step) {
-
-    if (step < 0 || step >= pathChoosers.size()) {
-
-      return null;
-    }
-
-    String selectedName = pathChoosers.get(step).getSelected();
-
-    if (selectedName == null) {
-      return null;
-    }
-
-    return namesToAuto.get(selectedName);
+  if (step < 0 || step >= pathChoosers.size()) {
+    return null;
   }
+
+  String selectedName = pathChoosers.get(step).getSelected();
+
+  if (selectedName == null || REMOVE_OPTION.equals(selectedName)) {
+    return null;
+  }
+
+  return namesToAuto.get(selectedName);
+}
 
   public static List<BLinePath> getSelectedPathSequence() {
 

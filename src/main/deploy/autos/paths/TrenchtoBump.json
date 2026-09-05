@@ -1,10 +1,6 @@
 {
-
   "path_elements": [
-
     {
-
-
       "type": "waypoint",
       "translation_target": {
         "x_meters": 4.01,
@@ -53,8 +49,6 @@
         "start_ordinal": 0,
         "end_ordinal": 0
       }
-
     ]
   }
-  
 }
