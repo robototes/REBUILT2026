@@ -55,7 +55,8 @@ public class BLineLogic {
     TRENCH("Trench", new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90))),
 
     CENTER("Center", new Pose2d(3.600, 4.035, Rotation2d.fromDegrees(0))),
-
+    DEPOT("Depot", new Pose2d(1.59, 2.10, Rotation2d.fromDegrees(0))),
+    BUMP("Bump", new Pose2d(3.38, 2.45, Rotation2d.fromDegrees(-90))),
     MISC("Misc", new Pose2d());
 
     public final String title;
@@ -85,7 +86,6 @@ public class BLineLogic {
   private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
   private static final List<BLinePath> autos = new ArrayList<>();
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
-  private static BLinePath defaultPath;
   private static boolean pathsInitialized = false;
   private static Command bLineLaunching;
   private static Command bLineSimLaunching;
@@ -147,14 +147,22 @@ public class BLineLogic {
 
   private static void initializePaths() {
 
-    defaultPath = new BLinePath("Default", "default");
+
 
     rebuiltPaths.clear();
     autos.clear();
     namesToAuto.clear();
     pathChoosers.clear();
+   for (BLinePath path : BLinePaths.paths) {
+    handleStartingPoses(path);
+}
 
-    rebuiltPaths.put(
+for (BLinePath path : BLinePaths.paths) {
+    rebuiltPaths.put(path, BLinePaths.findAdjecentPaths(path));
+}
+
+
+     /* rebuiltPaths.put(
         BLinePaths.FirstNeutralTrench,
         List.of(
             BLinePaths.FirstNeutralBump,
@@ -178,7 +186,7 @@ public class BLineLogic {
     rebuiltPaths.put(
         BLinePaths.SecondNeutralTrench,
         List.of(BLinePaths.FirstNeutralBump, BLinePaths.SecondNeutralBump));
-
+ */
     for (BLinePath path : rebuiltPaths.keySet()) {
 
       if (!autos.contains(path)) {
@@ -304,11 +312,13 @@ public class BLineLogic {
     for (int i = step + 1; i < pathChoosers.size(); i++) {
 
       pathChoosers.get(i).clearOptions();
+
     }
   }
 
   private static BLinePath getSelectedPath(int step) {
     if (step < 0 || step >= pathChoosers.size()) {
+
       return null;
     }
 
@@ -417,7 +427,7 @@ public class BLineLogic {
     BLinePath selected = getSelectedPath(0);
 
     if (selected == null) {
-      return defaultPath;
+      return BLinePaths.Default;
     }
 
     return selected;
@@ -465,44 +475,51 @@ public class BLineLogic {
     return names;
   }
 
-  public static void handleStartingPoses(BLinePath path) {
-    List<Pose2d> posses = new ArrayList<>();
-    for (StartPosition s : StartPosition.values()) {
-      posses.add(s.startPose);
+ public static void handleStartingPoses(BLinePath path) {
+    Pose2d pathPose = path.getPath().getStartPose();
+
+    double positionTolerance = 0.1;
+    double rotationTolerance = 5.0;
+
+    for (StartPosition position : StartPosition.values()) {
+        Pose2d startPose = position.startPose;
+
+        double distance = pathPose.getTranslation()
+            .getDistance(startPose.getTranslation());
+
+        double rotationDifference = Math.abs(
+            pathPose.getRotation()
+                .minus(startPose.getRotation())
+                .getDegrees()
+        );
+
+        if (rotationDifference > 180) {
+            rotationDifference = 360 - rotationDifference;
+        }
+
+        if (distance <= positionTolerance
+                && rotationDifference <= rotationTolerance) {
+
+            path.setStartPose2d(position);
+            return;
+        }
     }
+    System.out.println(
+    path.getDisplayName()
+    + " | ACTUAL = "
+    + path.getPath().getStartPose()
+);
 
-    String startingPosition = null;
+for (StartPosition position : StartPosition.values()) {
+    System.out.println(
+        position
+        + " | EXPECTED = "
+        + position.startPose
+    );
+}
 
-    if (posses != null) {
-      if (path.getStartPose2d().nearest(posses).equals(StartPosition.CENTER.startPose)) {
-        startingPosition = "Center";
-      } else if (path.getStartPose2d().nearest(posses).equals(StartPosition.TRENCH.startPose)) {
-        startingPosition = "RT";
-      }
-    }
-
-    if (startingPosition == null) {
-      return;
-    }
-
-    switch (startingPosition) {
-      case "RT":
-      case "LT":
-        path.setStartPose2d(StartPosition.TRENCH);
-
-        break;
-
-      case "Center":
-        path.setStartPose2d(StartPosition.CENTER);
-
-        break;
-
-      default:
-        path.setStartPose2d(StartPosition.MISC);
-
-        break;
-    }
-  }
+    path.setStartPose2d(StartPosition.MISC);
+}
 
   private static void updateInitialHeading() {
 
@@ -524,7 +541,8 @@ public class BLineLogic {
     if (s == null) return Commands.none();
 
     List<BLinePath> sequence = getSelectedPathSequence();
-    if (sequence.isEmpty()) return Commands.none();
+
+    if (sequence.isEmpty()) return Commands.runOnce(() -> buildPath(BLinePaths.Default.getPath(),true,true));
 
     List<Command> commands = new ArrayList<>();
     boolean firstPath = true;
@@ -537,6 +555,10 @@ public class BLineLogic {
 
       // Run every Path contained in this BLinePath
       for (Path path : sequence.get(step).getAllPaths()) {
+        if(sequence.get(0).equals(BLinePaths.Default)) {
+          commands.add(buildPath(BLinePaths.Default.getPath(),firstPath,true));
+          break;
+        }
         commands.add(buildPath(path, firstPath, true));
         firstPath = false;
       }

@@ -16,6 +16,7 @@ public class BLinePath {
   private final List<String> displayedPaths;
   private StartPosition positionType;
   private Pose2d startPose;
+    private StartPosition endPosition;
 
   public enum ShootMode {
     NONE,
@@ -24,23 +25,24 @@ public class BLinePath {
   }
 
   // Normal constructor: no shooting
-  public BLinePath(String displayName, String displayedPathName) {
-    this(displayName, false, displayedPathName, ShootMode.NONE);
+  public BLinePath(String displayName, String displayedPathName, StartPosition endPosition) {
+    this(displayName, false, displayedPathName, ShootMode.NONE,endPosition);
   }
 
   // Constructor with shooting mode
-  public BLinePath(String displayName, String displayedPathName, ShootMode shootMode) {
+  public BLinePath(String displayName, String displayedPathName, ShootMode shootMode,  StartPosition endPosition) {
 
-    this(displayName, false, displayedPathName, shootMode);
+    this(displayName, false, displayedPathName, shootMode,endPosition );
   }
 
   // Main constructor
   public BLinePath(
-      String displayName, boolean vision, String displayedPathName, ShootMode shootMode) {
+      String displayName, boolean vision, String displayedPathName, ShootMode shootMode,  StartPosition endPosition) {
 
     this.displayName = displayName + " (" + shootMode.name() + ")";
     this.vision = vision;
     this.shootMode = shootMode;
+    this.endPosition = endPosition;
 
     List<Path> loaded = new ArrayList<>();
     List<String> displayedList = new ArrayList<>();
@@ -63,6 +65,12 @@ public class BLinePath {
   public ShootMode getShootMode() {
     return shootMode;
   }
+  public StartPosition getEndingPosition() {
+    return endPosition;
+  }
+  public Pose2d getEndPose2d() {
+    return endPosition.startPose;
+  }
 
   public List<String> getDisplayingNames() {
     return displayedPaths;
@@ -75,6 +83,8 @@ public class BLinePath {
 
     return startPose;
   }
+
+
 
   public Pose2d setStartPose2d(StartPosition pos) {
     this.positionType = pos;
