@@ -42,7 +42,7 @@
             "title": "BLine",
             "x": 0.0,
             "y": 512.0,
-            "width": 256.0,
+            "width": 512.0,
             "height": 384.0,
             "type": "List Layout",
             "properties": {
@@ -59,7 +59,7 @@
                 "properties": {
                   "topic": "/SmartDashboard/BLine/Path Step 1",
                   "period": 0.06,
-                  "sort_options": false
+                  "sort_options": true
                 }
               },
               {
@@ -72,7 +72,7 @@
                 "properties": {
                   "topic": "/SmartDashboard/BLine/Path Step 2",
                   "period": 0.06,
-                  "sort_options": false
+                  "sort_options": true
                 }
               },
               {
@@ -85,14 +85,14 @@
                 "properties": {
                   "topic": "/SmartDashboard/BLine/Path Step 3",
                   "period": 0.06,
-                  "sort_options": false
+                  "sort_options": true
                 }
               }
             ]
           },
           {
             "title": "Delays",
-            "x": 256.0,
+            "x": 512.0,
             "y": 512.0,
             "width": 256.0,
             "height": 256.0,
@@ -149,7 +149,7 @@
         "containers": [
           {
             "title": "DisplaySpeed",
-            "x": 256.0,
+            "x": 512.0,
             "y": 768.0,
             "width": 256.0,
             "height": 128.0,

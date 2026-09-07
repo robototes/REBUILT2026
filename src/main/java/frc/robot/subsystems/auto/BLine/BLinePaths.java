@@ -29,6 +29,10 @@ public class BLinePaths {
         new BLinePath("SecondNeutralBump", "SecondNeutralBump", BLinePath.ShootMode.UNLIMITED,StartPosition.BUMP);
     public static BLinePath TrenchDepot =
         new BLinePath("TrenchDepot", "TrenchDepot", BLinePath.ShootMode.NONE, StartPosition.DEPOT);
+    public static BLinePath TrenchDepot2 =
+        new BLinePath("TrenchDepot", "TrenchDepot", BLinePath.ShootMode.TIMED, StartPosition.DEPOT);
+  public static BLinePath TrenchDepot3 =
+        new BLinePath("TrenchDepot", "TrenchDepot", BLinePath.ShootMode.UNLIMITED, StartPosition.DEPOT);
     public static BLinePath Default =
         new BLinePath("default", "default", BLinePath.ShootMode.UNLIMITED,StartPosition.MISC);
    public static final List<BLinePath> paths = List.of(
@@ -41,6 +45,8 @@ public class BLinePaths {
     SecondNeutralBump,
     SecondNeutralTrench,
     TrenchDepot,
+     TrenchDepot2,
+      TrenchDepot3,
     Default,
     DepotToTrench
 );
