@@ -162,31 +162,6 @@ for (BLinePath path : BLinePaths.paths) {
 }
 
 
-     /* rebuiltPaths.put(
-        BLinePaths.FirstNeutralTrench,
-        List.of(
-            BLinePaths.FirstNeutralBump,
-            BLinePaths.SecondNeutralBump,
-            BLinePaths.SecondNeutralTrench));
-
-    rebuiltPaths.put(
-        BLinePaths.FirstNeutralBump, List.of(BLinePaths.BumpToTrench, BLinePaths.BumpDepot));
-
-    rebuiltPaths.put(
-        BLinePaths.SecondNeutralBump, List.of(BLinePaths.BumpToTrench, BLinePaths.BumpDepot));
-
-    rebuiltPaths.put(
-        BLinePaths.BumpToTrench,
-        List.of(BLinePaths.FirstNeutralTrench, BLinePaths.SecondNeutralTrench));
-
-    rebuiltPaths.put(
-        BLinePaths.BumpDepot,
-        List.of(BLinePaths.FirstNeutralTrench, BLinePaths.SecondNeutralTrench));
-
-    rebuiltPaths.put(
-        BLinePaths.SecondNeutralTrench,
-        List.of(BLinePaths.FirstNeutralBump, BLinePaths.SecondNeutralBump));
- */
     for (BLinePath path : rebuiltPaths.keySet()) {
 
       if (!autos.contains(path)) {
