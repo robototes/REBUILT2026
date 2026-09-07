@@ -51,7 +51,7 @@ public class BLineLogic {
   private static final Pose2d LEFT_TRENCH_POSE =
       new Pose2d(4.013, 7.597, Rotation2d.fromDegrees(90));
 
-  public enum StartPosition {
+  public enum Position {
     TRENCH("Trench", new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90))),
 
     CENTER("Center", new Pose2d(3.600, 4.035, Rotation2d.fromDegrees(0))),
@@ -60,12 +60,12 @@ public class BLineLogic {
     MISC("Misc", new Pose2d());
 
     public final String title;
-    public final Pose2d startPose;
+    public final Pose2d pose;
 
-    StartPosition(String title, Pose2d startPose) {
+    Position(String title, Pose2d pose) {
 
       this.title = title;
-      this.startPose = startPose;
+      this.pose = pose;
     }
   }
 
@@ -108,7 +108,7 @@ public class BLineLogic {
 
   public static boolean isMirrored() {
 
-    return getSelectedAutoPath().getStartPositionType() == StartPosition.TRENCH
+    return getSelectedAutoPath().getStartPositionType() == Position.TRENCH
         && trenchSideChooser.getSelected() == TrenchSide.LEFT;
   }
 
@@ -147,20 +147,17 @@ public class BLineLogic {
 
   private static void initializePaths() {
 
-
-
     rebuiltPaths.clear();
     autos.clear();
     namesToAuto.clear();
     pathChoosers.clear();
-   for (BLinePath path : BLinePaths.paths) {
-    handleStartingPoses(path);
-}
+    for (BLinePath path : BLinePaths.paths) {
+      handleStartingPoses(path);
+    }
 
-for (BLinePath path : BLinePaths.paths) {
-    rebuiltPaths.put(path, BLinePaths.findAdjecentPaths(path));
-}
-
+    for (BLinePath path : BLinePaths.paths) {
+      rebuiltPaths.put(path, BLinePaths.findAdjecentPaths(path));
+    }
 
     for (BLinePath path : rebuiltPaths.keySet()) {
 
@@ -287,7 +284,6 @@ for (BLinePath path : BLinePaths.paths) {
     for (int i = step + 1; i < pathChoosers.size(); i++) {
 
       pathChoosers.get(i).clearOptions();
-
     }
   }
 
@@ -450,51 +446,33 @@ for (BLinePath path : BLinePaths.paths) {
     return names;
   }
 
- public static void handleStartingPoses(BLinePath path) {
+  public static void handleStartingPoses(BLinePath path) {
     Pose2d pathPose = path.getPath().getStartPose();
 
     double positionTolerance = 0.1;
     double rotationTolerance = 5.0;
 
-    for (StartPosition position : StartPosition.values()) {
-        Pose2d startPose = position.startPose;
+    for (Position position : Position.values()) {
+      Pose2d startPose = position.pose;
 
-        double distance = pathPose.getTranslation()
-            .getDistance(startPose.getTranslation());
+      double distance = pathPose.getTranslation().getDistance(startPose.getTranslation());
 
-        double rotationDifference = Math.abs(
-            pathPose.getRotation()
-                .minus(startPose.getRotation())
-                .getDegrees()
-        );
+      double rotationDifference =
+          Math.abs(pathPose.getRotation().minus(startPose.getRotation()).getDegrees());
 
-        if (rotationDifference > 180) {
-            rotationDifference = 360 - rotationDifference;
-        }
+      if (rotationDifference > 180) {
+        rotationDifference = 360 - rotationDifference;
+      }
 
-        if (distance <= positionTolerance
-                && rotationDifference <= rotationTolerance) {
+      if (distance <= positionTolerance && rotationDifference <= rotationTolerance) {
 
-            path.setStartPose2d(position);
-            return;
-        }
+        path.setStartPose2d(position);
+        return;
+      }
     }
-    System.out.println(
-    path.getDisplayName()
-    + " | ACTUAL = "
-    + path.getPath().getStartPose()
-);
 
-for (StartPosition position : StartPosition.values()) {
-    System.out.println(
-        position
-        + " | EXPECTED = "
-        + position.startPose
-    );
-}
-
-    path.setStartPose2d(StartPosition.MISC);
-}
+    path.setStartPose2d(Position.MISC);
+  }
 
   private static void updateInitialHeading() {
 
@@ -517,7 +495,8 @@ for (StartPosition position : StartPosition.values()) {
 
     List<BLinePath> sequence = getSelectedPathSequence();
 
-    if (sequence.isEmpty()) return Commands.runOnce(() -> buildPath(BLinePaths.Default.getPath(),true,true));
+    if (sequence.isEmpty())
+      return Commands.runOnce(() -> buildPath(BLinePaths.Default.getPath(), true, true));
 
     List<Command> commands = new ArrayList<>();
     boolean firstPath = true;
@@ -530,8 +509,8 @@ for (StartPosition position : StartPosition.values()) {
 
       // Run every Path contained in this BLinePath
       for (Path path : sequence.get(step).getAllPaths()) {
-        if(sequence.get(0).equals(BLinePaths.Default)) {
-          commands.add(buildPath(BLinePaths.Default.getPath(),firstPath,true));
+        if (sequence.get(0).equals(BLinePaths.Default)) {
+          commands.add(buildPath(BLinePaths.Default.getPath(), firstPath, true));
           break;
         }
         commands.add(buildPath(path, firstPath, true));

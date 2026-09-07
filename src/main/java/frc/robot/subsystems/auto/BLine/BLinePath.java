@@ -1,8 +1,9 @@
 package frc.robot.subsystems.auto.BLine;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.lib.BLine.Path;
-import frc.robot.subsystems.auto.BLine.BLineLogic.StartPosition;
+import frc.robot.subsystems.auto.BLine.BLineLogic.Position;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,9 +15,8 @@ public class BLinePath {
   private final Path path;
   private final List<Path> allPaths;
   private final List<String> displayedPaths;
-  private StartPosition positionType;
+  private Position positionType;
   private Pose2d startPose;
-    private StartPosition endPosition;
 
   public enum ShootMode {
     NONE,
@@ -25,24 +25,23 @@ public class BLinePath {
   }
 
   // Normal constructor: no shooting
-  public BLinePath(String displayName, String displayedPathName, StartPosition endPosition) {
-    this(displayName, false, displayedPathName, ShootMode.NONE,endPosition);
+  public BLinePath(String displayName, String displayedPathName) {
+    this(displayName, false, displayedPathName, ShootMode.NONE);
   }
 
   // Constructor with shooting mode
-  public BLinePath(String displayName, String displayedPathName, ShootMode shootMode,  StartPosition endPosition) {
+  public BLinePath(String displayName, String displayedPathName, ShootMode shootMode) {
 
-    this(displayName, false, displayedPathName, shootMode,endPosition );
+    this(displayName, false, displayedPathName, shootMode);
   }
 
   // Main constructor
   public BLinePath(
-      String displayName, boolean vision, String displayedPathName, ShootMode shootMode,  StartPosition endPosition) {
+      String displayName, boolean vision, String displayedPathName, ShootMode shootMode) {
 
     this.displayName = displayName + " (" + shootMode.name() + ")";
     this.vision = vision;
     this.shootMode = shootMode;
-    this.endPosition = endPosition;
 
     List<Path> loaded = new ArrayList<>();
     List<String> displayedList = new ArrayList<>();
@@ -65,11 +64,20 @@ public class BLinePath {
   public ShootMode getShootMode() {
     return shootMode;
   }
-  public StartPosition getEndingPosition() {
-    return endPosition;
-  }
+
   public Pose2d getEndPose2d() {
-    return endPosition.startPose;
+    var elements = path.getPathElements();
+    Pose2d endPose = new Pose2d();
+    if (elements.get(elements.size() - 1) instanceof Path.Waypoint end) {
+      endPose = new Pose2d(end.translationTarget().translation(), end.rotationTarget().rotation());
+    }
+    return endPose;
+  }
+
+  public Translation2d getEndTranslation2d() {
+    var translations = path.getTranslations();
+    Translation2d endPosition = translations.get(translations.size() - 1);
+    return endPosition;
   }
 
   public List<String> getDisplayingNames() {
@@ -77,18 +85,16 @@ public class BLinePath {
   }
 
   public Pose2d getStartPose2d() {
-    if (positionType == StartPosition.TRENCH) {
+    if (positionType == Position.TRENCH) {
       return BLineLogic.getTrenchPose();
     }
 
     return startPose;
   }
 
-
-
-  public Pose2d setStartPose2d(StartPosition pos) {
+  public Pose2d setStartPose2d(Position pos) {
     this.positionType = pos;
-    this.startPose = pos.startPose;
+    this.startPose = pos.pose;
     return getStartPose2d();
   }
 
@@ -109,7 +115,7 @@ public class BLinePath {
     return allPaths;
   }
 
-  public StartPosition getStartPositionType() {
+  public Position getStartPositionType() {
     return positionType;
   }
 }
