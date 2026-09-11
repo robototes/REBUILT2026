@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 public class StuckOnBallRecovery {
   private static final double STUCK_DEBOUNCE_SECONDS = 0.25;
   private static final Debouncer STUCK_DEBOUNCER = new Debouncer(STUCK_DEBOUNCE_SECONDS);
-  private static final double STUCK_ANGLE_THRESHOLD = 5.0;
+  public static final double STUCK_ANGLE_THRESHOLD = 5.0;
 
   private static final double RECOVERY_POINT_DISTANCE = 1.5;
 

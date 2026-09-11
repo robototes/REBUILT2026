@@ -353,10 +353,10 @@ public class BLineLogic {
 
     SmartDashboard.putString("Auto Key", keys);
 
-    SmartDashboard.putBoolean("Enable SOTM?", enableLaunchOnTheMove);
+    SmartDashboard.putBoolean("SOTM", enableLaunchOnTheMove);
     SmartDashboard.putData("Start Pose", fieldPoseStart);
 
-    SmartDashboard.putBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
+    SmartDashboard.putBoolean("Auto Unbeach", enableAutoUnbeach);
 
     trenchSideChooser.onChange(
         value -> {
@@ -669,7 +669,7 @@ public class BLineLogic {
                             s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
                 false,
                 false))
-        .until(() -> !s.drivebaseSubsystem.isBeached(5));
+        .until(() -> !s.drivebaseSubsystem.isBeached(StuckOnBallRecovery.STUCK_ANGLE_THRESHOLD));
   }
 
   private static Command resume() {
@@ -701,12 +701,11 @@ public class BLineLogic {
     beachedTrigger =
         new Trigger(
             () -> {
-              enableAutoUnbeach =
-                  SmartDashboard.getBoolean("Enable Auto Unbeach?", enableAutoUnbeach);
+              enableAutoUnbeach = SmartDashboard.getBoolean("Auto Unbeach", enableAutoUnbeach);
 
               return enableAutoUnbeach
                   && RobotState.isAutonomous()
-                  && s.drivebaseSubsystem.isBeached(5);
+                  && s.drivebaseSubsystem.isBeached(StuckOnBallRecovery.STUCK_ANGLE_THRESHOLD);
             });
 
     beachedTrigger.onTrue(
@@ -733,7 +732,7 @@ public class BLineLogic {
             Commands.defer(
                 () -> {
                   enableLaunchOnTheMove =
-                      SmartDashboard.getBoolean("Enable SOTM?", enableLaunchOnTheMove);
+                      SmartDashboard.getBoolean("Enable SOTM", enableLaunchOnTheMove);
 
                   return enableLaunchOnTheMove
                       ? Commands.runOnce(() -> launchAllowed.set(true))
@@ -751,7 +750,7 @@ public class BLineLogic {
             Commands.defer(
                 () -> {
                   enableLaunchOnTheMove =
-                      SmartDashboard.getBoolean("Enable SOTM?", enableLaunchOnTheMove);
+                      SmartDashboard.getBoolean("Enable SOTM", enableLaunchOnTheMove);
 
                   return enableLaunchOnTheMove ? bLineLaunching : Commands.none();
                 },
