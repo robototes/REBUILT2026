@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
 import java.util.function.Supplier;
 
 /**
@@ -298,6 +299,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   /** Clamps the pose estimator to the field boundary. Does not affect driving. */
   private void clampPoseToField() {
+    if (GetTargetFromPose.BALLING.get()) {
+      // Don't clamp pose if balling, since we may intentionally drive outside the field boundaries
+      // to pick up balls
+      return;
+    }
     Pose2d current = getState().Pose;
     double clampedX = MathUtil.clamp(current.getX(), 0.0, FIELD_X_MAX);
     double clampedY = MathUtil.clamp(current.getY(), 0.0, FIELD_Y_MAX);
