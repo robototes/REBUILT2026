@@ -41,6 +41,7 @@ public class IntakePivot extends SubsystemBase {
   public static final double LAUNCH_POS_OUT = -0.292;
   public static final double RETRACTED_POS = 0.0;
   public static final double EXTAKE_POS = -0.3;
+  public static final double SHOTBLOCK_POS = -0.25;
 
   // PID variables
   private static final double kP = 40;
