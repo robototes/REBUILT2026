@@ -9,6 +9,7 @@ public class BLineAutos {
 
   private final List<Path> paths;
   private final Pose2d startingPose;
+  public static final int MAX_STEPS = 1;
 
   public BLineAutos(String... pathNames) {
     List<Path> loaded = new ArrayList<>();

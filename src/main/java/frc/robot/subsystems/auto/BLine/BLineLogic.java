@@ -200,9 +200,8 @@ public class BLineLogic {
   }
 
   private static void createPathChoosers() {
-    final int MAX_STEPS = 3;
 
-    for (int i = 0; i < MAX_STEPS; i++) {
+    for (int i = 0; i < BLineAutos.MAX_STEPS; i++) {
 
       LoggedDashboardChooser<String> chooser =
           new LoggedDashboardChooser<>("BLine/Path Step" + (i + 1));

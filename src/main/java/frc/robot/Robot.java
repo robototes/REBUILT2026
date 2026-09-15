@@ -28,7 +28,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.BLine.BLineAutos;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
+import frc.robot.subsystems.auto.BLine.BLineLogicLegacy;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -122,13 +124,20 @@ public class Robot extends LoggedRobot {
       }
 
       // BLINE STUFF
-      BLineLogic.init(
-          subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
-      // off
-      BLineLogic.configure(subsystems); // configure the autobuilder to run autos
-      BLineLogic.initAdvantageKit(); // Logging
-      // BLineAutonomousField.initAdvantageKit( // Visualization
-      //  () -> "Autos", 0, 0, this.autonomousPeriodic());
+      if (BLineAutos.MAX_STEPS == 1) {
+        BLineLogicLegacy.init(subsystems);
+        BLineLogicLegacy.configure(subsystems);
+        BLineLogicLegacy.initAdvantageKit();
+      } else {
+        BLineLogic.init(
+            subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
+        // off
+        BLineLogic.configure(subsystems); // configure the autobuilder to run autos
+        // BLineLogic.initAdvantageKit(); // Logging
+        // TODO: ADD TELEMETRY LIB FOR 2027 SYSTEMCORE WPILIB
+        // BLineAutonomousField.initAdvantageKit( // Visualization
+        //  () -> "Autos", 0, 0, this.autonomousPeriodic());
+      }
     }
 
     CommandScheduler.getInstance()
@@ -285,8 +294,12 @@ public class Robot extends LoggedRobot {
 
       robotSim.resetFuelSim();
     }
+    if (BLineAutos.MAX_STEPS == 1) {
+      CommandScheduler.getInstance().schedule(BLineLogicLegacy.handleAutos());
 
-    CommandScheduler.getInstance().schedule(BLineLogic.handleAutos());
+    } else {
+      CommandScheduler.getInstance().schedule(BLineLogic.handleAutos());
+    }
     double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
     if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
