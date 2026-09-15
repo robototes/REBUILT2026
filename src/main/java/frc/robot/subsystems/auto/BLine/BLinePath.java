@@ -57,8 +57,7 @@ public class BLinePath {
       boolean vision,
       ShootMode shootMode,
       String... displayedPathNames) {
-
-    this.displayName = displayName + " (" + shootMode.name() + ")";
+    this.displayName =  BLineAutos.MAX_STEPS > 1 ? displayName + ("" + shootMode.name() +"") :  displayName;
     this.startingPosName = startingPosName;
     this.vision = vision;
     this.shootMode = shootMode;
