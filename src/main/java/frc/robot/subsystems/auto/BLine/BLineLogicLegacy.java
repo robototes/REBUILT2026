@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
 public class BLineLogicLegacy {
 
@@ -79,7 +80,7 @@ public class BLineLogicLegacy {
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
-
+  private static final LoggedNetworkString autoKeys = new LoggedNetworkString("Auto Key");
   private static BLinePath defaultPath;
   private static List<BLinePath> rebuiltPaths = List.of();
   private static Map<Integer, List<BLinePath>> commandsMap = Map.of();
@@ -194,7 +195,8 @@ public class BLineLogicLegacy {
     // TODO REPLACE WITH TELEMETRY SmartDashboard.putData("Selected auto", field);
     // TODO REPLACE WITH TELEMETRY SmartDashboard.putData("Start pose", fieldPoseStart);
 
-    SmartDashboard.putString("Auto Key", keys);
+
+    autoKeys.set(keys);
 
     autoDelayEntry.setDouble(0.0);
 
