@@ -22,11 +22,10 @@ public class BLineAutonomousField {
 
   /* ---------------- NetworkTables init ---------------- */
 
-  public static void initSmartDashBoard(
+  public static void initAdvantageKit(
       Supplier<String> tabName,
       int columnIndex,
-      int rowIndex,
-      ObjDoubleConsumer<Runnable> addPeriodic) {
+      int rowIndex) {
 
     NetworkTableEntry speedMultiplier =
         NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
@@ -36,11 +35,7 @@ public class BLineAutonomousField {
     BLineAutonomousField autonomousField =
         new BLineAutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
-    addPeriodic.accept(
-        () -> {
-          autonomousField.update(BLineLogic.getSelectedAutoName());
-        },
-        UPDATE_RATE);
+    
   }
 
   /* ---------------- Path data ---------------- */
@@ -248,18 +243,16 @@ public class BLineAutonomousField {
   /* ---------------- Periodic update ---------------- */
 
   public void update(String autoName) {
-
     if (DriverStation.isEnabled()) {
-      lastName = Optional.empty();
-      return;
+        lastName = Optional.empty();
+        return;
     }
 
     if (autoName == null) {
-      return;
+        return;
     }
 
     BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
-
     BLineLogic.fieldPoseStart.setRobotPose(startingPose);
-  }
+}
 }

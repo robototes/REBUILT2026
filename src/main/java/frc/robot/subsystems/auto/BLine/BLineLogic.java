@@ -9,6 +9,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotState;
+
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -33,12 +34,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+import org.littletonrobotics.junction.networktables.LoggedNetworkString;
+
 public class BLineLogic {
 
   private static Subsystems s;
 
   public static Field2d field = new Field2d();
-  public static Field2d fieldPoseStart = new Field2d();
+  public static edu.wpi.first.wpilibj.smartdashboard.Field2d fieldPoseStart = new Field2d();
 
   private static Trigger beachedTrigger;
 
@@ -81,8 +87,8 @@ public class BLineLogic {
   }
 
   private static final String REMOVE_OPTION = "REMOVE";
-  private static final SendableChooser<TrenchSide> trenchSideChooser = new SendableChooser<>();
-  private static final List<DynamicSendableChooser<String>> pathChoosers = new ArrayList<>();
+  private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser = new LoggedDashboardChooser<>("Trench Side");
+  private static final List<SendableChooser<String>> pathChoosers = new ArrayList<>();
   private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
   private static final List<BLinePath> autos = new ArrayList<>();
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
@@ -96,6 +102,11 @@ public class BLineLogic {
   private static FollowPath follow;
   private static int savedPathIndex = -1;
   private static boolean unlimitedAlreadySelected = false;
+  private static LoggedNetworkNumber initialHeading = new LoggedNetworkNumber("Initial Heading(Deg)", 0.0);
+   private static LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 0.0);
+  private static LoggedNetworkBoolean enableSotm =  new LoggedNetworkBoolean("SOTM", false);
+
+  private static LoggedNetworkBoolean enableUnbeach = new LoggedNetworkBoolean("Initial Heading(Deg)", false);
 
   private static Elastic.Notification autoTimingWarning =
       new Elastic.Notification(
@@ -105,11 +116,11 @@ public class BLineLogic {
   private static final List<NetworkTableEntry> autoDelayEntries = new ArrayList<>();
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
-
+  private static LoggedNetworkString key = new LoggedNetworkString("Auto Keys", keys);
   public static boolean isMirrored() {
 
     return getSelectedAutoPath().getStartPositionType() == Position.TRENCH
-        && trenchSideChooser.getSelected() == TrenchSide.LEFT;
+        && trenchSideChooser.getSendableChooser().getSelected() == TrenchSide.LEFT.title;
   }
 
   static Pose2d getTrenchPose() {
@@ -192,19 +203,18 @@ public class BLineLogic {
 
     for (int i = 0; i < MAX_STEPS; i++) {
 
-      DynamicSendableChooser<String> chooser = new DynamicSendableChooser<>();
+     LoggedDashboardChooser<String> chooser = new LoggedDashboardChooser<>("BLine/Path Step" + (i + 1));
 
-      pathChoosers.add(chooser);
+      pathChoosers.add(i,chooser.getSendableChooser());
 
-      SmartDashboard.putData("BLine/Path Step " + (i + 1), chooser);
     }
 
     populateFirstChooser();
-    for (DynamicSendableChooser<String> chooser : pathChoosers) {
-
-      chooser.onChange(
+    for (int i = 0; i < pathChoosers.size();  i ++) {
+      int ind = i;
+      pathChoosers.get(i).onChange(
           value -> {
-            BLinePath selected = getSelectedPath(pathChoosers.indexOf(chooser));
+            BLinePath selected = getSelectedPath(pathChoosers.indexOf(pathChoosers.get(ind)));
 
             if (selected != null && selected.getShootMode() == BLinePath.ShootMode.UNLIMITED) {
               Elastic.sendNotification(autoTimingWarning);
@@ -217,9 +227,9 @@ public class BLineLogic {
 
   private static void populateFirstChooser() {
 
-    DynamicSendableChooser<String> chooser = pathChoosers.get(0);
+    SendableChooser<String> chooser = pathChoosers.get(0);
 
-    chooser.clearOptions();
+    //chooser.clearOptions();
 
     for (BLinePath path : autos) {
 
@@ -259,8 +269,8 @@ public class BLineLogic {
         }
       }
 
-      DynamicSendableChooser<String> nextChooser = pathChoosers.get(step + 1);
-      nextChooser.clearOptions();
+      SendableChooser<String> nextChooser = pathChoosers.get(step + 1);
+     // nextChooser.clearOptions();
 
       for (BLinePath nextPath : nextPaths) {
 
@@ -283,7 +293,7 @@ public class BLineLogic {
 
     for (int i = step + 1; i < pathChoosers.size(); i++) {
 
-      pathChoosers.get(i).clearOptions();
+      //pathChoosers.get(i).clearOptions();
     }
   }
 
@@ -332,31 +342,32 @@ public class BLineLogic {
     updatePathChoosers();
   }
 
-  public static void initSmartDashboard() {
+  public static void initAdvantageKit() {
     autoDelayEntries.clear();
 
     for (int i = 0; i < pathChoosers.size(); i++) {
       String key = "BLine/Step " + (i + 1) + " Delay";
 
-      SmartDashboard.putNumber(key, 0.0);
+      autoDelay.setDefault(0.0);
 
       autoDelayEntries.add(
           NetworkTableInstance.getDefault().getTable("SmartDashboard").getEntry(key));
     }
-    trenchSideChooser.setDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
+    trenchSideChooser.addDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-    SmartDashboard.putData("Trench Side", trenchSideChooser);
+
 
     SmartDashboard.putData("Selected Auto", field);
 
-    SmartDashboard.putString("Auto Key", keys);
 
-    SmartDashboard.putBoolean("SOTM", enableLaunchOnTheMove);
+
+    enableSotm.set(enableLaunchOnTheMove);
+    enableUnbeach.set(enableAutoUnbeach);
+
     SmartDashboard.putData("Start Pose", fieldPoseStart);
 
-    SmartDashboard.putBoolean("Auto Unbeach", enableAutoUnbeach);
 
     trenchSideChooser.onChange(
         value -> {
@@ -479,15 +490,14 @@ public class BLineLogic {
     BLinePath selected = getSelectedAutoPath();
 
     if (selected == null || selected.getPath() == null) {
-
-      SmartDashboard.putNumber("Initial Heading(Deg)", 0.0);
+      initialHeading.set(0.0);
 
       return;
     }
 
     Pose2d start = selected.getStartPose2d();
 
-    SmartDashboard.putNumber("Initial Heading(Deg)", Math.round(start.getRotation().getDegrees()));
+    initialHeading.set(Math.round(start.getRotation().getDegrees()));
   }
 
   public static Command getSelectedAuto() {
@@ -701,9 +711,9 @@ public class BLineLogic {
     beachedTrigger =
         new Trigger(
             () -> {
-              enableAutoUnbeach = SmartDashboard.getBoolean("Auto Unbeach", enableAutoUnbeach);
 
-              return enableAutoUnbeach
+
+              return enableUnbeach.getAsBoolean()
                   && RobotState.isAutonomous()
                   && s.drivebaseSubsystem.isBeached(StuckOnBallRecovery.STUCK_ANGLE_THRESHOLD);
             });
@@ -731,10 +741,9 @@ public class BLineLogic {
             "launch",
             Commands.defer(
                 () -> {
-                  enableLaunchOnTheMove =
-                      SmartDashboard.getBoolean("Enable SOTM", enableLaunchOnTheMove);
 
-                  return enableLaunchOnTheMove
+
+                  return enableSotm.getAsBoolean()
                       ? Commands.runOnce(() -> launchAllowed.set(true))
                           .andThen(bLineSimLaunching.onlyWhile(launchAllowed::get))
                           .andThen(Commands.print("LAUNCH FINISHED"))
@@ -749,8 +758,7 @@ public class BLineLogic {
             "launch",
             Commands.defer(
                 () -> {
-                  enableLaunchOnTheMove =
-                      SmartDashboard.getBoolean("Enable SOTM", enableLaunchOnTheMove);
+                  enableSotm.getAsBoolean();
 
                   return enableLaunchOnTheMove ? bLineLaunching : Commands.none();
                 },
