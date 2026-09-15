@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -29,7 +28,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
-import frc.robot.subsystems.auto.BLine.BLineAutonomousField;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
@@ -40,13 +38,14 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
+import org.littletonrobotics.junction.LoggedRobot;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
  * the TimedRobot documentation. If you change the name of this class or the package after creating
  * this project, you must also update the Main.java file in the project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
 
   private final Controls controls;
   public final Subsystems subsystems;
@@ -127,9 +126,9 @@ public class Robot extends TimedRobot {
           subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
       // off
       BLineLogic.configure(subsystems); // configure the autobuilder to run autos
-      BLineLogic.initSmartDashboard(); // Logging
-      BLineAutonomousField.initSmartDashBoard( // Visualization
-          () -> "Autos", 0, 0, this::addPeriodic);
+      BLineLogic.initAdvantageKit(); // Logging
+      // BLineAutonomousField.initAdvantageKit( // Visualization
+      //  () -> "Autos", 0, 0, this.autonomousPeriodic());
     }
 
     CommandScheduler.getInstance()

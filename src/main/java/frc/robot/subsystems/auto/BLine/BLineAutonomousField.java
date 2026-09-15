@@ -11,7 +11,6 @@ import frc.robot.lib.BLine.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
-import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 
 public class BLineAutonomousField {
@@ -22,10 +21,7 @@ public class BLineAutonomousField {
 
   /* ---------------- NetworkTables init ---------------- */
 
-  public static void initAdvantageKit(
-      Supplier<String> tabName,
-      int columnIndex,
-      int rowIndex) {
+  public static void initAdvantageKit(Supplier<String> tabName, int columnIndex, int rowIndex) {
 
     NetworkTableEntry speedMultiplier =
         NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
@@ -34,8 +30,6 @@ public class BLineAutonomousField {
 
     BLineAutonomousField autonomousField =
         new BLineAutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
-
-    
   }
 
   /* ---------------- Path data ---------------- */
@@ -244,15 +238,15 @@ public class BLineAutonomousField {
 
   public void update(String autoName) {
     if (DriverStation.isEnabled()) {
-        lastName = Optional.empty();
-        return;
+      lastName = Optional.empty();
+      return;
     }
 
     if (autoName == null) {
-        return;
+      return;
     }
 
     BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
     BLineLogic.fieldPoseStart.setRobotPose(startingPose);
-}
+  }
 }

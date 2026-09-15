@@ -9,7 +9,6 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotState;
-
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,7 +21,6 @@ import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
-import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.Elastic;
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -87,7 +84,8 @@ public class BLineLogic {
   }
 
   private static final String REMOVE_OPTION = "REMOVE";
-  private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser = new LoggedDashboardChooser<>("Trench Side");
+  private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser =
+      new LoggedDashboardChooser<>("Trench Side");
   private static final List<SendableChooser<String>> pathChoosers = new ArrayList<>();
   private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
   private static final List<BLinePath> autos = new ArrayList<>();
@@ -102,11 +100,13 @@ public class BLineLogic {
   private static FollowPath follow;
   private static int savedPathIndex = -1;
   private static boolean unlimitedAlreadySelected = false;
-  private static LoggedNetworkNumber initialHeading = new LoggedNetworkNumber("Initial Heading(Deg)", 0.0);
-   private static LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 0.0);
-  private static LoggedNetworkBoolean enableSotm =  new LoggedNetworkBoolean("SOTM", false);
+  private static LoggedNetworkNumber initialHeading =
+      new LoggedNetworkNumber("Initial Heading(Deg)", 0.0);
+  private static LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 0.0);
+  private static LoggedNetworkBoolean enableSotm = new LoggedNetworkBoolean("SOTM", false);
 
-  private static LoggedNetworkBoolean enableUnbeach = new LoggedNetworkBoolean("Initial Heading(Deg)", false);
+  private static LoggedNetworkBoolean enableUnbeach =
+      new LoggedNetworkBoolean("Auto Unbeach", false);
 
   private static Elastic.Notification autoTimingWarning =
       new Elastic.Notification(
@@ -117,6 +117,7 @@ public class BLineLogic {
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
   private static LoggedNetworkString key = new LoggedNetworkString("Auto Keys", keys);
+
   public static boolean isMirrored() {
 
     return getSelectedAutoPath().getStartPositionType() == Position.TRENCH
@@ -203,25 +204,27 @@ public class BLineLogic {
 
     for (int i = 0; i < MAX_STEPS; i++) {
 
-     LoggedDashboardChooser<String> chooser = new LoggedDashboardChooser<>("BLine/Path Step" + (i + 1));
+      LoggedDashboardChooser<String> chooser =
+          new LoggedDashboardChooser<>("BLine/Path Step" + (i + 1));
 
-      pathChoosers.add(i,chooser.getSendableChooser());
-
+      pathChoosers.add(i, chooser.getSendableChooser());
     }
 
     populateFirstChooser();
-    for (int i = 0; i < pathChoosers.size();  i ++) {
+    for (int i = 0; i < pathChoosers.size(); i++) {
       int ind = i;
-      pathChoosers.get(i).onChange(
-          value -> {
-            BLinePath selected = getSelectedPath(pathChoosers.indexOf(pathChoosers.get(ind)));
+      pathChoosers
+          .get(i)
+          .onChange(
+              value -> {
+                BLinePath selected = getSelectedPath(pathChoosers.indexOf(pathChoosers.get(ind)));
 
-            if (selected != null && selected.getShootMode() == BLinePath.ShootMode.UNLIMITED) {
-              Elastic.sendNotification(autoTimingWarning);
-            }
+                if (selected != null && selected.getShootMode() == BLinePath.ShootMode.UNLIMITED) {
+                  Elastic.sendNotification(autoTimingWarning);
+                }
 
-            updatePathChoosers();
-          });
+                updatePathChoosers();
+              });
     }
   }
 
@@ -229,7 +232,7 @@ public class BLineLogic {
 
     SendableChooser<String> chooser = pathChoosers.get(0);
 
-    //chooser.clearOptions();
+    // chooser.clearOptions();
 
     for (BLinePath path : autos) {
 
@@ -270,7 +273,7 @@ public class BLineLogic {
       }
 
       SendableChooser<String> nextChooser = pathChoosers.get(step + 1);
-     // nextChooser.clearOptions();
+      // nextChooser.clearOptions();
 
       for (BLinePath nextPath : nextPaths) {
 
@@ -293,7 +296,7 @@ public class BLineLogic {
 
     for (int i = step + 1; i < pathChoosers.size(); i++) {
 
-      //pathChoosers.get(i).clearOptions();
+      // pathChoosers.get(i).clearOptions();
     }
   }
 
@@ -348,26 +351,19 @@ public class BLineLogic {
     for (int i = 0; i < pathChoosers.size(); i++) {
       String key = "BLine/Step " + (i + 1) + " Delay";
 
-      autoDelay.setDefault(0.0);
-
-      autoDelayEntries.add(
-          NetworkTableInstance.getDefault().getTable("SmartDashboard").getEntry(key));
+      autoDelayEntries.add(NetworkTableInstance.getDefault().getTable("Auto Stuff").getEntry(key));
+      NetworkTableInstance.getDefault().getTable("Auto Stuff").getEntry(key).setDefaultDouble(0.0);
     }
     trenchSideChooser.addDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-
-
     SmartDashboard.putData("Selected Auto", field);
-
-
 
     enableSotm.set(enableLaunchOnTheMove);
     enableUnbeach.set(enableAutoUnbeach);
 
     SmartDashboard.putData("Start Pose", fieldPoseStart);
-
 
     trenchSideChooser.onChange(
         value -> {
@@ -513,7 +509,7 @@ public class BLineLogic {
 
     for (int step = 0; step < sequence.size(); step++) {
 
-      // Delay before this BLinePath
+      //  before this BLinePath
       double delay = autoDelayEntries.get(step).getDouble(0.0);
       commands.add(Commands.waitSeconds(delay));
 
@@ -711,8 +707,6 @@ public class BLineLogic {
     beachedTrigger =
         new Trigger(
             () -> {
-
-
               return enableUnbeach.getAsBoolean()
                   && RobotState.isAutonomous()
                   && s.drivebaseSubsystem.isBeached(StuckOnBallRecovery.STUCK_ANGLE_THRESHOLD);
@@ -741,8 +735,6 @@ public class BLineLogic {
             "launch",
             Commands.defer(
                 () -> {
-
-
                   return enableSotm.getAsBoolean()
                       ? Commands.runOnce(() -> launchAllowed.set(true))
                           .andThen(bLineSimLaunching.onlyWhile(launchAllowed::get))
