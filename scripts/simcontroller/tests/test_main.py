@@ -21,8 +21,8 @@ class PulseTests(unittest.TestCase):
         mode(pulse, **{">enabled": True})
         self.assertIsNone(pulse.next_input(1))
         mode(pulse, **{">autonomous": False, ">test": False, ">estop": False})
-        self.assertEqual(pulse.next_input(10), -0.5)
-        self.assertEqual(pulse.next_input(11.999), -0.5)
+        self.assertEqual(pulse.next_input(10), 0.5)
+        self.assertEqual(pulse.next_input(11.999), 0.5)
         self.assertEqual(pulse.next_input(12), 0.0)
         mode(pulse, **{">enabled": False})
         enable(pulse)
@@ -34,7 +34,7 @@ class PulseTests(unittest.TestCase):
             with self.subTest(change=change):
                 pulse = main.JoystickPulse()
                 enable(pulse)
-                self.assertEqual(pulse.next_input(0), -0.5)
+                self.assertEqual(pulse.next_input(0), 0.5)
                 mode(pulse, **change)
                 self.assertEqual(pulse.next_input(0.5), 0.0)
                 enable(pulse)
@@ -42,11 +42,11 @@ class PulseTests(unittest.TestCase):
 
     def test_wire_messages_only_control_joystick_and_notify(self):
         websocket = MagicMock()
-        main.send_joystick(websocket, -0.5)
+        main.send_joystick(websocket, 0.5)
         joystick, notification = [json.loads(c.args[0])
                                   for c in websocket.send.call_args_list]
         self.assertEqual(joystick["device"], "0")
-        self.assertEqual(joystick["data"][">axes"], [0, -0.5, 0, 0, 0, 0])
+        self.assertEqual(joystick["data"][">axes"], [0, 0.5, 0, 0, 0, 0])
         self.assertEqual(joystick["data"][">buttons"], [False] * 10)
         self.assertEqual(joystick["data"][">povs"], [-1])
         self.assertEqual(notification, {"type": "DriverStation", "device": "",

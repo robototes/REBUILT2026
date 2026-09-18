@@ -13,7 +13,7 @@ Restart the Java simulation after updating `build.gradle` so that the HALSim
 WebSocket server extension is loaded. The script also connects to
 `ws://127.0.0.1:3300/wpilibws`. Enable teleop manually in the simulation GUI.
 Once both connections are ready and enabled teleop is confirmed, the script
-pushes controller port 0's left Y axis to -0.5 for two seconds, then returns all
+pushes controller port 0's left Y axis to 0.5 for two seconds, then returns all
 controls to neutral. This pulse happens only once per script run. Disabling or
 leaving teleop early ends the pulse without resuming it. Position reporting
 continues afterward. If teleop is already enabled, the pulse starts upon connection
