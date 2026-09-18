@@ -29,6 +29,7 @@ import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
+import frc.robot.subsystems.auto.BLine.LegacyBLine.LegacyBLineLogic;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -62,6 +63,7 @@ public class Robot extends LoggedRobot {
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
+  private final int MAX_STEPS = 1; // Number of steps in auto chooser
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -120,15 +122,24 @@ public class Robot extends LoggedRobot {
       } else {
         robotSim = null;
       }
-
       // BLINE STUFF
-      BLineLogic.init(
-          subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
-      // off
-      BLineLogic.configure(subsystems); // configure the autobuilder to run autos
-      BLineLogic.initAdvantageKit(); // Logging
-      // BLineAutonomousField.initAdvantageKit( // Visualization
-      //  () -> "Autos", 0, 0, this.autonomousPeriodic());
+      if (MAX_STEPS > 1) {
+        BLineLogic.init(
+            subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
+        // off
+        BLineLogic.configure(subsystems); // configure the autobuilder to run autos
+        BLineLogic.initAdvantageKit(); // Logging
+        // BLineAutonomousField.initAdvantageKit( // Visualization
+        //  () -> "Autos", 0, 0, this.autonomousPeriodic());
+      } else {
+        // BLINE STUFF
+        LegacyBLineLogic.init(subsystems); // Handling init and unit test cases
+        LegacyBLineLogic.configure(subsystems); // configure the autobuilder to run autos
+        LegacyBLineLogic.initSmartDashboard(); // Logging
+        // TODO REPLACE WITH TELEMETRY LIB
+        // BLineAutonomousField.initSmartDashBoard( // Visualization
+        //    () -> "Autos", 0, 0, this::addPeriodic);
+      }
     }
 
     CommandScheduler.getInstance()
