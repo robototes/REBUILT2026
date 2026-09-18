@@ -1,9 +1,9 @@
 package frc.robot.subsystems.index;
 
+import java.util.function.DoubleSupplier;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
-import java.util.function.DoubleSupplier;
 
 public class IndexerSubsystem extends SubsystemBase {
   protected Feeder feeder;

@@ -2,23 +2,18 @@ package frc.robot.subsystems.auto;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import org.wpilib.math.util.MathUtil;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.tuning.LauncherConstants;
+import java.util.function.DoubleSupplier;
+import org.wpilib.command2.Command;
+import org.wpilib.driverstation.RobotState;
 import org.wpilib.math.controller.PIDController;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.command2.Command;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
-import frc.robot.util.tuning.LauncherConstants;
-import java.util.function.DoubleSupplier;
 
 public class AutoDriveRotate {
   public static Command autoRotate(

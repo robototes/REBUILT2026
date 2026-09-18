@@ -1,12 +1,8 @@
 package frc.robot.test;
 
-import org.wpilib.hardware.hal.simulation.DriverStationDataJNI;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
 import frc.robot.Robot;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.hardware.hal.simulation.DriverStationDataJNI;
 
 public class AutomatedTestRobot extends Robot {
   private static void sleep(long durationMillis) {

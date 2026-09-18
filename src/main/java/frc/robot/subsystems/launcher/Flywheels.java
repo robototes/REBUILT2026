@@ -7,26 +7,22 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import frc.robot.Hardware;
+import frc.robot.util.robotType.RobotType;
+import frc.robot.util.tuning.NtTunableBoolean;
+import frc.robot.util.tuning.NtTunableDouble;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.command2.button.Trigger;
+import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.math.filter.Debouncer;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.DoubleTopic;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.networktables.TimestampedDouble;
+import org.wpilib.system.DataLogManager;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Current;
-import org.wpilib.system.DataLogManager;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.SubsystemBase;
-import org.wpilib.command2.button.Trigger;
-import frc.robot.Hardware;
-import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableBoolean;
-import frc.robot.util.tuning.NtTunableDouble;
 
 public class Flywheels extends SubsystemBase {
   private final TalonFX flywheelOne; // left spins clockwise

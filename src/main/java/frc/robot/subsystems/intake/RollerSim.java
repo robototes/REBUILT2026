@@ -3,17 +3,17 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-import org.wpilib.math.system.LinearSystem;
-import org.wpilib.math.system.DCMotor;
-import org.wpilib.math.system.LinearSystemId;
+import frc.robot.util.simulation.RobotSim;
+import org.wpilib.command2.SubsystemBase;
 import org.wpilib.framework.RobotBase;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.LinearSystem;
+import org.wpilib.math.system.LinearSystemId;
 import org.wpilib.simulation.FlywheelSim;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
 import org.wpilib.smartdashboard.MechanismRoot2d;
 import org.wpilib.smartdashboard.SmartDashboard;
-import org.wpilib.command2.SubsystemBase;
-import frc.robot.util.simulation.RobotSim;
 
 public class RollerSim extends SubsystemBase {
   // flywheel sim variables

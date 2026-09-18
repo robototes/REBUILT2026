@@ -2,7 +2,13 @@ package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule;
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.GetTargetFromPose;
+import frc.robot.util.tuning.LauncherConstants;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
@@ -16,13 +22,7 @@ import org.wpilib.networktables.BooleanPublisher;
 import org.wpilib.networktables.DoubleArrayPublisher;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTableInstance;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.AllianceUtils;
-import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.tuning.LauncherConstants;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import org.wpilib.vision.apriltag.AprilTagFieldLayout;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -293,18 +293,13 @@ public class LaunchCalculator {
     // Includes angular acceleration so aggressive rotation also busts the cache.
     double speedsDt = timestamp - lastWheelSpeedsTimestamp;
     if (speedsDt > MIN_POSE_DT && speedsDt < MAX_POSE_DT) {
-      double rawAX =
-          (currentSpeeds.vx - lastWheelSpeeds.vx) / speedsDt;
-      double rawAY =
-          (currentSpeeds.vy - lastWheelSpeeds.vy) / speedsDt;
-      double rawAOmega =
-          (currentSpeeds.omega - lastWheelSpeeds.omega) / speedsDt;
+      double rawAX = (currentSpeeds.vx - lastWheelSpeeds.vx) / speedsDt;
+      double rawAY = (currentSpeeds.vy - lastWheelSpeeds.vy) / speedsDt;
+      double rawAOmega = (currentSpeeds.omega - lastWheelSpeeds.omega) / speedsDt;
       filteredAcceleration =
           new ChassisVelocities(
-              ACCEL_FILTER_ALPHA * filteredAcceleration.vx
-                  + (1 - ACCEL_FILTER_ALPHA) * rawAX,
-              ACCEL_FILTER_ALPHA * filteredAcceleration.vy
-                  + (1 - ACCEL_FILTER_ALPHA) * rawAY,
+              ACCEL_FILTER_ALPHA * filteredAcceleration.vx + (1 - ACCEL_FILTER_ALPHA) * rawAX,
+              ACCEL_FILTER_ALPHA * filteredAcceleration.vy + (1 - ACCEL_FILTER_ALPHA) * rawAY,
               ACCEL_FILTER_ALPHA * filteredAcceleration.omega
                   + (1 - ACCEL_FILTER_ALPHA) * rawAOmega);
     } else if (speedsDt >= MAX_POSE_DT) {
@@ -314,8 +309,7 @@ public class LaunchCalculator {
       filteredAcceleration = new ChassisVelocities(0, 0, 0);
     }
 
-    double filteredAccelMagnitude =
-        Math.hypot(filteredAcceleration.vx, filteredAcceleration.vy);
+    double filteredAccelMagnitude = Math.hypot(filteredAcceleration.vx, filteredAcceleration.vy);
 
     boolean hasNotMovedSignificantly =
         Math.abs(currentPose.getTranslation().getDistance(lastPose.getTranslation()))
@@ -401,8 +395,7 @@ public class LaunchCalculator {
 
     // --- DEFENSE COMPENSATION: Slip filter with hysteresis gate ---
     // When still, tiny estimator corrections divided by a small dt produce large fake velocities.
-    double wheelSpeedMagnitude =
-        Math.hypot(wheelSpeeds.vx, wheelSpeeds.vy);
+    double wheelSpeedMagnitude = Math.hypot(wheelSpeeds.vx, wheelSpeeds.vy);
 
     if (robotIsMoving) {
       robotIsMoving = wheelSpeedMagnitude > MIN_MOVING_SPEED_DISABLE;
@@ -438,8 +431,7 @@ public class LaunchCalculator {
 
       double newSlipX = filterAlpha * filteredSlip.vx + (1 - filterAlpha) * slipRawX;
       double newSlipY = filterAlpha * filteredSlip.vy + (1 - filterAlpha) * slipRawY;
-      double newSlipOmega =
-          filterAlpha * filteredSlip.omega + (1 - filterAlpha) * slipRawOmega;
+      double newSlipOmega = filterAlpha * filteredSlip.omega + (1 - filterAlpha) * slipRawOmega;
 
       // Cap the filtered slip magnitude
       double newSlipMag = Math.hypot(newSlipX, newSlipY);
@@ -476,12 +468,9 @@ public class LaunchCalculator {
     estimatedPose =
         estimatedPose.exp(
             new Twist2d(
-                effectiveSpeeds.vx * pdt
-                    + 0.5 * acceleration.vx * pdt * pdt,
-                effectiveSpeeds.vy * pdt
-                    + 0.5 * acceleration.vy * pdt * pdt,
-                effectiveSpeeds.omega * pdt
-                    + 0.5 * acceleration.omega * pdt * pdt));
+                effectiveSpeeds.vx * pdt + 0.5 * acceleration.vx * pdt * pdt,
+                effectiveSpeeds.vy * pdt + 0.5 * acceleration.vy * pdt * pdt,
+                effectiveSpeeds.omega * pdt + 0.5 * acceleration.omega * pdt * pdt));
 
     ChassisVelocities launchSpeeds =
         new ChassisVelocities(
@@ -496,10 +485,8 @@ public class LaunchCalculator {
     double totalOmega = launchSpeeds.omega + turretSubsystem.getOmega();
     ChassisVelocities turretRobotRelativeSpeeds =
         new ChassisVelocities(
-            launchSpeeds.vx
-                - launchSpeeds.omega * turretTransform.getY(),
-            launchSpeeds.vy
-                + launchSpeeds.omega * turretTransform.getX(),
+            launchSpeeds.vx - launchSpeeds.omega * turretTransform.getY(),
+            launchSpeeds.vy + launchSpeeds.omega * turretTransform.getX(),
             totalOmega);
     ChassisVelocities turretFieldRelativeSpeeds =
         ChassisVelocities.fromRobotRelativeSpeeds(turretRobotRelativeSpeeds, robotAngle);
@@ -550,8 +537,7 @@ public class LaunchCalculator {
     if (trueDistance > VFF_DIST_TOLERANCE) {
       double tangentialVel =
           (-trueDistanceY * turretVelocityX + trueDistanceX * turretVelocityY) / trueDistance;
-      feedforwardAngularVelocity =
-          (tangentialVel / trueDistance) - launchSpeeds.omega;
+      feedforwardAngularVelocity = (tangentialVel / trueDistance) - launchSpeeds.omega;
     }
 
     Rotation2d targetAngleFieldRelative;
@@ -601,11 +587,7 @@ public class LaunchCalculator {
     for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
       double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
       Pose2d sampledRobotPose =
-          robotPose.exp(
-              new Twist2d(
-                  speeds.vx * t,
-                  speeds.vy * t,
-                  speeds.omega * t));
+          robotPose.exp(new Twist2d(speeds.vx * t, speeds.vy * t, speeds.omega * t));
       Pose2d sampledTurretPose = sampledRobotPose.transformBy(turretTransform);
       if (isCloseToTrench(sampledTurretPose)) return true;
     }

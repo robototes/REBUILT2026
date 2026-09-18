@@ -1,7 +1,6 @@
 package frc.robot.util;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-import org.wpilib.system.DataLogManager;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.atomic.AtomicLong;
@@ -9,6 +8,7 @@ import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
+import org.wpilib.system.DataLogManager;
 
 /**
  * GCMonitor registers JMX listeners for garbage collection notifications and increments an internal

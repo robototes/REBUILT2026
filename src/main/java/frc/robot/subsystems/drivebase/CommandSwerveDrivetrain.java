@@ -10,29 +10,27 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import org.wpilib.math.util.MathUtil;
-import org.wpilib.math.linalg.Matrix;
+import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.AllianceUtils;
+import java.util.function.Supplier;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Subsystem;
+import org.wpilib.command2.sysid.SysIdRoutine;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.framework.RobotBase;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.MathUtil;
 import org.wpilib.math.util.Units;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.system.Notifier;
-import org.wpilib.framework.RobotBase;
 import org.wpilib.system.RobotController;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Subsystem;
-import org.wpilib.command2.sysid.SysIdRoutine;
-import frc.robot.generated.CompTunerConstants;
-import frc.robot.util.AllianceUtils;
-import java.util.function.Supplier;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -225,9 +223,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
-    if (RobotBase.isSimulation()
-        || !m_hasAppliedOperatorPerspective
-        || RobotState.isDisabled()) {
+    if (RobotBase.isSimulation() || !m_hasAppliedOperatorPerspective || RobotState.isDisabled()) {
       MatchState.getAlliance()
           .ifPresent(
               alliance -> {

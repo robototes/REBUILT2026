@@ -1,7 +1,7 @@
 package frc.robot.util;
 
-import org.wpilib.math.geometry.Pose3d;
 import frc.robot.util.LimelightHelpers.RawFiducial;
+import org.wpilib.math.geometry.Pose3d;
 
 public class BetterPoseEstimate {
   public final Pose3d pose3d;

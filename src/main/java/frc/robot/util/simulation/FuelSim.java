@@ -6,6 +6,9 @@ import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.MetersPerSecond;
 import static org.wpilib.units.Units.Radians;
 
+import java.util.ArrayList;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
@@ -19,9 +22,6 @@ import org.wpilib.networktables.StructArrayPublisher;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.LinearVelocity;
-import java.util.ArrayList;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 
 public class FuelSim {
   protected static final double PERIOD = 0.02; // sec

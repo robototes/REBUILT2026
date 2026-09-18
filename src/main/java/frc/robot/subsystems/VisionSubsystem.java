@@ -2,27 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
-import org.wpilib.math.util.MathUtil;
-import org.wpilib.math.linalg.Matrix;
-import org.wpilib.math.linalg.VecBuilder;
-import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.math.geometry.Pose3d;
-import org.wpilib.math.geometry.Rotation3d;
-import org.wpilib.math.geometry.Transform3d;
-import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.math.numbers.N1;
-import org.wpilib.math.numbers.N3;
-import org.wpilib.math.util.Units;
-import org.wpilib.networktables.BooleanSubscriber;
-import org.wpilib.networktables.NetworkTable;
-import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.networktables.StructPublisher;
-import org.wpilib.system.Timer;
-import org.wpilib.smartdashboard.Field2d;
-import org.wpilib.smartdashboard.FieldObject2d;
-import org.wpilib.smartdashboard.SmartDashboard;
-import org.wpilib.command2.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -32,6 +11,27 @@ import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.util.Units;
+import org.wpilib.networktables.BooleanSubscriber;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.FieldObject2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.system.Timer;
+import org.wpilib.vision.apriltag.AprilTagFieldLayout;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -277,10 +277,8 @@ public class VisionSubsystem extends SubsystemBase {
     rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
-        && (Math.abs(visionPoseTracking.swerveSpeeds.vx)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.vy)
-                > VisionConstants.MAX_XY_VELO_ALPHA
+        && (Math.abs(visionPoseTracking.swerveSpeeds.vx) > VisionConstants.MAX_XY_VELO_ALPHA
+            || Math.abs(visionPoseTracking.swerveSpeeds.vy) > VisionConstants.MAX_XY_VELO_ALPHA
             || Math.abs(visionPoseTracking.swerveSpeeds.omega)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
       publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed");

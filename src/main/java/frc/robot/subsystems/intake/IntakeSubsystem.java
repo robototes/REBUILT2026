@@ -1,9 +1,9 @@
 package frc.robot.subsystems.intake;
 
-import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.command2.SubsystemBase;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.math.kinematics.ChassisVelocities;
 
 public class IntakeSubsystem extends SubsystemBase {
   public enum IntakeMode {

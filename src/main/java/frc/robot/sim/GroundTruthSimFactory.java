@@ -3,9 +3,9 @@ package frc.robot.sim;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
-import org.wpilib.math.geometry.Pose2d;
 import frc.robot.Robot;
 import java.util.function.Consumer;
+import org.wpilib.math.geometry.Pose2d;
 
 /**
  * Factory for creating GroundTruthSimInterface instances. Returns null when not in simulation mode.

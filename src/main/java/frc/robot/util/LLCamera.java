@@ -1,16 +1,12 @@
 package frc.robot.util;
 
+import frc.robot.util.LimelightHelpers.RawDetection;
+import frc.robot.util.LimelightHelpers.RawFiducial;
+import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.networktables.DoubleArrayEntry;
 import org.wpilib.networktables.TimestampedDoubleArray;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import frc.robot.util.LimelightHelpers.RawDetection;
-import frc.robot.util.LimelightHelpers.RawFiducial;
 
 public class LLCamera {
 

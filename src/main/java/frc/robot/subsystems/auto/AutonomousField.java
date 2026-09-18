@@ -1,22 +1,18 @@
 package frc.robot.subsystems.auto;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.networktables.NetworkTableEntry;
-import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.system.Timer;
-import org.wpilib.smartdashboard.Field2d;
-import org.wpilib.smartdashboard.SmartDashboard;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.networktables.NetworkTableEntry;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.system.Timer;
 
 public class AutonomousField {
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;

@@ -1,14 +1,5 @@
 package frc.robot.util;
 
-import org.wpilib.networktables.NetworkTable;
-import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.system.DataLogManager;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.system.Filesystem;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +7,11 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.system.Filesystem;
 
 public class BuildInfo {
   /**

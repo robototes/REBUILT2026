@@ -1,15 +1,11 @@
 package frc.robot.util;
 
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import org.wpilib.command2.button.Trigger;
+import org.wpilib.driverstation.RobotState;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.util.Units;
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.command2.button.Trigger;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 
 public class GetTargetFromPose {
   private static Translation2d pointLeftFieldTop = new Translation2d(2, 6);

@@ -7,17 +7,17 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import org.wpilib.networktables.DoublePublisher;
-import org.wpilib.networktables.DoubleTopic;
-import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.units.measure.AngularVelocity;
-import org.wpilib.framework.RobotBase;
-import org.wpilib.command2.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.DoubleTopic;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.units.measure.AngularVelocity;
 
 public class IntakeRollers extends SubsystemBase {
   // motors

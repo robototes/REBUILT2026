@@ -1,17 +1,17 @@
 package frc.robot.util.tuning;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import frc.robot.generated.CompTunerConstants;
+import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 import org.wpilib.math.filter.SlewRateLimiter;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.util.Units;
 import org.wpilib.system.DataLogManager;
-import org.wpilib.command2.Command;
-import org.wpilib.command2.Commands;
-import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 
 public class WheelRadiusCharacterization {
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 4; // Rad/Sec

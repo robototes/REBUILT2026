@@ -2,9 +2,6 @@ package frc.robot.util.robotType;
 
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
-import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.math.system.DCMotor;
-import org.wpilib.system.Filesystem;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -12,6 +9,9 @@ import java.io.IOException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.system.Filesystem;
 
 public class ConfigShift {
 

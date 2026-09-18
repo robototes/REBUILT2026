@@ -1,16 +1,13 @@
 package frc.robot.util;
 
-import org.wpilib.driverstation.MatchState;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.driverstation.MatchType;
-import org.wpilib.driverstation.DriverStationErrors;
-import org.wpilib.driverstation.Alliance;
-import org.wpilib.system.Timer;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.Setter;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.system.Timer;
 
 public class HubShiftUtil {
   public enum ShiftEnum {

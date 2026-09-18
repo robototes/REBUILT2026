@@ -2,9 +2,10 @@ package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import frc.robot.util.simulation.RobotSim;
+import org.wpilib.framework.RobotBase;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.system.LinearSystemId;
-import org.wpilib.framework.RobotBase;
 import org.wpilib.simulation.FlywheelSim;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
@@ -12,7 +13,6 @@ import org.wpilib.smartdashboard.MechanismRoot2d;
 import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
-import frc.robot.util.simulation.RobotSim;
 
 public class FlywheelsSim {
 

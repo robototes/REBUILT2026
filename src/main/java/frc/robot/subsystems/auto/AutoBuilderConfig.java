@@ -4,13 +4,13 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import org.wpilib.math.kinematics.ChassisVelocities;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.ConfigShift;
 import frc.robot.util.robotType.RobotType;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
+import org.wpilib.math.kinematics.ChassisVelocities;
 
 public class AutoBuilderConfig {
 

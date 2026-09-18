@@ -4,16 +4,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
+import frc.robot.util.simulation.RobotSim;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.framework.RobotBase;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.util.Units;
-import org.wpilib.framework.RobotBase;
 import org.wpilib.simulation.SingleJointedArmSim;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
 import org.wpilib.smartdashboard.MechanismRoot2d;
 import org.wpilib.smartdashboard.SmartDashboard;
-import org.wpilib.command2.SubsystemBase;
-import frc.robot.util.simulation.RobotSim;
 
 public class PivotSim extends SubsystemBase {
   private final SingleJointedArmSim intakeArmSim;

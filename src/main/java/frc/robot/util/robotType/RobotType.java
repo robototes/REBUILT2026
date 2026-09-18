@@ -1,7 +1,7 @@
 package frc.robot.util.robotType;
 
-import org.wpilib.system.DataLogManager;
 import org.wpilib.framework.RobotBase;
+import org.wpilib.system.DataLogManager;
 import org.wpilib.system.RobotController;
 
 public class RobotType {

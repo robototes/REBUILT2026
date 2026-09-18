@@ -2,10 +2,10 @@ package frc.robot.sim.visionproducers;
 
 import static frc.robot.sim.visionproducers.VisionSimConstants.kTagLayout;
 
-import org.wpilib.smartdashboard.Field2d;
 import frc.robot.Robot;
 import java.util.List;
 import org.photonvision.simulation.VisionSystemSim;
+import org.wpilib.smartdashboard.Field2d;
 
 /** Factory for creating VisionSimInterface instances. Returns empty list when not in simulation. */
 public class VisionSimFactory {

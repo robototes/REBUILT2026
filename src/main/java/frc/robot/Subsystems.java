@@ -14,8 +14,6 @@ import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
-import org.wpilib.smartdashboard.Mechanism2d;
-import org.wpilib.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
@@ -33,6 +31,8 @@ import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.smartdashboard.SmartDashboard;
 
 public class Subsystems {
   public static class SubsystemConstants {

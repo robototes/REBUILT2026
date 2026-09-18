@@ -1,5 +1,7 @@
 package frc.robot.util.tuning;
 
+import frc.robot.util.AllianceUtils;
+import frc.robot.util.robotType.RobotType;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Transform2d;
@@ -10,8 +12,6 @@ import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTable;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.networktables.StructPublisher;
-import frc.robot.util.AllianceUtils;
-import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
   private static final Transform2d LAUNCHER_OFFSET =
@@ -169,8 +169,7 @@ public class LauncherConstants {
   // then converts angular speed into tangent velocity
   public static Translation2d angularVelocity(Pose2d robot, ChassisVelocities fieldSpeeds) {
     Translation2d angle = LAUNCHER_OFFSET.getTranslation().rotateBy(robot.getRotation());
-    double angleVelocitySpeed =
-        (fieldSpeeds.omega * LAUNCHER_OFFSET.getTranslation().getNorm());
+    double angleVelocitySpeed = (fieldSpeeds.omega * LAUNCHER_OFFSET.getTranslation().getNorm());
     double vx = -angle.getY() * angleVelocitySpeed;
     double vy = angle.getX() * angleVelocitySpeed;
     return new Translation2d(vx, vy);

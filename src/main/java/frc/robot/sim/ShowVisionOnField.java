@@ -1,12 +1,12 @@
 package frc.robot.sim;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
+import frc.robot.generated.CompTunerConstants;
+import java.util.Optional;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Transform2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.smartdashboard.Field2d;
-import frc.robot.generated.CompTunerConstants;
-import java.util.Optional;
 
 /** Class to show vision targets on the field. */
 public class ShowVisionOnField {

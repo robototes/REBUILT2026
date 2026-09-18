@@ -6,15 +6,15 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
-import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.networktables.StringPublisher;
-import org.wpilib.units.Units;
-import org.wpilib.framework.RobotState;
-import org.wpilib.system.Timer;
+import frc.robot.Hardware;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
-import frc.robot.Hardware;
+import org.wpilib.framework.RobotState;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StringPublisher;
+import org.wpilib.system.Timer;
+import org.wpilib.units.Units;
 
 public class LEDSubsystem extends SubsystemBase {
   public enum LEDMode {
