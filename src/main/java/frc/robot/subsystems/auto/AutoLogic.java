@@ -65,11 +65,11 @@ public class AutoLogic {
 
   /* ---------------- Choosers ---------------- */
 
-    private static final Selectable<StartPosition> startPositionChooser = new Selectable<>();
+  private static final Selectable<StartPosition> startPositionChooser = new Selectable<>();
 
-    private static final Selectable<String> availableAutos = new Selectable<>();
+  private static final Selectable<String> availableAutos = new Selectable<>();
 
-    private static final Selectable<Integer> gameObjects = new Selectable<>();
+  private static final Selectable<Integer> gameObjects = new Selectable<>();
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");

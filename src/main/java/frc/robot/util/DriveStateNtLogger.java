@@ -84,7 +84,7 @@ public class DriveStateNtLogger {
     this.telem = telemetry;
     /* Telemeterize the module states to a Mechanism2d */
     for (int i = 0; i < 4; ++i) {
-    Telemetry.log("Module " + i, m_moduleMechanisms[i]);
+      Telemetry.log("Module " + i, m_moduleMechanisms[i]);
     }
     // Legacy double[] publisher has been removed entirely
   }
@@ -98,9 +98,9 @@ public class DriveStateNtLogger {
     }
 
     for (int i = 0; i < 4; ++i) {
-    m_moduleSpeeds[i].setAngle(state.ModuleVelocities[i].angle);
-    m_moduleDirections[i].setAngle(state.ModuleVelocities[i].angle);
-    m_moduleSpeeds[i].setLength(state.ModuleVelocities[i].velocity / (2 * MaxSpeed));
+      m_moduleSpeeds[i].setAngle(state.ModuleVelocities[i].angle);
+      m_moduleDirections[i].setAngle(state.ModuleVelocities[i].angle);
+      m_moduleSpeeds[i].setLength(state.ModuleVelocities[i].velocity / (2 * MaxSpeed));
     }
 
     /* Telemeterize the swerve drive state */

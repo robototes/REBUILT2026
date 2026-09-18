@@ -236,14 +236,12 @@ public class GroundTruthSim implements GroundTruthSimInterface {
   public void publishTelemetry() {
     Telemetry.log("Sim/GroundTruth/X", m_groundTruthPose.getX());
     Telemetry.log("Sim/GroundTruth/Y", m_groundTruthPose.getY());
-    Telemetry.log(
-        "Sim/GroundTruth/RotationDeg", m_groundTruthPose.getRotation().getDegrees());
+    Telemetry.log("Sim/GroundTruth/RotationDeg", m_groundTruthPose.getRotation().getDegrees());
 
     Pose2d estimatedPose = m_drivetrain.getState().Pose;
     Telemetry.log("Sim/EstimatedPose/X", estimatedPose.getX());
     Telemetry.log("Sim/EstimatedPose/Y", estimatedPose.getY());
-    Telemetry.log(
-        "Sim/EstimatedPose/RotationDeg", estimatedPose.getRotation().getDegrees());
+    Telemetry.log("Sim/EstimatedPose/RotationDeg", estimatedPose.getRotation().getDegrees());
 
     double poseError =
         m_groundTruthPose.getTranslation().getDistance(estimatedPose.getTranslation());

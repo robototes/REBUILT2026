@@ -28,6 +28,8 @@ import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.command2.button.Trigger;
 import org.wpilib.driverstation.GenericHID.RumbleType;
 import org.wpilib.driverstation.RobotState;
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Transform2d;
@@ -36,8 +38,6 @@ import org.wpilib.math.util.MathUtil;
 import org.wpilib.math.util.Units;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.units.measure.Time;
-import org.wpilib.fields.Field;
-import org.wpilib.fields.Fields;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -76,8 +76,7 @@ public class Controls {
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
-  Field aprilTagFieldLayout =
-    Fields.FRC_2026_REBUILT_WELDED.loadField();
+  Field aprilTagFieldLayout = Fields.FRC_2026_REBUILT_WELDED.loadField();
   // Robot with bumpers is 36.875 inches by 30.750 inches
   Transform2d robotOffsetFromTag =
       new Transform2d(
@@ -129,7 +128,7 @@ public class Controls {
   }
 
   private Trigger connected(CommandXboxController controller) {
-        return new Trigger(() -> controller.getController().isConnected());
+    return new Trigger(() -> controller.getController().isConnected());
   }
 
   public Command setRumble(RumbleType type, double value) {
@@ -152,15 +151,15 @@ public class Controls {
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
     return Commands.startEnd(
-                        () -> setBothRumble(controller, vibration), () -> setBothRumble(controller, 0))
+            () -> setBothRumble(controller, vibration), () -> setBothRumble(controller, 0))
         .withTimeout(duration)
         .withName("Rumble Port " + controller.getController().getPort());
   }
 
-    private void setBothRumble(CommandXboxController controller, double value) {
-        controller.getController().setRumble(RumbleType.LEFT_RUMBLE, value);
-        controller.getController().setRumble(RumbleType.RIGHT_RUMBLE, value);
-    }
+  private void setBothRumble(CommandXboxController controller, double value) {
+    controller.getController().setRumble(RumbleType.LEFT_RUMBLE, value);
+    controller.getController().setRumble(RumbleType.RIGHT_RUMBLE, value);
+  }
 
   // takes the X value from the joystick, and applies a deadband and input scaling
   private double getDriveX() {
@@ -389,8 +388,8 @@ public class Controls {
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
                     case INTAKE ->
-                          s.intakeSubsystem.smartIntake(
-                              () -> s.drivebaseSubsystem.getState().Velocity);
+                        s.intakeSubsystem.smartIntake(
+                            () -> s.drivebaseSubsystem.getState().Velocity);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },
@@ -441,8 +440,8 @@ public class Controls {
 
   public void vibrateDriveController(double vibration) {
     if (!RobotState.isAutonomous()) {
-    driverController.getController().setRumble(RumbleType.LEFT_RUMBLE, vibration);
-    driverController.getController().setRumble(RumbleType.RIGHT_RUMBLE, vibration);
+      driverController.getController().setRumble(RumbleType.LEFT_RUMBLE, vibration);
+      driverController.getController().setRumble(RumbleType.RIGHT_RUMBLE, vibration);
     }
   }
 

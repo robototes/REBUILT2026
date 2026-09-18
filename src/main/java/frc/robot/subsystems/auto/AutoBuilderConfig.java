@@ -10,7 +10,6 @@ import frc.robot.util.robotType.ConfigShift;
 import frc.robot.util.robotType.RobotType;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
-import org.wpilib.math.kinematics.ChassisVelocities;
 
 public class AutoBuilderConfig {
 
@@ -26,13 +25,13 @@ public class AutoBuilderConfig {
           }, // Method to reset odometry (will be called if your auto has a starting
           // pose)
           () -> {
-              return drivebase.getState().Velocity;
+            return drivebase.getState().Velocity;
           },
           // ChassisVelocities supplier. MUST BE ROBOT RELATIVE
           (speeds, feedforwards) ->
               drivebase.setControl(
                   new SwerveRequest.ApplyRobotVelocity()
-                    .withVelocity(speeds.discretize(0.020))
+                      .withVelocity(speeds.discretize(0.020))
                       .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                       .withWheelForceFeedforwardsY(
                           feedforwards

@@ -590,8 +590,7 @@ public class VisionSubsystem extends SubsystemBase {
           getVisionPoseError(visionPose2d, estimate.timestampSeconds));
       Telemetry.log(
           "/vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
-      Telemetry.log(
-          "/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
+      Telemetry.log("/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
     }
   }
 

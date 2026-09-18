@@ -9,6 +9,7 @@ import frc.robot.util.tuning.LauncherConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.wpilib.fields.Field;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
@@ -22,7 +23,6 @@ import org.wpilib.networktables.BooleanPublisher;
 import org.wpilib.networktables.DoubleArrayPublisher;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.fields.Field;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -466,12 +466,12 @@ public class LaunchCalculator {
     ChassisVelocities acceleration = filteredAcceleration;
     double pdt = PHASE_DELAY;
     estimatedPose =
-      estimatedPose.plus(
-        new Twist2d(
-            effectiveSpeeds.vx * pdt + 0.5 * acceleration.vx * pdt * pdt,
-            effectiveSpeeds.vy * pdt + 0.5 * acceleration.vy * pdt * pdt,
-            effectiveSpeeds.omega * pdt + 0.5 * acceleration.omega * pdt * pdt)
-          .exp());
+        estimatedPose.plus(
+            new Twist2d(
+                    effectiveSpeeds.vx * pdt + 0.5 * acceleration.vx * pdt * pdt,
+                    effectiveSpeeds.vy * pdt + 0.5 * acceleration.vy * pdt * pdt,
+                    effectiveSpeeds.omega * pdt + 0.5 * acceleration.omega * pdt * pdt)
+                .exp());
 
     ChassisVelocities launchSpeeds =
         new ChassisVelocities(
@@ -490,7 +490,7 @@ public class LaunchCalculator {
             launchSpeeds.vy + launchSpeeds.omega * turretTransform.getX(),
             totalOmega);
     ChassisVelocities turretFieldRelativeSpeeds =
-      turretRobotRelativeSpeeds.toFieldRelative(robotAngle);
+        turretRobotRelativeSpeeds.toFieldRelative(robotAngle);
 
     // Constant for the Newton loop — ball velocity is fixed at launch.
     double turretVelocityX = turretFieldRelativeSpeeds.vx;
@@ -587,7 +587,7 @@ public class LaunchCalculator {
   public static boolean isApproachingTrench(Pose2d robotPose, ChassisVelocities speeds) {
     for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
       double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
-        Pose2d sampledRobotPose = robotPose.plus(speeds.toTwist2d(t).exp());
+      Pose2d sampledRobotPose = robotPose.plus(speeds.toTwist2d(t).exp());
       Pose2d sampledTurretPose = sampledRobotPose.transformBy(turretTransform);
       if (isCloseToTrench(sampledTurretPose)) return true;
     }

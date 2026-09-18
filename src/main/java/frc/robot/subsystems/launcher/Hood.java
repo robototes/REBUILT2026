@@ -1,8 +1,8 @@
 package frc.robot.subsystems.launcher;
 
-import com.ctre.phoenix6.CANBus;
 import static org.wpilib.units.Units.Volts;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;

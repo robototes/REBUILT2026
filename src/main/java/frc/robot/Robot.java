@@ -86,9 +86,7 @@ public class Robot extends TimedRobot {
       DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
-    PDH =
-      new PowerDistribution(
-        CANPort.CAN_S0, Hardware.PDH_ID, PowerDistribution.ModuleType.REV);
+    PDH = new PowerDistribution(CANPort.CAN_S0, Hardware.PDH_ID, PowerDistribution.ModuleType.REV);
     Telemetry.log("PDH", PDH);
     BuildInfo.logBuildInfo();
     // Start GC monitor to count garbage collections and publish to SmartDashboard
@@ -291,7 +289,7 @@ public class Robot extends TimedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-        double initialYaw =
+      double initialYaw =
           NetworkTableInstance.getDefault().getEntry("/Selected auto/Robot/2").getDouble(0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
