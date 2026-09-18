@@ -1,5 +1,6 @@
 package frc.robot.sensors;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
 import com.ctre.phoenix6.controls.SolidColor;
@@ -10,7 +11,7 @@ import frc.robot.Hardware;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import org.wpilib.command2.SubsystemBase;
-import org.wpilib.framework.RobotState;
+import org.wpilib.driverstation.RobotState;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.networktables.StringPublisher;
 import org.wpilib.system.Timer;
@@ -41,7 +42,7 @@ public class LEDSubsystem extends SubsystemBase {
   /** Animation slot index used for LED animations. */
   private static final int SLOT = 0;
 
-  private final CANdle candle = new CANdle(CAN_ID);
+  private final CANdle candle = new CANdle(CAN_ID, new CANBus());
   private final SolidColor solidController = new SolidColor(0, END_INDEX);
   private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
   private final RainbowAnimation rainbowAnimation =

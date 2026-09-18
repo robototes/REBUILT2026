@@ -11,8 +11,8 @@ import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.networktables.NetworkTableEntry;
 import org.wpilib.networktables.NetworkTableInstance;
 import org.wpilib.smartdashboard.Field2d;
-import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.system.Timer;
+import org.wpilib.telemetry.Telemetry;
 
 public class AutonomousField {
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
@@ -34,13 +34,13 @@ public class AutonomousField {
     AutonomousField autonomousField =
         new AutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
-    SmartDashboard.putData("Selected auto", autonomousField.getField());
-    SmartDashboard.putData("Start pose", autonomousField.getStartPose());
+    Telemetry.log("Selected auto", autonomousField.getField());
+    Telemetry.log("Start pose", autonomousField.getStartPose());
 
     addPeriodic.accept(
         () -> {
           autonomousField.update(AutoLogic.getSelectedAutoName());
-          SmartDashboard.putNumber(
+          Telemetry.log(
               "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
         },
         UPDATE_RATE);
@@ -110,7 +110,7 @@ public class AutonomousField {
       if (autoData.getStartingPose() != null) {
         return autoData.getStartingPose();
       }
-      return Pose2d.kZero;
+      return Pose2d.ZERO;
     }
 
     lastTrajectoryTimeOffset += (fpgaTime - lastFPGATime) * speed;

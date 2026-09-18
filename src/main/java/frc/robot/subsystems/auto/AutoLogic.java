@@ -25,8 +25,9 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.util.Units;
 import org.wpilib.networktables.NetworkTableEntry;
 import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.Tunables;
 
 public class AutoLogic {
 
@@ -64,13 +65,11 @@ public class AutoLogic {
 
   /* ---------------- Choosers ---------------- */
 
-  private static final SendableChooser<StartPosition> startPositionChooser =
-      new SendableChooser<>();
+    private static final Selectable<StartPosition> startPositionChooser = new Selectable<>();
 
-  private static final DynamicSendableChooser<String> availableAutos =
-      new DynamicSendableChooser<>();
+    private static final Selectable<String> availableAutos = new Selectable<>();
 
-  private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
+    private static final Selectable<Integer> gameObjects = new Selectable<>();
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
@@ -148,23 +147,23 @@ public class AutoLogic {
   public static void initSmartDashBoard() {
     requirePathsInitialized();
 
-    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
+    startPositionChooser.addDefault(StartPosition.MISC.title, StartPosition.MISC);
 
     for (StartPosition pos : StartPosition.values()) {
-      startPositionChooser.addOption(pos.title, pos);
+      startPositionChooser.add(pos.title, pos);
     }
 
-    gameObjects.setDefaultOption("0", 0);
+    gameObjects.addDefault("0", 0);
     for (int i = 1; i < commandsMap.size(); i++) {
-      gameObjects.addOption(String.valueOf(i), i);
+      gameObjects.add(String.valueOf(i), i);
     }
 
     autoDelayEntry.setDouble(0.0);
 
-    SmartDashboard.putData("Starting Position", startPositionChooser);
-    SmartDashboard.putData("Auto Mode", gameObjects);
-    SmartDashboard.putData("Available Auto Variants", availableAutos);
-    SmartDashboard.putString("Auto Key", keys);
+    Tunables.publish("Starting Position", startPositionChooser);
+    Tunables.publish("Auto Mode", gameObjects);
+    Tunables.publish("Available Auto Variants", availableAutos);
+    Telemetry.log("Auto Key", keys);
 
     startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
     gameObjects.onChange(v -> filterAutos(gameObjects.getSelected()));
@@ -177,15 +176,15 @@ public class AutoLogic {
   public static void filterAutos(int numGameObjects) {
     requirePathsInitialized();
 
-    availableAutos.clearOptions();
-    availableAutos.setDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
+    availableAutos.clear();
+    availableAutos.addDefault(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
     List<AutoPath> autoList = commandsMap.get(numGameObjects);
     if (autoList == null) return;
 
     for (AutoPath auto : autoList) {
       if (auto.getStartPose().equals(startPositionChooser.getSelected())) {
-        availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
+        availableAutos.add(auto.getDisplayName(), auto.getDisplayName());
       }
     }
   }
@@ -193,7 +192,7 @@ public class AutoLogic {
   /* ---------------- Getters ---------------- */
 
   public static String getSelectedAutoName() {
-    return availableAutos.getSelectedName();
+    return availableAutos.getSelected();
   }
 
   public static boolean chooserHasAutoSelected() {
@@ -215,7 +214,7 @@ public class AutoLogic {
       return defaultPath.getStartPose2d();
     }
 
-    return Pose2d.kZero;
+    return Pose2d.ZERO;
   }
 
   public static Command getSelectedAuto() {

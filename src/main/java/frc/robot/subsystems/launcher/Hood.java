@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.CANBus;
 import static org.wpilib.units.Units.Volts;
 
 import com.ctre.phoenix6.StatusSignal;
@@ -66,7 +67,7 @@ public class Hood extends SubsystemBase {
   private final StatusSignal<Angle> SS_pos;
 
   public Hood() {
-    hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
+    hood = new TalonFX(Hardware.HOOD_MOTOR_ID, new CANBus());
 
     configureMotor();
     hood.clearStickyFaults();

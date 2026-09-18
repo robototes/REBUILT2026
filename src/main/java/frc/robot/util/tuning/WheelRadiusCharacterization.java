@@ -37,7 +37,7 @@ public class WheelRadiusCharacterization {
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
 
     ChassisVelocities speeds = new ChassisVelocities();
-    SwerveRequest driveRequest = new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds);
+    SwerveRequest driveRequest = new SwerveRequest.ApplyRobotVelocity().withVelocity(speeds);
     return Commands.parallel(
             // Drive control sequence
             Commands.sequence(
@@ -112,7 +112,7 @@ public class WheelRadiusCharacterization {
 
   private static class WheelRadiusCharacterizationState {
     double[] positions = new double[NUM_MODULES];
-    Rotation2d lastAngle = Rotation2d.kZero;
+    Rotation2d lastAngle = Rotation2d.ZERO;
     double gyroDelta = 0.0;
   }
 }

@@ -12,7 +12,7 @@ import org.wpilib.simulation.SingleJointedArmSim;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
 import org.wpilib.smartdashboard.MechanismRoot2d;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
 
@@ -54,7 +54,7 @@ public class HoodSim {
     hoodLigament =
         root.append(new MechanismLigament2d("hood", 20, 0, 6, new Color8Bit(Color.AQUA)));
 
-    SmartDashboard.putData("Hood Mechanism", mechanism);
+    Telemetry.log("Hood Mechanism", mechanism);
   }
 
   public void update() {
@@ -63,7 +63,7 @@ public class HoodSim {
     armSim.update(RobotSim.UPDATE_S);
 
     // Convert arm into motor units
-    double armAngleRad = armSim.getAngleRads();
+    double armAngleRad = armSim.getAngle();
     double motorRotations = Units.radiansToRotations(armAngleRad) * GEAR_RATIO;
 
     simState.setRawRotorPosition(motorRotations);

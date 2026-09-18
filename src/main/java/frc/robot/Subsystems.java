@@ -32,7 +32,7 @@ import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 import org.wpilib.smartdashboard.Mechanism2d;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -158,7 +158,7 @@ public class Subsystems {
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
       visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystem);
+      Telemetry.log("VisionSubsystem", visionSubsystem);
     } else {
       visionSubsystem = null;
     }

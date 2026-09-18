@@ -26,13 +26,13 @@ public class AutoBuilderConfig {
           }, // Method to reset odometry (will be called if your auto has a starting
           // pose)
           () -> {
-            return drivebase.getState().Speeds;
+              return drivebase.getState().Velocity;
           },
           // ChassisVelocities supplier. MUST BE ROBOT RELATIVE
           (speeds, feedforwards) ->
               drivebase.setControl(
-                  new SwerveRequest.ApplyRobotSpeeds()
-                      .withSpeeds(ChassisVelocities.discretize(speeds, 0.020))
+                  new SwerveRequest.ApplyRobotVelocity()
+                    .withVelocity(speeds.discretize(0.020))
                       .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                       .withWheelForceFeedforwardsY(
                           feedforwards

@@ -5,12 +5,13 @@ import com.ctre.phoenix6.sim.TalonFXSimState;
 import frc.robot.util.simulation.RobotSim;
 import org.wpilib.framework.RobotBase;
 import org.wpilib.math.system.DCMotor;
-import org.wpilib.math.system.LinearSystemId;
+import org.wpilib.math.system.Models;
 import org.wpilib.simulation.FlywheelSim;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
 import org.wpilib.smartdashboard.MechanismRoot2d;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.units.Units;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
 
@@ -39,7 +40,7 @@ public class FlywheelsSim {
     // Physics model
     flywheelSim =
         new FlywheelSim(
-            LinearSystemId.createFlywheelSystem(DCMotor.getKrakenX60(2), MOI, GEAR_RATIO),
+            Models.flywheelFromPhysicalConstants(DCMotor.getKrakenX60(2), MOI, GEAR_RATIO),
             DCMotor.getKrakenX60(2), // two motors total
             1);
 
@@ -50,7 +51,7 @@ public class FlywheelsSim {
     wheelLigament =
         root.append(new MechanismLigament2d("wheel", 2, 0, 10, new Color8Bit(Color.CORAL)));
 
-    SmartDashboard.putData("Flywheel", mech);
+    Telemetry.log("Flywheel", mech);
   }
 
   public void update() {
@@ -66,7 +67,7 @@ public class FlywheelsSim {
     flywheelSim.setInputVoltage(appliedVoltage);
     flywheelSim.update(RobotSim.UPDATE_S);
 
-    double rpm = flywheelSim.getAngularVelocityRPM();
+    double rpm = Units.RadiansPerSecond.of(flywheelSim.getAngularVelocity()).in(Units.RPM);
 
     // Convert RPM → rotor RPS
     double rps = rpm / 60.0;

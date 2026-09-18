@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -34,9 +35,9 @@ public class Flywheels extends SubsystemBase {
 
   // Debounce stuff
   private static final double DURATION = 1; // second
-  private final Debouncer m_dippedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kFalling);
+  private final Debouncer m_dippedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.FALLING);
   private final Debouncer m_recoveredDebouncer =
-      new Debouncer(DURATION, Debouncer.DebounceType.kRising);
+      new Debouncer(DURATION, Debouncer.DebounceType.RISING);
   private boolean hasDipped = false;
 
   // Config apply
@@ -58,8 +59,8 @@ public class Flywheels extends SubsystemBase {
 
   // Constructor
   public Flywheels() {
-    flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
-    flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
+    flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID, new CANBus());
+    flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID, new CANBus());
 
     targetVelocity = new NtTunableDouble("/launcher/flywheelTuner", 0.0);
     configureMotors();

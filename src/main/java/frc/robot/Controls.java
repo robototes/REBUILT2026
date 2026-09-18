@@ -28,7 +28,6 @@ import org.wpilib.command2.button.CommandXboxController;
 import org.wpilib.command2.button.Trigger;
 import org.wpilib.driverstation.GenericHID.RumbleType;
 import org.wpilib.driverstation.RobotState;
-import org.wpilib.framework.RobotState;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Transform2d;
@@ -37,8 +36,8 @@ import org.wpilib.math.util.MathUtil;
 import org.wpilib.math.util.Units;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.units.measure.Time;
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
-import org.wpilib.vision.apriltag.AprilTagFields;
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -77,8 +76,8 @@ public class Controls {
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
 
-  AprilTagFieldLayout aprilTagFieldLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+  Field aprilTagFieldLayout =
+    Fields.FRC_2026_REBUILT_WELDED.loadField();
   // Robot with bumpers is 36.875 inches by 30.750 inches
   Transform2d robotOffsetFromTag =
       new Transform2d(
@@ -130,13 +129,13 @@ public class Controls {
   }
 
   private Trigger connected(CommandXboxController controller) {
-    return new Trigger(() -> controller.isConnected());
+        return new Trigger(() -> controller.getController().isConnected());
   }
 
   public Command setRumble(RumbleType type, double value) {
     return Commands.runOnce(
             () -> {
-              driverController.setRumble(type, value);
+              driverController.getController().setRumble(type, value);
             })
         .withName("Set Rumble");
   }
@@ -153,11 +152,15 @@ public class Controls {
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
     return Commands.startEnd(
-            () -> controller.getHID().setRumble(RumbleType.kBothRumble, vibration),
-            () -> controller.getHID().setRumble(RumbleType.kBothRumble, 0))
+                        () -> setBothRumble(controller, vibration), () -> setBothRumble(controller, 0))
         .withTimeout(duration)
-        .withName("Rumble Port " + controller.getHID().getPort());
+        .withName("Rumble Port " + controller.getController().getPort());
   }
+
+    private void setBothRumble(CommandXboxController controller, double value) {
+        controller.getController().setRumble(RumbleType.LEFT_RUMBLE, value);
+        controller.getController().setRumble(RumbleType.RIGHT_RUMBLE, value);
+    }
 
   // takes the X value from the joystick, and applies a deadband and input scaling
   private double getDriveX() {
@@ -234,7 +237,7 @@ public class Controls {
     if (Robot.isSimulation()) {
       // In simulation, inject drift with POV-right to test vision correction
       visionTestController
-          .povRight()
+          .dpadRight()
           .onTrue(
               s.drivebaseSubsystem
                   .runOnce(() -> m_simWrapper.injectDrift(0.5, 15.0))
@@ -242,16 +245,16 @@ public class Controls {
 
       // POV-left resets robot to the starting pose of the selected auto
       visionTestController
-          .povLeft()
+          .dpadLeft()
           .onTrue(
               s.drivebaseSubsystem
-                  .runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero))
+                  .runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.ZERO))
                   .withName("Reset to Start Pose"));
     }
 
     // reset pose incase vision is bugging
     driverController
-        .back()
+        .view()
         .onTrue(
             s.drivebaseSubsystem
                 .runOnce(
@@ -314,7 +317,7 @@ public class Controls {
                 .withName("Launching Finished"));
 
     driverController
-        .start()
+        .menu()
         .onTrue(
             Commands.parallel(
                     Commands.either(
@@ -344,7 +347,7 @@ public class Controls {
                 .ignoringDisable(true));
 
     connected(launcherTuningController)
-        .and(launcherTuningController.start())
+        .and(launcherTuningController.menu())
         .onTrue(s.hood.autoZeroCommand());
     connected(launcherTuningController)
         .and(launcherTuningController.x())
@@ -386,7 +389,8 @@ public class Controls {
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
                     case INTAKE ->
-                        s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
+                          s.intakeSubsystem.smartIntake(
+                              () -> s.drivebaseSubsystem.getState().Velocity);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                   }
                 },
@@ -402,10 +406,10 @@ public class Controls {
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));
     driverController
-        .povUp()
+        .dpadUp()
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
     driverController
-        .povDown()
+        .dpadDown()
         .onTrue(
             Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED).withName("Retract Intake"));
     driverController
@@ -437,7 +441,8 @@ public class Controls {
 
   public void vibrateDriveController(double vibration) {
     if (!RobotState.isAutonomous()) {
-      driverController.getHID().setRumble(RumbleType.kBothRumble, vibration);
+    driverController.getController().setRumble(RumbleType.LEFT_RUMBLE, vibration);
+    driverController.getController().setRumble(RumbleType.RIGHT_RUMBLE, vibration);
     }
   }
 
@@ -477,7 +482,7 @@ public class Controls {
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
     (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
-        .or(driverController.povLeft())
+        .or(driverController.dpadLeft())
         .onTrue(
             Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
                 .withName("Zero Turret on Limit Switch"));
@@ -495,22 +500,22 @@ public class Controls {
             Commands.runOnce(() -> turretKillActive = !turretKillActive)
                 .withName("Toggle Turret Kill"));
     driverController
-        .povRight()
+        .dpadRight()
         .onTrue(
             Commands.runOnce(() -> turretSkipped = !turretSkipped)
                 .withName("Toggle Turret Skipped"));
 
     connected(turretTestController)
-        .and(turretTestController.povUp())
+        .and(turretTestController.dpadUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
     connected(turretTestController)
-        .and(turretTestController.povLeft())
+        .and(turretTestController.dpadLeft())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.LEFT_POSITION));
     connected(turretTestController)
-        .and(turretTestController.povRight())
+        .and(turretTestController.dpadRight())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.RIGHT_POSITION));
     connected(turretTestController)
-        .and(turretTestController.povDown())
+        .and(turretTestController.dpadDown())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.BACK_POSITION));
     connected(turretTestController)
         .and(turretTestController.y())

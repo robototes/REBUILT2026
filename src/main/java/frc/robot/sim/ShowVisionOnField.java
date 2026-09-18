@@ -95,7 +95,7 @@ public class ShowVisionOnField {
     for (int i = 0; i < 4; i++) {
       modulePoses[i] =
           driveState.Pose.transformBy(
-              new Transform2d(MODULE_LOCATIONS[i], driveState.ModuleStates[i].angle));
+              new Transform2d(MODULE_LOCATIONS[i], driveState.ModuleVelocities[i].angle));
     }
     return modulePoses;
   }

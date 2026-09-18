@@ -103,7 +103,7 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor =
         new TalonFX(
             Hardware.TURRET_MOTOR_ID,
-            RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+            RobotType.isAlpha() ? new CANBus() : CompTunerConstants.kCANBus);
     limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
     zeroPublisher.set(false);
     turretConfig();
@@ -299,11 +299,11 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void brakeTurret() {
-    turretMotor.setNeutralMode(NeutralModeValue.Brake);
+    turretMotor.configNeutralMode(NeutralModeValue.Brake);
   }
 
   public void coastTurret() {
-    turretMotor.setNeutralMode(NeutralModeValue.Coast);
+    turretMotor.configNeutralMode(NeutralModeValue.Coast);
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {

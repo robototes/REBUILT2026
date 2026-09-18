@@ -2,6 +2,7 @@ package frc.robot.test;
 
 import frc.robot.Robot;
 import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.hardware.hal.RobotMode;
 import org.wpilib.hardware.hal.simulation.DriverStationDataJNI;
 
 public class AutomatedTestRobot extends Robot {
@@ -15,6 +16,7 @@ public class AutomatedTestRobot extends Robot {
 
   public AutomatedTestRobot() {
     System.out.println("Robot type: Automated test");
+    new Thread(this::runTest).start();
   }
 
   @Override
@@ -32,18 +34,12 @@ public class AutomatedTestRobot extends Robot {
     }
   }
 
-  @Override
-  public void robotInit() {
-    super.robotInit();
-    new Thread(this::runTest).start();
-  }
-
   private void runTest() {
     System.out.println("Waiting two seconds for robot to finish startup");
     sleep(2000);
 
     System.out.println("Enabling autonomous mode and waiting 10 seconds");
-    DriverStationDataJNI.setAutonomous(true);
+    DriverStationDataJNI.setRobotMode(RobotMode.AUTONOMOUS);
     DriverStationDataJNI.setEnabled(true);
 
     sleep(10000);

@@ -24,7 +24,7 @@ import org.wpilib.driverstation.MatchState;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 
 /**
  * Simulation helper that tracks the ground truth robot pose independently of odometry drift. This
@@ -85,7 +85,7 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     double deltaTime = currentTime - m_lastUpdateTime;
     m_lastUpdateTime = currentTime;
 
-    ChassisVelocities speeds = m_drivetrain.getState().Speeds;
+    ChassisVelocities speeds = m_drivetrain.getState().Velocity;
 
     // Calculate how much the robot moved this timestep
     double dx = speeds.vx * deltaTime;
@@ -234,24 +234,24 @@ public class GroundTruthSim implements GroundTruthSimInterface {
    * Publishes simulation telemetry to SmartDashboard. Call this from Robot.simulationPeriodic().
    */
   public void publishTelemetry() {
-    SmartDashboard.putNumber("Sim/GroundTruth/X", m_groundTruthPose.getX());
-    SmartDashboard.putNumber("Sim/GroundTruth/Y", m_groundTruthPose.getY());
-    SmartDashboard.putNumber(
+    Telemetry.log("Sim/GroundTruth/X", m_groundTruthPose.getX());
+    Telemetry.log("Sim/GroundTruth/Y", m_groundTruthPose.getY());
+    Telemetry.log(
         "Sim/GroundTruth/RotationDeg", m_groundTruthPose.getRotation().getDegrees());
 
     Pose2d estimatedPose = m_drivetrain.getState().Pose;
-    SmartDashboard.putNumber("Sim/EstimatedPose/X", estimatedPose.getX());
-    SmartDashboard.putNumber("Sim/EstimatedPose/Y", estimatedPose.getY());
-    SmartDashboard.putNumber(
+    Telemetry.log("Sim/EstimatedPose/X", estimatedPose.getX());
+    Telemetry.log("Sim/EstimatedPose/Y", estimatedPose.getY());
+    Telemetry.log(
         "Sim/EstimatedPose/RotationDeg", estimatedPose.getRotation().getDegrees());
 
     double poseError =
         m_groundTruthPose.getTranslation().getDistance(estimatedPose.getTranslation());
     double headingError =
         Math.abs(m_groundTruthPose.getRotation().minus(estimatedPose.getRotation()).getDegrees());
-    SmartDashboard.putNumber("Sim/PoseErrorMeters", poseError);
-    SmartDashboard.putNumber("Sim/HeadingErrorDeg", headingError);
-    SmartDashboard.putNumber("Sim/TotalDistanceTraveled", m_totalDistanceTraveled);
+    Telemetry.log("Sim/PoseErrorMeters", poseError);
+    Telemetry.log("Sim/HeadingErrorDeg", headingError);
+    Telemetry.log("Sim/TotalDistanceTraveled", m_totalDistanceTraveled);
   }
 
   /**

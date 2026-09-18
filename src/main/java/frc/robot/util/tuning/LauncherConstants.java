@@ -16,8 +16,8 @@ import org.wpilib.networktables.StructPublisher;
 public class LauncherConstants {
   private static final Transform2d LAUNCHER_OFFSET =
       RobotType.isAlpha()
-          ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
-          : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+          ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.ZERO)
+          : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.ZERO);
 
   private static final NetworkTable table =
       NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");

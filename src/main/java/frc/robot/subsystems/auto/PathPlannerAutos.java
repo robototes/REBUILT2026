@@ -43,7 +43,7 @@ public class PathPlannerAutos {
 
     Pose2d startingPose = auto.getStartingPose();
     if (startingPose == null) {
-      startingPose = Pose2d.kZero;
+      startingPose = Pose2d.ZERO;
     }
     this.startingPose = startingPose;
     List<PathPlannerTrajectory> trajectories;

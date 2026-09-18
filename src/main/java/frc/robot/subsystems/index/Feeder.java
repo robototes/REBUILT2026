@@ -18,14 +18,14 @@ import org.wpilib.framework.RobotBase;
 import org.wpilib.framework.TimedRobot;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.system.LinearSystem;
-import org.wpilib.math.system.LinearSystemId;
+import org.wpilib.datalog.DataLog;
+import org.wpilib.datalog.DoubleLogEntry;
+import org.wpilib.math.system.Models;
 import org.wpilib.simulation.FlywheelSim;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Current;
-import org.wpilib.util.datalog.DataLog;
-import org.wpilib.util.datalog.DoubleLogEntry;
 
 public class Feeder extends SubsystemBase {
   private final double D_TARGET_RPS = 95;
@@ -49,13 +49,13 @@ public class Feeder extends SubsystemBase {
     feedMotor =
         new TalonFX(
             Hardware.FEEDER_MOTOR_ID,
-            (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+            (RobotType.isAlpha()) ? new CANBus() : CompTunerConstants.kCANBus);
     feederConfig();
     feedMotor.clearStickyFaults();
 
     if (RobotBase.isSimulation()) {
       LinearSystem feedMotorSystem =
-          LinearSystemId.createFlywheelSystem(
+          Models.flywheelFromPhysicalConstants(
               DCMotor.getKrakenX60(1),
               0.001,
               1.0); // TODO: Update to final moment of intertia and gear ratio
@@ -119,14 +119,14 @@ public class Feeder extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(feedMotor.getSimState().getMotorVoltage());
-    motorSim.update(TimedRobot.kDefaultPeriod);
+    motorSim.update(0.020);
   }
 
   @Override
   public void periodic() {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, feederRPS);
     // Log on NT at all times
-    SmartDashboard.putNumber("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
+    Telemetry.log("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());

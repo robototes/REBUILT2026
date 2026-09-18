@@ -1,5 +1,6 @@
 package frc.robot.subsystems.index;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -16,14 +17,14 @@ import org.wpilib.framework.RobotBase;
 import org.wpilib.framework.TimedRobot;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.system.LinearSystem;
-import org.wpilib.math.system.LinearSystemId;
+import org.wpilib.datalog.DataLog;
+import org.wpilib.datalog.DoubleLogEntry;
+import org.wpilib.math.system.Models;
 import org.wpilib.simulation.FlywheelSim;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 import org.wpilib.system.DataLogManager;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Current;
-import org.wpilib.util.datalog.DataLog;
-import org.wpilib.util.datalog.DoubleLogEntry;
 
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
@@ -48,13 +49,13 @@ public class Spindexer extends SubsystemBase {
   private final StatusSignal<Current> supplyCurrent;
 
   public Spindexer() {
-    spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
+    spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID, new CANBus());
     spindexerConfig();
     spindexerMotor.clearStickyFaults();
 
     if (RobotBase.isSimulation()) {
       LinearSystem spindexerMotorSystem =
-          LinearSystemId.createFlywheelSystem(
+          Models.flywheelFromPhysicalConstants(
               DCMotor.getKrakenX60(1), 0.001, ((52 / 12) * (52 / 18)));
       motorSim =
           new FlywheelSim(spindexerMotorSystem, DCMotor.getKrakenX60(1), ((52 / 12) * (52 / 18)));
@@ -123,13 +124,13 @@ public class Spindexer extends SubsystemBase {
   @Override
   public void simulationPeriodic() {
     motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
-    motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
+    motorSim.update(0.020); // every 20 ms
   }
 
   @Override
   public void periodic() {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
-    SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
+    Telemetry.log("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());

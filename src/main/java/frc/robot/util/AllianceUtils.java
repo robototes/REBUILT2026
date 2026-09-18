@@ -3,14 +3,12 @@ package frc.robot.util;
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.driverstation.MatchState;
 import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
-import org.wpilib.vision.apriltag.AprilTagFields;
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
 
 public final class AllianceUtils {
   // AprilTag field layout for this year
-  public static final AprilTagFieldLayout FIELD_LAYOUT =
-      // AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
-      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+  public static final Field FIELD_LAYOUT = Fields.FRC_2026_REBUILT_WELDED.loadField();
 
   private static final Translation2d REDHUB_TRANSLATION2D =
       FIELD_LAYOUT

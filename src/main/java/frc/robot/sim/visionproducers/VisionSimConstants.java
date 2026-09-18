@@ -8,14 +8,13 @@ import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.numbers.N1;
 import org.wpilib.math.numbers.N3;
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
-import org.wpilib.vision.apriltag.AprilTagFields;
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
 
 public class VisionSimConstants {
 
   // The layout of the AprilTags on the field (shared by all cameras)
-  public static final AprilTagFieldLayout kTagLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    public static final Field kTagLayout = Fields.FRC_2026_REBUILT_WELDED.loadField();
 
   // The standard deviations of our vision estimated poses, which affect correction rate
   // (Fake values. Experiment and determine estimation noise on an actual robot.)

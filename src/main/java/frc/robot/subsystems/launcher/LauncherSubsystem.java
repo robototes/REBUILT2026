@@ -112,7 +112,7 @@ public class LauncherSubsystem extends SubsystemBase {
     notUnderClimbPub.set(notUunderClimb);
 
     notGoingToBeUnderTrench =
-        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
+        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Velocity);
     notGoingToBeUnderTrenchPub.set(notGoingToBeUnderTrench);
 
     return flywheelAtTarget

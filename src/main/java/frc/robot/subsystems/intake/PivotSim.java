@@ -13,7 +13,7 @@ import org.wpilib.simulation.SingleJointedArmSim;
 import org.wpilib.smartdashboard.Mechanism2d;
 import org.wpilib.smartdashboard.MechanismLigament2d;
 import org.wpilib.smartdashboard.MechanismRoot2d;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.telemetry.Telemetry;
 
 public class PivotSim extends SubsystemBase {
   private final SingleJointedArmSim intakeArmSim;
@@ -53,7 +53,7 @@ public class PivotSim extends SubsystemBase {
     root = mech.getRoot("Shoulder", 20, 20);
     arm = root.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 0));
 
-    SmartDashboard.putData("Pivot", mech);
+    Telemetry.log("Pivot", mech);
   }
 
   // update sim
@@ -61,7 +61,7 @@ public class PivotSim extends SubsystemBase {
     intakeArmSim.setInput(intakeArmSimState.getMotorVoltage());
     intakeArmSim.update(RobotSim.UPDATE_S);
 
-    double angleRads = intakeArmSim.getAngleRads();
+    double angleRads = intakeArmSim.getAngle();
     double motorRotations = Units.radiansToRotations(angleRads) * PIVOT_GEAR_RATIO;
 
     intakeArmSimState.setRawRotorPosition(motorRotations);

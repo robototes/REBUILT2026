@@ -22,7 +22,7 @@ import org.wpilib.networktables.BooleanPublisher;
 import org.wpilib.networktables.DoubleArrayPublisher;
 import org.wpilib.networktables.DoublePublisher;
 import org.wpilib.networktables.NetworkTableInstance;
-import org.wpilib.vision.apriltag.AprilTagFieldLayout;
+import org.wpilib.fields.Field;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -156,7 +156,7 @@ public class LaunchCalculator {
           .publish();
 
   // Trench stuff
-  private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
+  private static final Field field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE_X = Units.inchesToMeters(12);
   private static final double TURRET_TO_TRENCH_TOLERANCE_Y = Units.inchesToMeters(24.97);
   private static final double TRENCH_LOOKAHEAD = 0.5; // seconds
@@ -273,7 +273,7 @@ public class LaunchCalculator {
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
     SwerveDriveState driveState = drivetrain.getState();
     Pose2d currentPose = driveState.Pose;
-    ChassisVelocities currentSpeeds = driveState.Speeds;
+    ChassisVelocities currentSpeeds = driveState.Velocity;
     double currentTurretOmega = turretSubsystem.getOmega();
     double timestamp = driveState.Timestamp;
 
@@ -390,7 +390,7 @@ public class LaunchCalculator {
       SwerveDriveState driveState, TurretSubsystem turretSubsystem, boolean isSlipping) {
 
     Pose2d estimatedPose = driveState.Pose;
-    ChassisVelocities wheelSpeeds = driveState.Speeds;
+    ChassisVelocities wheelSpeeds = driveState.Velocity;
     double timestamp = driveState.Timestamp;
 
     // --- DEFENSE COMPENSATION: Slip filter with hysteresis gate ---
@@ -411,7 +411,7 @@ public class LaunchCalculator {
     //   2. poseDt in valid range — ensures pose-diff gives a meaningful velocity
     //   3. isSlipping — confirmed by stator current drop + velocity spike this cycle
     if (robotIsMoving && poseDt > MIN_POSE_DT && poseDt < MAX_POSE_DT && isSlipping) {
-      Twist2d twist = prevPose.log(estimatedPose);
+      Twist2d twist = estimatedPose.minus(prevPose).log();
 
       // Slip = (pose-derived velocity) - (wheel velocity). When wheels match pose,
       // slip is ~0; when the robot is pushed or wheels slip, slipRaw is the motion delta.
@@ -466,11 +466,12 @@ public class LaunchCalculator {
     ChassisVelocities acceleration = filteredAcceleration;
     double pdt = PHASE_DELAY;
     estimatedPose =
-        estimatedPose.exp(
-            new Twist2d(
-                effectiveSpeeds.vx * pdt + 0.5 * acceleration.vx * pdt * pdt,
-                effectiveSpeeds.vy * pdt + 0.5 * acceleration.vy * pdt * pdt,
-                effectiveSpeeds.omega * pdt + 0.5 * acceleration.omega * pdt * pdt));
+      estimatedPose.plus(
+        new Twist2d(
+            effectiveSpeeds.vx * pdt + 0.5 * acceleration.vx * pdt * pdt,
+            effectiveSpeeds.vy * pdt + 0.5 * acceleration.vy * pdt * pdt,
+            effectiveSpeeds.omega * pdt + 0.5 * acceleration.omega * pdt * pdt)
+          .exp());
 
     ChassisVelocities launchSpeeds =
         new ChassisVelocities(
@@ -489,7 +490,7 @@ public class LaunchCalculator {
             launchSpeeds.vy + launchSpeeds.omega * turretTransform.getX(),
             totalOmega);
     ChassisVelocities turretFieldRelativeSpeeds =
-        ChassisVelocities.fromRobotRelativeSpeeds(turretRobotRelativeSpeeds, robotAngle);
+      turretRobotRelativeSpeeds.toFieldRelative(robotAngle);
 
     // Constant for the Newton loop — ball velocity is fixed at launch.
     double turretVelocityX = turretFieldRelativeSpeeds.vx;
@@ -542,7 +543,7 @@ public class LaunchCalculator {
 
     Rotation2d targetAngleFieldRelative;
     if (trueDistance < MIN_DISTANCE_TO_TARGET) {
-      targetAngleFieldRelative = Rotation2d.kZero;
+      targetAngleFieldRelative = Rotation2d.ZERO;
     } else {
       targetAngleFieldRelative = new Rotation2d(trueDistanceX, trueDistanceY);
     }
@@ -586,8 +587,7 @@ public class LaunchCalculator {
   public static boolean isApproachingTrench(Pose2d robotPose, ChassisVelocities speeds) {
     for (int i = 0; i <= TRENCH_LOOKAHEAD_SAMPLES; i++) {
       double t = TRENCH_LOOKAHEAD * i / TRENCH_LOOKAHEAD_SAMPLES;
-      Pose2d sampledRobotPose =
-          robotPose.exp(new Twist2d(speeds.vx * t, speeds.vy * t, speeds.omega * t));
+        Pose2d sampledRobotPose = robotPose.plus(speeds.toTwist2d(t).exp());
       Pose2d sampledTurretPose = sampledRobotPose.transformBy(turretTransform);
       if (isCloseToTrench(sampledTurretPose)) return true;
     }
