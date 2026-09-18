@@ -8,7 +8,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -21,7 +20,6 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.subsystems.auto.BLine.BLineLogic.Position;
-import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
@@ -29,6 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
 public class LegacyBLineLogic {
 
@@ -67,16 +68,22 @@ public class LegacyBLineLogic {
   }
 
   private static final List<LegacyBLinePath> autos = new ArrayList<>();
-  private static final SendableChooser<Position> startPositionChooser = new SendableChooser<>();
-  private static final SendableChooser<TrenchSide> trenchSideChooser = new SendableChooser<>();
-  private static final DynamicSendableChooser<String> autoChooser = new DynamicSendableChooser<>();
-  private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
-
+  private static final LoggedDashboardChooser<Position> startPositionChooser =
+      new LoggedDashboardChooser<>("BLine/Start Position");
+  private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser =
+      new LoggedDashboardChooser<>("BLine/Trench Side");
+  private static final LoggedDashboardChooser<String> autoChooser =
+      new LoggedDashboardChooser<>("Auto Chooser");
+  private static final LoggedDashboardChooser<Integer> gameObjects =
+      new LoggedDashboardChooser<>("BLine/Game Objects");
+  private static final LoggedNetworkNumber initialHeading =
+      new LoggedNetworkNumber("BLine/Initial Heading (Deg)", 0);
   private static final NetworkTableEntry autoDelayEntry =
-      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
+      NetworkTableInstance.getDefault().getTable("BLine Delays").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
-
+  private static final LoggedNetworkString loggedKeys =
+      new LoggedNetworkString("BLine/Auto Key", keys);
   private static LegacyBLinePath defaultPath;
   private static List<LegacyBLinePath> rebuiltPaths = List.of();
   private static Map<Integer, List<LegacyBLinePath>> commandsMap = Map.of();
@@ -92,8 +99,8 @@ public class LegacyBLineLogic {
   // ========================= MIRRORING =========================
 
   public static boolean isMirrored() {
-    return startPositionChooser.getSelected() == Position.TRENCH
-        && trenchSideChooser.getSelected() == TrenchSide.LEFT;
+    return startPositionChooser.getSendableChooser().getSelected() == Position.TRENCH.title
+        && trenchSideChooser.getSendableChooser().getSelected() == TrenchSide.LEFT.title;
   }
 
   // ========================= INIT =========================
@@ -176,31 +183,25 @@ public class LegacyBLineLogic {
 
   // ========================= LOGGING =========================
 
-  public static void initSmartDashboard() {
-    startPositionChooser.setDefaultOption(Position.MISC.title, Position.MISC);
+  public static void initAdvantageKit() {
+    startPositionChooser.addDefaultOption(Position.MISC.title, Position.MISC);
     for (Position pos : Position.values()) {
       startPositionChooser.addOption(pos.title, pos);
     }
 
-    trenchSideChooser.setDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
+    trenchSideChooser.addDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-    gameObjects.setDefaultOption("0", 0);
+    gameObjects.addDefaultOption("0", 0);
     filterAutos(0);
 
-    SmartDashboard.putData("Selected auto", field);
-    SmartDashboard.putData("Start pose", fieldPoseStart);
-    SmartDashboard.putData("Starting Position", startPositionChooser);
-    SmartDashboard.putData("Trench Side", trenchSideChooser);
-    SmartDashboard.putData("Auto Mode", gameObjects);
-    SmartDashboard.putData("Available Auto Variants", autoChooser);
-    SmartDashboard.putString("Auto Key", keys);
+    SmartDashboard.putData("BLine/Selected auto", field);
+    SmartDashboard.putData("BLine/Start pose", fieldPoseStart);
 
     autoDelayEntry.setDouble(0.0);
-
     startPositionChooser.onChange(
         v -> {
-          filterAutos(gameObjects.getSelected());
+          filterAutos(Integer.valueOf(gameObjects.getSendableChooser().getSelected()));
           updateInitialHeading();
           updateFieldDisplay();
         });
@@ -229,9 +230,21 @@ public class LegacyBLineLogic {
   }
 
   public static void filterAutos(int numGameObjects) {
-    autoChooser.clearOptions();
+    // autoChooser.clearOptions();
+    Position selected;
+    String selectedString = startPositionChooser.getSendableChooser().getSelected();
+    switch (selectedString) {
+      case "Trench":
+        selected = Position.TRENCH;
+        break;
+      case "Center":
+        selected = Position.CENTER;
+        break;
+      default:
+        selected = Position.MISC;
+        break;
+    }
 
-    Position selected = startPositionChooser.getSelected();
     if (selected == null) selected = Position.MISC;
 
     for (LegacyBLinePath auto : autos) {
@@ -249,14 +262,14 @@ public class LegacyBLineLogic {
   // ========================= SELECTION METHODS =========================
 
   public static String getSelectedAutoName() {
-    if (autoChooser.getSelected() == null) {
+    if (autoChooser.getSendableChooser().getSelected() == null) {
       return "Default";
     }
-    return autoChooser.getSelected();
+    return autoChooser.getSendableChooser().getSelected();
   }
 
   public static LegacyBLinePath getSelectedAutoPath() {
-    String selectedName = autoChooser.getSelected();
+    String selectedName = autoChooser.getSendableChooser().getSelected();
     if (selectedName == null) return defaultPath;
     return namesToAuto.getOrDefault(selectedName, defaultPath);
   }
@@ -265,7 +278,7 @@ public class LegacyBLineLogic {
     LegacyBLinePath selected = getSelectedAutoPath();
     if (selected == null) return Pose2d.kZero;
 
-    if (startPositionChooser.getSelected() == Position.TRENCH) {
+    if (startPositionChooser.getSendableChooser().getSelected() == Position.TRENCH.title) {
       return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
     }
 
@@ -394,11 +407,11 @@ public class LegacyBLineLogic {
   private static void updateInitialHeading() {
     LegacyBLinePath selected = getSelectedAutoPath();
     if (selected == null || selected.getPath() == null) {
-      SmartDashboard.putNumber("Initial Heading(Deg)", 0.0);
+      initialHeading.setDefault(0.0);
       return;
     }
     Pose2d start = selected.getPath().getStartPose();
-    SmartDashboard.putNumber("Initial Heading(Deg)", Math.round(start.getRotation().getDegrees()));
+    initialHeading.set(Math.round(start.getRotation().getDegrees()));
   }
 
   // ========================= COMMANDS =========================

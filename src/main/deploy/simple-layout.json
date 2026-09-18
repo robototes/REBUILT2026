@@ -41,7 +41,7 @@
         "containers": [
           {
             "title": "DisplaySpeed",
-            "x": 1280.0,
+            "x": 1024.0,
             "y": 512.0,
             "width": 256.0,
             "height": 128.0,
@@ -99,40 +99,38 @@
             }
           },
           {
-            "title": "SOTM",
-            "x": 1152.0,
-            "y": 512.0,
-            "width": 128.0,
+            "title": "Trench Side",
+            "x": 384.0,
+            "y": 640.0,
+            "width": 256.0,
             "height": 128.0,
-            "type": "Toggle Switch",
+            "type": "Split Button Chooser",
             "properties": {
-              "topic": "SOTM",
-              "period": 0.06,
-              "data_type": "boolean"
+              "topic": "/SmartDashboard/BLine/Trench Side",
+              "period": 0.06
             }
           },
           {
-            "title": "Auto Unbeach",
-            "x": 1024.0,
-            "y": 512.0,
-            "width": 128.0,
+            "title": "Start Position",
+            "x": 0.0,
+            "y": 640.0,
+            "width": 384.0,
             "height": 128.0,
-            "type": "Toggle Switch",
+            "type": "Split Button Chooser",
             "properties": {
-              "topic": "Auto Unbeach",
-              "period": 0.06,
-              "data_type": "boolean"
+              "topic": "/SmartDashboard/BLine/Start Position",
+              "period": 0.06
             }
           },
           {
             "title": "Auto Delay",
-            "x": 0.0,
+            "x": 640.0,
             "y": 640.0,
             "width": 256.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
-              "topic": "/Autos/Auto Delay",
+              "topic": "/BLine Delays/Auto Delay",
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": true
@@ -147,30 +145,6 @@
             "type": "Split Button Chooser",
             "properties": {
               "topic": "/SmartDashboard/Auto Chooser",
-              "period": 0.06
-            }
-          },
-          {
-            "title": "Start Position",
-            "x": 256.0,
-            "y": 640.0,
-            "width": 384.0,
-            "height": 128.0,
-            "type": "Split Button Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Start Position",
-              "period": 0.06
-            }
-          },
-          {
-            "title": "Trench Side",
-            "x": 640.0,
-            "y": 640.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Split Button Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Trench Side",
               "period": 0.06
             }
           }

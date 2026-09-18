@@ -85,7 +85,7 @@ public class BLineLogic {
 
   private static final String REMOVE_OPTION = "REMOVE";
   private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser =
-      new LoggedDashboardChooser<>("Trench Side");
+      new LoggedDashboardChooser<>("BLine/Trench Side");
   private static final List<SendableChooser<String>> pathChoosers = new ArrayList<>();
   private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
   private static final List<BLinePath> autos = new ArrayList<>();
@@ -102,11 +102,11 @@ public class BLineLogic {
   private static boolean unlimitedAlreadySelected = false;
   private static LoggedNetworkNumber initialHeading =
       new LoggedNetworkNumber("Initial Heading(Deg)", 0.0);
-  private static LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 0.0);
-  private static LoggedNetworkBoolean enableSotm = new LoggedNetworkBoolean("SOTM", false);
+  private static LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("BLine Delay", 0.0);
+  private static LoggedNetworkBoolean enableSotm = new LoggedNetworkBoolean("BLine/SOTM", false);
 
   private static LoggedNetworkBoolean enableUnbeach =
-      new LoggedNetworkBoolean("Auto Unbeach", false);
+      new LoggedNetworkBoolean("BLine/Auto Unbeach", false);
 
   private static Elastic.Notification autoTimingWarning =
       new Elastic.Notification(
@@ -135,7 +135,7 @@ public class BLineLogic {
 
     recoveryPose =
         NetworkTableInstance.getDefault()
-            .getTable("Autos")
+            .getTable("BLine")
             .getStructTopic("RecoveryPose", Pose2d.struct)
             .publish();
 
@@ -200,9 +200,8 @@ public class BLineLogic {
   }
 
   private static void createPathChoosers() {
-    final int MAX_STEPS = 3;
 
-    for (int i = 0; i < MAX_STEPS; i++) {
+    for (int i = 0; i < Robot.MAX_STEPS; i++) {
 
       LoggedDashboardChooser<String> chooser =
           new LoggedDashboardChooser<>("BLine/Path Step" + (i + 1));
@@ -351,19 +350,19 @@ public class BLineLogic {
     for (int i = 0; i < pathChoosers.size(); i++) {
       String key = "BLine/Step " + (i + 1) + " Delay";
 
-      autoDelayEntries.add(NetworkTableInstance.getDefault().getTable("Auto Stuff").getEntry(key));
-      NetworkTableInstance.getDefault().getTable("Auto Stuff").getEntry(key).setDefaultDouble(0.0);
+      autoDelayEntries.add(NetworkTableInstance.getDefault().getTable("BLine").getEntry(key));
+      NetworkTableInstance.getDefault().getTable("BLine").getEntry(key).setDefaultDouble(0.0);
     }
     trenchSideChooser.addDefaultOption(TrenchSide.RIGHT.title, TrenchSide.RIGHT);
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-    SmartDashboard.putData("Selected Auto", field);
+    SmartDashboard.putData("BLine/Selected Auto", field);
 
     enableSotm.set(enableLaunchOnTheMove);
     enableUnbeach.set(enableAutoUnbeach);
 
-    SmartDashboard.putData("Start Pose", fieldPoseStart);
+    SmartDashboard.putData("BLine/Start Pose", fieldPoseStart);
 
     trenchSideChooser.onChange(
         value -> {

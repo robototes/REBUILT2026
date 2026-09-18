@@ -63,7 +63,7 @@ public class Robot extends LoggedRobot {
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
-  private final int MAX_STEPS = 1; // Number of steps in auto chooser
+  public static final int MAX_STEPS = 1; // Number of steps in auto chooser
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -123,7 +123,16 @@ public class Robot extends LoggedRobot {
         robotSim = null;
       }
       // BLINE STUFF
-      if (MAX_STEPS > 1) {
+      if (MAX_STEPS <= 1) {
+        // BLINE STUFF
+        LegacyBLineLogic.init(subsystems); // Handling init and unit test cases
+        LegacyBLineLogic.configure(subsystems); // configure the autobuilder to run autos
+        LegacyBLineLogic.initAdvantageKit(); // Logging
+        // TODO REPLACE WITH TELEMETRY LIB
+        // BLineAutonomousField.initSmartDashBoard( // Visualization
+        //    () -> "Autos", 0, 0, this::addPeriodic);
+      } else {
+
         BLineLogic.init(
             subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
         // off
@@ -131,14 +140,7 @@ public class Robot extends LoggedRobot {
         BLineLogic.initAdvantageKit(); // Logging
         // BLineAutonomousField.initAdvantageKit( // Visualization
         //  () -> "Autos", 0, 0, this.autonomousPeriodic());
-      } else {
-        // BLINE STUFF
-        LegacyBLineLogic.init(subsystems); // Handling init and unit test cases
-        LegacyBLineLogic.configure(subsystems); // configure the autobuilder to run autos
-        LegacyBLineLogic.initSmartDashboard(); // Logging
-        // TODO REPLACE WITH TELEMETRY LIB
-        // BLineAutonomousField.initSmartDashBoard( // Visualization
-        //    () -> "Autos", 0, 0, this::addPeriodic);
+
       }
     }
 
