@@ -17,12 +17,16 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.pathplanner.lib.util.FlippingUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchType;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.smartdashboard.SmartDashboard;
 import frc.robot.Robot;
 import java.util.function.Consumer;
 
@@ -85,12 +89,12 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     double deltaTime = currentTime - m_lastUpdateTime;
     m_lastUpdateTime = currentTime;
 
-    ChassisSpeeds speeds = m_drivetrain.getState().Speeds;
+    ChassisVelocities speeds = m_drivetrain.getState().Speeds;
 
     // Calculate how much the robot moved this timestep
-    double dx = speeds.vxMetersPerSecond * deltaTime;
-    double dy = speeds.vyMetersPerSecond * deltaTime;
-    double dtheta = speeds.omegaRadiansPerSecond * deltaTime;
+    double dx = speeds.vx * deltaTime;
+    double dy = speeds.vy * deltaTime;
+    double dtheta = speeds.omega * deltaTime;
 
     double distanceThisStep = Math.hypot(dx, dy);
     double rotationThisStep = Math.abs(dtheta);
@@ -194,7 +198,7 @@ public class GroundTruthSim implements GroundTruthSimInterface {
 
   /** True if the robot is currently configured as red alliance. */
   private boolean isRedAlliance() {
-    return DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+    return MatchState.getAlliance().orElse(Alliance.BLUE) == Alliance.RED;
   }
 
   /**

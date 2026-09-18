@@ -1,10 +1,10 @@
 package frc.robot.util.tuning;
 
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleSubscriber;
-import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.TimestampedDouble;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.DoubleSubscriber;
+import org.wpilib.networktables.DoubleTopic;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.TimestampedDouble;
 
 /**
  * A pure NT4 tunable double that requires no Shuffleboard/SmartDashboard. Publish a default once;

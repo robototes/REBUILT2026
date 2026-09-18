@@ -3,23 +3,23 @@ package frc.robot.subsystems.index;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.system.LinearSystem;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.util.datalog.DataLog;
-import edu.wpi.first.util.datalog.DoubleLogEntry;
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.math.system.LinearSystem;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.LinearSystemId;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.util.datalog.DataLog;
+import org.wpilib.util.datalog.DoubleLogEntry;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.framework.TimedRobot;
+import org.wpilib.simulation.FlywheelSim;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
@@ -36,8 +36,7 @@ public class Spindexer extends SubsystemBase {
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
-  private final VelocityTorqueCurrentFOC velocityRequest =
-      new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
+  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final FlywheelSim motorSim;
 
@@ -92,9 +91,9 @@ public class Spindexer extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
-    talonFXConfiguration.Slot0.kA = 0.5;
-    talonFXConfiguration.Slot0.kS = 2.2;
-    talonFXConfiguration.Slot0.kP = 10;
+
+    talonFXConfiguration.Slot0.kV = 11.2 / 90.7;
+    talonFXConfiguration.Slot0.kP = 0.6;
 
     cfg.apply(talonFXConfiguration);
   }
@@ -102,18 +101,18 @@ public class Spindexer extends SubsystemBase {
   public void runVelocity() {
     if (TUNABLE_ENABLE.get()) {
       spindexerMotor.setControl(
-          velocityRequest.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
+          TARGET_VELOCITY.withVelocity(TARGET_RPS.get()).withAcceleration(TARGET_ACCEL.get()));
     } else {
       spindexerMotor.setControl(
-          velocityRequest.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
+          TARGET_VELOCITY.withVelocity(D_TARGET_RPS).withAcceleration(D_TARGET_ACCEL));
     }
   }
 
   public void setVelocity(double rps) {
     if (TUNABLE_ENABLE.get()) {
-      spindexerMotor.setControl(velocityRequest.withVelocity(TARGET_RPS.get()));
+      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
     } else {
-      spindexerMotor.setControl(velocityRequest.withVelocity(rps));
+      spindexerMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
     }
   }
 

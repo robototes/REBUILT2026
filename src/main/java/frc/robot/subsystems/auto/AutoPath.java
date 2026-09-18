@@ -2,9 +2,9 @@ package frc.robot.subsystems.auto;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.command2.Command;
 import frc.robot.subsystems.auto.AutoLogic.StartPosition;
 
 public class AutoPath {

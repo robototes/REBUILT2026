@@ -2,9 +2,9 @@ package frc.robot.util.robotType;
 
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.Filesystem;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.system.Filesystem;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

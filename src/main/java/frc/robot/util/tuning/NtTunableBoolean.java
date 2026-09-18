@@ -1,10 +1,10 @@
 package frc.robot.util.tuning;
 
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.BooleanSubscriber;
-import edu.wpi.first.networktables.BooleanTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.TimestampedBoolean;
+import org.wpilib.networktables.BooleanPublisher;
+import org.wpilib.networktables.BooleanSubscriber;
+import org.wpilib.networktables.BooleanTopic;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.TimestampedBoolean;
 
 /**
  * A pure NT4 tunable boolean that requires no Shuffleboard/SmartDashboard. Publish a default once;

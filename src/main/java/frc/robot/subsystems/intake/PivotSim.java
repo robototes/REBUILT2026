@@ -4,15 +4,15 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.util.Units;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.simulation.SingleJointedArmSim;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.smartdashboard.MechanismLigament2d;
+import org.wpilib.smartdashboard.MechanismRoot2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.SubsystemBase;
 import frc.robot.util.simulation.RobotSim;
 
 public class PivotSim extends SubsystemBase {
@@ -66,7 +66,7 @@ public class PivotSim extends SubsystemBase {
 
     intakeArmSimState.setRawRotorPosition(motorRotations);
     intakeArmSimState.setRotorVelocity(
-        Units.radiansToRotations(intakeArmSim.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
+        Units.radiansToRotations(intakeArmSim.getVelocity()) * PIVOT_GEAR_RATIO);
 
     // update sim
     arm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);

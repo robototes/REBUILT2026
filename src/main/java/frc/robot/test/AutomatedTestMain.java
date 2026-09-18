@@ -1,6 +1,6 @@
 package frc.robot.test;
 
-import edu.wpi.first.wpilibj.RobotBase;
+import org.wpilib.framework.RobotBase;
 
 public final class AutomatedTestMain {
   public static void main(String[] args) {

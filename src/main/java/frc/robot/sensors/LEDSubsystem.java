@@ -6,14 +6,14 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj.RobotState;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StringPublisher;
+import org.wpilib.units.Units;
+import org.wpilib.framework.RobotState;
+import org.wpilib.system.Timer;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SubsystemBase;
 import frc.robot.Hardware;
 
 public class LEDSubsystem extends SubsystemBase {
@@ -149,7 +149,7 @@ public class LEDSubsystem extends SubsystemBase {
 
     this.interval = interval;
     showingPrimary = true;
-    lastToggleTime = Timer.getFPGATimestamp();
+    lastToggleTime = Timer.getTimestamp();
 
     setHardwareColor(a);
     publishState();
@@ -206,10 +206,10 @@ public class LEDSubsystem extends SubsystemBase {
     }
 
     if (currentPattern == LEDPattern.ALTERNATE) {
-      if (Timer.getFPGATimestamp() - lastToggleTime > interval) {
+      if (Timer.getTimestamp() - lastToggleTime > interval) {
         showingPrimary = !showingPrimary;
         setHardwareColor(showingPrimary ? primaryColor : secondaryColor);
-        lastToggleTime = Timer.getFPGATimestamp();
+        lastToggleTime = Timer.getTimestamp();
       }
     }
   }

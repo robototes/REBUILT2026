@@ -4,7 +4,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import org.wpilib.math.kinematics.ChassisVelocities;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.ConfigShift;
@@ -28,17 +28,17 @@ public class AutoBuilderConfig {
           () -> {
             return drivebase.getState().Speeds;
           },
-          // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+          // ChassisVelocities supplier. MUST BE ROBOT RELATIVE
           (speeds, feedforwards) ->
               drivebase.setControl(
                   new SwerveRequest.ApplyRobotSpeeds()
-                      .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))
+                      .withSpeeds(ChassisVelocities.discretize(speeds, 0.020))
                       .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                       .withWheelForceFeedforwardsY(
                           feedforwards
                               .robotRelativeForcesYNewtons())), // Method that will drive the robot
           // given ROBOT RELATIVE
-          // ChassisSpeeds. Also optionally outputs individual module
+          // ChassisVelocities. Also optionally outputs individual module
           // feedforwards
           new PPHolonomicDriveController( // PPHolonomicController is the built in path following
               // controller for holonomic drive trains

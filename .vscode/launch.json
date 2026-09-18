@@ -15,13 +15,13 @@
       "type": "wpilib",
       "name": "WPILib Desktop Debug",
       "request": "launch",
-      "desktop": true
+      "desktop": true,
     },
     {
       "type": "wpilib",
-      "name": "WPILib roboRIO Debug",
+      "name": "WPILib Systemcore Debug",
       "request": "launch",
-      "desktop": false
+      "desktop": false,
     }
   ]
 }

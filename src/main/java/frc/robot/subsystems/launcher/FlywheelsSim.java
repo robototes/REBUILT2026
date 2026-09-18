@@ -2,16 +2,16 @@ package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
-import edu.wpi.first.wpilibj.util.Color8Bit;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.LinearSystemId;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.simulation.FlywheelSim;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.smartdashboard.MechanismLigament2d;
+import org.wpilib.smartdashboard.MechanismRoot2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.util.Color;
+import org.wpilib.util.Color8Bit;
 import frc.robot.util.simulation.RobotSim;
 
 public class FlywheelsSim {
@@ -48,7 +48,7 @@ public class FlywheelsSim {
     MechanismRoot2d root = mech.getRoot("flywheelRoot", 20, 20);
 
     wheelLigament =
-        root.append(new MechanismLigament2d("wheel", 2, 0, 10, new Color8Bit(Color.kCoral)));
+        root.append(new MechanismLigament2d("wheel", 2, 0, 10, new Color8Bit(Color.CORAL)));
 
     SmartDashboard.putData("Flywheel", mech);
   }

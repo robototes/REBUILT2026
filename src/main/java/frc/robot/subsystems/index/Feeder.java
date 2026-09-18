@@ -4,23 +4,23 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.system.LinearSystem;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.util.datalog.DataLog;
-import edu.wpi.first.util.datalog.DoubleLogEntry;
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.math.system.LinearSystem;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.LinearSystemId;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.util.datalog.DataLog;
+import org.wpilib.util.datalog.DoubleLogEntry;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.framework.TimedRobot;
+import org.wpilib.simulation.FlywheelSim;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.robotType.RobotType;
@@ -33,8 +33,7 @@ public class Feeder extends SubsystemBase {
       new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
-  private final VelocityTorqueCurrentFOC velocityRequest =
-      new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
+  private final VelocityVoltage TARGET_VELOCITY = new VelocityVoltage(D_TARGET_RPS); // Rotations/s
 
   private final TalonFX feedMotor;
   private final FlywheelSim motorSim;
@@ -91,26 +90,25 @@ public class Feeder extends SubsystemBase {
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLowerLimit = 0;
 
-    talonFXConfiguration.Slot0.kS = 4.2;
-    talonFXConfiguration.Slot0.kA = 0.5;
-    talonFXConfiguration.Slot0.kP = 10;
+    talonFXConfiguration.Slot0.kV = 11.28 / 92;
+    talonFXConfiguration.Slot0.kP = 0.5;
 
     cfg.apply(talonFXConfiguration);
   }
 
   public void runVelocity() {
     if (TUNABLE_ENABLE.get()) {
-      feedMotor.setControl(velocityRequest.withVelocity(TARGET_RPS.get()));
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
     } else {
-      feedMotor.setControl(velocityRequest.withVelocity(D_TARGET_RPS));
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(D_TARGET_RPS));
     }
   }
 
   public void setVelocity(double rps) {
     if (TUNABLE_ENABLE.get()) {
-      feedMotor.setControl(velocityRequest.withVelocity(TARGET_RPS.get()));
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(TARGET_RPS.get()));
     } else {
-      feedMotor.setControl(velocityRequest.withVelocity(rps));
+      feedMotor.setControl(TARGET_VELOCITY.withVelocity(rps));
     }
   }
 

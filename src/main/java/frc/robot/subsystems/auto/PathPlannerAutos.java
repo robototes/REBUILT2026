@@ -4,9 +4,9 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +21,7 @@ public class PathPlannerAutos {
       return List.of();
     }
     RobotConfig robotConfig = RobotConfig.fromGUISettings();
-    ChassisSpeeds startingSpeeds = new ChassisSpeeds();
+    ChassisVelocities startingSpeeds = new ChassisVelocities();
     List<PathPlannerTrajectory> trajectories = new ArrayList<>(paths.size());
     for (var path : paths) {
       PathPlannerTrajectory trajectory =

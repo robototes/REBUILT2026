@@ -1,6 +1,6 @@
 package frc.robot.sim;
 
-import edu.wpi.first.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose2d;
 
 /**
  * Interface for ground truth simulation functionality. Provides methods to track and manipulate the

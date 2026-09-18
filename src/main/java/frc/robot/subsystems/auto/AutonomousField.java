@@ -1,13 +1,17 @@
 package frc.robot.subsystems.auto;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.networktables.NetworkTableEntry;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchType;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.system.Timer;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.SmartDashboard;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
@@ -95,7 +99,7 @@ public class AutonomousField {
 
   public Pose2d getUpdatedPose(String autoName) {
     double speed = speedMultiplier.getAsDouble();
-    double fpgaTime = Timer.getFPGATimestamp();
+    double fpgaTime = Timer.getTimestamp();
 
     if (lastName.isEmpty() || !lastName.get().equals(autoName)) {
       lastName = Optional.of(autoName);
@@ -132,7 +136,7 @@ public class AutonomousField {
   /* ---------------- Periodic update ---------------- */
 
   public void update(String autoName) {
-    if (DriverStation.isEnabled()) {
+    if (RobotState.isEnabled()) {
       lastName = Optional.empty();
       return;
     }

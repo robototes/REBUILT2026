@@ -1,7 +1,7 @@
 package frc.robot.util;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-import edu.wpi.first.wpilibj.DataLogManager;
+import org.wpilib.system.DataLogManager;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.atomic.AtomicLong;

@@ -1,8 +1,8 @@
 package frc.robot.util.robotType;
 
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.RobotController;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.system.RobotController;
 
 public class RobotType {
   private static final String comp = "032B4B39"; // Comp bot serial number

@@ -1,7 +1,11 @@
 package frc.robot.test;
 
-import edu.wpi.first.hal.simulation.DriverStationDataJNI;
-import edu.wpi.first.wpilibj.DriverStation;
+import org.wpilib.hardware.hal.simulation.DriverStationDataJNI;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchType;
+import org.wpilib.driverstation.DriverStationErrors;
 import frc.robot.Robot;
 
 public class AutomatedTestRobot extends Robot {
@@ -26,7 +30,7 @@ public class AutomatedTestRobot extends Robot {
       if (cause != null) {
         throwable = cause;
       }
-      DriverStation.reportError(
+      DriverStationErrors.reportError(
           "Unhandled exception: " + throwable.toString(), throwable.getStackTrace());
       System.exit(-1);
     }

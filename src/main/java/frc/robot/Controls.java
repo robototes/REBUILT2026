@@ -1,25 +1,34 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Volts;
+import static org.wpilib.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.RadiansPerSecond;
+import static org.wpilib.units.Units.RotationsPerSecond;
+import static org.wpilib.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.RobotState;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.wpilib.vision.apriltag.AprilTagFieldLayout;
+import org.wpilib.vision.apriltag.AprilTagFields;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Time;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchType;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.driverstation.GenericHID.RumbleType;
+import org.wpilib.framework.RobotState;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.button.CommandXboxController;
+import org.wpilib.command2.button.Trigger;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
@@ -28,7 +37,7 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
-import frc.robot.util.GetTargetFromPose;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
@@ -71,6 +80,15 @@ public class Controls {
 
   private final CommandXboxController visionTestController =
       new CommandXboxController(VISION_TEST_CONTROLLER_PORT);
+
+  AprilTagFieldLayout aprilTagFieldLayout =
+      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+  // Robot with bumpers is 36.875 inches by 30.750 inches
+  Transform2d robotOffsetFromTag =
+      new Transform2d(
+          new Translation2d(Units.inchesToMeters(30.750 / 2), 0), Rotation2d.fromDegrees(180));
+  Pose2d redHub = aprilTagFieldLayout.getTagPose(10).get().toPose2d().plus(robotOffsetFromTag);
+  Pose2d blueHub = aprilTagFieldLayout.getTagPose(26).get().toPose2d().plus(robotOffsetFromTag);
 
   private LEDMode ledsMode = LEDMode.DEFAULT;
   public static IntakeMode intakeMode = IntakeMode.RETRACTED;
@@ -134,10 +152,7 @@ public class Controls {
     }
     connected(indexingTestController)
         .and(indexingTestController.leftTrigger())
-        .whileTrue(
-            s.flywheels != null
-                ? s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())
-                : s.indexerSubsystem.runIndexer());
+        .whileTrue(s.indexerSubsystem.runIndexer());
   }
 
   private Command rumble(CommandXboxController controller, double vibration, Time duration) {
@@ -243,7 +258,8 @@ public class Controls {
         .back()
         .onTrue(
             s.drivebaseSubsystem
-                .runOnce(() -> s.drivebaseSubsystem.resetPose(GetTargetFromPose.getRestPose()))
+                .runOnce(
+                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
                 .withName("Reset to Hub"));
   }
 
@@ -312,7 +328,7 @@ public class Controls {
                             s.launcherSubsystem.zeroSubsystemCommand(),
                             s.intakePivot.zeroPivot(),
                             s.turretSubsystem.zeroTurret()),
-                        () -> DriverStation.isEnabled()),
+                        () -> RobotState.isEnabled()),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
@@ -424,7 +440,7 @@ public class Controls {
   }
 
   public void vibrateDriveController(double vibration) {
-    if (!DriverStation.isAutonomous()) {
+    if (!RobotState.isAutonomous()) {
       driverController.getHID().setRumble(RumbleType.kBothRumble, vibration);
     }
   }
@@ -522,7 +538,8 @@ public class Controls {
         .and(turretTestController.rightBumper())
         .onTrue(
             s.drivebaseSubsystem
-                .runOnce(() -> s.drivebaseSubsystem.resetPose(GetTargetFromPose.getRestPose()))
+                .runOnce(
+                    () -> s.drivebaseSubsystem.resetPose(AllianceUtils.isRed() ? redHub : blueHub))
                 .withName("Reset to Hub"));
     driverController
         .rightStick()

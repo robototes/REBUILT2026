@@ -1,17 +1,16 @@
 package frc.robot.util.tuning;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.interpolation.InterpolatingDoubleTreeMap;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
@@ -26,8 +25,6 @@ public class LauncherConstants {
       table.getStructTopic("Turret Pose", Pose2d.struct).publish();
   private static final DoublePublisher turretToHubDistance =
       table.getDoubleTopic("Turret to hub distance").publish();
-  private static final DoublePublisher turretToTargetDistance =
-      table.getDoubleTopic("Turret to target distance").publish();
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
@@ -64,37 +61,23 @@ public class LauncherConstants {
   };
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
-    new LauncherDistanceDataPoint(1, 1.5, 35, 1.018),
-    new LauncherDistanceDataPoint(1.5, 2.2, 38, 1.138),
-    new LauncherDistanceDataPoint(2, 3.4, 38, 1.104),
-    new LauncherDistanceDataPoint(2.55, 3.5, 45, 1.204),
-    new LauncherDistanceDataPoint(3.2, 4.5, 47, 1.15),
-    new LauncherDistanceDataPoint(3.5, 4.8, 49, 1.189),
-    new LauncherDistanceDataPoint(3.75, 5, 49, 1.197),
-    new LauncherDistanceDataPoint(4.2, 5.125, 52.5, 1.23), // measured tof
-    new LauncherDistanceDataPoint(4.5, 5.5, 55, 1.265),
-    new LauncherDistanceDataPoint(5, 5.8, 62, 1.289),
-    new LauncherDistanceDataPoint(5.8, 6.6, 65, 1.338),
+    new LauncherDistanceDataPoint(1, 1.5, 40, 1.018),
+    new LauncherDistanceDataPoint(1.5, 2.2, 43, 1.138),
+    new LauncherDistanceDataPoint(2, 3.4, 46, 1.104),
+    new LauncherDistanceDataPoint(2.55, 3.5, 48, 1.204),
+    new LauncherDistanceDataPoint(3.2, 4.5, 51, 1.15),
+    new LauncherDistanceDataPoint(3.5, 4.8, 54, 1.189),
+    new LauncherDistanceDataPoint(3.75, 5, 54.5, 1.197),
+    new LauncherDistanceDataPoint(4.2, 5.125, 57.5, 1.23), // measured tof
+    new LauncherDistanceDataPoint(4.5, 5.5, 60, 1.265),
+    new LauncherDistanceDataPoint(5, 5.8, 64, 1.289),
+    new LauncherDistanceDataPoint(5.8, 6.6, 67, 1.338),
     new LauncherDistanceDataPoint(8, 9, 90, 1.53)
-  };
-
-  // These "work" but if you ever want to do this again I reccommend redoing the data map and add
-  // more points to shoot closer to the hoop
-  public static final LauncherDistanceDataPoint[] ballingDistanceData = {
-    new LauncherDistanceDataPoint(5.720, 5.7, 82, 1),
-    new LauncherDistanceDataPoint(4.354, 5, 70, 1),
-    new LauncherDistanceDataPoint(3.119, 3.7, 63, 1),
-    new LauncherDistanceDataPoint(2.319, 2.8, 60, 1)
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
-
-  private static final InterpolatingDoubleTreeMap flywheelMapBalling =
-      new InterpolatingDoubleTreeMap();
-  private static final InterpolatingDoubleTreeMap hoodMapBalling = new InterpolatingDoubleTreeMap();
-  private static final InterpolatingDoubleTreeMap timeMapBalling = new InterpolatingDoubleTreeMap();
 
   static {
     LauncherDistanceDataPoint[] distanceData =
@@ -106,24 +89,6 @@ public class LauncherConstants {
       maxTime = Math.max(maxTime, point.time);
       minTime = Math.min(minTime, point.time);
     }
-
-    for (var point : ballingDistanceData) {
-      flywheelMapBalling.put(point.distance, point.flywheelPower);
-      hoodMapBalling.put(point.distance, point.hoodAngle);
-      timeMapBalling.put(point.distance, point.time);
-    }
-  }
-
-  private static InterpolatingDoubleTreeMap activeFlywheelMap() {
-    return GetTargetFromPose.BALLING.get() ? flywheelMapBalling : flywheelMap;
-  }
-
-  private static InterpolatingDoubleTreeMap activeHoodMap() {
-    return GetTargetFromPose.BALLING.get() ? hoodMapBalling : hoodMap;
-  }
-
-  private static InterpolatingDoubleTreeMap activeTimeMap() {
-    return GetTargetFromPose.BALLING.get() ? timeMapBalling : timeMap;
   }
 
   // public static void update(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
@@ -142,7 +107,7 @@ public class LauncherConstants {
   // }
 
   public static double getFlywheelSpeedFromDistance(double distance) {
-    return activeFlywheelMap().get(distance);
+    return flywheelMap.get(distance);
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
@@ -154,8 +119,6 @@ public class LauncherConstants {
     turretPose.set(result);
     distToHub = AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm();
     turretToHubDistance.set(distToHub);
-    turretToTargetDistance.set(
-        GetTargetFromPose.getTargetLocation(result).minus(result.getTranslation()).getNorm());
   }
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
@@ -175,7 +138,7 @@ public class LauncherConstants {
   }
 
   public static double getHoodAngleFromDistance(double distance) {
-    return activeHoodMap().get(distance /*+ distanceOffset*/);
+    return hoodMap.get(distance /*+ distanceOffset*/);
   }
 
   public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot) {
@@ -184,7 +147,7 @@ public class LauncherConstants {
   }
 
   public static double getTimeFromDistance(double distance) {
-    return activeTimeMap().get(distance /*+ distanceOffset*/);
+    return timeMap.get(distance /*+ distanceOffset*/);
   }
 
   public static double minTimeOfFlight() {
@@ -197,17 +160,17 @@ public class LauncherConstants {
 
   // Move a target a set time in the future along a velocity defined by fieldSpeeds
   // public static Translation2d predictTargetPos(
-  //     Translation2d target, ChassisSpeeds fieldSpeeds, double timeOfFlight) {
-  //   double predictedX = target.getX() - fieldSpeeds.vxMetersPerSecond * timeOfFlight;
-  //   double predictedY = target.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight;}
+  //     Translation2d target, ChassisVelocities fieldSpeeds, double timeOfFlight) {
+  //   double predictedX = target.getX() - fieldSpeeds.vx * timeOfFlight;
+  //   double predictedY = target.getY() - fieldSpeeds.vy * timeOfFlight;}
 
   // finds angular speed using velocity = angular rotation * radius
   // radius is launcher offset from center of robot
   // then converts angular speed into tangent velocity
-  public static Translation2d angularVelocity(Pose2d robot, ChassisSpeeds fieldSpeeds) {
+  public static Translation2d angularVelocity(Pose2d robot, ChassisVelocities fieldSpeeds) {
     Translation2d angle = LAUNCHER_OFFSET.getTranslation().rotateBy(robot.getRotation());
     double angleVelocitySpeed =
-        (fieldSpeeds.omegaRadiansPerSecond * LAUNCHER_OFFSET.getTranslation().getNorm());
+        (fieldSpeeds.omega * LAUNCHER_OFFSET.getTranslation().getNorm());
     double vx = -angle.getY() * angleVelocitySpeed;
     double vy = angle.getX() * angleVelocitySpeed;
     return new Translation2d(vx, vy);
@@ -215,17 +178,17 @@ public class LauncherConstants {
 
   // predicts fuel landing spot based on time, robot aim, robot velocity
   public static Translation2d predictTargetPos(
-      Translation2d target, ChassisSpeeds fieldSpeeds, Double timeOfFlight, Pose2d robot) {
+      Translation2d target, ChassisVelocities fieldSpeeds, Double timeOfFlight, Pose2d robot) {
     Translation2d angularVelocity = angularVelocity(robot, fieldSpeeds);
-    double vx = fieldSpeeds.vxMetersPerSecond + angularVelocity.getX();
-    double vy = fieldSpeeds.vyMetersPerSecond + angularVelocity.getY();
+    double vx = fieldSpeeds.vx + angularVelocity.getX();
+    double vy = fieldSpeeds.vy + angularVelocity.getY();
     double predictedX = target.getX() - vx * timeOfFlight;
     double predictedY = target.getY() - vy * timeOfFlight;
     return new Translation2d(predictedX, predictedY);
   }
 
   public static Translation2d iterativeMovingShotFromFunnelClearance(
-      Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target, int iterations) {
+      Pose2d robot, ChassisVelocities fieldSpeeds, Translation2d target, int iterations) {
     // Perform initial estimation (assuming unmoving robot) to get time of flight estimate
     double distance = launcherFromRobot(robot).getDistance(target);
     double timeOfFlight = getTimeFromDistance(distance);

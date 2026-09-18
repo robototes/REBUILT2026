@@ -2,27 +2,27 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanSubscriber;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.vision.apriltag.AprilTagFieldLayout;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.Units;
+import org.wpilib.networktables.BooleanSubscriber;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
+import org.wpilib.system.Timer;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.FieldObject2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -164,7 +164,7 @@ public class VisionSubsystem extends SubsystemBase {
   private CommandSwerveDrivetrain drivetrain;
 
   private record VisionPoseTracking(
-      SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
+      SwerveDriveState swerveState, ChassisVelocities swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
   private ShowVisionOnField m_showVisionOnField;
@@ -277,11 +277,11 @@ public class VisionSubsystem extends SubsystemBase {
     rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
-        && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
+        && (Math.abs(visionPoseTracking.swerveSpeeds.vx)
                 > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+            || Math.abs(visionPoseTracking.swerveSpeeds.vy)
                 > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+            || Math.abs(visionPoseTracking.swerveSpeeds.omega)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
       publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed");
       return;
@@ -382,17 +382,17 @@ public class VisionSubsystem extends SubsystemBase {
 
   private boolean isUnderDefense(VisionPoseTracking visionPoseTracking) {
     if (visionPoseTracking == null) return false;
-    ChassisSpeeds speeds = visionPoseTracking.swerveSpeeds;
+    ChassisVelocities speeds = visionPoseTracking.swerveSpeeds;
 
-    double omega = Math.abs(speeds.omegaRadiansPerSecond);
-    double wheelSpeed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    double omega = Math.abs(speeds.omega);
+    double wheelSpeed = Math.hypot(speeds.vx, speeds.vy);
     boolean likelySpun =
         omega > VisionConstants.DEFENSE_SPIN_OMEGA
             && wheelSpeed < VisionConstants.DEFENSE_SPIN_MAX_TRANSLATION;
 
     boolean positionDiverged = false;
     if (lastFieldPose != null) {
-      double timeSinceVision = Timer.getFPGATimestamp() - lastTimestampSeconds;
+      double timeSinceVision = Timer.getTimestamp() - lastTimestampSeconds;
       Pose2d drivePose = visionPoseTracking.drivePose3d.toPose2d();
       double disagreement = lastFieldPose.getTranslation().getDistance(drivePose.getTranslation());
       double expectedDrift =
@@ -614,7 +614,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public double getTimeSinceLastReading() {
-    return Timer.getFPGATimestamp() - lastTimestampSeconds;
+    return Timer.getTimestamp() - lastTimestampSeconds;
   }
 
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
@@ -641,7 +641,7 @@ public class VisionSubsystem extends SubsystemBase {
     long lastChange = table.getEntry("hb").getLastChange();
     if (lastChange == 0) return false;
     double lastChangeSecs = lastChange / 1_000_000.0;
-    return (Timer.getFPGATimestamp() - lastChangeSecs) < VisionConstants.STALENESS_THRESHOLD;
+    return (Timer.getTimestamp() - lastChangeSecs) < VisionConstants.STALENESS_THRESHOLD;
   }
 
   private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {

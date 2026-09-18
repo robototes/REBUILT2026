@@ -1,10 +1,14 @@
 package frc.robot.util;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchType;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.system.Filesystem;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +34,7 @@ public class BuildInfo {
       File buildInfoFile = new File(Filesystem.getDeployDirectory(), "build-info.txt");
       return Optional.of(Files.readString(buildInfoFile.toPath()));
     } catch (IOException e) {
-      DriverStation.reportError("Could not open build info file!", true);
+      DriverStationErrors.reportError("Could not open build info file!", true);
       return Optional.empty();
     }
   }
@@ -56,7 +60,7 @@ public class BuildInfo {
    */
   private static void expectLineIsHeader(String line, String header) {
     if (!lineIsHeader(line, header)) {
-      DriverStation.reportError(
+      DriverStationErrors.reportError(
           "Invalid build info file! Expected header \"" + header + "\", got line \"" + line + "\"",
           true);
       throw new InvalidFormatException();

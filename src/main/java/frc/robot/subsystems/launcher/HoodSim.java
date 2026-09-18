@@ -4,16 +4,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
-import edu.wpi.first.wpilibj.util.Color8Bit;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.util.Units;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.simulation.SingleJointedArmSim;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.smartdashboard.MechanismLigament2d;
+import org.wpilib.smartdashboard.MechanismRoot2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.util.Color;
+import org.wpilib.util.Color8Bit;
 import frc.robot.util.simulation.RobotSim;
 
 public class HoodSim {
@@ -52,7 +52,7 @@ public class HoodSim {
     MechanismRoot2d root = mechanism.getRoot("hoodRoot", 30, 10);
 
     hoodLigament =
-        root.append(new MechanismLigament2d("hood", 20, 0, 6, new Color8Bit(Color.kAqua)));
+        root.append(new MechanismLigament2d("hood", 20, 0, 6, new Color8Bit(Color.AQUA)));
 
     SmartDashboard.putData("Hood Mechanism", mechanism);
   }
@@ -67,7 +67,7 @@ public class HoodSim {
     double motorRotations = Units.radiansToRotations(armAngleRad) * GEAR_RATIO;
 
     simState.setRawRotorPosition(motorRotations);
-    simState.setRotorVelocity(Units.radiansToRotations(armSim.getVelocityRadPerSec()) * GEAR_RATIO);
+    simState.setRotorVelocity(Units.radiansToRotations(armSim.getVelocity()) * GEAR_RATIO);
 
     // Update visualization/sim
     hoodLigament.setAngle(Units.radiansToDegrees(armAngleRad) + STARTING_ANGLE_OFFSET);

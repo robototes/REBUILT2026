@@ -7,26 +7,30 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.net.WebServer;
-import edu.wpi.first.util.datalog.DataLog;
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleState;
+import org.wpilib.math.util.Units;
+import org.wpilib.net.WebServer;
+import org.wpilib.util.datalog.DataLog;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchType;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.system.Filesystem;
+import org.wpilib.hardware.power.PowerDistribution;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.system.RobotController;
+import org.wpilib.framework.TimedRobot;
+import org.wpilib.system.Timer;
+import org.wpilib.livewindow.LiveWindow;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
@@ -161,7 +165,7 @@ public class Robot extends TimedRobot {
       DataLog log = DataLogManager.getLog();
       log.addSchema(Pose2d.struct);
       log.addSchema(Pose3d.struct);
-      log.addSchema(ChassisSpeeds.struct);
+      log.addSchema(ChassisVelocities.struct);
       log.addSchema(SwerveModuleState.struct);
       log.addSchema(SwerveModulePosition.struct);
     }
@@ -177,7 +181,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     // Resume logging every X seconds
-    double time = Timer.getFPGATimestamp();
+    double time = Timer.getTimestamp();
     if (time - LAST_TIME >= 1) {
       LAST_TIME = time;
       DataLogManager.getLog().resume();
@@ -254,7 +258,7 @@ public class Robot extends TimedRobot {
       if (subsystems.hood.isHoodZeroed()) {
         subsystems.hood.setHoodPosition(0);
       } else {
-        DriverStation.reportWarning(
+        DriverStationErrors.reportWarning(
             "Attempted to set hood position although it hasn't been zeroed", false);
       }
     }
@@ -336,14 +340,14 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void testInit() {
+  public void utilityInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void utilityPeriodic() {}
 
   /** This function is called once when the robot is first started up. */
   @Override

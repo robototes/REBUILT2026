@@ -1,10 +1,10 @@
 package frc.robot.util.tuning;
 
-import edu.wpi.first.networktables.IntegerPublisher;
-import edu.wpi.first.networktables.IntegerSubscriber;
-import edu.wpi.first.networktables.IntegerTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.TimestampedInteger;
+import org.wpilib.networktables.IntegerPublisher;
+import org.wpilib.networktables.IntegerSubscriber;
+import org.wpilib.networktables.IntegerTopic;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.TimestampedInteger;
 
 /**
  * A pure NT4 tunable integer. This ensures the topic is published (visible) and subscribed
