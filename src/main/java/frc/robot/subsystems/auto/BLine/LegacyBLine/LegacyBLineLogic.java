@@ -18,7 +18,9 @@ import frc.robot.Subsystems;
 import frc.robot.lib.BLine.BLineCommands;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
+import frc.robot.subsystems.auto.BLine.AutosCommands;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
+import frc.robot.subsystems.auto.BLine.BLineTriggers;
 import frc.robot.subsystems.auto.BLine.BLineLogic.Position;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.RobotSim;
@@ -107,7 +109,7 @@ public class LegacyBLineLogic {
 
   public static void init(Subsystems subsystems) {
     s = subsystems;
-    registerCommands();
+    registerCommands(s);
 
     if (pathsInitialized) return;
 
@@ -461,28 +463,7 @@ public class LegacyBLineLogic {
     }
   }
 
-  private static void registerCommands() {
-    if (s == null) return; // Skip registration during unit tests
-
-    AtomicBoolean launchAllowed = new AtomicBoolean(true);
-
-    if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
-      if (Robot.isSimulation()) {
-        bLineSimLaunching = RobotSim.launch(s, 30);
-        FollowPath.registerEventTrigger(
-            "launch",
-            Commands.runOnce(() -> launchAllowed.set(true))
-                .andThen(bLineSimLaunching.onlyWhile(launchAllowed::get))
-                .andThen(Commands.print("LAUNCH FINISHED")));
-      } else {
-        bLineLaunching = launcherCommand();
-        FollowPath.registerEventTrigger("launch", bLineLaunching);
-      }
-    }
-
-    FollowPath.registerEventTrigger("intake", intakeCommand());
-    FollowPath.registerEventTrigger("climb", climbCommand());
-    FollowPath.registerEventTrigger(
-        "cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
-  }
+  private static void registerCommands(Subsystems s) {
+   BLineTriggers.registerTriggers(s);
+}
 }

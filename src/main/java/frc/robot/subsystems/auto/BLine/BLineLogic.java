@@ -42,9 +42,6 @@ public class BLineLogic {
 
   public static Field2d field = new Field2d();
   public static edu.wpi.first.wpilibj.smartdashboard.Field2d fieldPoseStart = new Field2d();
-
-  private static Trigger beachedTrigger;
-
   private static Boolean enableAutoUnbeach = true;
   private static Boolean enableLaunchOnTheMove = true;
 
@@ -91,22 +88,19 @@ public class BLineLogic {
   private static final List<BLinePath> autos = new ArrayList<>();
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
   private static boolean pathsInitialized = false;
-  private static Command bLineLaunching;
-  private static Command bLineSimLaunching;
+  public  static Command bLineLaunching;
+  public static Command bLineSimLaunching;
   private static StructPublisher<Pose2d> recoveryPose;
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
-  private static Path currentPath;
-  private static FollowPath follow;
-  private static int savedPathIndex = -1;
+  public static Path currentPath;
+  public static FollowPath follow;
+  public  static int savedPathIndex = -1;
   private static boolean unlimitedAlreadySelected = false;
   private static LoggedNetworkNumber initialHeading =
       new LoggedNetworkNumber("Initial Heading(Deg)", 0.0);
   private static LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("BLine Delay", 0.0);
-  private static LoggedNetworkBoolean enableSotm = new LoggedNetworkBoolean("BLine/SOTM", false);
 
-  private static LoggedNetworkBoolean enableUnbeach =
-      new LoggedNetworkBoolean("BLine/Auto Unbeach", false);
 
   private static Elastic.Notification autoTimingWarning =
       new Elastic.Notification(
@@ -132,6 +126,7 @@ public class BLineLogic {
   public static void init(Subsystems subsystems) {
 
     s = subsystems;
+     AutosCommands.launcherCommand(s);
 
     recoveryPose =
         NetworkTableInstance.getDefault()
@@ -139,7 +134,8 @@ public class BLineLogic {
             .getStructTopic("RecoveryPose", Pose2d.struct)
             .publish();
 
-    registerTriggersAndCommands();
+    BLineTriggers.registerTriggers(s);
+
 
     if (pathsInitialized) {
       return;
@@ -359,8 +355,8 @@ public class BLineLogic {
 
     SmartDashboard.putData("BLine/Selected Auto", field);
 
-    enableSotm.set(enableLaunchOnTheMove);
-    enableUnbeach.set(enableAutoUnbeach);
+    BLineTriggers.enableSotm.set(enableLaunchOnTheMove);
+    BLineTriggers.enableUnbeach.set(enableAutoUnbeach);
 
     SmartDashboard.putData("BLine/Start Pose", fieldPoseStart);
 
@@ -526,10 +522,10 @@ public class BLineLogic {
       BLinePath.ShootMode shootMode = sequence.get(step).getShootMode();
 
       if (shootMode == BLinePath.ShootMode.TIMED) {
-        commands.add(launcherCommand(5.0));
+        commands.add(AutosCommands.launcherCommand(5.0, s));
 
       } else if (shootMode == BLinePath.ShootMode.UNLIMITED) {
-        commands.add((launcherCommand(12.0).until(() -> !RobotState.isAutonomous())));
+        commands.add((AutosCommands.launcherCommand(12.0, s).until(() -> !RobotState.isAutonomous())));
       }
     }
 
@@ -543,7 +539,7 @@ public class BLineLogic {
     return Commands.sequence(commands.toArray(new Command[0]));
   }
 
-  private static Command buildPath(Path path, boolean resetPose, boolean saveForRecovery) {
+  public static Command buildPath(Path path, boolean resetPose, boolean saveForRecovery) {
 
     if (s == null || pathBuilder == null || continuingPathBuilder == null) {
       return Commands.none();
@@ -586,70 +582,6 @@ public class BLineLogic {
         .withShouldMirror(BLineLogic::isMirrored);
   }
 
-  public static Command intakeCommand() {
-
-    return Commands.runOnce(() -> Controls.intakeMode = IntakeMode.INTAKE)
-        .withName("Auto Intake Command");
-  }
-
-  public static Command launcherCommand(double timeout) {
-
-    if (s == null || Robot.isSimulation()) {
-
-      return RobotSim.launch(s, timeout);
-    }
-
-    return Commands.parallel(
-            Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
-            s.launcherSubsystem.launcherAimCommand(),
-            Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
-        .withTimeout(timeout)
-        .andThen(s.launcherSubsystem.rawStowCommand())
-        .withName("Auto Launcher Command");
-  }
-
-  public static Command launcherCommand() {
-
-    if (s.launcherSubsystem != null && s.flywheels != null) {
-
-      return Commands.parallel(
-              Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
-              s.launcherSubsystem.launcherAimCommand(),
-              Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
-                  .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
-          .withName("Auto Launcher Command");
-    }
-
-    return Commands.none();
-  }
-
-  public static Command stowCommand() {
-
-    return s.launcherSubsystem != null ? s.launcherSubsystem.rawStowCommand() : Commands.none();
-  }
-
-  public static Command climbCommand() {
-
-    return Commands.none().withName("Auto Climb Command");
-  }
-
-  public static void cancelCommand() {
-
-    if (s == null) {
-      return;
-    }
-
-    if (Robot.isSimulation()) {
-
-      CommandScheduler.getInstance().cancel(bLineSimLaunching);
-
-    } else {
-
-      CommandScheduler.getInstance().cancel(bLineLaunching);
-    }
-  }
-
   public static void updateRecoveryPose() {
 
     recoveryPose.set(
@@ -660,108 +592,8 @@ public class BLineLogic {
                 s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
   }
 
-  public static Command recoverCommand() {
+  private static void registerTriggersAndCommands(Subsystems s) {
+BLineTriggers.registerTriggers(s);
+}
 
-    return Commands.sequence(
-            buildPath(
-                StuckOnBallRecovery.getRecoverySegment(
-                    () -> s.drivebaseSubsystem.getState().Pose,
-                    () ->
-                        Rotation2d.fromDegrees(
-                            s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
-                    () ->
-                        Rotation2d.fromDegrees(
-                            s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
-                false,
-                false))
-        .until(() -> !s.drivebaseSubsystem.isBeached(StuckOnBallRecovery.STUCK_ANGLE_THRESHOLD));
-  }
-
-  private static Command resume() {
-
-    if (currentPath == null || savedPathIndex < 0) {
-      return Commands.none();
-    }
-
-    int i = savedPathIndex;
-
-    var flat = currentPath.getPathElementsWithConstraintsNoWaypoints();
-
-    List<Path.PathElement> remaining = new ArrayList<>();
-
-    remaining.add(
-        new Path.TranslationTarget(s.drivebaseSubsystem.getState().Pose.getTranslation()));
-
-    for (int j = i; j < flat.size(); j++) {
-      remaining.add(flat.get(j).getFirst().copy());
-    }
-
-    Path remainder = new Path(remaining, currentPath.getPathConstraints());
-
-    return buildPath(remainder, false, false);
-  }
-
-  private static void registerTriggersAndCommands() {
-
-    beachedTrigger =
-        new Trigger(
-            () -> {
-              return enableUnbeach.getAsBoolean()
-                  && RobotState.isAutonomous()
-                  && s.drivebaseSubsystem.isBeached(StuckOnBallRecovery.STUCK_ANGLE_THRESHOLD);
-            });
-
-    beachedTrigger.onTrue(
-        Commands.sequence(
-            Commands.runOnce(
-                () -> {
-                  if (follow != null) {
-                    savedPathIndex = follow.getCurrentTranslationElementIndex();
-                  }
-                }),
-            recoverCommand(),
-            resume()));
-
-    AtomicBoolean launchAllowed = new AtomicBoolean(true);
-
-    if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
-
-      if (Robot.isSimulation()) {
-
-        bLineSimLaunching = RobotSim.launch(s, 30);
-
-        FollowPath.registerEventTrigger(
-            "launch",
-            Commands.defer(
-                () -> {
-                  return enableSotm.getAsBoolean()
-                      ? Commands.runOnce(() -> launchAllowed.set(true))
-                          .andThen(bLineSimLaunching.onlyWhile(launchAllowed::get))
-                          .andThen(Commands.print("LAUNCH FINISHED"))
-                      : Commands.none();
-                },
-                Set.of()));
-      } else {
-
-        bLineLaunching = launcherCommand();
-
-        FollowPath.registerEventTrigger(
-            "launch",
-            Commands.defer(
-                () -> {
-                  enableSotm.getAsBoolean();
-
-                  return enableLaunchOnTheMove ? bLineLaunching : Commands.none();
-                },
-                Set.of()));
-      }
-    }
-
-    FollowPath.registerEventTrigger("intake", intakeCommand());
-
-    FollowPath.registerEventTrigger("climb", climbCommand());
-
-    FollowPath.registerEventTrigger(
-        "cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(stowCommand()));
-  }
 }
