@@ -56,6 +56,21 @@ public class AutoLogic {
 
   private static AutoPath defaultPath;
 
+  private static final List<String> REBUILT_AUTO_NAMES =
+      List.of(
+          "C-Outpost-Depot",
+          "LeftTrench-Depot",
+          "LT-Neutral-Depot",
+          "LT-Neutral",
+          "LT-DoubleNeutral",
+          "RightTrench-Outpost",
+          "RT-Neutral-Outpost",
+          "Rotate-RT-Neutral",
+          "RT-Neutral",
+          "RT-DoubleNeutral",
+          "RT-BLOCK",
+          "LT-BLOCK");
+
   private static List<AutoPath> rebuiltPaths = List.of();
 
   private static Map<Integer, List<AutoPath>> commandsMap = Map.of();
@@ -84,6 +99,10 @@ public class AutoLogic {
     return List.of();
   }
 
+  public static List<String> getConfiguredAutoNames() {
+    return REBUILT_AUTO_NAMES;
+  }
+
   /* ---------------- Init ---------------- */
   public static void init(Subsystems subsystems) {
     s = subsystems;
@@ -110,19 +129,7 @@ public class AutoLogic {
     defaultPath = new AutoPath("Default", "Default");
 
     physicalRebuiltPaths =
-        List.of(
-            new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-            new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
-            new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
-            new AutoPath("LT-Neutral", "LT-Neutral"),
-            new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
-            new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
-            new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-            new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
-            new AutoPath("RT-Neutral", "RT-Neutral"),
-            new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
-            new AutoPath("RT-BLOCK", "RT-BLOCK"),
-            new AutoPath("LT-BLOCK", "LT-BLOCK"));
+      REBUILT_AUTO_NAMES.stream().map(name -> new AutoPath(name, name)).toList();
 
     rebuiltPaths = physicalRebuiltPaths;
 
