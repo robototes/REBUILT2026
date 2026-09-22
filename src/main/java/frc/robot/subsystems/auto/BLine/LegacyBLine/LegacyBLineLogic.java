@@ -355,19 +355,13 @@ public class LegacyBLineLogic {
         launcherCommand());
   }
 
-  public static Command buildDoubleNeutralBumpAuto() {
-    return BLineCommands.sequence(
-        Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralBump"), true),
-        buildPath(new Path("BumpToTrench"), false),
-        buildPath(new Path("SecondNeutralBump"), false),
-        launcherCommand());
-  }
+
 
   public static Command buildSingleNeutralTrenchDepotAuto() {
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
         buildPath(new Path("FirstNeutralTrench"), true),
+        launcherCommand(4.5),
         buildPath(new Path("TrenchDepot"), false),
         launcherCommand());
   }
@@ -388,7 +382,7 @@ public class LegacyBLineLogic {
 
   public static Command handleAutos() {
     switch (getSelectedAutoName()) {
-      case "TrenchDepot":
+      case "TrenchNeutral":
         return buildSingleNeutralTrenchAuto();
       case "DoubleTrenchNeutral":
         return buildDoubleNeutralTrenchAuto();
@@ -431,13 +425,17 @@ public class LegacyBLineLogic {
   }
 
   public static Command launcherCommand() {
+
+    if(Robot.isSimulation()) {
+      return RobotSim.launch(s, 5);
+    }
     if (s == null) return Commands.none();
     return Commands.parallel(
             Commands.runOnce(() -> s.flywheels.resetFuelCheck()),
             s.launcherSubsystem.launcherAimCommand(),
             Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
                 .andThen(s.indexerSubsystem.runIndexer(() -> s.flywheels.getTargetSpeed())))
-        .withName("Auto Launcher Command");
+        .withName("Auto Launcher Command UNLIMITED");
   }
 
   public static Command stowCommand() {
