@@ -1,6 +1,55 @@
 {
-  "paths": {
-    "FirstNeutralBump.json": {
+  "schema_version": 1,
+  "project_id": "workspace-a8906e57-8b41-4a5e-a3ac-368adef73109",
+  "display_name": "autos",
+  "editor_config": {
+    "gui": {
+      "robot": {
+        "length_meters": 0.78,
+        "width_meters": 0.93
+      },
+      "protrusions": {
+        "enabled": true,
+        "distance_meters": 0.21,
+        "side": "back",
+        "default_state": "shown",
+        "show_on_event_keys": [
+          "intake"
+        ],
+        "hide_on_event_keys": []
+      }
+    },
+    "kinematic_constraints": {
+      "default_auto_velocity_velocity_safety_factor": 1,
+      "default_auto_velocity_acceleration_safety_factor": 1,
+      "default_auto_velocity_merge_tolerance_meters_per_sec": 0.3
+    }
+  },
+  "paths": [
+    {
+      "path_id": "BumpDepot.json",
+      "display_name": "BumpDepot",
+      "file_name": "BumpDepot.json"
+    },
+    {
+      "path_id": "bumptotrench.json",
+      "display_name": "bumptotrench",
+      "file_name": "bumptotrench.json"
+    },
+    {
+      "path_id": "default.json",
+      "display_name": "default",
+      "file_name": "default.json"
+    },
+    {
+      "path_id": "DepotToTrench.json",
+      "display_name": "DepotToTrench",
+      "file_name": "DepotToTrench.json"
+    },
+    {
+      "path_id": "FirstNeutralBump.json",
+      "display_name": "FirstNeutralBump",
+      "file_name": "FirstNeutralBump.json",
       "editor_metadata": {
         "ranged_constraints": [
           {
@@ -32,7 +81,25 @@
         ]
       }
     },
-    "SecondNeutralBump.json": {
+    {
+      "path_id": "FirstNeutralTrench.json",
+      "display_name": "FirstNeutralTrench",
+      "file_name": "FirstNeutralTrench.json"
+    },
+    {
+      "path_id": "FirstNeutralTrenchFAST.json",
+      "display_name": "FirstNeutralTrenchFAST",
+      "file_name": "FirstNeutralTrenchFAST.json"
+    },
+    {
+      "path_id": "pathgroups.json",
+      "display_name": "pathgroups",
+      "file_name": "pathgroups.json"
+    },
+    {
+      "path_id": "SecondNeutralBump.json",
+      "display_name": "SecondNeutralBump",
+      "file_name": "SecondNeutralBump.json",
       "editor_metadata": {
         "ranged_constraints": [
           {
@@ -89,6 +156,41 @@
           }
         ]
       }
+    },
+    {
+      "path_id": "SecondNeutralTrench.json",
+      "display_name": "SecondNeutralTrench",
+      "file_name": "SecondNeutralTrench.json"
+    },
+    {
+      "path_id": "TrenchDepot.json",
+      "display_name": "TrenchDepot",
+      "file_name": "TrenchDepot.json"
+    },
+    {
+      "path_id": "TrenchtoBump.json",
+      "display_name": "TrenchtoBump",
+      "file_name": "TrenchtoBump.json"
     }
-  }
+  ],
+  "path_groups": [
+    {
+      "group_id": "group-be48ead2-6d4e-4a08-9787-7ec4fcb2553e",
+      "display_name": "Trench Paths",
+      "path_ids": [
+        "FirstNeutralTrench.json",
+        "FirstNeutralTrenchFAST.json",
+        "SecondNeutralTrench.json"
+      ]
+    },
+    {
+      "group_id": "group-24f6ec6b-f994-4a13-86c1-eaa4d5454b32",
+      "display_name": "Bump Paths",
+      "path_ids": [
+        "FirstNeutralBump.json",
+        "SecondNeutralBump.json"
+      ]
+    }
+  ],
+  "linked_targets": []
 }

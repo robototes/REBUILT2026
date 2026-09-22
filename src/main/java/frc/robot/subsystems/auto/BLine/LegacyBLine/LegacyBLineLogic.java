@@ -131,9 +131,8 @@ public class LegacyBLineLogic {
             new LegacyBLinePath("TrenchNeutral", "RT", "FirstNeutralTrench"),
             new LegacyBLinePath(
                 "DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
-            new LegacyBLinePath("BumpNeutral", "RT", "FirstNeutralBump"),
-            new LegacyBLinePath("DoubleBumpNeutral", "RT", "FirstNeutralBump", "SecondNeutralBump"),
-            new LegacyBLinePath("BumpNeutralDepot", "RT", "FirstNeutralBump"));
+            new LegacyBLinePath("Depot", "RT", "TrenchDepot"),
+            new LegacyBLinePath("TrenchNeutralDepot", "RT", "FirstNeutralTrench","TrenchDepot"));
     autos.clear();
     autos.addAll(rebuiltPaths);
     commandsMap = Map.of(0, rebuiltPaths);
@@ -351,10 +350,10 @@ public class LegacyBLineLogic {
         launcherCommand());
   }
 
-  public static Command buildSingleNeutralBumpAuto() {
+  public static Command buildSingleDepotAuto() {
     return Commands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralBump"), true),
+        buildPath(new Path("TrenchDepot"), true),
         launcherCommand());
   }
 
@@ -367,11 +366,11 @@ public class LegacyBLineLogic {
         launcherCommand());
   }
 
-  public static Command buildSingleNeutralBumpDepotAuto() {
+  public static Command buildSingleNeutralTrenchDepotAuto() {
     return BLineCommands.sequence(
         Commands.waitSeconds(autoDelayEntry.getDouble(0.0)),
-        buildPath(new Path("FirstNeutralBump"), true),
-        buildPath(new Path("BumpDepot"), false),
+        buildPath(new Path("FirstNeutralTrench"), true),
+        buildPath(new Path("TrenchDepot"), false),
         launcherCommand());
   }
 
@@ -391,16 +390,14 @@ public class LegacyBLineLogic {
 
   public static Command handleAutos() {
     switch (getSelectedAutoName()) {
-      case "TrenchNeutral":
+      case "TrenchDepot":
         return buildSingleNeutralTrenchAuto();
       case "DoubleTrenchNeutral":
         return buildDoubleNeutralTrenchAuto();
-      case "BumpNeutral":
-        return buildSingleNeutralBumpAuto();
-      case "DoubleBumpNeutral":
-        return buildDoubleNeutralBumpAuto();
-      case "BumpNeutralDepot":
-        return buildSingleNeutralBumpDepotAuto();
+      case "Depot":
+        return buildSingleDepotAuto();
+      case "TrenchNeutralDepot":
+        return buildSingleNeutralTrenchDepotAuto();
       default:
         return buildDefaultAuto();
     }

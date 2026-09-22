@@ -90,7 +90,8 @@
       {
         "value": 4.05,
         "start_ordinal": 1,
-        "end_ordinal": 1
+        "end_ordinal": 1,
+        "source": "auto_velocity"
       },
       {
         "value": 2.5,
@@ -105,7 +106,8 @@
       {
         "value": 1.37,
         "start_ordinal": 5,
-        "end_ordinal": 5
+        "end_ordinal": 5,
+        "source": "auto_velocity"
       },
       {
         "value": 4.0,
