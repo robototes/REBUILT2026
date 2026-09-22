@@ -99,18 +99,6 @@
             }
           },
           {
-            "title": "Trench Side",
-            "x": 384.0,
-            "y": 640.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Split Button Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/BLine/Trench Side",
-              "period": 0.06
-            }
-          },
-          {
             "title": "Start Position",
             "x": 0.0,
             "y": 640.0,
@@ -123,20 +111,6 @@
             }
           },
           {
-            "title": "Auto Delay",
-            "x": 640.0,
-            "y": 640.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/BLine Delays/Auto Delay",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
             "title": "Auto Chooser",
             "x": 0.0,
             "y": 512.0,
@@ -146,6 +120,32 @@
             "properties": {
               "topic": "/SmartDashboard/Auto Chooser",
               "period": 0.06
+            }
+          },
+          {
+            "title": "Trench Side",
+            "x": 384.0,
+            "y": 640.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Split Button Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/BLine2/Trench Side",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "BLine Delay",
+            "x": 640.0,
+            "y": 640.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "BLine Delay",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
             }
           }
         ]

@@ -73,7 +73,7 @@ public class LegacyBLineLogic {
   private static final LoggedDashboardChooser<Position> startPositionChooser =
       new LoggedDashboardChooser<>("BLine/Start Position");
   private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser =
-      new LoggedDashboardChooser<>("BLine/Trench Side");
+      new LoggedDashboardChooser<>("BLine2/Trench Side");
   private static final LoggedDashboardChooser<String> autoChooser =
       new LoggedDashboardChooser<>("Auto Chooser");
   private static final LoggedDashboardChooser<Integer> gameObjects =
