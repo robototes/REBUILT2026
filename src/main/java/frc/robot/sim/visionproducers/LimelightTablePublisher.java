@@ -11,10 +11,10 @@
 
 package frc.robot.sim.visionproducers;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
 
 /**
  * Publishes LimelightData to NetworkTables. This is the only class with NetworkTables dependency.

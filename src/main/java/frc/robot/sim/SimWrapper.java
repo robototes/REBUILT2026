@@ -3,16 +3,16 @@ package frc.robot.sim;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Robot;
 import frc.robot.sim.visionproducers.VisionSimFactory;
 import frc.robot.sim.visionproducers.VisionSimInterface;
 import java.util.List;
 import java.util.function.Consumer;
 import org.photonvision.simulation.VisionSystemSim;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
+import org.wpilib.smartdashboard.Field2d;
 
 /**
  * Unified simulation wrapper combining ground truth physics, vision simulation, and joystick

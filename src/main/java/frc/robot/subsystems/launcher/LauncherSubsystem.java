@@ -1,18 +1,18 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.util.Units;
+import org.wpilib.networktables.BooleanPublisher;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.NetworkTableInstance;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected double flywheelsGoal;
@@ -112,7 +112,7 @@ public class LauncherSubsystem extends SubsystemBase {
     notUnderClimbPub.set(notUunderClimb);
 
     notGoingToBeUnderTrench =
-        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
+        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Velocity);
     notGoingToBeUnderTrenchPub.set(notGoingToBeUnderTrench);
 
     return flywheelAtTarget

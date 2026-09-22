@@ -1,8 +1,8 @@
 package frc.robot.subsystems.drivebase;
 
-import static edu.wpi.first.units.Units.Meter;
-import static edu.wpi.first.units.Units.Second;
-import static edu.wpi.first.units.Units.Volts;
+import static org.wpilib.units.Units.Meter;
+import static org.wpilib.units.Units.Second;
+import static org.wpilib.units.Units.Volts;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -10,26 +10,27 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.GetTargetFromPose;
 import java.util.function.Supplier;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Subsystem;
+import org.wpilib.command2.sysid.SysIdRoutine;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.util.Units;
+import org.wpilib.system.Notifier;
+import org.wpilib.system.RobotController;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -41,7 +42,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private double m_lastSimTime;
 
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
-  private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
+  private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.ZERO;
   /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   /* Keep track if we've ever applied the operator perspective before or not */
@@ -222,14 +223,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
-    if (RobotBase.isSimulation()
-        || !m_hasAppliedOperatorPerspective
-        || DriverStation.isDisabled()) {
-      DriverStation.getAlliance()
+    if (RobotBase.isSimulation() || !m_hasAppliedOperatorPerspective || RobotState.isDisabled()) {
+      MatchState.getAlliance()
           .ifPresent(
               alliance -> {
                 this.setOperatorPerspectiveForward(
-                    alliance == DriverStation.Alliance.Blue
+                    alliance == Alliance.BLUE
                         ? kBlueAlliancePerspectiveRotation
                         : kRedAlliancePerspectiveRotation);
               });
@@ -255,8 +254,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   // returns the speeds for logging purposes
-  public ChassisSpeeds returnSpeeds() {
-    return getState().Speeds;
+  public ChassisVelocities returnSpeeds() {
+    return getState().Velocity;
   }
 
   // method for on-demand coasting control
@@ -278,17 +277,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   }
 
   public boolean isStationary() {
-    var speeds = getState().Speeds;
-    return MathUtil.isNear(0, speeds.vxMetersPerSecond, 0.01)
-        && MathUtil.isNear(0, speeds.vyMetersPerSecond, 0.01)
-        && MathUtil.isNear(0, speeds.omegaRadiansPerSecond, Units.degreesToRadians(2));
+    var speeds = getState().Velocity;
+    return MathUtil.isNear(0, speeds.vx, 0.01)
+        && MathUtil.isNear(0, speeds.vy, 0.01)
+        && MathUtil.isNear(0, speeds.omega, Units.degreesToRadians(2));
   }
 
   public double[] getWheelRotations() {
     double wheelCircumference = tau(CompTunerConstants.kWheelRadius.abs(Meter));
     double[] values = new double[4];
     for (int i = 0; i < values.length; i++) {
-      values[i] = getState().ModulePositions[i].distanceMeters / wheelCircumference;
+      values[i] = getState().ModulePositions[i].distance / wheelCircumference;
     }
     return values;
   }
@@ -299,14 +298,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   /** Clamps the pose estimator to the field boundary. Does not affect driving. */
   private void clampPoseToField() {
-    if (GetTargetFromPose.BALLING.get()) {
-      // Don't clamp pose if balling, since we may intentionally drive outside the field boundaries
-      // to pick up balls
-      return;
-    }
     Pose2d current = getState().Pose;
-    double clampedX = MathUtil.clamp(current.getX(), 0.0, FIELD_X_MAX);
-    double clampedY = MathUtil.clamp(current.getY(), 0.0, FIELD_Y_MAX);
+    double clampedX = Math.clamp(current.getX(), 0.0, FIELD_X_MAX);
+    double clampedY = Math.clamp(current.getY(), 0.0, FIELD_Y_MAX);
 
     if (clampedX != current.getX() || clampedY != current.getY()) {
       resetPose(new Pose2d(new Translation2d(clampedX, clampedY), current.getRotation()));

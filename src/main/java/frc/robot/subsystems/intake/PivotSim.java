@@ -4,16 +4,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.simulation.RobotSim;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.util.Units;
+import org.wpilib.simulation.SingleJointedArmSim;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.smartdashboard.MechanismLigament2d;
+import org.wpilib.smartdashboard.MechanismRoot2d;
+import org.wpilib.telemetry.Telemetry;
 
 public class PivotSim extends SubsystemBase {
   private final SingleJointedArmSim intakeArmSim;
@@ -53,7 +53,7 @@ public class PivotSim extends SubsystemBase {
     root = mech.getRoot("Shoulder", 20, 20);
     arm = root.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 0));
 
-    SmartDashboard.putData("Pivot", mech);
+    Telemetry.log("Pivot", mech);
   }
 
   // update sim
@@ -61,12 +61,12 @@ public class PivotSim extends SubsystemBase {
     intakeArmSim.setInput(intakeArmSimState.getMotorVoltage());
     intakeArmSim.update(RobotSim.UPDATE_S);
 
-    double angleRads = intakeArmSim.getAngleRads();
+    double angleRads = intakeArmSim.getAngle();
     double motorRotations = Units.radiansToRotations(angleRads) * PIVOT_GEAR_RATIO;
 
     intakeArmSimState.setRawRotorPosition(motorRotations);
     intakeArmSimState.setRotorVelocity(
-        Units.radiansToRotations(intakeArmSim.getVelocityRadPerSec()) * PIVOT_GEAR_RATIO);
+        Units.radiansToRotations(intakeArmSim.getVelocity()) * PIVOT_GEAR_RATIO);
 
     // update sim
     arm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);

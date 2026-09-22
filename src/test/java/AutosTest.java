@@ -1,51 +1,22 @@
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.pathplanner.lib.commands.PathPlannerAuto;
-import frc.robot.generated.CompTunerConstants;
-import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
-import frc.robot.subsystems.auto.AutoPath;
-import java.io.IOException;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import org.json.simple.parser.ParseException;
-import org.junit.jupiter.api.BeforeEach;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 class AutosTest {
-
-  @BeforeEach
-  void setup() {
-
-    AutoBuilderConfig.buildAuto(CompTunerConstants.createDrivetrain(), true);
-  }
-
   @Test
-  void validateFileName() throws IOException, ParseException {
-    AutoLogic.initCommandsAndPaths(true);
+  void validateFileName() {
+    Path autosDirectory = Path.of("src", "main", "deploy", "pathplanner", "autos");
 
-    Dictionary<String, Boolean> pathDictionary = new Hashtable<>();
-    for (AutoPath path : AutoLogic.getAutos()) { // Every auto in the auto chooser
-      pathDictionary.put(
-          path.getAutoName(), false); // Putting each auto from the auto chooser in dictionary
-    }
+    assertTrue(
+        !AutoLogic.getConfiguredAutoNames().isEmpty(), "No auto paths are configured in AutoLogic");
 
-    // We expect >= 1 paths, otherwise its possible we forgot to call
-    // AutoLogic::initCommandsAndPaths().
-    if (pathDictionary.isEmpty()) {
-      throw new IllegalStateException(
-          "No auto paths found. Did you forget to call AutoLogic::initCommandsAndPaths()?");
-    }
-
-    Enumeration<String> k = pathDictionary.keys();
-    while (k.hasMoreElements()) { // As long as there are more autos in the list
-      String key = k.nextElement();
-      // Next entry in the dictionary
-      // Asserts false if file name does not exist
-
-      assertFalse(
-          PathPlannerAuto.getPathGroupFromAutoFile(key).isEmpty(), "No file path matches" + key);
+    for (String autoName : AutoLogic.getConfiguredAutoNames()) {
+      assertTrue(
+          Files.isRegularFile(autosDirectory.resolve(autoName + ".auto")),
+          "No auto file matches " + autoName);
     }
   }
 }

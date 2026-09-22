@@ -1,6 +1,6 @@
 package frc.robot.subsystems.launcher;
 
-import static edu.wpi.first.units.Units.Volts;
+import static org.wpilib.units.Units.Volts;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
@@ -10,21 +10,6 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -32,6 +17,21 @@ import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.hardware.discrete.AnalogInput;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.util.Units;
+import org.wpilib.networktables.BooleanPublisher;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructArrayPublisher;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Voltage;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
@@ -103,7 +103,7 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor =
         new TalonFX(
             Hardware.TURRET_MOTOR_ID,
-            RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+            RobotType.isAlpha() ? new CANBus() : CompTunerConstants.kCANBus);
     limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
     zeroPublisher.set(false);
     turretConfig();
@@ -219,7 +219,7 @@ public class TurretSubsystem extends SubsystemBase {
           degrees = MathUtil.inputModulus(degrees, TURRET_MIN, TURRET_MAX);
 
           // Clamp to soft limits
-          degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
+          degrees = Math.clamp(degrees, TURRET_MIN, TURRET_MAX);
 
           double rotations = Units.degreesToRotations(degrees);
 
@@ -267,7 +267,7 @@ public class TurretSubsystem extends SubsystemBase {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
               };
 
-              double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
+              double finalTarget = Math.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
               double bestDist = Double.MAX_VALUE;
 
               for (double candidate : candidates) {
@@ -299,11 +299,11 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void brakeTurret() {
-    turretMotor.setNeutralMode(NeutralModeValue.Brake);
+    turretMotor.configNeutralMode(NeutralModeValue.Brake);
   }
 
   public void coastTurret() {
-    turretMotor.setNeutralMode(NeutralModeValue.Coast);
+    turretMotor.configNeutralMode(NeutralModeValue.Coast);
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {

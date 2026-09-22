@@ -1,20 +1,21 @@
 package frc.robot.sensors;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.RGBWColor;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj.RobotState;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StringPublisher;
+import org.wpilib.system.Timer;
+import org.wpilib.units.Units;
 
 public class LEDSubsystem extends SubsystemBase {
   public enum LEDMode {
@@ -41,7 +42,7 @@ public class LEDSubsystem extends SubsystemBase {
   /** Animation slot index used for LED animations. */
   private static final int SLOT = 0;
 
-  private final CANdle candle = new CANdle(CAN_ID);
+  private final CANdle candle = new CANdle(CAN_ID, new CANBus());
   private final SolidColor solidController = new SolidColor(0, END_INDEX);
   private final EmptyAnimation emptyAnimation = new EmptyAnimation(SLOT);
   private final RainbowAnimation rainbowAnimation =
@@ -149,7 +150,7 @@ public class LEDSubsystem extends SubsystemBase {
 
     this.interval = interval;
     showingPrimary = true;
-    lastToggleTime = Timer.getFPGATimestamp();
+    lastToggleTime = Timer.getTimestamp();
 
     setHardwareColor(a);
     publishState();
@@ -206,10 +207,10 @@ public class LEDSubsystem extends SubsystemBase {
     }
 
     if (currentPattern == LEDPattern.ALTERNATE) {
-      if (Timer.getFPGATimestamp() - lastToggleTime > interval) {
+      if (Timer.getTimestamp() - lastToggleTime > interval) {
         showingPrimary = !showingPrimary;
         setHardwareColor(showingPrimary ? primaryColor : secondaryColor);
-        lastToggleTime = Timer.getFPGATimestamp();
+        lastToggleTime = Timer.getTimestamp();
       }
     }
   }

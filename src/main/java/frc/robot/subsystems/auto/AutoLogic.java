@@ -1,22 +1,13 @@
 package frc.robot.subsystems.auto;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Radians;
+import static org.wpilib.units.Units.Meters;
+import static org.wpilib.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.Radians;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
@@ -27,6 +18,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.util.Units;
+import org.wpilib.networktables.NetworkTableEntry;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.Tunables;
 
 public class AutoLogic {
 
@@ -55,6 +56,21 @@ public class AutoLogic {
 
   private static AutoPath defaultPath;
 
+  private static final List<String> REBUILT_AUTO_NAMES =
+      List.of(
+          "C-Outpost-Depot",
+          "LeftTrench-Depot",
+          "LT-Neutral-Depot",
+          "LT-Neutral",
+          "LT-DoubleNeutral",
+          "RightTrench-Outpost",
+          "RT-Neutral-Outpost",
+          "Rotate-RT-Neutral",
+          "RT-Neutral",
+          "RT-DoubleNeutral",
+          "RT-BLOCK",
+          "LT-BLOCK");
+
   private static List<AutoPath> rebuiltPaths = List.of();
 
   private static Map<Integer, List<AutoPath>> commandsMap = Map.of();
@@ -64,13 +80,11 @@ public class AutoLogic {
 
   /* ---------------- Choosers ---------------- */
 
-  private static final SendableChooser<StartPosition> startPositionChooser =
-      new SendableChooser<>();
+  private static final Selectable<StartPosition> startPositionChooser = new Selectable<>();
 
-  private static final DynamicSendableChooser<String> availableAutos =
-      new DynamicSendableChooser<>();
+  private static final Selectable<String> availableAutos = new Selectable<>();
 
-  private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
+  private static final Selectable<Integer> gameObjects = new Selectable<>();
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
@@ -83,6 +97,10 @@ public class AutoLogic {
     }
 
     return List.of();
+  }
+
+  public static List<String> getConfiguredAutoNames() {
+    return REBUILT_AUTO_NAMES;
   }
 
   /* ---------------- Init ---------------- */
@@ -111,19 +129,7 @@ public class AutoLogic {
     defaultPath = new AutoPath("Default", "Default");
 
     physicalRebuiltPaths =
-        List.of(
-            new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-            new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
-            new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
-            new AutoPath("LT-Neutral", "LT-Neutral"),
-            new AutoPath("LT-DoubleNeutral", "LT-DoubleNeutral"),
-            new AutoPath("RightTrench-Outpost", "RightTrench-Outpost"),
-            new AutoPath("RT-Neutral-Outpost", "RT-Neutral-Outpost"),
-            new AutoPath("Rotate-RT-Neutral", "Rotate-RT-Neutral"),
-            new AutoPath("RT-Neutral", "RT-Neutral"),
-            new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
-            new AutoPath("RT-BLOCK", "RT-BLOCK"),
-            new AutoPath("LT-BLOCK", "LT-BLOCK"));
+      REBUILT_AUTO_NAMES.stream().map(name -> new AutoPath(name, name)).toList();
 
     rebuiltPaths = physicalRebuiltPaths;
 
@@ -148,23 +154,23 @@ public class AutoLogic {
   public static void initSmartDashBoard() {
     requirePathsInitialized();
 
-    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
+    startPositionChooser.addDefault(StartPosition.MISC.title, StartPosition.MISC);
 
     for (StartPosition pos : StartPosition.values()) {
-      startPositionChooser.addOption(pos.title, pos);
+      startPositionChooser.add(pos.title, pos);
     }
 
-    gameObjects.setDefaultOption("0", 0);
+    gameObjects.addDefault("0", 0);
     for (int i = 1; i < commandsMap.size(); i++) {
-      gameObjects.addOption(String.valueOf(i), i);
+      gameObjects.add(String.valueOf(i), i);
     }
 
     autoDelayEntry.setDouble(0.0);
 
-    SmartDashboard.putData("Starting Position", startPositionChooser);
-    SmartDashboard.putData("Auto Mode", gameObjects);
-    SmartDashboard.putData("Available Auto Variants", availableAutos);
-    SmartDashboard.putString("Auto Key", keys);
+    Tunables.publish("Starting Position", startPositionChooser);
+    Tunables.publish("Auto Mode", gameObjects);
+    Tunables.publish("Available Auto Variants", availableAutos);
+    Telemetry.log("Auto Key", keys);
 
     startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
     gameObjects.onChange(v -> filterAutos(gameObjects.getSelected()));
@@ -177,15 +183,15 @@ public class AutoLogic {
   public static void filterAutos(int numGameObjects) {
     requirePathsInitialized();
 
-    availableAutos.clearOptions();
-    availableAutos.setDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
+    availableAutos.clear();
+    availableAutos.addDefault(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
     List<AutoPath> autoList = commandsMap.get(numGameObjects);
     if (autoList == null) return;
 
     for (AutoPath auto : autoList) {
       if (auto.getStartPose().equals(startPositionChooser.getSelected())) {
-        availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
+        availableAutos.add(auto.getDisplayName(), auto.getDisplayName());
       }
     }
   }
@@ -193,7 +199,7 @@ public class AutoLogic {
   /* ---------------- Getters ---------------- */
 
   public static String getSelectedAutoName() {
-    return availableAutos.getSelectedName();
+    return availableAutos.getSelected();
   }
 
   public static boolean chooserHasAutoSelected() {
@@ -215,7 +221,7 @@ public class AutoLogic {
       return defaultPath.getStartPose2d();
     }
 
-    return Pose2d.kZero;
+    return Pose2d.ZERO;
   }
 
   public static Command getSelectedAuto() {

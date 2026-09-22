@@ -3,17 +3,18 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-import edu.wpi.first.math.system.LinearSystem;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.simulation.RobotSim;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.LinearSystem;
+import org.wpilib.math.system.Models;
+import org.wpilib.simulation.FlywheelSim;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.smartdashboard.MechanismLigament2d;
+import org.wpilib.smartdashboard.MechanismRoot2d;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.units.Units;
 
 public class RollerSim extends SubsystemBase {
   // flywheel sim variables
@@ -30,7 +31,7 @@ public class RollerSim extends SubsystemBase {
 
   // flywheel system variable
   LinearSystem rollerSystem =
-      LinearSystemId.createFlywheelSystem(
+      Models.flywheelFromPhysicalConstants(
           DCMotor.getKrakenX60(1), 0.002, ROLLERS_GEAR_RATIO); // idk how to calculate MOI
 
   public RollerSim(TalonFX leftRoller, TalonFX rightRoller) {
@@ -53,7 +54,7 @@ public class RollerSim extends SubsystemBase {
 
     roller = root.append(new MechanismLigament2d("roller", 2, 0));
 
-    SmartDashboard.putData("Roller", mech);
+    Telemetry.log("Roller", mech);
   }
 
   // update sim
@@ -64,9 +65,9 @@ public class RollerSim extends SubsystemBase {
     rightRollerSim.setInput(rightRollerSimState.getMotorVoltage());
     rightRollerSim.update(RobotSim.UPDATE_S);
 
-    double leftRPM = leftRollerSim.getAngularVelocityRPM();
+    double leftRPM = Units.RadiansPerSecond.of(leftRollerSim.getAngularVelocity()).in(Units.RPM);
     double leftRPS = leftRPM / 60.0;
-    double rightRPM = rightRollerSim.getAngularVelocityRPM();
+    double rightRPM = Units.RadiansPerSecond.of(rightRollerSim.getAngularVelocity()).in(Units.RPM);
     double rightRPS = rightRPM / 60.0;
 
     leftRollerSimState.setRotorVelocity(leftRPS * ROLLERS_GEAR_RATIO);

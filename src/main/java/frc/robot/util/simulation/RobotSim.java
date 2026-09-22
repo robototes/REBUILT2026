@@ -1,9 +1,9 @@
 package frc.robot.util.simulation;
 
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.simulation.FuelSim.Hub;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.NetworkTableInstance;
 
 public class RobotSim {
 
@@ -28,7 +28,7 @@ public class RobotSim {
         SIM_ROBOT_LENGTH_M,
         SIM_ROBOT_BUMPER_HEIGHT,
         () -> drive.getState().Pose,
-        () -> drive.getState().Speeds);
+        () -> drive.getState().Velocity);
     fuelSim.registerIntake(0.1, 0.2, 0.1, 0.746, () -> true);
     scorePublisher =
         NetworkTableInstance.getDefault()

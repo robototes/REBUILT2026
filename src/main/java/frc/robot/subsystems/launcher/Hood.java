@@ -1,7 +1,8 @@
 package frc.robot.subsystems.launcher;
 
-import static edu.wpi.first.units.Units.Volts;
+import static org.wpilib.units.Units.Volts;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -11,18 +12,6 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.TimestampedDouble;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.util.tuning.NtTunableBoolean;
@@ -30,6 +19,18 @@ import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.networktables.BooleanPublisher;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.TimestampedDouble;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Voltage;
 
 public class Hood extends SubsystemBase {
   private final TalonFX hood;
@@ -66,7 +67,7 @@ public class Hood extends SubsystemBase {
   private final StatusSignal<Angle> SS_pos;
 
   public Hood() {
-    hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
+    hood = new TalonFX(Hardware.HOOD_MOTOR_ID, new CANBus());
 
     configureMotor();
     hood.clearStickyFaults();
@@ -179,7 +180,7 @@ public class Hood extends SubsystemBase {
   }
 
   public boolean atTargetPosition() {
-    return DriverStation.isEnabled()
+    return RobotState.isEnabled()
         && Math.abs(SS_pos.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
   }
 

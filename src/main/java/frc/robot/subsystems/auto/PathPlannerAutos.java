@@ -4,15 +4,15 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 
 public class PathPlannerAutos {
   private static List<PathPlannerTrajectory> pathsToTrajectories(
@@ -21,7 +21,7 @@ public class PathPlannerAutos {
       return List.of();
     }
     RobotConfig robotConfig = RobotConfig.fromGUISettings();
-    ChassisSpeeds startingSpeeds = new ChassisSpeeds();
+    ChassisVelocities startingSpeeds = new ChassisVelocities();
     List<PathPlannerTrajectory> trajectories = new ArrayList<>(paths.size());
     for (var path : paths) {
       PathPlannerTrajectory trajectory =
@@ -43,7 +43,7 @@ public class PathPlannerAutos {
 
     Pose2d startingPose = auto.getStartingPose();
     if (startingPose == null) {
-      startingPose = Pose2d.kZero;
+      startingPose = Pose2d.ZERO;
     }
     this.startingPose = startingPose;
     List<PathPlannerTrajectory> trajectories;

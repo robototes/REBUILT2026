@@ -1,18 +1,18 @@
 package frc.robot.subsystems.auto;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.networktables.NetworkTableEntry;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.system.Timer;
+import org.wpilib.telemetry.Telemetry;
 
 public class AutonomousField {
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
@@ -34,13 +34,13 @@ public class AutonomousField {
     AutonomousField autonomousField =
         new AutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
-    SmartDashboard.putData("Selected auto", autonomousField.getField());
-    SmartDashboard.putData("Start pose", autonomousField.getStartPose());
+    Telemetry.log("Selected auto", autonomousField.getField());
+    Telemetry.log("Start pose", autonomousField.getStartPose());
 
     addPeriodic.accept(
         () -> {
           autonomousField.update(AutoLogic.getSelectedAutoName());
-          SmartDashboard.putNumber(
+          Telemetry.log(
               "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
         },
         UPDATE_RATE);
@@ -95,7 +95,7 @@ public class AutonomousField {
 
   public Pose2d getUpdatedPose(String autoName) {
     double speed = speedMultiplier.getAsDouble();
-    double fpgaTime = Timer.getFPGATimestamp();
+    double fpgaTime = Timer.getTimestamp();
 
     if (lastName.isEmpty() || !lastName.get().equals(autoName)) {
       lastName = Optional.of(autoName);
@@ -110,7 +110,7 @@ public class AutonomousField {
       if (autoData.getStartingPose() != null) {
         return autoData.getStartingPose();
       }
-      return Pose2d.kZero;
+      return Pose2d.ZERO;
     }
 
     lastTrajectoryTimeOffset += (fpgaTime - lastFPGATime) * speed;
@@ -132,7 +132,7 @@ public class AutonomousField {
   /* ---------------- Periodic update ---------------- */
 
   public void update(String autoName) {
-    if (DriverStation.isEnabled()) {
+    if (RobotState.isEnabled()) {
       lastName = Optional.empty();
       return;
     }

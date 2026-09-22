@@ -7,17 +7,17 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.DoubleTopic;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.units.measure.AngularVelocity;
 
 public class IntakeRollers extends SubsystemBase {
   // motors
@@ -48,8 +48,8 @@ public class IntakeRollers extends SubsystemBase {
     leftRoller =
         new TalonFX(
             Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
-    rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
+            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : new CANBus()));
+    rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID, new CANBus());
     motorConfigs();
     leftRoller.clearStickyFaults();
     rightRoller.clearStickyFaults();

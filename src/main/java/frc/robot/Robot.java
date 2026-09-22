@@ -7,26 +7,6 @@ package frc.robot;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.net.WebServer;
-import edu.wpi.first.util.datalog.DataLog;
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
@@ -43,6 +23,28 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
+import org.wpilib.command2.CommandScheduler;
+import org.wpilib.datalog.DataLog;
+import org.wpilib.driverstation.DriverStation;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.framework.TimedRobot;
+import org.wpilib.hardware.bus.CANPort;
+import org.wpilib.hardware.power.PowerDistribution;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.util.Units;
+import org.wpilib.net.WebServer;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.system.DataLogManager;
+import org.wpilib.system.Filesystem;
+import org.wpilib.system.RobotController;
+import org.wpilib.system.Timer;
+import org.wpilib.telemetry.Telemetry;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -84,20 +86,19 @@ public class Robot extends TimedRobot {
       DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
-    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
-    LiveWindow.disableAllTelemetry();
-    LiveWindow.enableTelemetry(PDH);
+    PDH = new PowerDistribution(CANPort.CAN_S0, Hardware.PDH_ID, PowerDistribution.ModuleType.REV);
+    Telemetry.log("PDH", PDH);
     BuildInfo.logBuildInfo();
     // Start GC monitor to count garbage collections and publish to SmartDashboard
     frc.robot.util.GCMonitor.start();
 
     // Set brownout Voltage
-    RobotController.setBrownoutVoltage(BROWNOUT_VOLTAGE);
+    RobotController.setBrownoutVoltages(BROWNOUT_VOLTAGE, BROWNOUT_VOLTAGE + 0.5);
 
     // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
     mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
-    SmartDashboard.putData("Mechanism2d", mechanismRobot);
+    Telemetry.log("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
 
     // $VISIONSIM - Wrapper for sim features
@@ -141,7 +142,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance()
         .onCommandFinish(command -> DataLogManager.log("Command finished: " + command.getName()));
 
-    SmartDashboard.putData(CommandScheduler.getInstance());
+    Telemetry.log("CommandScheduler", CommandScheduler.getInstance());
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       AutoLogic.initCommandsAndPaths(false);
@@ -161,8 +162,8 @@ public class Robot extends TimedRobot {
       DataLog log = DataLogManager.getLog();
       log.addSchema(Pose2d.struct);
       log.addSchema(Pose3d.struct);
-      log.addSchema(ChassisSpeeds.struct);
-      log.addSchema(SwerveModuleState.struct);
+      log.addSchema(ChassisVelocities.struct);
+      log.addSchema(SwerveModuleVelocity.struct);
       log.addSchema(SwerveModulePosition.struct);
     }
   }
@@ -177,7 +178,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     // Resume logging every X seconds
-    double time = Timer.getFPGATimestamp();
+    double time = Timer.getTimestamp();
     if (time - LAST_TIME >= 1) {
       LAST_TIME = time;
       DataLogManager.getLog().resume();
@@ -205,7 +206,7 @@ public class Robot extends TimedRobot {
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 
-    SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
+    Telemetry.log("GCCount", GCMonitor.getGcCount());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -254,7 +255,7 @@ public class Robot extends TimedRobot {
       if (subsystems.hood.isHoodZeroed()) {
         subsystems.hood.setHoodPosition(0);
       } else {
-        DriverStation.reportWarning(
+        DriverStationErrors.reportWarning(
             "Attempted to set hood position although it hasn't been zeroed", false);
       }
     }
@@ -288,7 +289,8 @@ public class Robot extends TimedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
+      double initialYaw =
+          NetworkTableInstance.getDefault().getEntry("/Selected auto/Robot/2").getDouble(0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
@@ -336,14 +338,14 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void testInit() {
+  public void utilityInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void utilityPeriodic() {}
 
   /** This function is called once when the robot is first started up. */
   @Override

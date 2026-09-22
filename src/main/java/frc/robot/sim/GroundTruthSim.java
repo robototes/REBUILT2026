@@ -17,14 +17,14 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.pathplanner.lib.util.FlippingUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Robot;
 import java.util.function.Consumer;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.telemetry.Telemetry;
 
 /**
  * Simulation helper that tracks the ground truth robot pose independently of odometry drift. This
@@ -85,12 +85,12 @@ public class GroundTruthSim implements GroundTruthSimInterface {
     double deltaTime = currentTime - m_lastUpdateTime;
     m_lastUpdateTime = currentTime;
 
-    ChassisSpeeds speeds = m_drivetrain.getState().Speeds;
+    ChassisVelocities speeds = m_drivetrain.getState().Velocity;
 
     // Calculate how much the robot moved this timestep
-    double dx = speeds.vxMetersPerSecond * deltaTime;
-    double dy = speeds.vyMetersPerSecond * deltaTime;
-    double dtheta = speeds.omegaRadiansPerSecond * deltaTime;
+    double dx = speeds.vx * deltaTime;
+    double dy = speeds.vy * deltaTime;
+    double dtheta = speeds.omega * deltaTime;
 
     double distanceThisStep = Math.hypot(dx, dy);
     double rotationThisStep = Math.abs(dtheta);
@@ -194,7 +194,7 @@ public class GroundTruthSim implements GroundTruthSimInterface {
 
   /** True if the robot is currently configured as red alliance. */
   private boolean isRedAlliance() {
-    return DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+    return MatchState.getAlliance().orElse(Alliance.BLUE) == Alliance.RED;
   }
 
   /**
@@ -234,24 +234,22 @@ public class GroundTruthSim implements GroundTruthSimInterface {
    * Publishes simulation telemetry to SmartDashboard. Call this from Robot.simulationPeriodic().
    */
   public void publishTelemetry() {
-    SmartDashboard.putNumber("Sim/GroundTruth/X", m_groundTruthPose.getX());
-    SmartDashboard.putNumber("Sim/GroundTruth/Y", m_groundTruthPose.getY());
-    SmartDashboard.putNumber(
-        "Sim/GroundTruth/RotationDeg", m_groundTruthPose.getRotation().getDegrees());
+    Telemetry.log("Sim/GroundTruth/X", m_groundTruthPose.getX());
+    Telemetry.log("Sim/GroundTruth/Y", m_groundTruthPose.getY());
+    Telemetry.log("Sim/GroundTruth/RotationDeg", m_groundTruthPose.getRotation().getDegrees());
 
     Pose2d estimatedPose = m_drivetrain.getState().Pose;
-    SmartDashboard.putNumber("Sim/EstimatedPose/X", estimatedPose.getX());
-    SmartDashboard.putNumber("Sim/EstimatedPose/Y", estimatedPose.getY());
-    SmartDashboard.putNumber(
-        "Sim/EstimatedPose/RotationDeg", estimatedPose.getRotation().getDegrees());
+    Telemetry.log("Sim/EstimatedPose/X", estimatedPose.getX());
+    Telemetry.log("Sim/EstimatedPose/Y", estimatedPose.getY());
+    Telemetry.log("Sim/EstimatedPose/RotationDeg", estimatedPose.getRotation().getDegrees());
 
     double poseError =
         m_groundTruthPose.getTranslation().getDistance(estimatedPose.getTranslation());
     double headingError =
         Math.abs(m_groundTruthPose.getRotation().minus(estimatedPose.getRotation()).getDegrees());
-    SmartDashboard.putNumber("Sim/PoseErrorMeters", poseError);
-    SmartDashboard.putNumber("Sim/HeadingErrorDeg", headingError);
-    SmartDashboard.putNumber("Sim/TotalDistanceTraveled", m_totalDistanceTraveled);
+    Telemetry.log("Sim/PoseErrorMeters", poseError);
+    Telemetry.log("Sim/HeadingErrorDeg", headingError);
+    Telemetry.log("Sim/TotalDistanceTraveled", m_totalDistanceTraveled);
   }
 
   /**

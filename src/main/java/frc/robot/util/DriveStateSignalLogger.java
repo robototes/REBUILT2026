@@ -29,10 +29,10 @@ public class DriveStateSignalLogger {
     m_poseArray[1] = state.Pose.getY();
     m_poseArray[2] = state.Pose.getRotation().getDegrees();
     for (int i = 0; i < 4; ++i) {
-      m_moduleStatesArray[i * 2 + 0] = state.ModuleStates[i].angle.getRadians();
-      m_moduleStatesArray[i * 2 + 1] = state.ModuleStates[i].speedMetersPerSecond;
+      m_moduleStatesArray[i * 2 + 0] = state.ModuleVelocities[i].angle.getRadians();
+      m_moduleStatesArray[i * 2 + 1] = state.ModuleVelocities[i].velocity;
       m_moduleTargetsArray[i * 2 + 0] = state.ModuleTargets[i].angle.getRadians();
-      m_moduleTargetsArray[i * 2 + 1] = state.ModuleTargets[i].speedMetersPerSecond;
+      m_moduleTargetsArray[i * 2 + 1] = state.ModuleTargets[i].velocity;
     }
 
     SignalLogger.writeDoubleArray("DriveState/Pose", m_poseArray);

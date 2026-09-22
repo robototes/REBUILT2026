@@ -11,7 +11,7 @@
 
 package frc.robot.sim.visionproducers;
 
-import edu.wpi.first.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Pose3d;
 
 /**
  * Pure data container representing Limelight NetworkTables data format. No WPILib/NetworkTables

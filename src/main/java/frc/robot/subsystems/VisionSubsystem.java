@@ -2,27 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanSubscriber;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
@@ -32,6 +11,27 @@ import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.wpilib.command2.SubsystemBase;
+import org.wpilib.fields.Field;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.util.Units;
+import org.wpilib.networktables.BooleanSubscriber;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.FieldObject2d;
+import org.wpilib.system.Timer;
+import org.wpilib.telemetry.Telemetry;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -164,27 +164,31 @@ public class VisionSubsystem extends SubsystemBase {
   private CommandSwerveDrivetrain drivetrain;
 
   private record VisionPoseTracking(
-      SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
+      SwerveDriveState swerveState, ChassisVelocities swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
   private ShowVisionOnField m_showVisionOnField;
+
+  private static double fpgaToCurrentTime(double timestampSeconds) {
+    return timestampSeconds + Utils.getCurrentTimeSeconds() - Timer.getTimestamp();
+  }
 
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
 
     robotField = new Field2d();
-    SmartDashboard.putData(robotField);
+    Telemetry.log("VisionField", robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
 
-    SmartDashboard.putNumber("/vision/limelight-a_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-a_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-a_time since last reading", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_time since last reading", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_time since last reading", 0);
+    Telemetry.log("/vision/limelight-a_Last timestamp", 0);
+    Telemetry.log("/vision/limelight-b_Last timestamp", 0);
+    Telemetry.log("/vision/limelight-c_Last timestamp", 0);
+    Telemetry.log("/vision/limelight-a_Num targets", 0);
+    Telemetry.log("/vision/limelight-b_Num targets", 0);
+    Telemetry.log("/vision/limelight-c_Num targets", 0);
+    Telemetry.log("/vision/limelight-a_time since last reading", 0);
+    Telemetry.log("/vision/limelight-b_time since last reading", 0);
+    Telemetry.log("/vision/limelight-c_time since last reading", 0);
 
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
@@ -192,9 +196,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void update() {
     if (getDisableVision()) {
-      SmartDashboard.putString("/vision/limelight-a_rejectReason", "vision-disabled");
-      SmartDashboard.putString("/vision/limelight-b_rejectReason", "vision-disabled");
-      SmartDashboard.putString("/vision/limelight-c_rejectReason", "vision-disabled");
+      Telemetry.log("/vision/limelight-a_rejectReason", "vision-disabled");
+      Telemetry.log("/vision/limelight-b_rejectReason", "vision-disabled");
+      Telemetry.log("/vision/limelight-c_rejectReason", "vision-disabled");
       return;
     }
 
@@ -205,13 +209,13 @@ public class VisionSubsystem extends SubsystemBase {
     SwerveDriveState swerveDriveState = drivetrain.getState();
     visionPoseTracking =
         new VisionPoseTracking(
-            swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
+            swerveDriveState, swerveDriveState.Velocity, new Pose3d(swerveDriveState.Pose));
 
     // Compute defense state once per update cycle so all cameras see the same value.
     // isUnderDefense() uses lastFieldPose and visionPoseTracking, both of which are
     // set before any camera processes — this is intentional.
     boolean underDefense = isUnderDefense(visionPoseTracking);
-    SmartDashboard.putBoolean("/vision/underDefense", underDefense);
+    Telemetry.log("/vision/underDefense", underDefense);
 
     processCamera(
         ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
@@ -277,11 +281,9 @@ public class VisionSubsystem extends SubsystemBase {
     rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
-        && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+        && (Math.abs(visionPoseTracking.swerveSpeeds.vx) > VisionConstants.MAX_XY_VELO_ALPHA
+            || Math.abs(visionPoseTracking.swerveSpeeds.vy) > VisionConstants.MAX_XY_VELO_ALPHA
+            || Math.abs(visionPoseTracking.swerveSpeeds.omega)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
       publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed");
       return;
@@ -318,7 +320,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
-      SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
+      Telemetry.log("/vision/" + camera.getName() + "_tagSpread", spread);
       publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
       return;
     }
@@ -359,7 +361,7 @@ public class VisionSubsystem extends SubsystemBase {
     maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, camera.getName());
 
     drivetrain.addVisionMeasurement(
-        visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+        visionPose2d, fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
     robotField.setRobotPose(drivetrain.getState().Pose);
 
     if (estimate.isMegaTag2) {
@@ -376,23 +378,23 @@ public class VisionSubsystem extends SubsystemBase {
       lastTimestampSeconds = estimate.timestampSeconds;
     }
 
-    SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
+    Telemetry.log("/vision/" + camera.getName() + "_tagSpread", spread);
     publishDiagnostics(estimate, visionPose2d, camera, "none");
   }
 
   private boolean isUnderDefense(VisionPoseTracking visionPoseTracking) {
     if (visionPoseTracking == null) return false;
-    ChassisSpeeds speeds = visionPoseTracking.swerveSpeeds;
+    ChassisVelocities speeds = visionPoseTracking.swerveSpeeds;
 
-    double omega = Math.abs(speeds.omegaRadiansPerSecond);
-    double wheelSpeed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    double omega = Math.abs(speeds.omega);
+    double wheelSpeed = Math.hypot(speeds.vx, speeds.vy);
     boolean likelySpun =
         omega > VisionConstants.DEFENSE_SPIN_OMEGA
             && wheelSpeed < VisionConstants.DEFENSE_SPIN_MAX_TRANSLATION;
 
     boolean positionDiverged = false;
     if (lastFieldPose != null) {
-      double timeSinceVision = Timer.getFPGATimestamp() - lastTimestampSeconds;
+      double timeSinceVision = Timer.getTimestamp() - lastTimestampSeconds;
       Pose2d drivePose = visionPoseTracking.drivePose3d.toPose2d();
       double disagreement = lastFieldPose.getTranslation().getDistance(drivePose.getTranslation());
       double expectedDrift =
@@ -451,7 +453,7 @@ public class VisionSubsystem extends SubsystemBase {
    * SPREAD_REJECT+1 if any tag ID is unknown (immediate hard reject).
    */
   private double getMultiTagSpread(
-      RawFiducial[] fiducials, Pose3d reportedPose, AprilTagFieldLayout aprilTagFieldLayout) {
+      RawFiducial[] fiducials, Pose3d reportedPose, Field aprilTagFieldLayout) {
     if (aprilTagFieldLayout == null || fiducials == null || fiducials.length < 2) return 0.0;
 
     double sumSqErr = 0;
@@ -489,7 +491,7 @@ public class VisionSubsystem extends SubsystemBase {
             && isPoseOnField(visionPose);
     if (odomOffField && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
-      SmartDashboard.putString("/vision/" + cameraName + "_rejectReason", "odometry-reset");
+      Telemetry.log("/vision/" + cameraName + "_rejectReason", "odometry-reset");
     }
   }
 
@@ -522,8 +524,8 @@ public class VisionSubsystem extends SubsystemBase {
             ? Double.MAX_VALUE
             : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
 
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
+    Telemetry.log("/vision/" + cameraName + " Mt1 STD xy", xy);
+    Telemetry.log("/vision/" + cameraName + " Mt1 STD theta", theta);
     return VecBuilder.fill(xy, xy, theta);
   }
 
@@ -552,7 +554,7 @@ public class VisionSubsystem extends SubsystemBase {
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
 
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt2 STD xy", xy);
+    Telemetry.log("/vision/" + cameraName + " Mt2 STD xy", xy);
     // θ = MAX_VALUE: heading comes from gyro, not vision
     return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
   }
@@ -582,14 +584,13 @@ public class VisionSubsystem extends SubsystemBase {
   private void publishDiagnostics(
       BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      SmartDashboard.putString("/vision/" + camera.getName() + "_rejectReason", rejectionReason);
-      SmartDashboard.putNumber(
+      Telemetry.log("/vision/" + camera.getName() + "_rejectReason", rejectionReason);
+      Telemetry.log(
           "/vision/" + camera.getName() + "_visionError",
           getVisionPoseError(visionPose2d, estimate.timestampSeconds));
-      SmartDashboard.putNumber(
+      Telemetry.log(
           "/vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
-      SmartDashboard.putNumber(
-          "/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
+      Telemetry.log("/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
     }
   }
 
@@ -614,7 +615,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public double getTimeSinceLastReading() {
-    return Timer.getFPGATimestamp() - lastTimestampSeconds;
+    return Timer.getTimestamp() - lastTimestampSeconds;
   }
 
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
@@ -641,12 +642,12 @@ public class VisionSubsystem extends SubsystemBase {
     long lastChange = table.getEntry("hb").getLastChange();
     if (lastChange == 0) return false;
     double lastChangeSecs = lastChange / 1_000_000.0;
-    return (Timer.getFPGATimestamp() - lastChangeSecs) < VisionConstants.STALENESS_THRESHOLD;
+    return (Timer.getTimestamp() - lastChangeSecs) < VisionConstants.STALENESS_THRESHOLD;
   }
 
   private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {
     if (drivetrain == null) return 0;
-    var historicPose = drivetrain.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
+    var historicPose = drivetrain.samplePoseAt(fpgaToCurrentTime(timestampSeconds));
     return historicPose
         .map(pose2d -> getDistanceToTargetViaPoseEstimation(pose2d, visionPose2d))
         .orElse(0.0);

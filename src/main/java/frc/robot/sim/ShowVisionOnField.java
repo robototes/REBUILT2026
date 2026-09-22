@@ -1,12 +1,12 @@
 package frc.robot.sim;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.generated.CompTunerConstants;
 import java.util.Optional;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.smartdashboard.Field2d;
 
 /** Class to show vision targets on the field. */
 public class ShowVisionOnField {
@@ -95,7 +95,7 @@ public class ShowVisionOnField {
     for (int i = 0; i < 4; i++) {
       modulePoses[i] =
           driveState.Pose.transformBy(
-              new Transform2d(MODULE_LOCATIONS[i], driveState.ModuleStates[i].angle));
+              new Transform2d(MODULE_LOCATIONS[i], driveState.ModuleVelocities[i].angle));
     }
     return modulePoses;
   }

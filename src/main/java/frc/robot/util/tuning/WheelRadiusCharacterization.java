@@ -1,17 +1,17 @@
 package frc.robot.util.tuning;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.math.filter.SlewRateLimiter;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.util.Units;
+import org.wpilib.system.DataLogManager;
 
 public class WheelRadiusCharacterization {
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 4; // Rad/Sec
@@ -36,8 +36,8 @@ public class WheelRadiusCharacterization {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
 
-    ChassisSpeeds speeds = new ChassisSpeeds();
-    SwerveRequest driveRequest = new SwerveRequest.ApplyRobotSpeeds().withSpeeds(speeds);
+    ChassisVelocities speeds = new ChassisVelocities();
+    SwerveRequest driveRequest = new SwerveRequest.ApplyRobotVelocity().withVelocity(speeds);
     return Commands.parallel(
             // Drive control sequence
             Commands.sequence(
@@ -50,7 +50,7 @@ public class WheelRadiusCharacterization {
                 // Turn in place, accelerating up to full speed
                 Commands.run(
                     () -> {
-                      speeds.omegaRadiansPerSecond = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
+                      speeds.omega = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
                       drive.setControl(driveRequest);
                     },
                     drive)),
@@ -112,7 +112,7 @@ public class WheelRadiusCharacterization {
 
   private static class WheelRadiusCharacterizationState {
     double[] positions = new double[NUM_MODULES];
-    Rotation2d lastAngle = Rotation2d.kZero;
+    Rotation2d lastAngle = Rotation2d.ZERO;
     double gyroDelta = 0.0;
   }
 }

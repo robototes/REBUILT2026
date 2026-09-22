@@ -2,19 +2,18 @@ package frc.robot.subsystems.auto;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.function.DoubleSupplier;
+import org.wpilib.command2.Command;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.math.controller.PIDController;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.NetworkTableInstance;
 
 public class AutoDriveRotate {
   public static Command autoRotate(
@@ -83,7 +82,7 @@ public class AutoDriveRotate {
       double rotationOutput =
           pidRotate.calculate(
               drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
-      rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
+      rotationOutput = Math.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(targetRotate.getDegrees());
       SwerveRequest request =
           driveRequest
@@ -96,7 +95,7 @@ public class AutoDriveRotate {
 
     @Override
     public boolean isFinished() {
-      if (DriverStation.isAutonomousEnabled()) {
+      if (RobotState.isAutonomousEnabled()) {
         return pidRotate.atSetpoint();
       }
       return false;

@@ -1,15 +1,14 @@
 package frc.robot.util;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.DriverStation;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
+import org.wpilib.math.geometry.Translation2d;
 
 public final class AllianceUtils {
   // AprilTag field layout for this year
-  public static final AprilTagFieldLayout FIELD_LAYOUT =
-      // AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
-      AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+  public static final Field FIELD_LAYOUT = Fields.FRC_2026_REBUILT_WELDED.loadField();
 
   private static final Translation2d REDHUB_TRANSLATION2D =
       FIELD_LAYOUT
@@ -28,15 +27,15 @@ public final class AllianceUtils {
           .interpolate(FIELD_LAYOUT.getTagPose(21).get().getTranslation().toTranslation2d(), 0.5);
 
   public static boolean isBlue() {
-    if (!DriverStation.getAlliance().isEmpty()) {
-      return DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue);
+    if (!MatchState.getAlliance().isEmpty()) {
+      return MatchState.getAlliance().get().equals(Alliance.BLUE);
     }
     return false;
   }
 
   public static boolean isRed() {
-    if (!DriverStation.getAlliance().isEmpty()) {
-      return DriverStation.getAlliance().get().equals(DriverStation.Alliance.Red);
+    if (!MatchState.getAlliance().isEmpty()) {
+      return MatchState.getAlliance().get().equals(Alliance.RED);
     }
     return false;
   }

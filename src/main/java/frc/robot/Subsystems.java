@@ -14,8 +14,6 @@ import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
@@ -33,6 +31,8 @@ import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
+import org.wpilib.smartdashboard.Mechanism2d;
+import org.wpilib.telemetry.Telemetry;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -158,7 +158,7 @@ public class Subsystems {
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
       visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystem);
+      Telemetry.log("VisionSubsystem", visionSubsystem);
     } else {
       visionSubsystem = null;
     }

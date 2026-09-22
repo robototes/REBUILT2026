@@ -1,10 +1,9 @@
 package frc.robot.subsystems.index;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.util.GetTargetFromPose;
 import java.util.function.DoubleSupplier;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SubsystemBase;
 
 public class IndexerSubsystem extends SubsystemBase {
   protected Feeder feeder;
@@ -35,11 +34,6 @@ public class IndexerSubsystem extends SubsystemBase {
           // the flywheel to have a smooth handoff
           double fRPS = flywheelRPS.getAsDouble() * 1.12 + 15;
           double sRPS = Math.min(fRPS * 1.5, 70);
-          if (GetTargetFromPose.BALLING.get()) {
-            // Feeding speed reduced for balling so balls dont hit each other mid air
-            fRPS /= 2;
-            sRPS /= 2;
-          }
           feeder.setVelocity(fRPS);
           spindexerSubsystem.setVelocity(sRPS);
         },

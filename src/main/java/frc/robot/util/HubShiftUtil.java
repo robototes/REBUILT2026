@@ -1,12 +1,13 @@
 package frc.robot.util;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.Setter;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.system.Timer;
 
 public class HubShiftUtil {
   public enum ShiftEnum {
@@ -87,29 +88,29 @@ public class HubShiftUtil {
   }
 
   public static Alliance getFirstActiveAlliance() {
-    var alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    var alliance = MatchState.getAlliance().orElse(Alliance.BLUE);
 
     // Return override value
     var winOverride = getAllianceWinOverride();
     if (!winOverride.isEmpty()) {
       return winOverride.get()
-          ? (alliance == Alliance.Red ? Alliance.Blue : Alliance.Red)
+          ? (alliance == Alliance.RED ? Alliance.BLUE : Alliance.RED)
           : alliance;
     }
 
     // Return FMS value
-    String message = DriverStation.getGameSpecificMessage();
+    String message = MatchState.getGameData().orElse("");
     if (message.length() > 0) {
       char character = message.charAt(0);
       if (character == 'R') {
-        return Alliance.Blue;
+        return Alliance.BLUE;
       } else if (character == 'B') {
-        return Alliance.Red;
+        return Alliance.RED;
       }
     }
 
     // Return default value
-    return alliance == Alliance.Blue ? Alliance.Red : Alliance.Blue;
+    return alliance == Alliance.BLUE ? Alliance.RED : Alliance.BLUE;
   }
 
   /** Starts the timer at the beginning of teleop. */
@@ -119,7 +120,7 @@ public class HubShiftUtil {
 
   private static boolean[] getSchedule() {
     Alliance startAlliance = getFirstActiveAlliance();
-    return startAlliance == DriverStation.getAlliance().orElse(Alliance.Blue)
+    return startAlliance == MatchState.getAlliance().orElse(Alliance.BLUE)
         ? activeSchedule
         : inactiveSchedule;
   }
@@ -132,12 +133,12 @@ public class HubShiftUtil {
     boolean active = false;
     ShiftEnum currentShift = ShiftEnum.DISABLED;
 
-    if (DriverStation.isAutonomousEnabled()) {
+    if (RobotState.isAutonomousEnabled()) {
       stateTimeElapsed = currentTime;
       stateTimeRemaining = autoEndTime - currentTime;
       active = true;
       currentShift = ShiftEnum.AUTO;
-    } else if (DriverStation.isEnabled()) {
+    } else if (RobotState.isEnabled()) {
       int currentShiftIndex = -1;
       for (int i = 0; i < shiftStartTimes.length; i++) {
         if (currentTime >= shiftStartTimes[i] && currentTime < shiftEndTimes[i]) {

@@ -1,8 +1,9 @@
 package frc.robot.test;
 
-import edu.wpi.first.hal.simulation.DriverStationDataJNI;
-import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Robot;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.hardware.hal.RobotMode;
+import org.wpilib.hardware.hal.simulation.DriverStationDataJNI;
 
 public class AutomatedTestRobot extends Robot {
   private static void sleep(long durationMillis) {
@@ -15,6 +16,7 @@ public class AutomatedTestRobot extends Robot {
 
   public AutomatedTestRobot() {
     System.out.println("Robot type: Automated test");
+    new Thread(this::runTest).start();
   }
 
   @Override
@@ -26,16 +28,10 @@ public class AutomatedTestRobot extends Robot {
       if (cause != null) {
         throwable = cause;
       }
-      DriverStation.reportError(
+      DriverStationErrors.reportError(
           "Unhandled exception: " + throwable.toString(), throwable.getStackTrace());
       System.exit(-1);
     }
-  }
-
-  @Override
-  public void robotInit() {
-    super.robotInit();
-    new Thread(this::runTest).start();
   }
 
   private void runTest() {
@@ -43,7 +39,7 @@ public class AutomatedTestRobot extends Robot {
     sleep(2000);
 
     System.out.println("Enabling autonomous mode and waiting 10 seconds");
-    DriverStationDataJNI.setAutonomous(true);
+    DriverStationDataJNI.setRobotMode(RobotMode.AUTONOMOUS);
     DriverStationDataJNI.setEnabled(true);
 
     sleep(10000);

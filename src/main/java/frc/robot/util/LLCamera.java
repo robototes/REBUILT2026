@@ -1,12 +1,12 @@
 package frc.robot.util;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.networktables.DoubleArrayEntry;
-import edu.wpi.first.networktables.TimestampedDoubleArray;
-import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.util.LimelightHelpers.RawDetection;
 import frc.robot.util.LimelightHelpers.RawFiducial;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.networktables.DoubleArrayEntry;
+import org.wpilib.networktables.TimestampedDoubleArray;
 
 public class LLCamera {
 
@@ -161,7 +161,7 @@ public class LLCamera {
 
     if (poseArray.length != expectedTotalVals) {
       // Don't populate fiducials
-      DriverStation.reportWarning(
+      DriverStationErrors.reportWarning(
           "Limelight pose array size mismatch. Expected "
               + expectedTotalVals
               + " but got "
