@@ -298,8 +298,11 @@ public class Robot extends LoggedRobot {
 
       robotSim.resetFuelSim();
     }
-
+if (MAX_STEPS <= 1) {
+  CommandScheduler.getInstance().schedule(LegacyBLineLogic.handleAutos());
+} else {
     CommandScheduler.getInstance().schedule(BLineLogic.handleAutos());
+}
     double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
     if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
