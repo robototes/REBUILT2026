@@ -13,26 +13,18 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
-import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.Elastic;
-import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
@@ -88,19 +80,18 @@ public class BLineLogic {
   private static final List<BLinePath> autos = new ArrayList<>();
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
   private static boolean pathsInitialized = false;
-  public  static Command bLineLaunching;
+  public static Command bLineLaunching;
   public static Command bLineSimLaunching;
   private static StructPublisher<Pose2d> recoveryPose;
   public static FollowPath.Builder pathBuilder;
   private static FollowPath.Builder continuingPathBuilder;
   public static Path currentPath;
   public static FollowPath follow;
-  public  static int savedPathIndex = -1;
+  public static int savedPathIndex = -1;
   private static boolean unlimitedAlreadySelected = false;
   private static LoggedNetworkNumber initialHeading =
       new LoggedNetworkNumber("Initial Heading(Deg)", 0.0);
   private static LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("BLine Delay", 0.0);
-
 
   private static Elastic.Notification autoTimingWarning =
       new Elastic.Notification(
@@ -126,7 +117,7 @@ public class BLineLogic {
   public static void init(Subsystems subsystems) {
 
     s = subsystems;
-     AutosCommands.launcherCommand(s);
+    AutosCommands.launcherCommand(s);
 
     recoveryPose =
         NetworkTableInstance.getDefault()
@@ -135,7 +126,6 @@ public class BLineLogic {
             .publish();
 
     BLineTriggers.registerTriggers(s);
-
 
     if (pathsInitialized) {
       return;
@@ -525,7 +515,8 @@ public class BLineLogic {
         commands.add(AutosCommands.launcherCommand(5.0, s));
 
       } else if (shootMode == BLinePath.ShootMode.UNLIMITED) {
-        commands.add((AutosCommands.launcherCommand(12.0, s).until(() -> !RobotState.isAutonomous())));
+        commands.add(
+            (AutosCommands.launcherCommand(12.0, s).until(() -> !RobotState.isAutonomous())));
       }
     }
 
@@ -593,7 +584,6 @@ public class BLineLogic {
   }
 
   private static void registerTriggersAndCommands(Subsystems s) {
-BLineTriggers.registerTriggers(s);
-}
-
+    BLineTriggers.registerTriggers(s);
+  }
 }

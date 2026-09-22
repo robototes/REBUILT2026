@@ -18,17 +18,15 @@ import frc.robot.Subsystems;
 import frc.robot.lib.BLine.BLineCommands;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
-import frc.robot.subsystems.auto.BLine.AutosCommands;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
-import frc.robot.subsystems.auto.BLine.BLineTriggers;
 import frc.robot.subsystems.auto.BLine.BLineLogic.Position;
+import frc.robot.subsystems.auto.BLine.BLineTriggers;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.simulation.RobotSim;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import org.littletonrobotics.junction.networktables.LoggedNetworkString;
@@ -132,7 +130,7 @@ public class LegacyBLineLogic {
             new LegacyBLinePath(
                 "DoubleTrenchNeutral", "RT", "FirstNeutralTrench", "SecondNeutralTrench"),
             new LegacyBLinePath("Depot", "RT", "TrenchDepot"),
-            new LegacyBLinePath("TrenchNeutralDepot", "RT", "FirstNeutralTrench","TrenchDepot"));
+            new LegacyBLinePath("TrenchNeutralDepot", "RT", "FirstNeutralTrench", "TrenchDepot"));
     autos.clear();
     autos.addAll(rebuiltPaths);
     commandsMap = Map.of(0, rebuiltPaths);
@@ -461,6 +459,6 @@ public class LegacyBLineLogic {
   }
 
   private static void registerCommands(Subsystems s) {
-   BLineTriggers.registerTriggers(s);
-}
+    BLineTriggers.registerTriggers(s);
+  }
 }

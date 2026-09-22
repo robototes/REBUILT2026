@@ -1,10 +1,5 @@
 package frc.robot.subsystems.auto.BLine;
 
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
-
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -13,15 +8,19 @@ import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
 import frc.robot.util.simulation.RobotSim;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 public class BLineTriggers {
-      public static Trigger beachedTrigger;
-      public  static LoggedNetworkBoolean enableSotm = new LoggedNetworkBoolean("BLine/SOTM", false);
-      
-  public  static LoggedNetworkBoolean enableUnbeach =
+  public static Trigger beachedTrigger;
+  public static LoggedNetworkBoolean enableSotm = new LoggedNetworkBoolean("BLine/SOTM", false);
+
+  public static LoggedNetworkBoolean enableUnbeach =
       new LoggedNetworkBoolean("BLine/Auto Unbeach", false);
-    public static void registerTriggers(Subsystems s) {
-        beachedTrigger =
+
+  public static void registerTriggers(Subsystems s) {
+    beachedTrigger =
         new Trigger(
             () -> {
               return enableUnbeach.getAsBoolean()
@@ -34,7 +33,8 @@ public class BLineTriggers {
             Commands.runOnce(
                 () -> {
                   if (BLineLogic.follow != null) {
-                    BLineLogic.savedPathIndex = BLineLogic.follow.getCurrentTranslationElementIndex();
+                    BLineLogic.savedPathIndex =
+                        BLineLogic.follow.getCurrentTranslationElementIndex();
                   }
                 }),
             AutosCommands.recoverCommand(s),
@@ -69,7 +69,9 @@ public class BLineTriggers {
                 () -> {
                   enableSotm.getAsBoolean();
 
-                  return BLineTriggers.enableSotm.getAsBoolean() ? BLineLogic.bLineLaunching : Commands.none();
+                  return BLineTriggers.enableSotm.getAsBoolean()
+                      ? BLineLogic.bLineLaunching
+                      : Commands.none();
                 },
                 Set.of()));
       }
@@ -80,6 +82,7 @@ public class BLineTriggers {
     FollowPath.registerEventTrigger("climb", AutosCommands.climbCommand());
 
     FollowPath.registerEventTrigger(
-        "cancel", Commands.runOnce(() -> launchAllowed.set(false)).andThen(AutosCommands.stowCommand(s)));
-}
+        "cancel",
+        Commands.runOnce(() -> launchAllowed.set(false)).andThen(AutosCommands.stowCommand(s)));
+  }
 }
