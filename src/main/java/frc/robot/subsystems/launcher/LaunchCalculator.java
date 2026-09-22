@@ -161,11 +161,11 @@ public class LaunchCalculator {
   private static final double TURRET_TO_TRENCH_TOLERANCE_Y = Units.inchesToMeters(24.97);
   private static final double TRENCH_LOOKAHEAD = 0.5; // seconds
   private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
-  private static final List<Pose2d> trenchTags = new ArrayList<>();
+  private static final List<Translation2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_X = Units.inchesToMeters(47.0 / 2);
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
-  private static final List<Pose2d> underclimbTags = new ArrayList<>();
+  private static final List<Translation2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
 
   public record LaunchingParameters(
@@ -179,7 +179,7 @@ public class LaunchCalculator {
     for (int tag : tags) {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
-        trenchTags.add(t.get().toPose2d());
+        trenchTags.add(t.get().getTranslation().toTranslation2d());
       } else {
         edu.wpi.first.wpilibj.DriverStation.reportWarning(
             "Tag " + tag + " not found in launch calculator", false);
@@ -188,7 +188,7 @@ public class LaunchCalculator {
     for (int tag : underclimbTagIds) {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
-        underclimbTags.add(t.get().toPose2d());
+        underclimbTags.add(t.get().getTranslation().toTranslation2d());
       } else {
         edu.wpi.first.wpilibj.DriverStation.reportWarning(
             "Tag " + tag + " not found in launch calculator", false);
@@ -613,14 +613,14 @@ public class LaunchCalculator {
   }
 
   public static boolean isCloseToTrench(Pose2d pose) {
-    Pose2d nearestTag = pose.nearest(trenchTags);
+    Translation2d nearestTag = pose.getTranslation().nearest(trenchTags);
     double dx = Math.abs(pose.getX() - nearestTag.getX());
     double dy = Math.abs(pose.getY() - nearestTag.getY());
     return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
   }
 
   public static boolean isUnderClimb(Pose2d turretPose) {
-    Pose2d nearestTag = turretPose.nearest(underclimbTags);
+    Translation2d nearestTag = turretPose.getTranslation().nearest(underclimbTags);
     double dx = Math.abs(turretPose.getX() - nearestTag.getX());
     double dy = Math.abs(turretPose.getY() - nearestTag.getY());
     return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;
