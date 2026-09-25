@@ -91,11 +91,11 @@ public class Blocker extends SubsystemBase {
   }
 
   public Command blockerInCommand() {
-    return Commands.runOnce(() -> setPivotPosition(RETRACTED_POS));
+    return Commands.runOnce(() -> setPivotPosition(RETRACTED_POS)).withName("Blocker In");
   }
 
   public Command blockerOutCommand() {
-    return Commands.runOnce(() -> setPivotPosition(DEPLOYED_POS));
+    return Commands.runOnce(() -> setPivotPosition(DEPLOYED_POS)).withName("Blocker Out");
   }
 
   public Command zeroBlocker() {

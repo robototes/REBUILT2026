@@ -416,15 +416,17 @@ public class Controls {
         .and(intakeTestController.y())
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
 
-    connected(indexingTestController)
-        .and(indexingTestController.rightTrigger())
-        .onTrue(
-            Commands.parallel(
-                Commands.runOnce(() -> intakeMode = IntakeMode.BLOCK),
-                s.blocker.blockerOutCommand()))
-        .onFalse(
-            Commands.parallel(
-                Commands.runOnce(() -> updateIntakeMode()), s.blocker.blockerInCommand()));
+    if (s.blocker != null) {
+      connected(indexingTestController)
+          .and(indexingTestController.rightTrigger())
+          .onTrue(
+              Commands.parallel(
+                  Commands.runOnce(() -> intakeMode = IntakeMode.BLOCK),
+                  s.blocker.blockerOutCommand()))
+          .onFalse(
+              Commands.parallel(
+                  Commands.runOnce(() -> updateIntakeMode()), s.blocker.blockerInCommand()));
+    }
   }
 
   /**
