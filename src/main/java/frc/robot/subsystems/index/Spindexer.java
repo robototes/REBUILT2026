@@ -18,12 +18,12 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
 
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
@@ -130,7 +130,7 @@ public class Spindexer extends SubsystemBase {
   @Override
   public void periodic() {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
-    SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
+    Logger.recordOutput("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());

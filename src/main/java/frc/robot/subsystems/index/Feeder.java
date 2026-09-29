@@ -19,13 +19,13 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
 
 public class Feeder extends SubsystemBase {
   private final double D_TARGET_RPS = 95;
@@ -128,7 +128,7 @@ public class Feeder extends SubsystemBase {
   public void periodic() {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, feederRPS);
     // Log on NT at all times
-    SmartDashboard.putNumber("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
+    Logger.recordOutput("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
