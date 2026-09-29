@@ -8,19 +8,19 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.simulation.RobotSim;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 public class PivotSim extends SubsystemBase {
   private final SingleJointedArmSim intakeArmSim;
   private final TalonFXSimState intakeArmSimState;
 
-  private final MechanismRoot2d root;
-  private final MechanismLigament2d arm;
+  private final LoggedMechanismRoot2d root;
+  private final LoggedMechanismLigament2d arm;
 
   // physical specs
   private static final double PIVOT_GEAR_RATIO = 36.0;
@@ -31,7 +31,7 @@ public class PivotSim extends SubsystemBase {
     if (!RobotBase.isSimulation()) {
       throw new IllegalStateException("This is not sim what are you doing");
     }
-    Mechanism2d mech = new Mechanism2d(40, 40);
+    LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
 
     // define the simulator
     intakeArmSim =
@@ -51,9 +51,9 @@ public class PivotSim extends SubsystemBase {
     intakeArmSimState.Orientation = ChassisReference.Clockwise_Positive;
 
     root = mech.getRoot("Shoulder", 20, 20);
-    arm = root.append(new MechanismLigament2d("arm", ARM_LENGTH_METERS, 0));
+    arm = root.append(new LoggedMechanismLigament2d("arm", ARM_LENGTH_METERS, 0));
 
-    SmartDashboard.putData("Pivot", mech);
+    Logger.recordOutput("Pivot", mech);
   }
 
   // update sim

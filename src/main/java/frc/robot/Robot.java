@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
@@ -44,6 +43,7 @@ import frc.robot.util.tuning.LauncherConstants;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -64,7 +64,7 @@ public class Robot extends LoggedRobot {
   private final double MAX_TIME_RECORD = 165;
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
-  private final Mechanism2d mechanismRobot;
+  private final LoggedMechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
   private static final double BROWNOUT_VOLTAGE = 7.0;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
@@ -117,8 +117,8 @@ public class Robot extends LoggedRobot {
 
     // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
-    mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
-    SmartDashboard.putData("Mechanism2d", mechanismRobot);
+    mechanismRobot = new LoggedMechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
+    Logger.recordOutput("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
 
     // $VISIONSIM - Wrapper for sim features
@@ -168,7 +168,7 @@ public class Robot extends LoggedRobot {
       AutoLogic.initCommandsAndPaths(false);
       // AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
 
-      AutoLogic.initSmartDashBoard();
+      // AutoLogic.initSmartDashBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
@@ -226,7 +226,7 @@ public class Robot extends LoggedRobot {
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 
-    SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
+    Logger.recordOutput("GCCount", GCMonitor.getGcCount());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

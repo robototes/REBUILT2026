@@ -21,7 +21,6 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.sim.ShowVisionOnField;
@@ -32,6 +31,7 @@ import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -173,18 +173,17 @@ public class VisionSubsystem extends SubsystemBase {
     this.drivetrain = drivetrain;
 
     robotField = new Field2d();
-    SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
 
-    SmartDashboard.putNumber("/vision/limelight-a_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-a_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-a_time since last reading", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_time since last reading", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_time since last reading", 0);
+    Logger.recordOutput("/vision/limelight-a_Last timestamp", 0);
+    Logger.recordOutput("/vision/limelight-b_Last timestamp", 0);
+    Logger.recordOutput("/vision/limelight-c_Last timestamp", 0);
+    Logger.recordOutput("/vision/limelight-a_Num targets", 0);
+    Logger.recordOutput("/vision/limelight-b_Num targets", 0);
+    Logger.recordOutput("/vision/limelight-c_Num targets", 0);
+    Logger.recordOutput("/vision/limelight-a_time since last reading", 0);
+    Logger.recordOutput("/vision/limelight-b_time since last reading", 0);
+    Logger.recordOutput("/vision/limelight-c_time since last reading", 0);
 
     var nt = NetworkTableInstance.getDefault();
     disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
@@ -192,9 +191,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void update() {
     if (getDisableVision()) {
-      SmartDashboard.putString("/vision/limelight-a_rejectReason", "vision-disabled");
-      SmartDashboard.putString("/vision/limelight-b_rejectReason", "vision-disabled");
-      SmartDashboard.putString("/vision/limelight-c_rejectReason", "vision-disabled");
+      Logger.recordOutput("/vision/limelight-a_rejectReason", "vision-disabled");
+      Logger.recordOutput("/vision/limelight-b_rejectReason", "vision-disabled");
+      Logger.recordOutput("/vision/limelight-c_rejectReason", "vision-disabled");
       return;
     }
 
@@ -211,7 +210,7 @@ public class VisionSubsystem extends SubsystemBase {
     // isUnderDefense() uses lastFieldPose and visionPoseTracking, both of which are
     // set before any camera processes — this is intentional.
     boolean underDefense = isUnderDefense(visionPoseTracking);
-    SmartDashboard.putBoolean("/vision/underDefense", underDefense);
+    Logger.recordOutput("/vision/underDefense", underDefense);
 
     processCamera(
         ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
@@ -318,7 +317,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
-      SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
+      Logger.recordOutput("/vision/" + camera.getName() + "_tagSpread", spread);
       publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
       return;
     }
@@ -376,7 +375,7 @@ public class VisionSubsystem extends SubsystemBase {
       lastTimestampSeconds = estimate.timestampSeconds;
     }
 
-    SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
+    Logger.recordOutput("/vision/" + camera.getName() + "_tagSpread", spread);
     publishDiagnostics(estimate, visionPose2d, camera, "none");
   }
 
@@ -489,7 +488,7 @@ public class VisionSubsystem extends SubsystemBase {
             && isPoseOnField(visionPose);
     if (odomOffField && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
-      SmartDashboard.putString("/vision/" + cameraName + "_rejectReason", "odometry-reset");
+      Logger.recordOutput("/vision/" + cameraName + "_rejectReason", "odometry-reset");
     }
   }
 
@@ -522,8 +521,8 @@ public class VisionSubsystem extends SubsystemBase {
             ? Double.MAX_VALUE
             : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
 
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
+    Logger.recordOutput("/vision/" + cameraName + " Mt1 STD xy", xy);
+    Logger.recordOutput("/vision/" + cameraName + " Mt1 STD theta", theta);
     return VecBuilder.fill(xy, xy, theta);
   }
 
@@ -552,7 +551,7 @@ public class VisionSubsystem extends SubsystemBase {
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
 
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt2 STD xy", xy);
+    Logger.recordOutput("/vision/" + cameraName + " Mt2 STD xy", xy);
     // θ = MAX_VALUE: heading comes from gyro, not vision
     return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
   }
@@ -582,14 +581,13 @@ public class VisionSubsystem extends SubsystemBase {
   private void publishDiagnostics(
       BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      SmartDashboard.putString("/vision/" + camera.getName() + "_rejectReason", rejectionReason);
-      SmartDashboard.putNumber(
+      Logger.recordOutput("/vision/" + camera.getName() + "_rejectReason", rejectionReason);
+      Logger.recordOutput(
           "/vision/" + camera.getName() + "_visionError",
           getVisionPoseError(visionPose2d, estimate.timestampSeconds));
-      SmartDashboard.putNumber(
+      Logger.recordOutput(
           "/vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
-      SmartDashboard.putNumber(
-          "/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
+      Logger.recordOutput("/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
     }
   }
 
