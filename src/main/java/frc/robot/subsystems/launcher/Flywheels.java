@@ -50,7 +50,7 @@ public class Flywheels extends SubsystemBase {
 
   public final double FLYWHEEL_TOLERANCE = 10;
   public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/Advantagekit/RealOutputs/Tunables/Flywheels", false);
+      new NtTunableBoolean("/AdvantageKit/RealOutputs/Tunables/Flywheels", false);
 
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
