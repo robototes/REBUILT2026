@@ -57,7 +57,7 @@ public class Hood extends SubsystemBase {
   private static final double BACKWARD_SOFT_LIMIT = -0.01224; // -0.02 rotations, past zeroing point
 
   public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/SmartDashboard/Tunables/Hood", false);
+      new NtTunableBoolean("/AdvantageKit/RealOutputs/Tunables/Hood", false);
 
   private static final double AUTO_ZERO_VOLTAGE = -1.5;
 

@@ -111,7 +111,7 @@ public class TurretSubsystem extends SubsystemBase {
     turretRotation.set(new Pose2d[2]);
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
-    NetworkTable table = inst.getTable("SmartDashboard");
+    NetworkTable table = inst.getTable("AdvantageKit/RealOutputs");
 
     positionSignal = turretMotor.getPosition();
     posPub = table.getDoubleTopic("/Turret/Position").publish();

@@ -21,7 +21,7 @@ public class LauncherConstants {
           : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
 
   private static final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
+      NetworkTableInstance.getDefault().getTable("/AdvantageKit/RealOutputs/LiveLauncherData");
   private static final StructPublisher<Pose2d> turretPose =
       table.getStructTopic("Turret Pose", Pose2d.struct).publish();
   private static final DoublePublisher turretToHubDistance =

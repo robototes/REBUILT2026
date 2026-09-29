@@ -34,9 +34,9 @@ public class IntakeRollers extends SubsystemBase {
   public final double TARGET_RPS = 68;
   public final double AGITATE_RPS = TARGET_RPS / 2;
   private final NtTunableBoolean TUNABLE_ENABLE =
-      new NtTunableBoolean("SmartDashboard/Tunables/TuneIntakeRollers", false);
+      new NtTunableBoolean("AdvantageKit/RealOutputs/Tunables/TuneIntakeRollers", false);
   private final NtTunableDouble NT_TARGET_RPS =
-      new NtTunableDouble("SmartDashboard/intake/TargetVelocityRPS", TARGET_RPS);
+      new NtTunableDouble("AdvantagekitRealOutputs/intake/TargetVelocityRPS", TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest = new VelocityTorqueCurrentFOC(0);
 
   // status signals

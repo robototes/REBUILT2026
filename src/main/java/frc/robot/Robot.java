@@ -6,6 +6,9 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -24,6 +27,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
@@ -44,6 +48,7 @@ import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -162,7 +167,22 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance()
         .onCommandFinish(command -> DataLogManager.log("Command finished: " + command.getName()));
 
-    SmartDashboard.putData(CommandScheduler.getInstance());
+    Map<String, Integer> commandCounts = new HashMap<>();
+    BiConsumer<Command, Boolean> logCommandFunction =
+        (Command command, Boolean active) -> {
+          String name = command.getName();
+          int count = commandCounts.getOrDefault(name, 0) + (active ? 1 : -1);
+          commandCounts.put(name, count);
+          Logger.recordOutput(
+              "CommandsUnique/" + name + "_" + Integer.toHexString(command.hashCode()), active);
+          Logger.recordOutput("CommandsAll/" + name, count > 0);
+        };
+    CommandScheduler.getInstance()
+        .onCommandInitialize((Command command) -> logCommandFunction.accept(command, true));
+    CommandScheduler.getInstance()
+        .onCommandFinish((Command command) -> logCommandFunction.accept(command, false));
+    CommandScheduler.getInstance()
+        .onCommandInterrupt((Command command) -> logCommandFunction.accept(command, false));
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       AutoLogic.initCommandsAndPaths(false);
@@ -309,16 +329,16 @@ public class Robot extends LoggedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
+      LoggedNetworkNumber initialYaw = new LoggedNetworkNumber("/Selected auto/Robot/2", 0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw.getAsDouble());
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw.getAsDouble());
         }
         if (subsystems.visionSubsystem.limelightcOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw.getAsDouble());
         }
       }
     }

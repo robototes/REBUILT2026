@@ -30,7 +30,7 @@ public class LauncherSubsystem extends SubsystemBase {
   private boolean turretAtTarget;
   private boolean hoodAtTarget;
   private boolean flywheelAtTarget;
-  private boolean notUunderClimb;
+  private boolean notUnderClimb;
   private boolean notGoingToBeUnderTrench;
 
   private LaunchingParameters launchParameters;
@@ -106,10 +106,10 @@ public class LauncherSubsystem extends SubsystemBase {
                         Math.atan(0.3 / LauncherConstants.distToHub()))));
     turretBooleanPub.set(turretAtTarget);
 
-    notUunderClimb =
+    notUnderClimb =
         !LaunchCalculator.isUnderClimb(
             driveState.Pose.transformBy(LauncherConstants.turretTransform()));
-    notUnderClimbPub.set(notUunderClimb);
+    notUnderClimbPub.set(notUnderClimb);
 
     notGoingToBeUnderTrench =
         !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
@@ -118,7 +118,7 @@ public class LauncherSubsystem extends SubsystemBase {
     return flywheelAtTarget
         && hoodAtTarget
         && turretAtTarget
-        && notUunderClimb
+        && notUnderClimb
         && notGoingToBeUnderTrench;
   }
 
