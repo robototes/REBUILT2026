@@ -31,6 +31,7 @@ import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
+import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -74,6 +75,9 @@ public class Robot extends LoggedRobot {
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
+  private Runnable autoSmartDashboardUpdate;
+  private final Timer autoSmartDashboardTimer = new Timer();
+  private static final double UPDATE_RATE = 0.05;
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -185,9 +189,10 @@ public class Robot extends LoggedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       AutoLogic.initCommandsAndPaths(false);
-      // AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+      autoSmartDashboardUpdate = AutonomousField.initSmartDashBoard(() -> "Field", 0, 0);
+      autoSmartDashboardTimer.start();
 
-      // AutoLogic.initSmartDashBoard();
+      AutoLogic.initSmartDashBoard();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
@@ -242,6 +247,9 @@ public class Robot extends LoggedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    if (autoSmartDashboardTimer.advanceIfElapsed(UPDATE_RATE)) {
+      autoSmartDashboardUpdate.run();
+    }
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 

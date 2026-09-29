@@ -16,15 +16,14 @@ import java.util.function.Supplier;
 
 public class AutonomousField {
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
-  private static final double UPDATE_RATE = 0.05;
+
 
   /* ---------------- NetworkTables init ---------------- */
 
-  public static void initSmartDashBoard(
+  public static Runnable initSmartDashBoard(
       Supplier<String> tabName,
       int columnIndex,
-      int rowIndex,
-      ObjDoubleConsumer<Runnable> addPeriodic) {
+      int rowIndex) {
 
     NetworkTableEntry speedMultiplier =
         NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
@@ -37,13 +36,11 @@ public class AutonomousField {
     SmartDashboard.putData("Selected auto", autonomousField.getField());
     SmartDashboard.putData("Start pose", autonomousField.getStartPose());
 
-    addPeriodic.accept(
-        () -> {
-          autonomousField.update(AutoLogic.getSelectedAutoName());
-          SmartDashboard.putNumber(
-              "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
-        },
-        UPDATE_RATE);
+   return () -> {
+    autonomousField.update(AutoLogic.getSelectedAutoName());
+    SmartDashboard.putNumber(
+        "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
+  };
   }
 
   /* ---------------- Display ---------------- */
