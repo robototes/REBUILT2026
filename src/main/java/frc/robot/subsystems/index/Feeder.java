@@ -32,7 +32,8 @@ public class Feeder extends SubsystemBase {
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("AdvantageKit/RealOutputs/Tunables/FeederRPS", false);
   private final NtTunableDouble TARGET_RPS =
-      new NtTunableDouble("AdvantageKit/RealOutputs/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+      new NtTunableDouble(
+          "AdvantageKit/RealOutputs/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
       new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 

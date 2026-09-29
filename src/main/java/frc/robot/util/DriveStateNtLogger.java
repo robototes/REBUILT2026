@@ -1,8 +1,5 @@
 package frc.robot.util;
 
-import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
-import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
-
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -13,10 +10,11 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 public class DriveStateNtLogger {
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -46,7 +44,10 @@ public class DriveStateNtLogger {
   /* Mechanisms to represent the swerve module states */
   private final LoggedMechanism2d[] m_moduleMechanisms =
       new LoggedMechanism2d[] {
-        new LoggedMechanism2d(1, 1), new LoggedMechanism2d(1, 1), new LoggedMechanism2d(1, 1), new LoggedMechanism2d(1, 1),
+        new LoggedMechanism2d(1, 1),
+        new LoggedMechanism2d(1, 1),
+        new LoggedMechanism2d(1, 1),
+        new LoggedMechanism2d(1, 1),
       };
   /* A direction and length changing ligament for speed representation */
   private final LoggedMechanismLigament2d[] m_moduleSpeeds =
@@ -69,16 +70,20 @@ public class DriveStateNtLogger {
       new LoggedMechanismLigament2d[] {
         m_moduleMechanisms[0]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
         m_moduleMechanisms[1]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
         m_moduleMechanisms[2]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
         m_moduleMechanisms[3]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
       };
 
   public DriveStateNtLogger(DriveStateSignalLogger telemetry, double MaxSpeed) {

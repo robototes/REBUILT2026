@@ -33,9 +33,11 @@ public class Spindexer extends SubsystemBase {
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("AdvantageKit/RealOutputs/Tunables/TuneSpindexer", false);
   private final NtTunableDouble TARGET_ACCEL =
-      new NtTunableDouble("AdvantageKit/RealOutputs/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
+      new NtTunableDouble(
+          "AdvantageKit/RealOutputs/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final NtTunableDouble TARGET_RPS =
-      new NtTunableDouble("AdvantageKit/RealOutputs/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+      new NtTunableDouble(
+          "AdvantageKit/RealOutputs/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
       new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 
