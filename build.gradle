@@ -21,6 +21,7 @@ def getProjectBooleanProperty(String name, boolean defaultValue = false) {
 
 def ROBOT_MAIN_CLASS = getProjectBooleanProperty('automatedTest') ? "frc.robot.test.AutomatedTestMain" : "frc.robot.Main"
 def HIGH_FIDELITY_VISION = getProjectBooleanProperty('highFidelityVision')
+def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -101,7 +102,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
 }
 
@@ -141,6 +141,15 @@ tasks.withType(JavaExec).configureEach {
     if (name.toLowerCase().contains("simulate")) {
         jvmArgs "-Xmx2G", "-Xms2G"
         systemProperty 'highFidelityVision', HIGH_FIDELITY_VISION
+    }
+}
+afterEvaluate {
+    // AdvantageKit doesn't publish debug natives; fall back to the release zip
+    configurations.nativeDebug.dependencies.removeIf {
+        it.group == "org.littletonrobotics.akit" && it.name == "akit-wpilibio"
+    }
+    dependencies {
+        nativeDebug "org.littletonrobotics.akit:akit-wpilibio:${akitJson.version}:${wpi.platforms.desktop}@zip"
     }
 }
 
