@@ -79,7 +79,7 @@ public class Robot extends LoggedRobot {
    * initialization code.
    */
   protected Robot() {
-    Logger.recordMetadata("ProjectName", "MyProject"); // Set a metadata value
+    Logger.recordMetadata("Robototes", "REBUILT2026"); // Set a metadata value
 
     if (isReal()) {
       Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
