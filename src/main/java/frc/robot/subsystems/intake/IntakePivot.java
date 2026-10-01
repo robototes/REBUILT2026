@@ -125,10 +125,14 @@ public class IntakePivot extends SubsystemBase {
 
   private void networktables() {
     var nt = NetworkTableInstance.getDefault();
-    this.currentPosPub = nt.getDoubleTopic("intake/pivotCurrentPosition").publish();
-    this.targetPosPub = nt.getDoubleTopic("intake/pivotTargetPosition").publish();
+    this.currentPosPub =
+        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/pivotCurrentPosition").publish();
+    this.targetPosPub =
+        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/pivotTargetPosition").publish();
     this.zeroPublisher =
-        NetworkTableInstance.getDefault().getBooleanTopic("/Zero/intakePivotZero").publish();
+        NetworkTableInstance.getDefault()
+            .getBooleanTopic("AdvantageKit/RealOutputs/Logger/Zero/intakePivotZero")
+            .publish();
 
     currentPosPub.set(0.0); // default value
     targetPosPub.set(0.0); // default value

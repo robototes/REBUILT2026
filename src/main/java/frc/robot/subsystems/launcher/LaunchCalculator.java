@@ -135,24 +135,29 @@ public class LaunchCalculator {
 
   // NT publishers
   private final DoublePublisher filteredSlipXPub =
-      NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
+      NetworkTableInstance.getDefault()
+          .getDoubleTopic("AdvantageKit/RealOutputs/Logger/LaunchCalculator/filteredX")
+          .publish();
   private final DoublePublisher filteredSlipYPub =
       NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
   private final BooleanPublisher isSlippingPub =
       NetworkTableInstance.getDefault()
-          .getBooleanTopic("/LaunchCalculator/slip/isSlipping")
+          .getBooleanTopic("AdvantageKit/RealOutputs/Logger/LaunchCalculator/slip/isSlipping")
           .publish();
   private final DoubleArrayPublisher perModuleCurrentPub =
       NetworkTableInstance.getDefault()
-          .getDoubleArrayTopic("/LaunchCalculator/slip/perModuleCurrent")
+          .getDoubleArrayTopic(
+              "AdvantageKit/RealOutputs/Logger/LaunchCalculator/slip/perModuleCurrent")
           .publish();
   private final DoubleArrayPublisher perModuleVelocityDeltaPub =
       NetworkTableInstance.getDefault()
-          .getDoubleArrayTopic("/LaunchCalculator/slip/perModuleVelocityDelta")
+          .getDoubleArrayTopic(
+              "AdvantageKit/RealOutputs/Logger/LaunchCalculator/slip/perModuleVelocityDelta")
           .publish();
   private final BooleanArrayPublisher perModuleSlippingPub =
       NetworkTableInstance.getDefault()
-          .getBooleanArrayTopic("/LaunchCalculator/slip/perModuleSlipping")
+          .getBooleanArrayTopic(
+              "AdvantageKit/RealOutputs/Logger/LaunchCalculator/slip/perModuleSlipping")
           .publish();
 
   // Trench stuff

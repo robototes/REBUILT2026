@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
@@ -48,7 +49,6 @@ import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -89,10 +89,11 @@ public class Robot extends LoggedRobot {
   protected Robot() {
     Logger.recordMetadata("Robototes", "REBUILT2026"); // Set a metadata value
 
-    if (isReal()) {
+    if (isReal() || isSimulation()) {
       Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
     } else {
+      // NOTE: FOR REPLAY
       setUseTiming(false); // Run as fast as possible
       String logPath =
           LogFileUtil
@@ -246,10 +247,10 @@ public class Robot extends LoggedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    CommandScheduler.getInstance().run();
     if (autoSmartDashboardTimer.advanceIfElapsed(UPDATE_RATE)) {
       autoSmartDashboardUpdate.run();
     }
+    CommandScheduler.getInstance().run();
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 
@@ -336,16 +337,18 @@ public class Robot extends LoggedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      LoggedNetworkNumber initialYaw = new LoggedNetworkNumber("/Selected auto/Robot/2", 0);
+      // Change in 2027 code bc of Field2d cant be logged in advantage kit at the moment (which is
+      // where this value is from)
+      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0.0);
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw.getAsDouble());
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightbOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw.getAsDouble());
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_B, initialYaw);
         }
         if (subsystems.visionSubsystem.limelightcOnline) {
-          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw.getAsDouble());
+          supplyRobotYawToLimelight(Hardware.LIMELIGHT_C, initialYaw);
         }
       }
     }

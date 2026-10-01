@@ -57,7 +57,7 @@ public class Hood extends SubsystemBase {
   private static final double BACKWARD_SOFT_LIMIT = -0.01224; // -0.02 rotations, past zeroing point
 
   public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/AdvantageKit/RealOutputs/Tunables/Hood", false);
+      new NtTunableBoolean("/AdvantageKit/RealOutputs/Logger/Tunables/Hood", false);
 
   private static final double AUTO_ZERO_VOLTAGE = -1.5;
 
@@ -80,13 +80,13 @@ public class Hood extends SubsystemBase {
 
   public void initializeNT() {
     var nt = NetworkTableInstance.getDefault();
-    positionPub = nt.getDoubleTopic("/hood/position").publish();
+    positionPub = nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/hood/position").publish();
     positionPub.set(0);
-    goalPub = nt.getDoubleTopic("/hood/goal").publish();
+    goalPub = nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/hood/goal").publish();
     goalPub.set(request.Position);
-    zeroPublisher = nt.getBooleanTopic("/Zero/hoodZero").publish();
+    zeroPublisher = nt.getBooleanTopic("AdvantageKit/RealOutputs/Logger/Zero/hoodZero").publish();
     zeroPublisher.set(false);
-    targetPosition = new NtTunableDouble("/launcher/hoodTuner", 0.0);
+    targetPosition = new NtTunableDouble("AdvantageKit/RealOutputs/Logger/launcher/hoodTuner", 0.0);
   }
 
   public void configureMotor() {

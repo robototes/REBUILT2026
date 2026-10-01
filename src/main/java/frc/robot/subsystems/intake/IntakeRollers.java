@@ -34,9 +34,9 @@ public class IntakeRollers extends SubsystemBase {
   public final double TARGET_RPS = 68;
   public final double AGITATE_RPS = TARGET_RPS / 2;
   private final NtTunableBoolean TUNABLE_ENABLE =
-      new NtTunableBoolean("AdvantageKit/RealOutputs/Tunables/TuneIntakeRollers", false);
+      new NtTunableBoolean("AdvantageKit/RealOutputs/Logger/Tunables/TuneIntakeRollers", false);
   private final NtTunableDouble NT_TARGET_RPS =
-      new NtTunableDouble("AdvantageKit/RealOutputs/intake/TargetVelocityRPS", TARGET_RPS);
+      new NtTunableDouble("AdvantageKit/RealOutputs/Logger/intake/TargetVelocityRPS", TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest = new VelocityTorqueCurrentFOC(0);
 
   // status signals
@@ -88,10 +88,12 @@ public class IntakeRollers extends SubsystemBase {
   // configure networktables
   private void networktables() {
     var nt = NetworkTableInstance.getDefault();
-    this.leftRollerTopic = nt.getDoubleTopic("intake/leftRollerSpeed");
+    this.leftRollerTopic =
+        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/leftRollerSpeed");
     this.leftRollerPub = leftRollerTopic.publish();
 
-    this.rightRollerTopic = nt.getDoubleTopic("intake/rightRollerSpeed");
+    this.rightRollerTopic =
+        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/rightRollerSpeed");
     this.rightRollerPub = rightRollerTopic.publish();
 
     // default values

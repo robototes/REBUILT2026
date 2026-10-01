@@ -1,12 +1,18 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -47,10 +53,21 @@ public class Blocker extends SubsystemBase {
   public static final double PIVOT_MIN = -0.45; // rotations
   public static final double PIVOT_MAX = 0.0;
 
+  private DoublePublisher currentPosPub;
+  private DoublePublisher targetPosPub;
+  private BooleanPublisher zeroPublisher;
+
+  // Status Signals
+  private final StatusSignal<Current> SS_intakePivotCurrent;
+  private final StatusSignal<Angle> SS_position;
+
   public Blocker() {
     blockerMotor = new TalonFX(Hardware.BLOCKER_MOTOR_ID, CANBus.roboRIO());
     blockerConfig();
     blockerMotor.clearStickyFaults();
+    networktables();
+    SS_intakePivotCurrent = blockerMotor.getStatorCurrent();
+    SS_position = blockerMotor.getPosition();
   }
 
   public void blockerConfig() {
@@ -107,8 +124,42 @@ public class Blocker extends SubsystemBase {
         .withName("Zero Blocker");
   }
 
+  public double getBlockerPosition() {
+    return SS_position.getValueAsDouble();
+  }
+
+  public double getBlockerTargetPosition() {
+    return targetPos;
+  }
+
+  @Override
+  // update simulation
+  public void periodic() {
+    StatusSignal.refreshAll(SS_position);
+    currentPosPub.set(getBlockerPosition());
+    targetPosPub.set(getBlockerTargetPosition());
+  }
+
   public boolean isAtTarget(double pose) {
     return Math.abs(blockerMotor.getPosition().getValueAsDouble() - pose)
         < Units.degreesToRotations(degreeTolerance);
+  }
+
+  private void networktables() {
+    var nt = NetworkTableInstance.getDefault();
+    this.currentPosPub =
+        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/Blocker/blockerCurrentPosition")
+            .publish();
+    this.targetPosPub =
+        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/Blocker/blockerTargetPosition")
+            .publish();
+    this.zeroPublisher =
+        NetworkTableInstance.getDefault()
+            .getBooleanTopic("AdvantageKit/RealOutputs/Logger/Zero/blockerZero")
+            .publish();
+
+    currentPosPub.set(0.0); // default value
+    targetPosPub.set(0.0); // default value
+    zeroPublisher.set(false);
   }
 }

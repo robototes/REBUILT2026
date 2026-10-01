@@ -50,7 +50,7 @@ public class Flywheels extends SubsystemBase {
 
   public final double FLYWHEEL_TOLERANCE = 10;
   public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/AdvantageKit/RealOutputs/Tunables/Flywheels", false);
+      new NtTunableBoolean("AdvantageKit/RealOutputs/Logger/Tunables/Flywheels", false);
 
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
@@ -61,12 +61,13 @@ public class Flywheels extends SubsystemBase {
     flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
     flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
-    targetVelocity = new NtTunableDouble("/launcher/flywheelTuner", 0.0);
+    targetVelocity =
+        new NtTunableDouble("AdvantageKit/RealOutputs/Logger/launcher/flywheelTuner", 0.0);
     configureMotors();
 
     var nt = NetworkTableInstance.getDefault();
-    velocityTopic = nt.getDoubleTopic("/launcher/velocity");
-    currentTopic = nt.getDoubleTopic("/launcher/current");
+    velocityTopic = nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/launcher/velocity");
+    currentTopic = nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/launcher/current");
     velocityPub = velocityTopic.publish();
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);

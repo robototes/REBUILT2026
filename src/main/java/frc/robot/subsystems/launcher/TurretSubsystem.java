@@ -77,11 +77,14 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
-      NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
+      NetworkTableInstance.getDefault()
+          .getBooleanTopic("AdvantageKit/RealOutputs/Logger/Zero/turretZero")
+          .publish();
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
+          .getStructArrayTopic(
+              "AdvantageKit/RealOutputs/Logger/lines/turretRotation", Pose2d.struct)
           .publish();
 
   // Network tables
@@ -111,7 +114,7 @@ public class TurretSubsystem extends SubsystemBase {
     turretRotation.set(new Pose2d[2]);
 
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
-    NetworkTable table = inst.getTable("AdvantageKit/RealOutputs");
+    NetworkTable table = inst.getTable("AdvantageKit/RealOutputs/Logger");
 
     positionSignal = turretMotor.getPosition();
     posPub = table.getDoubleTopic("/Turret/Position").publish();

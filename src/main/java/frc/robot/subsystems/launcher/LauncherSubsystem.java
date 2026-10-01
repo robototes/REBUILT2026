@@ -40,15 +40,21 @@ public class LauncherSubsystem extends SubsystemBase {
     this.s = s;
 
     var nt = NetworkTableInstance.getDefault();
-    hoodGoalPub = nt.getDoubleTopic("/AutoAim/hoodGoal").publish();
+    hoodGoalPub = nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/AutoAim/hoodGoal").publish();
     hoodGoalPub.set(0.0);
-    flywheelGoalPub = nt.getDoubleTopic("/AutoAim/flywheelGoal").publish();
+    flywheelGoalPub =
+        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/AutoAim/flywheelGoal").publish();
     flywheelGoalPub.set(0.0);
-    hoodBooleanPub = nt.getBooleanTopic("/AutoAim/hoodAtTarget").publish();
-    turretBooleanPub = nt.getBooleanTopic("/AutoAim/turretAtTarget").publish();
-    flywheelBooleanPub = nt.getBooleanTopic("/AutoAim/flywheelAtTarget").publish();
-    notUnderClimbPub = nt.getBooleanTopic("/AutoAim/NotUnderClimb").publish();
-    notGoingToBeUnderTrenchPub = nt.getBooleanTopic("/AutoAim/NotUnderTrench").publish();
+    hoodBooleanPub =
+        nt.getBooleanTopic("AdvantageKit/RealOutputs/Logger/AutoAim/hoodAtTarget").publish();
+    turretBooleanPub =
+        nt.getBooleanTopic("AdvantageKit/RealOutputs/Logger/AutoAim/turretAtTarget").publish();
+    flywheelBooleanPub =
+        nt.getBooleanTopic("AdvantageKit/RealOutputs/Logger/AutoAim/flywheelAtTarget").publish();
+    notUnderClimbPub =
+        nt.getBooleanTopic("AdvantageKit/RealOutputs/Logger/AutoAim/NotUnderClimb").publish();
+    notGoingToBeUnderTrenchPub =
+        nt.getBooleanTopic("AdvantageKit/RealOutputs/Logger/AutoAim/NotUnderTrench").publish();
     hoodBooleanPub.set(false);
     turretBooleanPub.set(false);
     flywheelBooleanPub.set(false);
