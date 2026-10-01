@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class AutoLogic {
 
@@ -64,13 +65,13 @@ public class AutoLogic {
 
   /* ---------------- Choosers ---------------- */
 
-  private static final SendableChooser<StartPosition> startPositionChooser =
-      new SendableChooser<>();
+  private static final LoggedDashboardChooser<StartPosition> startPositionChooser =
+      new LoggedDashboardChooser<>("Starting Position");
 
   private static final DynamicSendableChooser<String> availableAutos =
       new DynamicSendableChooser<>();
 
-  private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
+  private static final LoggedDashboardChooser<Integer> gameObjects = new LoggedDashboardChooser<>("Game Objects");
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
@@ -148,33 +149,34 @@ public class AutoLogic {
   public static void initSmartDashBoard() {
     requirePathsInitialized();
 
-    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
+    startPositionChooser.addDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
 
     for (StartPosition pos : StartPosition.values()) {
       startPositionChooser.addOption(pos.title, pos);
     }
 
-    gameObjects.setDefaultOption("0", 0);
+    gameObjects.addDefaultOption("0", 0);
     for (int i = 1; i < commandsMap.size(); i++) {
       gameObjects.addOption(String.valueOf(i), i);
     }
 
     autoDelayEntry.setDouble(0.0);
 
-    SmartDashboard.putData("Starting Position", startPositionChooser);
-    SmartDashboard.putData("Auto Mode", gameObjects);
+
+
     SmartDashboard.putData("Available Auto Variants", availableAutos);
     SmartDashboard.putString("Auto Key", keys);
 
-    startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
-    gameObjects.onChange(v -> filterAutos(gameObjects.getSelected()));
+    startPositionChooser.onChange(v -> filterAutos(gameObjects.getSendableChooser().getSelected()));
+    gameObjects.onChange(v -> filterAutos(gameObjects.getSendableChooser().getSelected()));
 
-    filterAutos(gameObjects.getSelected());
+    filterAutos(gameObjects.getSendableChooser().getSelected());
   }
 
   /* ---------------- Filtering ---------------- */
 
-  public static void filterAutos(int numGameObjects) {
+  public static void filterAutos(String numGameObject) {
+    int numGameObjects = Integer.valueOf(numGameObject);
     requirePathsInitialized();
 
     availableAutos.clearOptions();
@@ -184,7 +186,7 @@ public class AutoLogic {
     if (autoList == null) return;
 
     for (AutoPath auto : autoList) {
-      if (auto.getStartPose().equals(startPositionChooser.getSelected())) {
+      if (auto.getStartPose().title.equals(startPositionChooser.getSendableChooser().getSelected())) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }
