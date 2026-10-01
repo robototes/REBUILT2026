@@ -193,7 +193,7 @@ public class Robot extends LoggedRobot {
       autoSmartDashboardUpdate = AutonomousField.initSmartDashBoard(() -> "Field", 0, 0);
       autoSmartDashboardTimer.start();
 
-      AutoLogic.initSmartDashBoard();
+      AutoLogic.initAdvantageKit();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
