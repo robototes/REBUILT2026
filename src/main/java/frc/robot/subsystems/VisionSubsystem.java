@@ -182,18 +182,15 @@ public class VisionSubsystem extends SubsystemBase {
     robotField = new Field2d();
     rawVisionFieldObject = robotField.getObject("RawVision");
 
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/limelight-a_Last timestamp", 0);
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/limelight-b_Last timestamp", 0);
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/limelight-c_Last timestamp", 0);
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/limelight-a_Num targets", 0);
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/limelight-b_Num targets", 0);
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/limelight-c_Num targets", 0);
-    Logger.recordOutput(
-        "AdvantageKit/RealOutputs/Logger/vision/limelight-a_time since last reading", 0);
-    Logger.recordOutput(
-        "AdvantageKit/RealOutputs/Logger/vision/limelight-b_time since last reading", 0);
-    Logger.recordOutput(
-        "AdvantageKit/RealOutputs/Logger/vision/limelight-c_time since last reading", 0);
+    Logger.recordOutput("vision/limelight-a_Last timestamp", 0);
+    Logger.recordOutput("vision/limelight-b_Last timestamp", 0);
+    Logger.recordOutput("vision/limelight-c_Last timestamp", 0);
+    Logger.recordOutput("vision/limelight-a_Num targets", 0);
+    Logger.recordOutput("vision/limelight-b_Num targets", 0);
+    Logger.recordOutput("vision/limelight-c_Num targets", 0);
+    Logger.recordOutput("vision/limelight-a_time since last reading", 0);
+    Logger.recordOutput("vision/limelight-b_time since last reading", 0);
+    Logger.recordOutput("vision/limelight-c_time since last reading", 0);
 
     var nt = NetworkTableInstance.getDefault();
     disableVision =
@@ -331,8 +328,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
-      Logger.recordOutput(
-          "AdvantageKit/RealOutputs/Logger/vision/" + cameraName + "_tagSpread", spread);
+      Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
       publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
       return;
     }
@@ -390,8 +386,7 @@ public class VisionSubsystem extends SubsystemBase {
       lastTimestampSeconds = estimate.timestampSeconds;
     }
 
-    Logger.recordOutput(
-        "AdvantageKit/RealOutputs/Logger/vision/" + cameraName + "_tagSpread", spread);
+    Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
     publishDiagnostics(estimate, visionPose2d, camera, "none");
   }
 
@@ -504,9 +499,7 @@ public class VisionSubsystem extends SubsystemBase {
             && isPoseOnField(visionPose);
     if (odomOffField && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
-      Logger.recordOutput(
-          "AdvantageKit/RealOutputs/Logger/vision/" + cameraName + "_rejectReason",
-          "odometry-reset");
+      Logger.recordOutput("vision/" + cameraName + "_rejectReason", "odometry-reset");
     }
   }
 
@@ -539,9 +532,8 @@ public class VisionSubsystem extends SubsystemBase {
             ? Double.MAX_VALUE
             : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
 
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/" + cameraName + " Mt1 STD xy", xy);
-    Logger.recordOutput(
-        "AdvantageKit/RealOutputs/Logger/vision/" + cameraName + " Mt1 STD theta", theta);
+    Logger.recordOutput("vision/" + cameraName + " Mt1 STD xy", xy);
+    Logger.recordOutput("vision/" + cameraName + " Mt1 STD theta", theta);
     return VecBuilder.fill(xy, xy, theta);
   }
 
@@ -570,7 +562,7 @@ public class VisionSubsystem extends SubsystemBase {
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
 
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/" + cameraName + " Mt2 STD xy", xy);
+    Logger.recordOutput("vision/" + cameraName + " Mt2 STD xy", xy);
     // θ = MAX_VALUE: heading comes from gyro, not vision
     return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
   }
@@ -600,18 +592,13 @@ public class VisionSubsystem extends SubsystemBase {
   private void publishDiagnostics(
       BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
+      Logger.recordOutput("vision/" + camera.getName() + "_rejectReason", rejectionReason);
       Logger.recordOutput(
-          "AdvantageKit/RealOutputs/Logger/vision/" + camera.getName() + "_rejectReason",
-          rejectionReason);
-      Logger.recordOutput(
-          "AdvantageKit/RealOutputs/Logger/vision/" + camera.getName() + "_visionError",
+          "vision/" + camera.getName() + "_visionError",
           getVisionPoseError(visionPose2d, estimate.timestampSeconds));
       Logger.recordOutput(
-          "AdvantageKit/RealOutputs/Logger/vision/" + camera.getName() + "_Last timestamp",
-          camera.getLastTimestampSeconds());
-      Logger.recordOutput(
-          "AdvantageKit/RealOutputs/Logger/vision/" + camera.getName() + "_Num targets",
-          camera.getNumTargets());
+          "vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
+      Logger.recordOutput("vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
     }
   }
 

@@ -11,9 +11,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -25,6 +22,8 @@ import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class IntakePivot extends SubsystemBase {
   private final TalonFX pivotMotor;
@@ -70,9 +69,9 @@ public class IntakePivot extends SubsystemBase {
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
-  private DoublePublisher currentPosPub;
-  private DoublePublisher targetPosPub;
-  private BooleanPublisher zeroPublisher;
+  private LoggedNetworkNumber currentPosPub;
+  private LoggedNetworkNumber targetPosPub;
+  private LoggedNetworkBoolean zeroPublisher;
 
   // Status Signals
   private final StatusSignal<Current> SS_intakePivotCurrent;
@@ -124,19 +123,9 @@ public class IntakePivot extends SubsystemBase {
   }
 
   private void networktables() {
-    var nt = NetworkTableInstance.getDefault();
-    this.currentPosPub =
-        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/pivotCurrentPosition").publish();
-    this.targetPosPub =
-        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/pivotTargetPosition").publish();
-    this.zeroPublisher =
-        NetworkTableInstance.getDefault()
-            .getBooleanTopic("AdvantageKit/RealOutputs/Logger/Zero/intakePivotZero")
-            .publish();
-
-    currentPosPub.set(0.0); // default value
-    targetPosPub.set(0.0); // default value
-    zeroPublisher.set(false);
+    this.currentPosPub = new LoggedNetworkNumber("intake/pivotCurrentPosition", 0.0);
+    this.targetPosPub = new LoggedNetworkNumber("intake/pivotTargetPosition", 0.0);
+    this.zeroPublisher = new LoggedNetworkBoolean("Zero/intakePivotZero", false);
   }
 
   public void setPivotPosition(double pos) {

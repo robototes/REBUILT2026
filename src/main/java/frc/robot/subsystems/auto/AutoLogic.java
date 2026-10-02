@@ -19,6 +19,7 @@ import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
+import frc.robot.util.CustomLoggedDashboardChooser;
 import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
@@ -67,8 +68,8 @@ public class AutoLogic {
   private static final LoggedDashboardChooser<StartPosition> startPositionChooser =
       new LoggedDashboardChooser<>("Starting Position");
 
-  private static final LoggedDashboardChooser<String> availableAutos =
-      new LoggedDashboardChooser<>("Available Auto Variants");
+  private static final CustomLoggedDashboardChooser<String> availableAutos =
+      new CustomLoggedDashboardChooser<>("Available Auto Variants");
 
   private static final LoggedDashboardChooser<Integer> gameObjects =
       new LoggedDashboardChooser<>("Game Objects");
@@ -165,22 +166,21 @@ public class AutoLogic {
 
     loggedKeys.set(keys);
 
-    startPositionChooser.onChange(v -> filterAutos(gameObjects.getSendableChooser().getSelected()));
-    gameObjects.onChange(v -> filterAutos(gameObjects.getSendableChooser().getSelected()));
+    startPositionChooser.onChange(v -> filterAutos(gameObjects.get()));
+    gameObjects.onChange(v -> filterAutos(gameObjects.get()));
 
-    filterAutos(gameObjects.getSendableChooser().getSelected());
+    filterAutos(gameObjects.get());
   }
 
   /* ---------------- Filtering ---------------- */
 
-  public static void filterAutos(String numGameObject) {
-    int numGameObjects = Integer.valueOf(numGameObject);
+  public static void filterAutos(int numGameObject) {
     requirePathsInitialized();
 
-    // availableAutos.clearOptions();
+    availableAutos.clearOptions();
     availableAutos.addDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
-    List<AutoPath> autoList = commandsMap.get(numGameObjects);
+    List<AutoPath> autoList = commandsMap.get(numGameObject);
     if (autoList == null) return;
 
     for (AutoPath auto : autoList) {

@@ -21,6 +21,7 @@ public class PivotSim extends SubsystemBase {
 
   private final LoggedMechanismRoot2d root;
   private final LoggedMechanismLigament2d arm;
+  private final LoggedMechanism2d mech;
 
   // physical specs
   private static final double PIVOT_GEAR_RATIO = 36.0;
@@ -31,7 +32,7 @@ public class PivotSim extends SubsystemBase {
     if (!RobotBase.isSimulation()) {
       throw new IllegalStateException("This is not sim what are you doing");
     }
-    LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
+    mech = new LoggedMechanism2d(40, 40);
 
     // define the simulator
     intakeArmSim =
@@ -58,6 +59,7 @@ public class PivotSim extends SubsystemBase {
 
   // update sim
   public void updateArm() {
+
     intakeArmSim.setInput(intakeArmSimState.getMotorVoltage());
     intakeArmSim.update(RobotSim.UPDATE_S);
 
@@ -70,5 +72,6 @@ public class PivotSim extends SubsystemBase {
 
     // update sim
     arm.setAngle(Units.radiansToDegrees(angleRads) + ARM_START_POS);
+    Logger.recordOutput("Pivot", mech);
   }
 }

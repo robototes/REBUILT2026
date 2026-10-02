@@ -22,6 +22,7 @@ public class FlywheelsSim {
   private final FlywheelSim flywheelSim;
 
   private final LoggedMechanismLigament2d wheelLigament;
+  LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
 
   // Tune these to match reality
   private static final double GEAR_RATIO = 1.0;
@@ -44,7 +45,6 @@ public class FlywheelsSim {
             1);
 
     // --- Mechanism2d ---
-    LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
     LoggedMechanismRoot2d root = mech.getRoot("flywheelRoot", 20, 20);
 
     wheelLigament =
@@ -79,5 +79,6 @@ public class FlywheelsSim {
 
     // idk how this math works but someone suggested it to me so
     wheelLigament.setAngle(wheelLigament.getAngle() + rpm * 6.0 * 0.02); // visual spin factor
+    Logger.recordOutput("Flywheels", mech);
   }
 }

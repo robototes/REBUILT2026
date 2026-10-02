@@ -21,23 +21,21 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableBoolean;
-import frc.robot.util.tuning.NtTunableDouble;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
   private final double D_TARGET_RPS = 70;
   private final double D_TARGET_ACCEL = 1000; // Rotations /s /s
-  private final NtTunableBoolean TUNABLE_ENABLE =
-      new NtTunableBoolean("AdvantageKit/RealOutputs/Logger/Tunables/TuneSpindexer", false);
-  private final NtTunableDouble TARGET_ACCEL =
-      new NtTunableDouble(
-          "AdvantageKit/RealOutputs/Logger/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
-  private final NtTunableDouble TARGET_RPS =
-      new NtTunableDouble(
-          "AdvantageKit/RealOutputs/Logger/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+  private final LoggedNetworkBoolean TUNABLE_ENABLE =
+      new LoggedNetworkBoolean("Tuning/TuneSpindexer", false);
+  private final LoggedNetworkNumber TARGET_ACCEL =
+      new LoggedNetworkNumber("SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
+  private final LoggedNetworkNumber TARGET_RPS =
+      new LoggedNetworkNumber("SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
       new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 

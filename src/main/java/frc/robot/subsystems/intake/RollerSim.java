@@ -25,6 +25,7 @@ public class RollerSim extends SubsystemBase {
   private final TalonFXSimState rightRollerSimState;
 
   private final LoggedMechanismLigament2d roller;
+  LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
 
   private final double ROLLERS_GEAR_RATIO = 1.0; // tune this
 
@@ -48,7 +49,6 @@ public class RollerSim extends SubsystemBase {
     rightRollerSimState.setMotorType(MotorType.KrakenX60);
 
     // visualization
-    LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
     LoggedMechanismRoot2d root = mech.getRoot("root", 20, 20);
 
     roller = root.append(new LoggedMechanismLigament2d("roller", 2, 0));
@@ -71,5 +71,6 @@ public class RollerSim extends SubsystemBase {
 
     leftRollerSimState.setRotorVelocity(leftRPS * ROLLERS_GEAR_RATIO);
     rightRollerSimState.setRotorVelocity(rightRPS * ROLLERS_GEAR_RATIO);
+    Logger.recordOutput("Roller", mech);
   }
 }

@@ -8,8 +8,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -18,6 +16,7 @@ import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class IntakeRollers extends SubsystemBase {
   // motors
@@ -25,8 +24,8 @@ public class IntakeRollers extends SubsystemBase {
   private final TalonFX rightRoller;
 
   // networktables and sim
-  private DoubleTopic leftRollerTopic;
-  private DoubleTopic rightRollerTopic;
+  private LoggedNetworkNumber leftRollerTopic;
+  private LoggedNetworkNumber rightRollerTopic;
   private DoublePublisher leftRollerPub;
   private DoublePublisher rightRollerPub;
   private RollerSim rollerSim;
@@ -87,18 +86,10 @@ public class IntakeRollers extends SubsystemBase {
 
   // configure networktables
   private void networktables() {
-    var nt = NetworkTableInstance.getDefault();
-    this.leftRollerTopic =
-        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/leftRollerSpeed");
-    this.leftRollerPub = leftRollerTopic.publish();
 
-    this.rightRollerTopic =
-        nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/intake/rightRollerSpeed");
-    this.rightRollerPub = rightRollerTopic.publish();
+    this.leftRollerTopic = new LoggedNetworkNumber("intake/leftRollerSpeed", 0.0);
 
-    // default values
-    leftRollerPub.set(0);
-    rightRollerPub.set(0);
+    this.rightRollerTopic = new LoggedNetworkNumber("intake/rightRollerSpeed", 0.0);
   }
 
   public void runRollers(double velocity) {

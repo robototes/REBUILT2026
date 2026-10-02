@@ -21,8 +21,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 public class Flywheels extends SubsystemBase {
   private final TalonFX flywheelOne; // left spins clockwise
@@ -49,8 +49,8 @@ public class Flywheels extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   public final double FLYWHEEL_TOLERANCE = 10;
-  public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("AdvantageKit/RealOutputs/Logger/Tunables/Flywheels", false);
+  public final LoggedNetworkBoolean TUNER_CONTROLLED =
+      new LoggedNetworkBoolean("Tuning/Flywheels", false);
 
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
@@ -61,13 +61,12 @@ public class Flywheels extends SubsystemBase {
     flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
     flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
-    targetVelocity =
-        new NtTunableDouble("AdvantageKit/RealOutputs/Logger/launcher/flywheelTuner", 0.0);
+    targetVelocity = new NtTunableDouble("Tuning/launcher/flywheelTuner", 0.0);
     configureMotors();
 
     var nt = NetworkTableInstance.getDefault();
-    velocityTopic = nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/launcher/velocity");
-    currentTopic = nt.getDoubleTopic("AdvantageKit/RealOutputs/Logger/launcher/current");
+    velocityTopic = nt.getDoubleTopic("launcher/velocity");
+    currentTopic = nt.getDoubleTopic("launcher/current");
     velocityPub = velocityTopic.publish();
     currentPub = currentTopic.publish();
     velocityPub.set(0.0);
