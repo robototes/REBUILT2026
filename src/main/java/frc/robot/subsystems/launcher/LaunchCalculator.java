@@ -613,16 +613,28 @@ public class LaunchCalculator {
   }
 
   public static boolean isCloseToTrench(Pose2d pose) {
-    Translation2d nearestTag = pose.getTranslation().nearest(trenchTags);
-    double dx = Math.abs(pose.getX() - nearestTag.getX());
-    double dy = Math.abs(pose.getY() - nearestTag.getY());
-    return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
+    double poseX = pose.getX();
+    double poseY = pose.getY();
+    for (int i = 0; i < trenchTags.size(); i++) {
+      Translation2d tag = trenchTags.get(i);
+      if (Math.abs(poseX - tag.getX()) < TURRET_TO_TRENCH_TOLERANCE_X
+          && Math.abs(poseY - tag.getY()) < TURRET_TO_TRENCH_TOLERANCE_Y) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isUnderClimb(Pose2d turretPose) {
-    Translation2d nearestTag = turretPose.getTranslation().nearest(underclimbTags);
-    double dx = Math.abs(turretPose.getX() - nearestTag.getX());
-    double dy = Math.abs(turretPose.getY() - nearestTag.getY());
-    return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;
+    double turretX = turretPose.getX();
+    double turretY = turretPose.getY();
+    for (int i = 0; i < underclimbTags.size(); i++) {
+      Translation2d tag = underclimbTags.get(i);
+      if (Math.abs(turretX - tag.getX()) < TURRET_TO_UNDERCLIMB_TOLERANCE_X
+          && Math.abs(turretY - tag.getY()) < TURRET_TO_UNDERCLIMB_TOLERANCE_Y) {
+        return true;
+      }
+    }
+    return false;
   }
 }
