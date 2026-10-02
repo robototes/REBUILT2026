@@ -417,6 +417,7 @@ public class Controls {
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
 
     if (s.blocker != null) {
+      // Need to add requirements here
       connected(indexingTestController)
           .and(indexingTestController.rightTrigger())
           .onTrue(

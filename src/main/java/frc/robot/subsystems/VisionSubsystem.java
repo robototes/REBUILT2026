@@ -32,6 +32,7 @@ import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -44,12 +45,12 @@ public class VisionSubsystem extends SubsystemBase {
 
   private Matrix<N3, N1> stdDevs = null;
 
-  private static NtTunableDouble A_XY_MT2 =
-      new NtTunableDouble("AdvantageKit/RealOutputs/Logger/vision/A_XY_MT2", 0.07);
-  private static NtTunableDouble A_XY_MT1 =
-      new NtTunableDouble("AdvantageKit/RealOutputs/Logger/vision/A_XY_MT1", 0.09);
-  private static NtTunableDouble P_XY =
-      new NtTunableDouble("AdvantageKit/RealOutputs/Logger/vision/P_XY", 1.4);
+  private static LoggedNetworkNumber A_XY_MT2 =
+      new LoggedNetworkNumber("AdvantageKit/RealOutputs/Logger/vision/A_XY_MT2", 0.07);
+  private static LoggedNetworkNumber A_XY_MT1 =
+      new LoggedNetworkNumber("AdvantageKit/RealOutputs/Logger/vision/A_XY_MT1", 0.09);
+  private static LoggedNetworkNumber P_XY =
+      new LoggedNetworkNumber("AdvantageKit/RealOutputs/Logger/vision/P_XY", 1.4);
 
   // How much to reduce std devs when defense slip is detected.
   // <1.0 = trust vision more (0.5 = half the std dev = 4x the filter weight).
@@ -182,15 +183,15 @@ public class VisionSubsystem extends SubsystemBase {
     robotField = new Field2d();
     rawVisionFieldObject = robotField.getObject("RawVision");
 
-    Logger.recordOutput("vision/limelight-a_Last timestamp", 0);
-    Logger.recordOutput("vision/limelight-b_Last timestamp", 0);
-    Logger.recordOutput("vision/limelight-c_Last timestamp", 0);
-    Logger.recordOutput("vision/limelight-a_Num targets", 0);
-    Logger.recordOutput("vision/limelight-b_Num targets", 0);
-    Logger.recordOutput("vision/limelight-c_Num targets", 0);
-    Logger.recordOutput("vision/limelight-a_time since last reading", 0);
-    Logger.recordOutput("vision/limelight-b_time since last reading", 0);
-    Logger.recordOutput("vision/limelight-c_time since last reading", 0);
+    Logger.recordOutput("vision/limelight-a_Last timestamp", 0.0);
+    Logger.recordOutput("vision/limelight-b_Last timestamp", 0.0);
+    Logger.recordOutput("vision/limelight-c_Last timestamp", 0.0);
+    Logger.recordOutput("vision/limelight-a_Num targets", 0.0);
+    Logger.recordOutput("vision/limelight-b_Num targets", 0.0);
+    Logger.recordOutput("vision/limelight-c_Num targets", 0.0);
+    Logger.recordOutput("vision/limelight-a_time since last reading", 0.0);
+    Logger.recordOutput("vision/limelight-b_time since last reading", 0.0);
+    Logger.recordOutput("vision/limelight-c_time since last reading", 0.0);
 
     var nt = NetworkTableInstance.getDefault();
     disableVision =
@@ -218,7 +219,7 @@ public class VisionSubsystem extends SubsystemBase {
     // isUnderDefense() uses lastFieldPose and visionPoseTracking, both of which are
     // set before any camera processes — this is intentional.
     boolean underDefense = isUnderDefense(visionPoseTracking);
-    Logger.recordOutput("AdvantageKit/RealOutputs/Logger/vision/underDefense", underDefense);
+    Logger.recordOutput("vision/underDefense", underDefense);
 
     processCamera(
         ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);

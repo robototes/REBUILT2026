@@ -89,6 +89,7 @@ public class Robot extends LoggedRobot {
   protected Robot() {
     Logger.recordMetadata("Robototes", "REBUILT2026"); // Set a metadata value
 
+    // Need to put solution here for REPLAY
     if (isReal() || isSimulation()) {
       Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
