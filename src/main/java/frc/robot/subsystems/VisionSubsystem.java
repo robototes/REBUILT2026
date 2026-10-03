@@ -16,7 +16,6 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -127,40 +126,15 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
   private final LoggedNetworkBoolean disableVision =
-      new LoggedNetworkBoolean("vision/disableVision", false);
+      new LoggedNetworkBoolean("disableVision", false);
 
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
-  private final StructPublisher<Pose3d> fieldPose3dEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/fieldPose3d", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryA =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dA", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dB", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryC =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dC", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/compBotLeftCameraView", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> compBotRightCameraViewEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/compBotRightCameraView", Pose3d.struct)
-          .publish();
+  private static final String RAW_POSE_KEY_A = "vision/rawFieldPose3dA";
+  private static final String RAW_POSE_KEY_B = "vision/rawFieldPose3dB";
+  private static final String RAW_POSE_KEY_C = "vision/rawFieldPose3dC";
 
   private double lastTimestampSeconds = 0;
   private Pose2d lastFieldPose = null;
@@ -213,22 +187,16 @@ public class VisionSubsystem extends SubsystemBase {
     boolean underDefense = isUnderDefense(visionPoseTracking);
     Logger.recordOutput("vision/underDefense", underDefense);
 
-    processCamera(
-        ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
-    processCamera(
-        BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking, underDefense);
-    // uncomment if when using intake pose
-    // if (intakePivot.isAtTarget(2, IntakePivot.DEPLOYED_POS)) {
-    processCamera(
-        CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking, underDefense);
-    // }
+    processCamera(ACamera, limelightaOnline, RAW_POSE_KEY_A, visionPoseTracking, underDefense);
+    processCamera(BCamera, limelightbOnline, RAW_POSE_KEY_B, visionPoseTracking, underDefense);
+    processCamera(CCamera, limelightcOnline, RAW_POSE_KEY_C, visionPoseTracking, underDefense);
     updateCameraView(visionPoseTracking);
   }
 
   private void processCamera(
       LLCamera camera,
       boolean cameraOnline,
-      StructPublisher<Pose3d> rawFieldPose3dEntry,
+      String rawPoseKey,
       VisionPoseTracking visionPoseTracking,
       boolean underDefense) {
     if (!cameraOnline) return;
@@ -241,7 +209,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     processLimelight(
         mt1Estimate,
-        rawFieldPose3dEntry,
+        rawPoseKey,
         maxAmbiguity,
         visionPoseTracking,
         rawFiducials,
@@ -250,7 +218,7 @@ public class VisionSubsystem extends SubsystemBase {
         camera.getName());
     processLimelight(
         mt2Estimate,
-        rawFieldPose3dEntry,
+        rawPoseKey,
         maxAmbiguity,
         visionPoseTracking,
         rawFiducials,
@@ -261,7 +229,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   private void processLimelight(
       BetterPoseEstimate estimate,
-      StructPublisher<Pose3d> rawFieldPoseEntry,
+      String rawPoseKey,
       double maxAmbiguity,
       VisionPoseTracking visionPoseTracking,
       RawFiducial[] rawFiducials,
@@ -270,6 +238,7 @@ public class VisionSubsystem extends SubsystemBase {
       String cameraName) {
 
     if (estimate == null || estimate.tagCount <= 0) return;
+    Logger.recordOutput(rawPoseKey + (estimate.isMegaTag2 ? "_MT2" : "_MT1"), estimate.pose3d);
 
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
     if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
@@ -371,7 +340,7 @@ public class VisionSubsystem extends SubsystemBase {
     camera.setLastTimestampSeconds(estimate.timestampSeconds);
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      fieldPose3dEntry.set(estimate.pose3d);
+      Logger.recordOutput("vision/fieldPose3d", estimate.pose3d);
       lastFieldPose = visionPose2d;
       rawVisionFieldObject.setPose(lastFieldPose);
       lastTimestampSeconds = estimate.timestampSeconds;
@@ -626,11 +595,14 @@ public class VisionSubsystem extends SubsystemBase {
 
   private void updateCameraView(VisionPoseTracking visionPoseTracking) {
     if (visionPoseTracking != null && visionPoseTracking.drivePose3d != null) {
-      compBotLeftCameraViewEntry.set(
+      Logger.recordOutput(
+          "vision/compBotLeftCameraView",
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA));
-      compBotFrontCameraViewEntry.set(
+      Logger.recordOutput(
+          "vision/compBotFrontCameraView",
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_FRONT_CAMERA));
-      compBotRightCameraViewEntry.set(
+      Logger.recordOutput(
+          "vision/compBotRightCameraView",
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_RIGHT_CAMERA));
     }
   }
