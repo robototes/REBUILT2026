@@ -32,7 +32,7 @@ public class Feeder extends SubsystemBase {
   private final LoggedNetworkBoolean TUNABLE_ENABLE =
       new LoggedNetworkBoolean("Tuning/FeederRPS", false);
   private final LoggedNetworkNumber TARGET_RPS =
-      new LoggedNetworkNumber("FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+      new LoggedNetworkNumber("Tuning/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
       new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 

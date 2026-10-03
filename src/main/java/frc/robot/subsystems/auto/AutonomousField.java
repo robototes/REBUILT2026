@@ -125,6 +125,10 @@ public class AutonomousField {
   /* ---------------- Periodic update ---------------- */
 
   public void update(String autoName) {
+    if (autoName == null || autoName.isEmpty()) {
+      return;
+    }
+
     if (DriverStation.isEnabled()) {
       lastName = Optional.empty();
       return;

@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
@@ -338,9 +337,8 @@ public class Robot extends LoggedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      // Change in 2027 code bc of Field2d cant be logged in advantage kit at the moment (which is
-      // where this value is from)
-      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0.0);
+      Pose2d startingPose = AutoLogic.getSelectedAutoStartingPose();
+      double initialYaw = startingPose != null ? startingPose.getRotation().getDegrees() : 0.0;
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);

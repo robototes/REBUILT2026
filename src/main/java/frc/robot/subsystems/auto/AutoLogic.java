@@ -66,13 +66,13 @@ public class AutoLogic {
   /* ---------------- Choosers ---------------- */
 
   private static final LoggedDashboardChooser<StartPosition> startPositionChooser =
-      new LoggedDashboardChooser<>("Starting Position");
+      new LoggedDashboardChooser<StartPosition>("Starting Position");
 
   private static final CustomLoggedDashboardChooser<String> availableAutos =
-      new CustomLoggedDashboardChooser<>("Available Auto Variants");
+      new CustomLoggedDashboardChooser<String>("Available Auto Variants");
 
   private static final LoggedDashboardChooser<Integer> gameObjects =
-      new LoggedDashboardChooser<>("Game Objects");
+      new LoggedDashboardChooser<Integer>("Game Objects");
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
@@ -174,19 +174,27 @@ public class AutoLogic {
 
   /* ---------------- Filtering ---------------- */
 
-  public static void filterAutos(int numGameObject) {
+  public static void filterAutos(Integer numGameObject) {
     requirePathsInitialized();
 
     availableAutos.clearOptions();
     availableAutos.addDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
-    List<AutoPath> autoList = commandsMap.get(numGameObject);
+    // Map.of(...).get(null) throws an NPE, so never pass null to commandsMap
+    int key = (numGameObject != null) ? numGameObject : 0;
+
+    List<AutoPath> autoList = commandsMap.get(key);
     if (autoList == null) return;
 
+    // Selected key from the sendable chooser (the title string); can be null if no default is set
+    String selectedTitle = startPositionChooser.getSendableChooser().getSelected();
+    if (selectedTitle == null) {
+      selectedTitle = StartPosition.MISC.title;
+    }
+
     for (AutoPath auto : autoList) {
-      if (auto.getStartPose()
-          .title
-          .equals(startPositionChooser.getSendableChooser().getSelected())) {
+      StartPosition pos = auto.getStartPose();
+      if (pos != null && pos.title.equals(selectedTitle)) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }

@@ -14,7 +14,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
@@ -30,8 +29,8 @@ import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableDouble;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -46,17 +45,16 @@ public class VisionSubsystem extends SubsystemBase {
   private Matrix<N3, N1> stdDevs = null;
 
   private static LoggedNetworkNumber A_XY_MT2 =
-      new LoggedNetworkNumber("AdvantageKit/RealOutputs/Logger/vision/A_XY_MT2", 0.07);
+      new LoggedNetworkNumber("visionTunables/A_XY_MT2", 0.07);
   private static LoggedNetworkNumber A_XY_MT1 =
-      new LoggedNetworkNumber("AdvantageKit/RealOutputs/Logger/vision/A_XY_MT1", 0.09);
-  private static LoggedNetworkNumber P_XY =
-      new LoggedNetworkNumber("AdvantageKit/RealOutputs/Logger/vision/P_XY", 1.4);
+      new LoggedNetworkNumber("visionTunables/A_XY_MT1", 0.09);
+  private static LoggedNetworkNumber P_XY = new LoggedNetworkNumber("visionTunables/P_XY", 1.4);
 
   // How much to reduce std devs when defense slip is detected.
   // <1.0 = trust vision more (0.5 = half the std dev = 4x the filter weight).
   // Tune this at practice with someone actively defending.
-  private static NtTunableDouble DEFENSE_STD_DEV_SCALE =
-      new NtTunableDouble("AdvantageKit/RealOutputs/Logger/vision/defenseStdDevScale", 0.5);
+  private static LoggedNetworkNumber DEFENSE_STD_DEV_SCALE =
+      new LoggedNetworkNumber("visionTunables/defenseStdDevScale", 0.5);
 
   private static class VisionConstants {
     private static final double STD_DEVS_MT1_THETA = Math.PI / 60;
@@ -128,7 +126,8 @@ public class VisionSubsystem extends SubsystemBase {
           new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90)));
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
-  private BooleanSubscriber disableVision;
+  private final LoggedNetworkBoolean disableVision =
+      new LoggedNetworkBoolean("vision/disableVision", false);
 
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
@@ -136,34 +135,31 @@ public class VisionSubsystem extends SubsystemBase {
 
   private final StructPublisher<Pose3d> fieldPose3dEntry =
       NetworkTableInstance.getDefault()
-          .getStructTopic("AdvantageKit/RealOutputs/Logger/vision/fieldPose3d", Pose3d.struct)
+          .getStructTopic("vision/fieldPose3d", Pose3d.struct)
           .publish();
   private final StructPublisher<Pose3d> rawFieldPose3dEntryA =
       NetworkTableInstance.getDefault()
-          .getStructTopic("AdvantageKit/RealOutputs/Logger/vision/rawFieldPose3dA", Pose3d.struct)
+          .getStructTopic("vision/rawFieldPose3dA", Pose3d.struct)
           .publish();
   private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
       NetworkTableInstance.getDefault()
-          .getStructTopic("AdvantageKit/RealOutputs/Logger/vision/rawFieldPose3dB", Pose3d.struct)
+          .getStructTopic("vision/rawFieldPose3dB", Pose3d.struct)
           .publish();
   private final StructPublisher<Pose3d> rawFieldPose3dEntryC =
       NetworkTableInstance.getDefault()
-          .getStructTopic("AdvantageKit/RealOutputs/Logger/vision/rawFieldPose3dC", Pose3d.struct)
+          .getStructTopic("vision/rawFieldPose3dC", Pose3d.struct)
           .publish();
   private final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
       NetworkTableInstance.getDefault()
-          .getStructTopic(
-              "AdvantageKit/RealOutputs/Logger/vision/compBotLeftCameraView", Pose3d.struct)
+          .getStructTopic("vision/compBotLeftCameraView", Pose3d.struct)
           .publish();
   private final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
       NetworkTableInstance.getDefault()
-          .getStructTopic(
-              "AdvantageKit/RealOutputs/Logger/vision/compBotFrontCameraView", Pose3d.struct)
+          .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
           .publish();
   private final StructPublisher<Pose3d> compBotRightCameraViewEntry =
       NetworkTableInstance.getDefault()
-          .getStructTopic(
-              "AdvantageKit/RealOutputs/Logger/vision/compBotRightCameraView", Pose3d.struct)
+          .getStructTopic("vision/compBotRightCameraView", Pose3d.struct)
           .publish();
 
   private double lastTimestampSeconds = 0;
@@ -192,10 +188,6 @@ public class VisionSubsystem extends SubsystemBase {
     Logger.recordOutput("vision/limelight-a_time since last reading", 0.0);
     Logger.recordOutput("vision/limelight-b_time since last reading", 0.0);
     Logger.recordOutput("vision/limelight-c_time since last reading", 0.0);
-
-    var nt = NetworkTableInstance.getDefault();
-    disableVision =
-        nt.getBooleanTopic("AdvantageKit/RealOutputs/Logger/vision/disablevision").subscribe(false);
   }
 
   public void update() {
@@ -284,8 +276,6 @@ public class VisionSubsystem extends SubsystemBase {
       publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp");
       return;
     }
-
-    rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
         && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
@@ -616,7 +606,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public boolean getDisableVision() {
-    return disableVision.get(false);
+    return disableVision.get();
   }
 
   public Pose2d getLastVisionPose2d() {

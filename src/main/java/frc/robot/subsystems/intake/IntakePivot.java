@@ -22,8 +22,7 @@ import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+import org.littletonrobotics.junction.Logger;
 
 public class IntakePivot extends SubsystemBase {
   private final TalonFX pivotMotor;
@@ -69,9 +68,6 @@ public class IntakePivot extends SubsystemBase {
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
-  private LoggedNetworkNumber currentPosPub;
-  private LoggedNetworkNumber targetPosPub;
-  private LoggedNetworkBoolean zeroPublisher;
 
   // Status Signals
   private final StatusSignal<Current> SS_intakePivotCurrent;
@@ -81,7 +77,6 @@ public class IntakePivot extends SubsystemBase {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     pivotConfig();
     pivotMotor.clearStickyFaults();
-    networktables();
     if (Robot.isSimulation()) {
       pivotSim = new PivotSim(pivotMotor);
     }
@@ -122,12 +117,6 @@ public class IntakePivot extends SubsystemBase {
     pivotMotor.getConfigurator().apply(config);
   }
 
-  private void networktables() {
-    this.currentPosPub = new LoggedNetworkNumber("intake/pivotCurrentPosition", 0.0);
-    this.targetPosPub = new LoggedNetworkNumber("intake/pivotTargetPosition", 0.0);
-    this.zeroPublisher = new LoggedNetworkBoolean("Zero/intakePivotZero", false);
-  }
-
   public void setPivotPosition(double pos) {
     targetPos = pos;
     pivotMotor.setControl(request.withPosition(pos));
@@ -149,7 +138,7 @@ public class IntakePivot extends SubsystemBase {
             () -> {
               pivotMotor.setPosition(RETRACTED_POS);
               targetPos = RETRACTED_POS;
-              zeroPublisher.set(true);
+              Logger.recordOutput("Zero/intakePivotZero", true);
             })
         .withName("Zero Pivot");
   }
@@ -205,8 +194,8 @@ public class IntakePivot extends SubsystemBase {
   // update simulation
   public void periodic() {
     StatusSignal.refreshAll(SS_position);
-    currentPosPub.set(getPivotPosition());
-    targetPosPub.set(getPivotTargetPosition());
+    Logger.recordOutput("intake/pivotCurrentPosition", getPivotPosition());
+    Logger.recordOutput("intake/pivotTargetPosition", getPivotTargetPosition());
   }
 
   public void simulationPeriodic() {

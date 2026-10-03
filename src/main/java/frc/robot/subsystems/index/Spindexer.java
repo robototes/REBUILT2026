@@ -33,9 +33,9 @@ public class Spindexer extends SubsystemBase {
   private final LoggedNetworkBoolean TUNABLE_ENABLE =
       new LoggedNetworkBoolean("Tuning/TuneSpindexer", false);
   private final LoggedNetworkNumber TARGET_ACCEL =
-      new LoggedNetworkNumber("SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
+      new LoggedNetworkNumber("Tuning/SpindexerSubsystem/TargetAccelRPS", D_TARGET_ACCEL);
   private final LoggedNetworkNumber TARGET_RPS =
-      new LoggedNetworkNumber("SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+      new LoggedNetworkNumber("Tuning/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
       new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 

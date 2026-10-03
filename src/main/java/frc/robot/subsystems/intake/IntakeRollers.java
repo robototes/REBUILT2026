@@ -7,35 +7,28 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableBoolean;
-import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class IntakeRollers extends SubsystemBase {
   // motors
   private final TalonFX leftRoller;
   private final TalonFX rightRoller;
-
-  // networktables and sim
-  private LoggedNetworkNumber leftRollerTopic;
-  private LoggedNetworkNumber rightRollerTopic;
-  private DoublePublisher leftRollerPub;
-  private DoublePublisher rightRollerPub;
   private RollerSim rollerSim;
 
   public final double TARGET_RPS = 68;
   public final double AGITATE_RPS = TARGET_RPS / 2;
-  private final NtTunableBoolean TUNABLE_ENABLE =
-      new NtTunableBoolean("AdvantageKit/RealOutputs/Logger/Tunables/TuneIntakeRollers", false);
-  private final NtTunableDouble NT_TARGET_RPS =
-      new NtTunableDouble("AdvantageKit/RealOutputs/Logger/intake/TargetVelocityRPS", TARGET_RPS);
+  private final LoggedNetworkBoolean TUNABLE_ENABLE =
+      new LoggedNetworkBoolean("Tuning/TuneIntakeRollers", false);
+  private final LoggedNetworkNumber NT_TARGET_RPS =
+      new LoggedNetworkNumber("Tuning/intake/TargetVelocityRPS", TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest = new VelocityTorqueCurrentFOC(0);
 
   // status signals
@@ -52,7 +45,6 @@ public class IntakeRollers extends SubsystemBase {
     motorConfigs();
     leftRoller.clearStickyFaults();
     rightRoller.clearStickyFaults();
-    networktables();
 
     // sim creator
     if (RobotBase.isSimulation()) {
@@ -84,14 +76,6 @@ public class IntakeRollers extends SubsystemBase {
     rightRoller.getConfigurator().apply(talonFXConfigs);
   }
 
-  // configure networktables
-  private void networktables() {
-
-    this.leftRollerTopic = new LoggedNetworkNumber("intake/leftRollerSpeed", 0.0);
-
-    this.rightRollerTopic = new LoggedNetworkNumber("intake/rightRollerSpeed", 0.0);
-  }
-
   public void runRollers(double velocity) {
     if (TUNABLE_ENABLE.get() && velocity == TARGET_RPS) {
       leftRoller.setControl(velocityRequest.withVelocity(NT_TARGET_RPS.get()));
@@ -113,8 +97,8 @@ public class IntakeRollers extends SubsystemBase {
     // SS_roller1.refresh();
     // SS_roller2.refresh();
     StatusSignal.refreshAll(SS_roller1, SS_roller2);
-    leftRollerPub.set(SS_roller1.getValueAsDouble());
-    rightRollerPub.set(SS_roller2.getValueAsDouble());
+    Logger.recordOutput("intake/lefyRollerSpeed", SS_roller1.getValueAsDouble());
+    Logger.recordOutput("intake/rightRollerSpeed", SS_roller2.getValueAsDouble());
   }
 
   // update sim
