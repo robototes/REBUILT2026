@@ -213,8 +213,8 @@ public class VisionSubsystem extends SubsystemBase {
     boolean underDefense = isUnderDefense(visionPoseTracking);
     SmartDashboard.putBoolean("/vision/underDefense", underDefense);
 
-    processCamera(
-        ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
+    // processCamera(
+    //     ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
     processCamera(
         BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking, underDefense);
     // uncomment if when using intake pose
