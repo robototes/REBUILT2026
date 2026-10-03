@@ -8,21 +8,21 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.util.simulation.RobotSim;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 public class HoodSim {
 
   private final TalonFXSimState simState;
   private final SingleJointedArmSim armSim;
 
-  private final Mechanism2d mechanism;
-  private final MechanismLigament2d hoodLigament;
+  private final LoggedMechanism2d mechanism;
+  private final LoggedMechanismLigament2d hoodLigament;
 
   private static final double GEAR_RATIO = 23.2727;
   private static final double ARM_LENGTH_METERS = Units.inchesToMeters(7);
@@ -48,13 +48,13 @@ public class HoodSim {
             false,
             Units.degreesToRadians(STARTING_ANGLE_OFFSET));
 
-    mechanism = new Mechanism2d(60, 60);
-    MechanismRoot2d root = mechanism.getRoot("hoodRoot", 30, 10);
+    mechanism = new LoggedMechanism2d(60, 60);
+    LoggedMechanismRoot2d root = mechanism.getRoot("hoodRoot", 30, 10);
 
     hoodLigament =
-        root.append(new MechanismLigament2d("hood", 20, 0, 6, new Color8Bit(Color.kAqua)));
+        root.append(new LoggedMechanismLigament2d("hood", 20, 0, 6, new Color8Bit(Color.kAqua)));
 
-    SmartDashboard.putData("Hood Mechanism", mechanism);
+    Logger.recordOutput("Hood Mechanism", mechanism);
   }
 
   public void update() {

@@ -21,11 +21,9 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
@@ -43,13 +41,23 @@ import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
  * the TimedRobot documentation. If you change the name of this class or the package after creating
  * this project, you must also update the Main.java file in the project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
 
   private final Controls controls;
   public final Subsystems subsystems;
@@ -60,12 +68,15 @@ public class Robot extends TimedRobot {
   private final double MAX_TIME_RECORD = 165;
   private final double LL_IMU_CORRECTION_RATE = 0.1;
   private final RobotSim robotSim;
-  private final Mechanism2d mechanismRobot;
+  private final LoggedMechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
   private static final double BROWNOUT_VOLTAGE = 7.0;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
+  private Runnable autoSmartDashboardUpdate;
+  private final Timer autoSmartDashboardTimer = new Timer();
+  private static final double UPDATE_RATE = 0.05;
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -75,7 +86,26 @@ public class Robot extends TimedRobot {
    * initialization code.
    */
   protected Robot() {
+    Logger.recordMetadata("Robototes", "REBUILT2026"); // Set a metadata value
 
+    // Need to put solution here for REPLAY
+    if (isReal() || isSimulation()) {
+      Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
+      Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+    } else {
+      // NOTE: FOR REPLAY
+      setUseTiming(false); // Run as fast as possible
+      String logPath =
+          LogFileUtil
+              .findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+      Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+      Logger.addDataReceiver(
+          new WPILOGWriter(
+              LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+    }
+
+    Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
+    // be added.
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
@@ -96,8 +126,8 @@ public class Robot extends TimedRobot {
 
     // Loads the field layout before auto  to prevent any delay
     AllianceUtils.getHubTranslation2d();
-    mechanismRobot = new Mechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
-    SmartDashboard.putData("Mechanism2d", mechanismRobot);
+    mechanismRobot = new LoggedMechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
+    Logger.recordOutput("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
 
     // $VISIONSIM - Wrapper for sim features
@@ -141,13 +171,29 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance()
         .onCommandFinish(command -> DataLogManager.log("Command finished: " + command.getName()));
 
-    SmartDashboard.putData(CommandScheduler.getInstance());
+    Map<String, Integer> commandCounts = new HashMap<>();
+    BiConsumer<Command, Boolean> logCommandFunction =
+        (Command command, Boolean active) -> {
+          String name = command.getName();
+          int count = commandCounts.getOrDefault(name, 0) + (active ? 1 : -1);
+          commandCounts.put(name, count);
+          Logger.recordOutput(
+              "CommandsUnique/" + name + "_" + Integer.toHexString(command.hashCode()), active);
+          Logger.recordOutput("CommandsAll/" + name, count > 0);
+        };
+    CommandScheduler.getInstance()
+        .onCommandInitialize((Command command) -> logCommandFunction.accept(command, true));
+    CommandScheduler.getInstance()
+        .onCommandFinish((Command command) -> logCommandFunction.accept(command, false));
+    CommandScheduler.getInstance()
+        .onCommandInterrupt((Command command) -> logCommandFunction.accept(command, false));
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       AutoLogic.initCommandsAndPaths(false);
-      AutonomousField.initSmartDashBoard(() -> "Field", 0, 0, this::addPeriodic);
+      autoSmartDashboardUpdate = AutonomousField.initSmartDashBoard(() -> "Field", 0, 0);
+      autoSmartDashboardTimer.start();
 
-      AutoLogic.initSmartDashBoard();
+      AutoLogic.initAdvantageKit();
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
@@ -201,11 +247,14 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
+    if (autoSmartDashboardTimer.advanceIfElapsed(UPDATE_RATE)) {
+      autoSmartDashboardUpdate.run();
+    }
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 
-    SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
+    Logger.recordOutput("GCCount", GCMonitor.getGcCount());
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -288,7 +337,8 @@ public class Robot extends TimedRobot {
       }
 
       CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
+      Pose2d startingPose = AutoLogic.getSelectedAutoStartingPose();
+      double initialYaw = startingPose != null ? startingPose.getRotation().getDegrees() : 0.0;
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
           supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, initialYaw);

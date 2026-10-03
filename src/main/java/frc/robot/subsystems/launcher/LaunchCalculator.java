@@ -11,11 +11,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanArrayPublisher;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoubleArrayPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
@@ -23,6 +18,7 @@ import frc.robot.util.tuning.LauncherConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 
 public class LaunchCalculator {
   private static class Holder {
@@ -133,28 +129,6 @@ public class LaunchCalculator {
   // Per-module velocity history for delta computation (rot/s, one entry per module)
   private double[] lastModuleVelocity = null; // lazy-initialized on first call
 
-  // NT publishers
-  private final DoublePublisher filteredSlipXPub =
-      NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredX").publish();
-  private final DoublePublisher filteredSlipYPub =
-      NetworkTableInstance.getDefault().getDoubleTopic("/LaunchCalculator/filteredY").publish();
-  private final BooleanPublisher isSlippingPub =
-      NetworkTableInstance.getDefault()
-          .getBooleanTopic("/LaunchCalculator/slip/isSlipping")
-          .publish();
-  private final DoubleArrayPublisher perModuleCurrentPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleArrayTopic("/LaunchCalculator/slip/perModuleCurrent")
-          .publish();
-  private final DoubleArrayPublisher perModuleVelocityDeltaPub =
-      NetworkTableInstance.getDefault()
-          .getDoubleArrayTopic("/LaunchCalculator/slip/perModuleVelocityDelta")
-          .publish();
-  private final BooleanArrayPublisher perModuleSlippingPub =
-      NetworkTableInstance.getDefault()
-          .getBooleanArrayTopic("/LaunchCalculator/slip/perModuleSlipping")
-          .publish();
-
   // Trench stuff
   private static final AprilTagFieldLayout field = AllianceUtils.FIELD_LAYOUT;
   private static final double TURRET_TO_TRENCH_TOLERANCE_X = Units.inchesToMeters(12);
@@ -244,10 +218,10 @@ public class LaunchCalculator {
     boolean isSlipping = slippingCount >= SLIP_MODULE_COUNT_THRESHOLD;
 
     // Publish diagnostics every cycle for tuning
-    isSlippingPub.set(isSlipping);
-    perModuleCurrentPub.set(currents);
-    perModuleVelocityDeltaPub.set(velocityDeltas);
-    perModuleSlippingPub.set(moduleSlipping);
+    Logger.recordOutput("LaunchCalculator/slip/isSlipping", isSlipping);
+    Logger.recordOutput("LaunchCalculator/slip/perModuleCurrent", currents);
+    Logger.recordOutput("LaunchCalculator/slip/perModuleVelocityDelta", velocityDeltas);
+    Logger.recordOutput("LaunchCalculator/slip/perModuleSlipping", moduleSlipping);
 
     return isSlipping;
   }
@@ -464,8 +438,8 @@ public class LaunchCalculator {
       slipFastMode = false;
     }
 
-    filteredSlipXPub.set(filteredSlip.vxMetersPerSecond);
-    filteredSlipYPub.set(filteredSlip.vyMetersPerSecond);
+    Logger.recordOutput("LaunchCalculator/filteredX", filteredSlip.vxMetersPerSecond);
+    Logger.recordOutput("LaunchCalculator/filteredY", filteredSlip.vyMetersPerSecond);
 
     // --- PHASE DELAY PREDICTION (second-order) ---
     // Predict robot state at end of PHASE_DELAY: x = x0 + v*t + 0.5*a*t^2.

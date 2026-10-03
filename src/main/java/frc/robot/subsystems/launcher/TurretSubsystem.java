@@ -13,9 +13,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Angle;
@@ -32,6 +29,8 @@ import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
@@ -76,22 +75,19 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 350; // degrees
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
 
-  private final BooleanPublisher zeroPublisher =
-      NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
-
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
+          .getStructArrayTopic("turretRotation", Pose2d.struct)
           .publish();
 
   // Network tables
 
-  private final DoublePublisher posPub;
-  private final DoublePublisher targetPub;
-  private final DoublePublisher velocityPub;
-  private final DoublePublisher currentPub;
-  private final DoublePublisher ffPub;
-  private final DoublePublisher limitSwitchPub;
+  private final LoggedNetworkNumber posPub;
+  private final LoggedNetworkNumber targetPub;
+  private final LoggedNetworkNumber velocityPub;
+  private final LoggedNetworkNumber currentPub;
+  private final LoggedNetworkNumber ffPub;
+  private final LoggedNetworkNumber limitSwitchPub;
 
   // Status signals
   private final StatusSignal<Angle> positionSignal;
@@ -105,28 +101,24 @@ public class TurretSubsystem extends SubsystemBase {
             Hardware.TURRET_MOTOR_ID,
             RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
-    zeroPublisher.set(false);
     turretConfig();
     turretMotor.clearStickyFaults();
     turretRotation.set(new Pose2d[2]);
 
-    NetworkTableInstance inst = NetworkTableInstance.getDefault();
-    NetworkTable table = inst.getTable("SmartDashboard");
-
     positionSignal = turretMotor.getPosition();
-    posPub = table.getDoubleTopic("/Turret/Position").publish();
+    posPub = new LoggedNetworkNumber("/Turret/Position");
 
     velocitySignal = turretMotor.getVelocity();
-    velocityPub = table.getDoubleTopic("/Turret/Velocity").publish();
+    velocityPub = new LoggedNetworkNumber("/Turret/Velocity");
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
-    currentPub = table.getDoubleTopic("/Turret/Current").publish();
+    currentPub = new LoggedNetworkNumber("/Turret/Current");
 
-    targetPub = table.getDoubleTopic("/Turret/Target").publish();
+    targetPub = new LoggedNetworkNumber("/Turret/Target");
 
-    ffPub = table.getDoubleTopic("/Turret/FF Volts").publish();
+    ffPub = new LoggedNetworkNumber("/Turret/FF Volts");
 
-    limitSwitchPub = table.getDoubleTopic("/Turret/LimitSwitchCurrent").publish();
+    limitSwitchPub = new LoggedNetworkNumber("/Turret/LimitSwitchCurrent");
   }
 
   public void turretConfig() {
@@ -183,7 +175,7 @@ public class TurretSubsystem extends SubsystemBase {
             () -> {
               turretMotor.setPosition(0);
               targetPos = 0;
-              zeroPublisher.set(true);
+              Logger.recordOutput("Zero/zeroedTurret", true);
             })
         .withName("zeroed turret");
   }

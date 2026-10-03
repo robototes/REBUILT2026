@@ -6,13 +6,13 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.util.simulation.RobotSim;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 public class FlywheelsSim {
 
@@ -21,7 +21,8 @@ public class FlywheelsSim {
 
   private final FlywheelSim flywheelSim;
 
-  private final MechanismLigament2d wheelLigament;
+  private final LoggedMechanismLigament2d wheelLigament;
+  LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
 
   // Tune these to match reality
   private static final double GEAR_RATIO = 1.0;
@@ -44,13 +45,12 @@ public class FlywheelsSim {
             1);
 
     // --- Mechanism2d ---
-    Mechanism2d mech = new Mechanism2d(40, 40);
-    MechanismRoot2d root = mech.getRoot("flywheelRoot", 20, 20);
+    LoggedMechanismRoot2d root = mech.getRoot("flywheelRoot", 20, 20);
 
     wheelLigament =
-        root.append(new MechanismLigament2d("wheel", 2, 0, 10, new Color8Bit(Color.kCoral)));
+        root.append(new LoggedMechanismLigament2d("wheel", 2, 0, 10, new Color8Bit(Color.kCoral)));
 
-    SmartDashboard.putData("Flywheel", mech);
+    Logger.recordOutput("Flywheels", mech);
   }
 
   public void update() {
@@ -79,5 +79,6 @@ public class FlywheelsSim {
 
     // idk how this math works but someone suggested it to me so
     wheelLigament.setAngle(wheelLigament.getAngle() + rpm * 6.0 * 0.02); // visual spin factor
+    Logger.recordOutput("Flywheels", mech);
   }
 }

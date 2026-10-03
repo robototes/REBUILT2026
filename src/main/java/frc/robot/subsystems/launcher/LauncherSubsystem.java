@@ -3,9 +3,6 @@ package frc.robot.subsystems.launcher;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -13,24 +10,17 @@ import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
+import org.littletonrobotics.junction.Logger;
 
 public class LauncherSubsystem extends SubsystemBase {
   protected double flywheelsGoal;
   protected double hoodGoal;
   protected Subsystems s;
 
-  private final DoublePublisher hoodGoalPub;
-  private final DoublePublisher flywheelGoalPub;
-  private final BooleanPublisher hoodBooleanPub;
-  private final BooleanPublisher turretBooleanPub;
-  private final BooleanPublisher flywheelBooleanPub;
-  private final BooleanPublisher notGoingToBeUnderTrenchPub;
-  private final BooleanPublisher notUnderClimbPub;
-
   private boolean turretAtTarget;
   private boolean hoodAtTarget;
   private boolean flywheelAtTarget;
-  private boolean notUunderClimb;
+  private boolean notUnderClimb;
   private boolean notGoingToBeUnderTrench;
 
   private LaunchingParameters launchParameters;
@@ -38,22 +28,6 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
-
-    var nt = NetworkTableInstance.getDefault();
-    hoodGoalPub = nt.getDoubleTopic("/AutoAim/hoodGoal").publish();
-    hoodGoalPub.set(0.0);
-    flywheelGoalPub = nt.getDoubleTopic("/AutoAim/flywheelGoal").publish();
-    flywheelGoalPub.set(0.0);
-    hoodBooleanPub = nt.getBooleanTopic("/AutoAim/hoodAtTarget").publish();
-    turretBooleanPub = nt.getBooleanTopic("/AutoAim/turretAtTarget").publish();
-    flywheelBooleanPub = nt.getBooleanTopic("/AutoAim/flywheelAtTarget").publish();
-    notUnderClimbPub = nt.getBooleanTopic("/AutoAim/NotUnderClimb").publish();
-    notGoingToBeUnderTrenchPub = nt.getBooleanTopic("/AutoAim/NotUnderTrench").publish();
-    hoodBooleanPub.set(false);
-    turretBooleanPub.set(false);
-    flywheelBooleanPub.set(false);
-    notUnderClimbPub.set(false);
-    notGoingToBeUnderTrenchPub.set(false);
   }
 
   public Command launcherAimCommand() {
@@ -66,8 +40,8 @@ public class LauncherSubsystem extends SubsystemBase {
               hoodGoal = para.targetHood();
               flywheelsGoal = para.targetFlywheels();
 
-              hoodGoalPub.set(hoodGoal);
-              flywheelGoalPub.set(flywheelsGoal);
+              Logger.recordOutput("AutoAim/hoodGoal", hoodGoal);
+              Logger.recordOutput("AutoAim/flywheelGoal", flywheelsGoal);
 
               s.hood.setHoodPosition(hoodGoal);
               s.flywheels.setVelocityRPS(flywheelsGoal);
@@ -91,10 +65,10 @@ public class LauncherSubsystem extends SubsystemBase {
     }
 
     flywheelAtTarget = s.flywheels.atTargetVelocity(flywheelsGoal, flywheelTolerance);
-    flywheelBooleanPub.set(flywheelAtTarget);
+    Logger.recordOutput("AutoAim/flywheelAtTarget", flywheelAtTarget);
 
     hoodAtTarget = s.hood.atTargetPosition();
-    hoodBooleanPub.set(hoodAtTarget);
+    Logger.recordOutput("AutoAim/hoodAtTarget", hoodAtTarget);
 
     turretAtTarget =
         s.turretSubsystem.atTarget(
@@ -104,21 +78,21 @@ public class LauncherSubsystem extends SubsystemBase {
                     Math.max(
                         Units.degreesToRadians(4),
                         Math.atan(0.3 / LauncherConstants.distToHub()))));
-    turretBooleanPub.set(turretAtTarget);
+    Logger.recordOutput("turretAtTarget", turretAtTarget);
 
-    notUunderClimb =
+    notUnderClimb =
         !LaunchCalculator.isUnderClimb(
             driveState.Pose.transformBy(LauncherConstants.turretTransform()));
-    notUnderClimbPub.set(notUunderClimb);
+    Logger.recordOutput("AutoAim/NotUnderClimb", notUnderClimb);
 
     notGoingToBeUnderTrench =
         !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
-    notGoingToBeUnderTrenchPub.set(notGoingToBeUnderTrench);
+    Logger.recordOutput("AutoAim/NotUnderTrench", notGoingToBeUnderTrench);
 
     return flywheelAtTarget
         && hoodAtTarget
         && turretAtTarget
-        && notUunderClimb
+        && notUnderClimb
         && notGoingToBeUnderTrench;
   }
 
