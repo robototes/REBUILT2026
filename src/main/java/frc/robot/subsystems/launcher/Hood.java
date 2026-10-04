@@ -11,7 +11,6 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
@@ -74,7 +73,6 @@ public class Hood extends SubsystemBase {
   }
 
   public void initializeNT() {
-    var nt = NetworkTableInstance.getDefault();
     targetPosition = new NtTunableDouble("Tuning/hood/hoodTuner", 0.0);
   }
 
