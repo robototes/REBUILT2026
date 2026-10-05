@@ -489,8 +489,8 @@ public class Controls {
     //         Commands.runOnce(() -> turretSkipped = !turretSkipped)
     //             .withName("Toggle Turret Skipped"));
 
-    driverController.povRight().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
-    driverController.povLeft().onTrue(s.turretSubsystem.offsetTurretCommand(1));
+    driverController.povRight().onTrue(s.turretSubsystem.offsetTurretCommand(1));
+    driverController.povLeft().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
 
 
     connected(turretTestController)
