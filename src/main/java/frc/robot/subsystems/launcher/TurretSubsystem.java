@@ -193,6 +193,7 @@ public class TurretSubsystem extends SubsystemBase {
             () -> {
               turretMotor.setPosition(0);
               targetPos = 0;
+              manualOffset = 0;
               zeroPublisher.set(true);
             })
         .withName("zeroed turret");

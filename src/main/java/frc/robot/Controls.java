@@ -492,7 +492,6 @@ public class Controls {
     driverController.povRight().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
     driverController.povLeft().onTrue(s.turretSubsystem.offsetTurretCommand(1));
 
-
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));
