@@ -19,6 +19,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.sim.ShowVisionOnField;
@@ -151,6 +152,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     // TODO: Log this with Telemetry WPILib 2027 no support or workaround from advantage kit
     robotField = new Field2d();
+    SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
 
     Logger.recordOutput("vision/limelight-a_Last timestamp", 0.0);
@@ -242,7 +244,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
     if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
-      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp");
+      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp", cameraName);
       return;
     }
 
@@ -253,7 +255,7 @@ public class VisionSubsystem extends SubsystemBase {
                 > VisionConstants.MAX_XY_VELO_ALPHA
             || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed");
+      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed", cameraName);
       return;
     }
 
@@ -266,12 +268,12 @@ public class VisionSubsystem extends SubsystemBase {
             estimate.pose3d.getRotation().getY(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || (lastFieldPose != null && lastFieldPose.equals(visionPose2d))) {
-      publishDiagnostics(estimate, visionPose2d, camera, "impossible-rotation or height");
+      publishDiagnostics(estimate, visionPose2d, camera, "impossible-rotation or height", cameraName);
       return;
     }
 
     if (!isPoseOnField(visionPose2d)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "off-field");
+      publishDiagnostics(estimate, visionPose2d, camera, "off-field", cameraName);
       return;
     }
 
@@ -282,14 +284,14 @@ public class VisionSubsystem extends SubsystemBase {
         lastVisionPose,
         camera.getLastTimestampSeconds(),
         underDefense)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "velocity-implausible");
+      publishDiagnostics(estimate, visionPose2d, camera, "velocity-implausible", cameraName);
       return;
     }
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
       Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
-      publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
+      publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent", cameraName);
       return;
     }
 
@@ -305,7 +307,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
-      publishDiagnostics(estimate, visionPose2d, camera, "ambiguity-or-range");
+      publishDiagnostics(estimate, visionPose2d, camera, "ambiguity-or-range", cameraName);
       return;
     }
 
@@ -326,7 +328,7 @@ public class VisionSubsystem extends SubsystemBase {
           java.util.Optional.of(estimate.pose3d.toPose2d()));
     }
 
-    maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, camera.getName());
+    maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, cameraName);
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
@@ -347,7 +349,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
-    publishDiagnostics(estimate, visionPose2d, camera, "none");
+    publishDiagnostics(estimate, visionPose2d, camera, "none", cameraName);
   }
 
   private boolean isUnderDefense(VisionPoseTracking visionPoseTracking) {
@@ -550,15 +552,15 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void publishDiagnostics(
-      BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason) {
+      BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason, String cameraName) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      Logger.recordOutput("vision/" + camera.getName() + "_rejectReason", rejectionReason);
+      Logger.recordOutput("vision/" + cameraName + "_rejectReason", rejectionReason);
       Logger.recordOutput(
-          "vision/" + camera.getName() + "_visionError",
+          "vision/" + cameraName + "_visionError",
           getVisionPoseError(visionPose2d, estimate.timestampSeconds));
       Logger.recordOutput(
-          "vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
-      Logger.recordOutput("vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
+          "vision/" + cameraName + "_Last timestamp", camera.getLastTimestampSeconds());
+      Logger.recordOutput("vision/" + cameraName + "_Num targets", camera.getNumTargets());
     }
   }
 
