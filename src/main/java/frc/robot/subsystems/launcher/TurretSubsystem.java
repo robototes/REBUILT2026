@@ -274,7 +274,7 @@ public class TurretSubsystem extends SubsystemBase {
               double normalizedTarget =
                   MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
 
-              normalizedTarget = normalizedTarget + manualOffset; //Changing the target to account for jogging from driver
+              normalizedTarget = normalizedTarget + manualOffset*360; //Changing the target to account for jogging from driver. Convert from rotations to degrees
 
               double[] candidates = {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
