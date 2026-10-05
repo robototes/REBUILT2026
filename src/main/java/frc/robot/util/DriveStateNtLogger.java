@@ -10,9 +10,9 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
@@ -91,7 +91,7 @@ public class DriveStateNtLogger {
     this.telem = telemetry;
     /* Telemeterize the module states to a Mechanism2d */
     for (int i = 0; i < 4; ++i) {
-      SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
+      Logger.recordOutput("Drive/Module " + i, m_moduleMechanisms[i]);
     }
     // Legacy double[] publisher has been removed entirely
   }

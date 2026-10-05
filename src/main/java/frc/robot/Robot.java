@@ -39,6 +39,7 @@ import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.GCMonitor;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.robotType.RobotMode;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
 import java.util.HashMap;
@@ -80,6 +81,10 @@ public class Robot extends LoggedRobot {
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
+  public static RobotMode currentMode =
+      Robot.isReal()
+          ? RobotMode.REAL
+          : (System.getProperty("replay") != null ? RobotMode.REPLAY : RobotMode.SIM);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -89,7 +94,7 @@ public class Robot extends LoggedRobot {
     Logger.recordMetadata("Robototes", "REBUILT2026"); // Set a metadata value
 
     // Need to put solution here for REPLAY
-    if (isReal() || isSimulation()) {
+    if (currentMode != RobotMode.REPLAY) {
       Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
     } else {
