@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
@@ -32,8 +33,12 @@ public class IntakeRollers extends SubsystemBase {
   private final VelocityTorqueCurrentFOC velocityRequest = new VelocityTorqueCurrentFOC(0);
 
   // status signals
-  private final StatusSignal<AngularVelocity> SS_roller1;
-  private final StatusSignal<AngularVelocity> SS_roller2;
+  private final StatusSignal<AngularVelocity> rollerLeftVelocity;
+  private final StatusSignal<Current> rollerLeftStatorCurrent;
+  private final StatusSignal<Current> rollerLeftSupplyCurrent;
+  private final StatusSignal<AngularVelocity> rollerRightVelocity;
+  private final StatusSignal<Current> rollerRightStatorCurrent;
+  private final StatusSignal<Current> rollerRightSupplyCurrent;
 
   public IntakeRollers() {
     // define motors and configs
@@ -51,8 +56,12 @@ public class IntakeRollers extends SubsystemBase {
       rollerSim = new RollerSim(leftRoller, rightRoller);
     }
 
-    SS_roller1 = leftRoller.getVelocity();
-    SS_roller2 = rightRoller.getVelocity();
+    rollerLeftVelocity = leftRoller.getVelocity();
+    rollerRightVelocity = rightRoller.getVelocity();
+    rollerLeftStatorCurrent = leftRoller.getStatorCurrent();
+    rollerLeftSupplyCurrent = leftRoller.getSupplyCurrent();
+    rollerRightStatorCurrent = rightRoller.getStatorCurrent();
+    rollerRightSupplyCurrent = rightRoller.getSupplyCurrent();
   }
 
   // roller configs
@@ -94,11 +103,25 @@ public class IntakeRollers extends SubsystemBase {
   @Override
   // update networktables
   public void periodic() {
-    // SS_roller1.refresh();
-    // SS_roller2.refresh();
-    StatusSignal.refreshAll(SS_roller1, SS_roller2);
-    Logger.recordOutput("intake/lefyRollerSpeed", SS_roller1.getValueAsDouble());
-    Logger.recordOutput("intake/rightRollerSpeed", SS_roller2.getValueAsDouble());
+    StatusSignal.refreshAll(
+        rollerLeftVelocity,
+        rollerRightVelocity,
+        rollerLeftStatorCurrent,
+        rollerLeftSupplyCurrent,
+        rollerRightStatorCurrent,
+        rollerRightSupplyCurrent);
+    Logger.recordOutput(
+        "Intake/Rollers/Left/leftRollerSpeed", rollerLeftVelocity.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Right/rightRollerSpeed", rollerRightVelocity.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Left/leftRollerStator", rollerLeftStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Right/rightRollerStator", rollerRightStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Left/leftRollerSupply", rollerLeftSupplyCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Right/rightRollerSupply", rollerRightSupplyCurrent.getValueAsDouble());
   }
 
   // update sim

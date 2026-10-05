@@ -129,6 +129,8 @@ public class Feeder extends SubsystemBase {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, feederRPS);
     // Log on NT at all times
     Logger.recordOutput("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
+    Logger.recordOutput("FeederSubsystem/StatorCurrent", statorCurrent.getValueAsDouble());
+    Logger.recordOutput("FeederSubsystem/supplyCurrent", supplyCurrent.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());

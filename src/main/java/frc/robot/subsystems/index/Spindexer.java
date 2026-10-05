@@ -131,6 +131,8 @@ public class Spindexer extends SubsystemBase {
   public void periodic() {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
     Logger.recordOutput("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
+    Logger.recordOutput("SpindexerSubsystem/StatorCurrent", statorCurrent.getValueAsDouble());
+    Logger.recordOutput("SpindexerSubsystem/SupplyCurrent", supplyCurrent.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());

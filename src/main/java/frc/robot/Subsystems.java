@@ -53,7 +53,7 @@ public class Subsystems {
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
     public static final boolean LEDS_ENABLED = true;
-    public static final boolean BLOCKER_ENABLED = true;
+    public static final boolean BLOCKER_ENABLED = false;
   }
 
   // Subsystems go here

@@ -56,8 +56,9 @@ public class Hood extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = -1.5;
 
   // Status signals
-  private final StatusSignal<Current> hoodCurrent;
-  private final StatusSignal<Angle> SS_pos;
+  private final StatusSignal<Current> hoodStatorCurrent;
+  private final StatusSignal<Current> hoodSupplyCurrent;
+  private final StatusSignal<Angle> position;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -68,8 +69,9 @@ public class Hood extends SubsystemBase {
     if (RobotBase.isSimulation()) {
       hoodSim = new HoodSim(hood);
     }
-    hoodCurrent = hood.getStatorCurrent();
-    SS_pos = hood.getPosition();
+    hoodStatorCurrent = hood.getStatorCurrent();
+    hoodSupplyCurrent = hood.getSupplyCurrent();
+    position = hood.getPosition();
   }
 
   public void initializeNT() {
@@ -123,9 +125,11 @@ public class Hood extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(SS_pos);
-    Logger.recordOutput("hood/position", SS_pos.getValueAsDouble());
-    Logger.recordOutput("hood/goal", request.Position);
+    StatusSignal.refreshAll(position, hoodStatorCurrent, hoodSupplyCurrent);
+    Logger.recordOutput("Hood/position", position.getValueAsDouble());
+    Logger.recordOutput("Hood/statorCurrent", hoodStatorCurrent.getValueAsDouble());
+    Logger.recordOutput("Hood/supplyCurrent", hoodSupplyCurrent.getValueAsDouble());
+    Logger.recordOutput("Hood/goal", request.Position);
     if (TUNER_CONTROLLED.get()) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetPosition.getAtomic();
@@ -136,7 +140,7 @@ public class Hood extends SubsystemBase {
   }
 
   public double getHoodPosition() {
-    return SS_pos.getValueAsDouble();
+    return position.getValueAsDouble();
   }
 
   public void setHoodPosition(double positionRotations) {
@@ -167,7 +171,7 @@ public class Hood extends SubsystemBase {
 
   public boolean atTargetPosition() {
     return DriverStation.isEnabled()
-        && Math.abs(SS_pos.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
+        && Math.abs(position.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
@@ -191,10 +195,10 @@ public class Hood extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.run(() -> hoodCurrent.refresh())
+                            Commands.run(() -> hoodStatorCurrent.refresh())
                                 .until(
                                     () ->
-                                        hoodCurrent.getValueAsDouble()
+                                        hoodStatorCurrent.getValueAsDouble()
                                             >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroHoodCommand())
         .withTimeout(3)

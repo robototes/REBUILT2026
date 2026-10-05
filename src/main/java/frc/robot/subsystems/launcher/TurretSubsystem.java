@@ -30,7 +30,6 @@ import frc.robot.util.robotType.RobotType;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
@@ -80,15 +79,6 @@ public class TurretSubsystem extends SubsystemBase {
           .getStructArrayTopic("turretRotation", Pose2d.struct)
           .publish();
 
-  // Network tables
-
-  private final LoggedNetworkNumber posPub;
-  private final LoggedNetworkNumber targetPub;
-  private final LoggedNetworkNumber velocityPub;
-  private final LoggedNetworkNumber currentPub;
-  private final LoggedNetworkNumber ffPub;
-  private final LoggedNetworkNumber limitSwitchPub;
-
   // Status signals
   private final StatusSignal<Angle> positionSignal;
   private final StatusSignal<AngularVelocity> velocitySignal;
@@ -106,19 +96,11 @@ public class TurretSubsystem extends SubsystemBase {
     turretRotation.set(new Pose2d[2]);
 
     positionSignal = turretMotor.getPosition();
-    posPub = new LoggedNetworkNumber("/Turret/Position");
 
     velocitySignal = turretMotor.getVelocity();
-    velocityPub = new LoggedNetworkNumber("/Turret/Velocity");
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
-    currentPub = new LoggedNetworkNumber("/Turret/Current");
-
-    targetPub = new LoggedNetworkNumber("/Turret/Target");
-
-    ffPub = new LoggedNetworkNumber("/Turret/FF Volts");
-
-    limitSwitchPub = new LoggedNetworkNumber("/Turret/LimitSwitchCurrent");
+    Logger.recordOutput("Zero/zeroedTurret", false);
   }
 
   public void turretConfig() {
@@ -160,7 +142,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public void setTurretRawPosition(double pos, double FFVelocity) {
     double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV;
-    ffPub.set(feedforwardVolts);
+    Logger.recordOutput("/Turret/FF Volts", feedforwardVolts);
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
   }
@@ -283,11 +265,15 @@ public class TurretSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
-    posPub.set(positionSignal.getValueAsDouble()); // Rotations
-    velocityPub.set(velocitySignal.getValueAsDouble()); // RPS
-    currentPub.set(statorCurrentSignal.getValueAsDouble()); // Amps
-    targetPub.set(targetPos);
-    limitSwitchPub.set(limitSwitch.getVoltage());
+    Logger.recordOutput("/Turret/Position", positionSignal.getValueAsDouble());
+
+    Logger.recordOutput("/Turret/Velocity", velocitySignal.getValueAsDouble());
+
+    Logger.recordOutput("/Turret/Current", statorCurrentSignal.getValueAsDouble());
+
+    Logger.recordOutput("/Turret/Target", targetPos);
+
+    Logger.recordOutput("/Turret/LimitSwitchCurrent", limitSwitch.getVoltage());
   }
 
   public void brakeTurret() {

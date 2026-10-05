@@ -28,6 +28,13 @@ public class LauncherSubsystem extends SubsystemBase {
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
+    Logger.recordOutput("AutoAim/hoodGoal", 0.0);
+    Logger.recordOutput("AutoAim/flywheelGoal", 0.0);
+    Logger.recordOutput("AutoAim/flywheelAtTarget", false);
+    Logger.recordOutput("AutoAim/hoodAtTarget", false);
+    Logger.recordOutput("AutoAim/turretAtTarget", false);
+    Logger.recordOutput("AutoAim/NotUnderClimb", false);
+    Logger.recordOutput("AutoAim/NotUnderTrench", false);
   }
 
   public Command launcherAimCommand() {
@@ -78,7 +85,7 @@ public class LauncherSubsystem extends SubsystemBase {
                     Math.max(
                         Units.degreesToRadians(4),
                         Math.atan(0.3 / LauncherConstants.distToHub()))));
-    Logger.recordOutput("turretAtTarget", turretAtTarget);
+    Logger.recordOutput("AutoAim/turretAtTarget", turretAtTarget);
 
     notUnderClimb =
         !LaunchCalculator.isUnderClimb(

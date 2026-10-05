@@ -268,7 +268,8 @@ public class VisionSubsystem extends SubsystemBase {
             estimate.pose3d.getRotation().getY(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || (lastFieldPose != null && lastFieldPose.equals(visionPose2d))) {
-      publishDiagnostics(estimate, visionPose2d, camera, "impossible-rotation or height", cameraName);
+      publishDiagnostics(
+          estimate, visionPose2d, camera, "impossible-rotation or height", cameraName);
       return;
     }
 
@@ -552,7 +553,11 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void publishDiagnostics(
-      BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason, String cameraName) {
+      BetterPoseEstimate estimate,
+      Pose2d visionPose2d,
+      LLCamera camera,
+      String rejectionReason,
+      String cameraName) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
       Logger.recordOutput("vision/" + cameraName + "_rejectReason", rejectionReason);
       Logger.recordOutput(

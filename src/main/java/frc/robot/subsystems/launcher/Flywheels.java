@@ -48,7 +48,11 @@ public class Flywheels extends SubsystemBase {
 
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
+  private StatusSignal<Current> flywheelOneStatorCurrent;
   private StatusSignal<Current> flywheelOneSupplyCurrent;
+  private StatusSignal<AngularVelocity> flywheelTwoRPS;
+  private StatusSignal<Current> flywheelTwoStatorCurrent;
+  private StatusSignal<Current> flywheelTwoSupplyCurrent;
 
   // Constructor
   public Flywheels() {
@@ -59,7 +63,11 @@ public class Flywheels extends SubsystemBase {
     configureMotors();
 
     flywheelOneRPS = flywheelOne.getVelocity();
+    flywheelOneStatorCurrent = flywheelOne.getStatorCurrent();
     flywheelOneSupplyCurrent = flywheelOne.getSupplyCurrent();
+    flywheelTwoRPS = flywheelTwo.getVelocity();
+    flywheelTwoStatorCurrent = flywheelTwo.getStatorCurrent();
+    flywheelTwoSupplyCurrent = flywheelTwo.getSupplyCurrent();
 
     flywheelOne.clearStickyFaults();
     flywheelTwo.clearStickyFaults();
@@ -182,9 +190,23 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(flywheelOneRPS, flywheelOneSupplyCurrent);
-    Logger.recordOutput("launcher/velocity", flywheelOneRPS.getValueAsDouble());
-    Logger.recordOutput("launcher/current", flywheelOneSupplyCurrent.getValueAsDouble());
+    StatusSignal.refreshAll(
+        flywheelOneRPS,
+        flywheelOneSupplyCurrent,
+        flywheelOneStatorCurrent,
+        flywheelTwoRPS,
+        flywheelTwoStatorCurrent,
+        flywheelTwoSupplyCurrent);
+    Logger.recordOutput("Launcher/flywheel1/velocity", flywheelOneRPS.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel1/StatorCurrent", flywheelOneStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel1/supplyCurrent", flywheelOneSupplyCurrent.getValueAsDouble());
+    Logger.recordOutput("Launcher/flywheel2/velocity", flywheelTwoRPS.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel2/StatorCurrent", flywheelTwoStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel2/supplyCurrent", flywheelTwoSupplyCurrent.getValueAsDouble());
     if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetVelocity.getAtomic();

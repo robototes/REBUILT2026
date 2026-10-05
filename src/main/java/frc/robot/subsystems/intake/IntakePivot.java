@@ -70,8 +70,9 @@ public class IntakePivot extends SubsystemBase {
   private PivotSim pivotSim;
 
   // Status Signals
-  private final StatusSignal<Current> SS_intakePivotCurrent;
-  private final StatusSignal<Angle> SS_position;
+  private final StatusSignal<Current> intakePivotStatorCurrent;
+  private final StatusSignal<Current> intakePivotSupplyCurrent;
+  private final StatusSignal<Angle> position;
 
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
@@ -80,8 +81,10 @@ public class IntakePivot extends SubsystemBase {
     if (Robot.isSimulation()) {
       pivotSim = new PivotSim(pivotMotor);
     }
-    SS_intakePivotCurrent = pivotMotor.getStatorCurrent();
-    SS_position = pivotMotor.getPosition();
+    intakePivotStatorCurrent = pivotMotor.getStatorCurrent();
+    position = pivotMotor.getPosition();
+    intakePivotSupplyCurrent = pivotMotor.getSupplyCurrent();
+    Logger.recordOutput("Zero/intakePivotZero", false);
   }
 
   public void pivotConfig() {
@@ -155,7 +158,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public double getPivotPosition() {
-    return SS_position.getValueAsDouble();
+    return position.getValueAsDouble();
   }
 
   public double getPivotTargetPosition() {
@@ -163,8 +166,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public boolean isAtTarget(double degreeTolerance, double pose) {
-    return Math.abs(SS_position.getValueAsDouble() - pose)
-        < Units.degreesToRotations(degreeTolerance);
+    return Math.abs(position.getValueAsDouble() - pose) < Units.degreesToRotations(degreeTolerance);
   }
 
   public boolean isAtTarget(double degreeTolerance) {
@@ -180,10 +182,10 @@ public class IntakePivot extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.run(() -> SS_intakePivotCurrent.refresh())
+                            Commands.run(() -> intakePivotStatorCurrent.refresh())
                                 .until(
                                     () ->
-                                        SS_intakePivotCurrent.getValueAsDouble()
+                                        intakePivotStatorCurrent.getValueAsDouble()
                                             >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroPivot())
         .withTimeout(3)
@@ -193,9 +195,11 @@ public class IntakePivot extends SubsystemBase {
   @Override
   // update simulation
   public void periodic() {
-    StatusSignal.refreshAll(SS_position);
-    Logger.recordOutput("intake/pivotCurrentPosition", getPivotPosition());
-    Logger.recordOutput("intake/pivotTargetPosition", getPivotTargetPosition());
+    StatusSignal.refreshAll(position, intakePivotStatorCurrent, intakePivotSupplyCurrent);
+    Logger.recordOutput("Intake/Pivot/pivotCurrentPosition", getPivotPosition());
+    Logger.recordOutput("Intake/Pivot/pivotTargetPosition", getPivotTargetPosition());
+    Logger.recordOutput("Intake/Pivot/pivotStator", intakePivotStatorCurrent.getValueAsDouble());
+    Logger.recordOutput("Intake/Pivot/pivotSupply", intakePivotSupplyCurrent.getValueAsDouble());
   }
 
   public void simulationPeriodic() {
