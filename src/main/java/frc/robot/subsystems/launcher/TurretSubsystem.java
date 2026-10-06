@@ -190,7 +190,7 @@ public class TurretSubsystem extends SubsystemBase {
           degrees += 180.0;
 
           // Normalize to [-40, 300] (input modulus always need 360)
-          degrees = MathUtil.inputModulus(degrees, TURRET_MIN, TURRET_MAX);
+          degrees = toRange(degrees, TURRET_MIN, TURRET_MAX);
 
           // Clamp to soft limits
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
@@ -298,5 +298,18 @@ public class TurretSubsystem extends SubsystemBase {
   public boolean atLimitSwitch() {
     double velo = velocitySignal.getValueAsDouble();
     return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
+  }
+
+  /**
+   * Map an angle (degrees) to its equivalent in [min, max], or the nearest limit if none exists.
+   */
+  public static double toRange(double deg, double min, double max) {
+    // Equivalent angle in [min, min + 360)
+    double c = MathUtil.inputModulus(deg, min, min + 360.0);
+    if (c <= max) {
+      return c; // reachable equivalent exists
+    }
+    // c is in the unreachable gap (max, min + 360): snap to the closer limit
+    return (c - max) < (min + 360.0 - c) ? max : min;
   }
 }

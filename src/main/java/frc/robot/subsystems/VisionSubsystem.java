@@ -45,16 +45,16 @@ public class VisionSubsystem extends SubsystemBase {
   private Matrix<N3, N1> stdDevs = null;
 
   private static LoggedNetworkNumber A_XY_MT2 =
-      new LoggedNetworkNumber("visionTunables/A_XY_MT2", 0.07);
+      new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
   private static LoggedNetworkNumber A_XY_MT1 =
-      new LoggedNetworkNumber("visionTunables/A_XY_MT1", 0.09);
-  private static LoggedNetworkNumber P_XY = new LoggedNetworkNumber("visionTunables/P_XY", 1.4);
+      new LoggedNetworkNumber("Tuning/Vision/A_XY_MT1", 0.09);
+  private static LoggedNetworkNumber P_XY = new LoggedNetworkNumber("Tuning/vision/P_XY", 1.4);
 
   // How much to reduce std devs when defense slip is detected.
   // <1.0 = trust vision more (0.5 = half the std dev = 4x the filter weight).
   // Tune this at practice with someone actively defending.
   private static LoggedNetworkNumber DEFENSE_STD_DEV_SCALE =
-      new LoggedNetworkNumber("visionTunables/defenseStdDevScale", 0.5);
+      new LoggedNetworkNumber("Tuning/vision/defenseStdDevScale", 0.5);
 
   private static class VisionConstants {
     private static final double STD_DEVS_MT1_THETA = Math.PI / 60;
@@ -158,12 +158,12 @@ public class VisionSubsystem extends SubsystemBase {
     Logger.recordOutput("vision/limelight-a_Last timestamp", 0.0);
     Logger.recordOutput("vision/limelight-b_Last timestamp", 0.0);
     Logger.recordOutput("vision/limelight-c_Last timestamp", 0.0);
-    Logger.recordOutput("vision/limelight-a_Num targets", 0.0);
-    Logger.recordOutput("vision/limelight-b_Num targets", 0.0);
-    Logger.recordOutput("vision/limelight-c_Num targets", 0.0);
-    Logger.recordOutput("vision/limelight-a_time since last reading", 0);
-    Logger.recordOutput("vision/limelight-b_time since last reading", 0);
-    Logger.recordOutput("vision/limelight-c_time since last reading", 0);
+    Logger.recordOutput("vision/limelight-a_Num targets", 0);
+    Logger.recordOutput("vision/limelight-b_Num targets", 0);
+    Logger.recordOutput("vision/limelight-c_Num targets", 0);
+    Logger.recordOutput("vision/limelight-a_time since last reading", 0.0);
+    Logger.recordOutput("vision/limelight-b_time since last reading", 0.0);
+    Logger.recordOutput("vision/limelight-c_time since last reading", 0.0);
   }
 
   public void update() {

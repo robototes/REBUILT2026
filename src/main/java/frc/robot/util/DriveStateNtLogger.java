@@ -118,5 +118,8 @@ public class DriveStateNtLogger {
     driveModulePositions.set(state.ModulePositions);
     driveTimestamp.set(state.Timestamp);
     driveOdometryFrequency.set(state.OdometryPeriod == 0 ? 0 : 1.0 / state.OdometryPeriod);
+    for (int i = 0; i < 4; ++i) {
+      Logger.recordOutput("Drive/Module " + i, m_moduleMechanisms[i]);
+    }
   }
 }

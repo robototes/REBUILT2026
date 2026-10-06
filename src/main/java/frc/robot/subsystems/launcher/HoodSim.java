@@ -71,5 +71,6 @@ public class HoodSim {
 
     // Update visualization/sim
     hoodLigament.setAngle(Units.radiansToDegrees(armAngleRad) + STARTING_ANGLE_OFFSET);
+    Logger.recordOutput("Hood Mechanism", mechanism);
   }
 }
