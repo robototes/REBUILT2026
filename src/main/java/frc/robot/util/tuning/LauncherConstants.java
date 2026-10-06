@@ -12,13 +12,10 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
   private static final Transform2d LAUNCHER_OFFSET =
-      RobotType.isAlpha()
-          ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
-          : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+      new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
 
   private static final NetworkTable table =
       NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
@@ -97,8 +94,7 @@ public class LauncherConstants {
   private static final InterpolatingDoubleTreeMap timeMapBalling = new InterpolatingDoubleTreeMap();
 
   static {
-    LauncherDistanceDataPoint[] distanceData =
-        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+    LauncherDistanceDataPoint[] distanceData = compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);

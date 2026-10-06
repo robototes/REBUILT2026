@@ -14,8 +14,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.generated.AlphaTunerConstants;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 
@@ -45,10 +43,7 @@ public class IntakeRollers extends SubsystemBase {
 
   public IntakeRollers() {
     // define motors and configs
-    leftRoller =
-        new TalonFX(
-            Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
+    leftRoller = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID, (CANBus.roboRIO()));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     leftRoller.clearStickyFaults();
@@ -75,8 +70,8 @@ public class IntakeRollers extends SubsystemBase {
     talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    talonFXConfigs.Slot0.kP = RobotType.isAlpha() ? 5.0 : 4.0;
-    talonFXConfigs.Slot0.kS = RobotType.isAlpha() ? 5.0 : 1.0;
+    talonFXConfigs.Slot0.kP = 4.0;
+    talonFXConfigs.Slot0.kS = 1.0;
     talonFXConfigs.Slot0.kA = 0.2;
 
     // configurator

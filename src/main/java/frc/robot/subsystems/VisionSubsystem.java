@@ -30,7 +30,6 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -275,17 +274,6 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     rawFieldPoseEntry.set(estimate.pose3d);
-
-    if (RobotType.isAlpha()
-        && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                > VisionConstants.MAX_TURN_VELO_ALPHA)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed");
-      return;
-    }
 
     if (!MathUtil.isNear(
             0,
@@ -594,11 +582,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public int getNumTargets() {
-    if (!RobotType.isAlpha()) {
-      return ACamera.getNumTargets() + BCamera.getNumTargets();
-    } else {
-      return CCamera.getNumTargets();
-    }
+    return ACamera.getNumTargets() + BCamera.getNumTargets();
   }
 
   public double getLastTimestampSeconds() {
