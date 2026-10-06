@@ -2,7 +2,6 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -29,7 +28,6 @@ import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
-import frc.robot.util.robotType.RobotType;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -56,13 +54,12 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP =  200;
+  private static final double kP = 200;
   private static final double kI = 0;
-  private static final double kD =  2;
+  private static final double kD = 2;
   private static final double kG = 0;
-  private static final double kS =  0.65;
-  private static final double kV =
-      0; // volts per requested rps  12 / 1.29;
+  private static final double kS = 0.65;
+  private static final double kV = 0; // volts per requested rps  12 / 1.29;
   private static final double kA = 0; // 0.12;
 
   // Current limits
@@ -70,11 +67,11 @@ public class TurretSubsystem extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
 
   // Gear Ratio
-  private static final double GEAR_RATIO =  40;
+  private static final double GEAR_RATIO = 40;
 
   // Soft Limits
-  public static final double TURRET_MAX =  350; // degrees
-  public static final double TURRET_MIN =  -90; // degrees
+  public static final double TURRET_MAX = 350; // degrees
+  public static final double TURRET_MIN = -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
       NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
@@ -100,10 +97,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor =
-        new TalonFX(
-            Hardware.TURRET_MOTOR_ID,
-             CompTunerConstants.kCANBus);
+    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, CompTunerConstants.kCANBus);
     limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
     zeroPublisher.set(false);
     turretConfig();

@@ -30,7 +30,6 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
-import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableDouble;
 
 public class VisionSubsystem extends SubsystemBase {
