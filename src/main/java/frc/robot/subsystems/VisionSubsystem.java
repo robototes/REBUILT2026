@@ -47,7 +47,7 @@ public class VisionSubsystem extends SubsystemBase {
   private static LoggedNetworkNumber A_XY_MT2 =
       new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
   private static LoggedNetworkNumber A_XY_MT1 =
-      new LoggedNetworkNumber("Tuning/Vision/A_XY_MT1", 0.09);
+      new LoggedNetworkNumber("Tuning/vision/A_XY_MT1", 0.09);
   private static LoggedNetworkNumber P_XY = new LoggedNetworkNumber("Tuning/vision/P_XY", 1.4);
 
   // How much to reduce std devs when defense slip is detected.
