@@ -27,7 +27,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
   private final String key;
   private String selectedValue = null;
   private String previousValue = null;
-  private SendableChooser<String> sendableChooser = new SendableChooser<>();
+  private CustomSendableChooser<String> sendableChooser = new CustomSendableChooser<>();
   private Map<String, V> options = new HashMap<>();
   private Consumer<V> listener = null;
 
@@ -117,6 +117,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
 
   public void clearOptions() {
     options.clear();
+    sendableChooser.clear();
   }
 
   /**
@@ -156,7 +157,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
    *
    * @return The internal SendableChooser object.
    */
-  public SendableChooser<String> getSendableChooser() {
+  public CustomSendableChooser<String> getSendableChooser() {
     return sendableChooser;
   }
 

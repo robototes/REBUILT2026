@@ -256,7 +256,7 @@ public class TurretSubsystem extends SubsystemBase {
 
               // System.out.println(Units.degreesToRotations(finalTarget));
               setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
-              targetPos = Units.degreesToRotations(finalTarget);
+              targetPos = normalizedTarget;
             },
             () -> turretMotor.stopMotor())
         .withName("Set Turret Position: SOTM calculation");

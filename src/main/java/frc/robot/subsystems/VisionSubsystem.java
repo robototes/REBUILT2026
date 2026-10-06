@@ -161,9 +161,9 @@ public class VisionSubsystem extends SubsystemBase {
     Logger.recordOutput("vision/limelight-a_Num targets", 0.0);
     Logger.recordOutput("vision/limelight-b_Num targets", 0.0);
     Logger.recordOutput("vision/limelight-c_Num targets", 0.0);
-    Logger.recordOutput("vision/limelight-a_time since last reading", 0.0);
-    Logger.recordOutput("vision/limelight-b_time since last reading", 0.0);
-    Logger.recordOutput("vision/limelight-c_time since last reading", 0.0);
+    Logger.recordOutput("vision/limelight-a_time since last reading", 0);
+    Logger.recordOutput("vision/limelight-b_time since last reading", 0);
+    Logger.recordOutput("vision/limelight-c_time since last reading", 0);
   }
 
   public void update() {
