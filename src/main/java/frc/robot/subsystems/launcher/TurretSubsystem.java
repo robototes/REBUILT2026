@@ -189,7 +189,7 @@ public class TurretSubsystem extends SubsystemBase {
           // Shift so 0° = backward
           degrees += 180.0;
 
-          // Normalize to [-90, 270] (input modulus always need 360)
+          // Normalize to [-40, 300] (input modulus always need 360)
           degrees = MathUtil.inputModulus(degrees, TURRET_MIN, TURRET_MAX);
 
           // Clamp to soft limits
