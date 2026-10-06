@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
@@ -171,7 +172,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command offsetTurretCommand(int direction) { // 1 is positive offset, -1 is negative offset
-    return runOnce(
+    return Commands.runOnce(
             () -> {
               manualOffset += offsetJogAmount * direction;
             })
