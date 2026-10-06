@@ -52,9 +52,9 @@ public class TurretSubsystem extends SubsystemBase {
   // Positions
   private double targetPos;
   private double manualOffset = 0.0; // Manual jogging to correct for skip
-  // The turret pulley has 120 teeth, so each jog is 1 tooth. This is a resolution of 8" at 10' from the turret
-  private static final double offsetJogAmount =
-      1.0 / 120.0;
+  // The turret pulley has 120 teeth, so each jog is 1 tooth. This is a resolution of 8" at 10' from
+  // the turret
+  private static final double offsetJogAmount = 1.0 / 120.0;
   public static final double FRONT_POSITION = 0;
   public static final double LEFT_POSITION = -0.15;
   public static final double RIGHT_POSITION = 0.15;
@@ -274,12 +274,12 @@ public class TurretSubsystem extends SubsystemBase {
               double targetDegrees = -params.targetTurret().getDegrees();
               double FFV = params.targetTurretFeedforward();
 
-              double normalizedTarget =
-                  MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
-
               // Changing the target to account for jogging from driver
               // Converting from rotations to degrees
-              normalizedTarget = normalizedTarget + manualOffset * 360;
+              targetDegrees += manualOffset * 360;
+
+              double normalizedTarget =
+                  MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
 
               double[] candidates = {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
