@@ -1,10 +1,13 @@
 package frc.robot.subsystems.auto.BLine;
 
 import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.lib.BLine.BLineCommands;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
 import frc.robot.util.simulation.RobotSim;
@@ -15,7 +18,7 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 public class BLineTriggers {
   public static Trigger beachedTrigger;
   public static LoggedNetworkBoolean enableSotm = new LoggedNetworkBoolean("BLine/SOTM", false);
-
+private static Boolean enableLaunchOnTheMove = true;
   public static LoggedNetworkBoolean enableUnbeach =
       new LoggedNetworkBoolean("BLine/Auto Unbeach", false);
 
@@ -43,35 +46,35 @@ public class BLineTriggers {
     AtomicBoolean launchAllowed = new AtomicBoolean(true);
 
     if (s.launcherSubsystem != null && s.indexerSubsystem != null) {
-
       if (Robot.isSimulation()) {
-
-        BLineLogic.bLineSimLaunching = RobotSim.launch(s, 30);
+        Command bLineSimLaunching = RobotSim.launch(s, 30);
 
         FollowPath.registerEventTrigger(
             "launch",
-            Commands.defer(
+            BLineCommands.defer(
                 () -> {
-                  return enableSotm.getAsBoolean()
+                  enableLaunchOnTheMove =
+                      SmartDashboard.getBoolean("Enable SOTM?", enableLaunchOnTheMove);
+
+                  return enableLaunchOnTheMove
                       ? Commands.runOnce(() -> launchAllowed.set(true))
-                          .andThen(AutosCommands.bLineSimLaunching.onlyWhile(launchAllowed::get))
+                          .andThen(bLineSimLaunching.onlyWhile(launchAllowed::get))
                           .andThen(Commands.print("LAUNCH FINISHED"))
                       : Commands.none();
                 },
                 Set.of()));
-      } else {
 
-        BLineLogic.bLineLaunching = AutosCommands.launcherCommand(5.0, s);
+      } else {
+        Command bLineLaunching = AutosCommands.launcherCommand(s);
 
         FollowPath.registerEventTrigger(
             "launch",
             Commands.defer(
                 () -> {
-                  enableSotm.getAsBoolean();
+                  enableLaunchOnTheMove =
+                      SmartDashboard.getBoolean("Enable SOTM?", enableLaunchOnTheMove);
 
-                  return BLineTriggers.enableSotm.getAsBoolean()
-                      ? BLineLogic.bLineLaunching
-                      : Commands.none();
+                  return enableLaunchOnTheMove ? bLineLaunching : Commands.none();
                 },
                 Set.of()));
       }
