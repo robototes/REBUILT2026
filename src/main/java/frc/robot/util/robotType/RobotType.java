@@ -29,11 +29,11 @@ public class RobotType {
   }
 
   public static boolean isAlpha() {
-    return TYPE == RobotTypesEnum.ALPHA;
+    return false;
   }
 
   public static boolean isComp() {
-    return TYPE == RobotTypesEnum.COMP;
+    return true;
   }
 
   public static boolean isSim() {
