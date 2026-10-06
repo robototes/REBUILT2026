@@ -92,20 +92,16 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // create PID gains
-    config.Slot0.kP = RobotType.isAlpha() ? 5 : 10;
+    config.Slot0.kP = 10;
     config.Slot0.kS = 5.0;
     config.Slot0.kA = 0.5;
 
     config.MotorOutput.Inverted =
-        RobotType.isAlpha()
-            ? InvertedValue.Clockwise_Positive
-            : InvertedValue.CounterClockwise_Positive;
+         InvertedValue.CounterClockwise_Positive;
     applyConfig(flywheelOne, config);
 
     config.MotorOutput.Inverted =
-        RobotType.isAlpha()
-            ? InvertedValue.CounterClockwise_Positive
-            : InvertedValue.Clockwise_Positive;
+        InvertedValue.Clockwise_Positive;
     applyConfig(flywheelTwo, config);
   }
 

@@ -56,13 +56,13 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = RobotType.isAlpha() ? 25 : 200;
+  private static final double kP =  200;
   private static final double kI = 0;
-  private static final double kD = RobotType.isAlpha() ? 0 : 2;
+  private static final double kD =  2;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.65;
+  private static final double kS =  0.65;
   private static final double kV =
-      0; // volts per requested rps RobotType.isAlpha() ? 0.884766 / 1.125 : 12 / 1.29;
+      0; // volts per requested rps  12 / 1.29;
   private static final double kA = 0; // 0.12;
 
   // Current limits
@@ -70,11 +70,11 @@ public class TurretSubsystem extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
 
   // Gear Ratio
-  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 40;
+  private static final double GEAR_RATIO =  40;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 350; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
+  public static final double TURRET_MAX =  350; // degrees
+  public static final double TURRET_MIN =  -90; // degrees
 
   private final BooleanPublisher zeroPublisher =
       NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
@@ -103,7 +103,7 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor =
         new TalonFX(
             Hardware.TURRET_MOTOR_ID,
-            RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+             CompTunerConstants.kCANBus);
     limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
     zeroPublisher.set(false);
     turretConfig();

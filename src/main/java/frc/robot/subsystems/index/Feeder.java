@@ -50,7 +50,7 @@ public class Feeder extends SubsystemBase {
     feedMotor =
         new TalonFX(
             Hardware.FEEDER_MOTOR_ID,
-            (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+             CompTunerConstants.kCANBus);
     feederConfig();
     feedMotor.clearStickyFaults();
 

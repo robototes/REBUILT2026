@@ -16,9 +16,7 @@ import frc.robot.util.robotType.RobotType;
 
 public class LauncherConstants {
   private static final Transform2d LAUNCHER_OFFSET =
-      RobotType.isAlpha()
-          ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
-          : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+           new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
 
   private static final NetworkTable table =
       NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
@@ -98,7 +96,7 @@ public class LauncherConstants {
 
   static {
     LauncherDistanceDataPoint[] distanceData =
-        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+         compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);

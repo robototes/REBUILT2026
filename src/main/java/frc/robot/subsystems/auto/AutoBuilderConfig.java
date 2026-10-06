@@ -66,6 +66,6 @@ public class AutoBuilderConfig {
       return "sim";
     }
 
-    return (RobotType.isAlpha() ? "alpha" : "comp");
+    return ("comp");
   }
 }

@@ -48,7 +48,7 @@ public class IntakeRollers extends SubsystemBase {
     leftRoller =
         new TalonFX(
             Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
+            (CANBus.roboRIO()));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     leftRoller.clearStickyFaults();
@@ -75,8 +75,8 @@ public class IntakeRollers extends SubsystemBase {
     talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    talonFXConfigs.Slot0.kP = RobotType.isAlpha() ? 5.0 : 4.0;
-    talonFXConfigs.Slot0.kS = RobotType.isAlpha() ? 5.0 : 1.0;
+    talonFXConfigs.Slot0.kP =  4.0;
+    talonFXConfigs.Slot0.kS = 1.0;
     talonFXConfigs.Slot0.kA = 0.2;
 
     // configurator

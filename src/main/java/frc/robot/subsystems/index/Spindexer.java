@@ -80,9 +80,7 @@ public class Spindexer extends SubsystemBase {
 
     // Inverting motor output direction
     talonFXConfiguration.MotorOutput.Inverted =
-        (RobotType.isAlpha())
-            ? InvertedValue.Clockwise_Positive
-            : InvertedValue.CounterClockwise_Positive;
+             InvertedValue.CounterClockwise_Positive;
     // Setting the motor to brake when not moving
     talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
