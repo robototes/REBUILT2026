@@ -121,7 +121,6 @@ public class Robot extends LoggedRobot {
     }
     PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
-    LiveWindow.enableTelemetry(PDH);
     BuildInfo.logBuildInfo();
     // Start GC monitor to count garbage collections and publish to SmartDashboard
     frc.robot.util.GCMonitor.start();
