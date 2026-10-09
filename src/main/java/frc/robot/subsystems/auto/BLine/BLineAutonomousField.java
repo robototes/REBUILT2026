@@ -246,7 +246,7 @@ public class BLineAutonomousField {
       return;
     }
 
-    BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
-    BLineLogic.fieldPoseStart.setRobotPose(startingPose);
+   // BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
+   // BLineLogic.fieldPoseStart.setRobotPose(startingPose);
   }
 }

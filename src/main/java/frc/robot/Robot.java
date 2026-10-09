@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.lib.BLine.FollowPath;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
@@ -40,6 +41,7 @@ import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
 import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -122,6 +124,8 @@ public class Robot extends LoggedRobot {
       } else {
         robotSim = null;
       }
+
+
       // BLINE STUFF
       if (MAX_STEPS <= 1) {
         // BLINE STUFF

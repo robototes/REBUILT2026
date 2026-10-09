@@ -33,7 +33,6 @@ public class BLineLogic {
   private static Subsystems s;
 
   public static Field2d field = new Field2d();
-  public static edu.wpi.first.wpilibj.smartdashboard.Field2d fieldPoseStart = new Field2d();
   private static Boolean enableAutoUnbeach = true;
   private static Boolean enableLaunchOnTheMove = true;
 
@@ -74,7 +73,7 @@ public class BLineLogic {
 
   private static final String REMOVE_OPTION = "REMOVE";
   private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser =
-      new LoggedDashboardChooser<>("BLine/Trench Side");
+      new LoggedDashboardChooser<TrenchSide>("BLine/Trench Side");
   private static final List<SendableChooser<String>> pathChoosers = new ArrayList<>();
   private static final Map<BLinePath, List<BLinePath>> rebuiltPaths = new HashMap<>();
   private static final List<BLinePath> autos = new ArrayList<>();
@@ -343,25 +342,25 @@ public class BLineLogic {
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-    SmartDashboard.putData("BLine/Selected Auto", field);
+    //SmartDashboard.putData("BLine/Selected Auto", field);
 
     BLineTriggers.enableSotm.set(enableLaunchOnTheMove);
     BLineTriggers.enableUnbeach.set(enableAutoUnbeach);
 
-    SmartDashboard.putData("BLine/Start Pose", fieldPoseStart);
+
 
     trenchSideChooser.onChange(
         value -> {
           updateInitialHeading();
-          updateFieldDisplay();
+         // updateFieldDisplay();
         });
 
     updatePathChoosers();
-    updateFieldDisplay();
+   // updateFieldDisplay();
   }
 
   public static void updateFieldDisplay() {
-    fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
+    //fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
   }
 
   public static String getSelectedAutoName() {
