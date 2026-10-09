@@ -30,10 +30,7 @@ public final class AllianceUtils {
   public static DriverStation.Alliance populateAlliance() {
     if (!DriverStation.getAlliance().isEmpty()) {
       DriverStation.Alliance alliance = DriverStation.getAlliance().get();
-      System.out.println("Alliance: " + alliance);
       return alliance;
-    } else {
-      System.out.println("Alliance: Unknown");
     }
     return null;
   }
