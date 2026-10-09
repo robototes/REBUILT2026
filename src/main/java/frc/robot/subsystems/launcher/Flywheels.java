@@ -8,9 +8,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -21,16 +18,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 public class Flywheels extends SubsystemBase {
   private final TalonFX flywheelOne; // left spins clockwise
   private final TalonFX flywheelTwo; // right spins counterclockwise
-  private final DoubleTopic currentTopic; // supply current in amps
-  private final DoubleTopic velocityTopic; // velocity in rps
-  private final DoublePublisher currentPub;
-  private final DoublePublisher velocityPub;
 
   // Debounce stuff
   private static final double DURATION = 1; // second
@@ -49,31 +43,31 @@ public class Flywheels extends SubsystemBase {
   private long lastPositionUpdateTime = 0;
 
   public final double FLYWHEEL_TOLERANCE = 10;
-  public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/SmartDashboard/Tunables/Flywheels", false);
+  public final LoggedNetworkBoolean TUNER_CONTROLLED =
+      new LoggedNetworkBoolean("Tuning/Flywheels", false);
 
   // Status signals
   private StatusSignal<AngularVelocity> flywheelOneRPS;
+  private StatusSignal<Current> flywheelOneStatorCurrent;
   private StatusSignal<Current> flywheelOneSupplyCurrent;
+  private StatusSignal<AngularVelocity> flywheelTwoRPS;
+  private StatusSignal<Current> flywheelTwoStatorCurrent;
+  private StatusSignal<Current> flywheelTwoSupplyCurrent;
 
   // Constructor
   public Flywheels() {
     flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
     flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
-    targetVelocity = new NtTunableDouble("/launcher/flywheelTuner", 0.0);
+    targetVelocity = new NtTunableDouble("Tuning/launcher/flywheelTuner", 0.0);
     configureMotors();
 
-    var nt = NetworkTableInstance.getDefault();
-    velocityTopic = nt.getDoubleTopic("/launcher/velocity");
-    currentTopic = nt.getDoubleTopic("/launcher/current");
-    velocityPub = velocityTopic.publish();
-    currentPub = currentTopic.publish();
-    velocityPub.set(0.0);
-    currentPub.set(0.0);
-
     flywheelOneRPS = flywheelOne.getVelocity();
+    flywheelOneStatorCurrent = flywheelOne.getStatorCurrent();
     flywheelOneSupplyCurrent = flywheelOne.getSupplyCurrent();
+    flywheelTwoRPS = flywheelTwo.getVelocity();
+    flywheelTwoStatorCurrent = flywheelTwo.getStatorCurrent();
+    flywheelTwoSupplyCurrent = flywheelTwo.getSupplyCurrent();
 
     flywheelOne.clearStickyFaults();
     flywheelTwo.clearStickyFaults();
@@ -196,9 +190,23 @@ public class Flywheels extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(flywheelOneRPS, flywheelOneSupplyCurrent);
-    velocityPub.set(flywheelOneRPS.getValueAsDouble());
-    currentPub.set(flywheelOneSupplyCurrent.getValueAsDouble());
+    StatusSignal.refreshAll(
+        flywheelOneRPS,
+        flywheelOneSupplyCurrent,
+        flywheelOneStatorCurrent,
+        flywheelTwoRPS,
+        flywheelTwoStatorCurrent,
+        flywheelTwoSupplyCurrent);
+    Logger.recordOutput("Launcher/flywheel1/velocity", flywheelOneRPS.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel1/StatorCurrent", flywheelOneStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel1/supplyCurrent", flywheelOneSupplyCurrent.getValueAsDouble());
+    Logger.recordOutput("Launcher/flywheel2/velocity", flywheelTwoRPS.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel2/StatorCurrent", flywheelTwoStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Launcher/flywheel2/supplyCurrent", flywheelTwoSupplyCurrent.getValueAsDouble());
     if (TUNER_CONTROLLED.get()) {
       if (targetVelocity.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetVelocity.getAtomic();

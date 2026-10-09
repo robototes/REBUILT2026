@@ -11,9 +11,6 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDouble;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
@@ -25,19 +22,16 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
-import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 public class Hood extends SubsystemBase {
   private final TalonFX hood;
   private HoodSim hoodSim;
-
-  private DoublePublisher positionPub; // hood pose in rotations
-  private DoublePublisher goalPub; // hood pose in rotations
-  private BooleanPublisher zeroPublisher;
 
   @Getter private boolean hoodZeroed = false; // is hood Zeroed
 
@@ -56,14 +50,15 @@ public class Hood extends SubsystemBase {
   private static final double FORWARD_SOFT_LIMIT = 9;
   private static final double BACKWARD_SOFT_LIMIT = -0.01224; // -0.02 rotations, past zeroing point
 
-  public final NtTunableBoolean TUNER_CONTROLLED =
-      new NtTunableBoolean("/SmartDashboard/Tunables/Hood", false);
+  public final LoggedNetworkBoolean TUNER_CONTROLLED =
+      new LoggedNetworkBoolean("Tuning/Hood", false);
 
   private static final double AUTO_ZERO_VOLTAGE = -1.5;
 
   // Status signals
-  private final StatusSignal<Current> hoodCurrent;
-  private final StatusSignal<Angle> SS_pos;
+  private final StatusSignal<Current> hoodStatorCurrent;
+  private final StatusSignal<Current> hoodSupplyCurrent;
+  private final StatusSignal<Angle> position;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -74,19 +69,13 @@ public class Hood extends SubsystemBase {
     if (RobotBase.isSimulation()) {
       hoodSim = new HoodSim(hood);
     }
-    hoodCurrent = hood.getStatorCurrent();
-    SS_pos = hood.getPosition();
+    hoodStatorCurrent = hood.getStatorCurrent();
+    hoodSupplyCurrent = hood.getSupplyCurrent();
+    position = hood.getPosition();
   }
 
   public void initializeNT() {
-    var nt = NetworkTableInstance.getDefault();
-    positionPub = nt.getDoubleTopic("/hood/position").publish();
-    positionPub.set(0);
-    goalPub = nt.getDoubleTopic("/hood/goal").publish();
-    goalPub.set(request.Position);
-    zeroPublisher = nt.getBooleanTopic("/Zero/hoodZero").publish();
-    zeroPublisher.set(false);
-    targetPosition = new NtTunableDouble("/launcher/hoodTuner", 0.0);
+    targetPosition = new NtTunableDouble("Tuning/hood/hoodTuner", 0.0);
   }
 
   public void configureMotor() {
@@ -136,9 +125,11 @@ public class Hood extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(SS_pos);
-    positionPub.set(SS_pos.getValueAsDouble());
-    goalPub.set(request.Position);
+    StatusSignal.refreshAll(position, hoodStatorCurrent, hoodSupplyCurrent);
+    Logger.recordOutput("Hood/position", position.getValueAsDouble());
+    Logger.recordOutput("Hood/statorCurrent", hoodStatorCurrent.getValueAsDouble());
+    Logger.recordOutput("Hood/supplyCurrent", hoodSupplyCurrent.getValueAsDouble());
+    Logger.recordOutput("Hood/goal", request.Position);
     if (TUNER_CONTROLLED.get()) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
         TimestampedDouble currentTarget = targetPosition.getAtomic();
@@ -149,7 +140,7 @@ public class Hood extends SubsystemBase {
   }
 
   public double getHoodPosition() {
-    return SS_pos.getValueAsDouble();
+    return position.getValueAsDouble();
   }
 
   public void setHoodPosition(double positionRotations) {
@@ -171,7 +162,7 @@ public class Hood extends SubsystemBase {
   public void zero() {
     hood.setPosition(0);
     hoodZeroed = true;
-    zeroPublisher.set(true);
+    Logger.recordOutput("Zero/hoodZero", true);
   }
 
   public Command zeroHoodCommand() {
@@ -180,7 +171,7 @@ public class Hood extends SubsystemBase {
 
   public boolean atTargetPosition() {
     return DriverStation.isEnabled()
-        && Math.abs(SS_pos.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
+        && Math.abs(position.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
@@ -204,10 +195,10 @@ public class Hood extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.run(() -> hoodCurrent.refresh())
+                            Commands.run(() -> hoodStatorCurrent.refresh())
                                 .until(
                                     () ->
-                                        hoodCurrent.getValueAsDouble()
+                                        hoodStatorCurrent.getValueAsDouble()
                                             >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroHoodCommand())
         .withTimeout(3)

@@ -14,10 +14,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -31,7 +29,9 @@ import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class VisionSubsystem extends SubsystemBase {
   private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
@@ -44,15 +44,17 @@ public class VisionSubsystem extends SubsystemBase {
 
   private Matrix<N3, N1> stdDevs = null;
 
-  private static NtTunableDouble A_XY_MT2 = new NtTunableDouble("/vision/A_XY_MT2", 0.07);
-  private static NtTunableDouble A_XY_MT1 = new NtTunableDouble("/vision/A_XY_MT1", 0.09);
-  private static NtTunableDouble P_XY = new NtTunableDouble("/vision/P_XY", 1.4);
+  private static LoggedNetworkNumber A_XY_MT2 =
+      new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
+  private static LoggedNetworkNumber A_XY_MT1 =
+      new LoggedNetworkNumber("Tuning/vision/A_XY_MT1", 0.09);
+  private static LoggedNetworkNumber P_XY = new LoggedNetworkNumber("Tuning/vision/P_XY", 1.4);
 
   // How much to reduce std devs when defense slip is detected.
   // <1.0 = trust vision more (0.5 = half the std dev = 4x the filter weight).
   // Tune this at practice with someone actively defending.
-  private static NtTunableDouble DEFENSE_STD_DEV_SCALE =
-      new NtTunableDouble("/vision/defenseStdDevScale", 0.5);
+  private static LoggedNetworkNumber DEFENSE_STD_DEV_SCALE =
+      new LoggedNetworkNumber("Tuning/vision/defenseStdDevScale", 0.5);
 
   private static class VisionConstants {
     private static final double STD_DEVS_MT1_THETA = Math.PI / 60;
@@ -124,40 +126,16 @@ public class VisionSubsystem extends SubsystemBase {
           new Rotation3d(0, Units.degreesToRadians(-20), Units.degreesToRadians(-90)));
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
-  private BooleanSubscriber disableVision;
+  private final LoggedNetworkBoolean disableVision =
+      new LoggedNetworkBoolean("disableVision", false);
 
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
   private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
 
-  private final StructPublisher<Pose3d> fieldPose3dEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/fieldPose3d", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryA =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dA", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryB =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dB", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> rawFieldPose3dEntryC =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/rawFieldPose3dC", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> compBotLeftCameraViewEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/compBotLeftCameraView", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> compBotFrontCameraViewEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/compBotFrontCameraView", Pose3d.struct)
-          .publish();
-  private final StructPublisher<Pose3d> compBotRightCameraViewEntry =
-      NetworkTableInstance.getDefault()
-          .getStructTopic("vision/compBotRightCameraView", Pose3d.struct)
-          .publish();
+  private static final String RAW_POSE_KEY_A = "vision/rawFieldPose3dA";
+  private static final String RAW_POSE_KEY_B = "vision/rawFieldPose3dB";
+  private static final String RAW_POSE_KEY_C = "vision/rawFieldPose3dC";
 
   private double lastTimestampSeconds = 0;
   private Pose2d lastFieldPose = null;
@@ -172,29 +150,27 @@ public class VisionSubsystem extends SubsystemBase {
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
 
+    // TODO: Log this with Telemetry WPILib 2027 no support or workaround from advantage kit
     robotField = new Field2d();
     SmartDashboard.putData(robotField);
     rawVisionFieldObject = robotField.getObject("RawVision");
 
-    SmartDashboard.putNumber("/vision/limelight-a_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_Last timestamp", 0);
-    SmartDashboard.putNumber("/vision/limelight-a_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_Num targets", 0);
-    SmartDashboard.putNumber("/vision/limelight-a_time since last reading", 0);
-    SmartDashboard.putNumber("/vision/limelight-b_time since last reading", 0);
-    SmartDashboard.putNumber("/vision/limelight-c_time since last reading", 0);
-
-    var nt = NetworkTableInstance.getDefault();
-    disableVision = nt.getBooleanTopic("/vision/disablevision").subscribe(false);
+    Logger.recordOutput("vision/limelight-a_Last timestamp", 0.0);
+    Logger.recordOutput("vision/limelight-b_Last timestamp", 0.0);
+    Logger.recordOutput("vision/limelight-c_Last timestamp", 0.0);
+    Logger.recordOutput("vision/limelight-a_Num targets", 0);
+    Logger.recordOutput("vision/limelight-b_Num targets", 0);
+    Logger.recordOutput("vision/limelight-c_Num targets", 0);
+    Logger.recordOutput("vision/limelight-a_time since last reading", 0.0);
+    Logger.recordOutput("vision/limelight-b_time since last reading", 0.0);
+    Logger.recordOutput("vision/limelight-c_time since last reading", 0.0);
   }
 
   public void update() {
     if (getDisableVision()) {
-      SmartDashboard.putString("/vision/limelight-a_rejectReason", "vision-disabled");
-      SmartDashboard.putString("/vision/limelight-b_rejectReason", "vision-disabled");
-      SmartDashboard.putString("/vision/limelight-c_rejectReason", "vision-disabled");
+      Logger.recordOutput("/vision/limelight-a_rejectReason", "vision-disabled");
+      Logger.recordOutput("/vision/limelight-b_rejectReason", "vision-disabled");
+      Logger.recordOutput("/vision/limelight-c_rejectReason", "vision-disabled");
       return;
     }
 
@@ -211,24 +187,18 @@ public class VisionSubsystem extends SubsystemBase {
     // isUnderDefense() uses lastFieldPose and visionPoseTracking, both of which are
     // set before any camera processes — this is intentional.
     boolean underDefense = isUnderDefense(visionPoseTracking);
-    SmartDashboard.putBoolean("/vision/underDefense", underDefense);
+    Logger.recordOutput("vision/underDefense", underDefense);
 
-    processCamera(
-        ACamera, limelightaOnline, rawFieldPose3dEntryA, visionPoseTracking, underDefense);
-    processCamera(
-        BCamera, limelightbOnline, rawFieldPose3dEntryB, visionPoseTracking, underDefense);
-    // uncomment if when using intake pose
-    // if (intakePivot.isAtTarget(2, IntakePivot.DEPLOYED_POS)) {
-    processCamera(
-        CCamera, limelightcOnline, rawFieldPose3dEntryC, visionPoseTracking, underDefense);
-    // }
+    processCamera(ACamera, limelightaOnline, RAW_POSE_KEY_A, visionPoseTracking, underDefense);
+    processCamera(BCamera, limelightbOnline, RAW_POSE_KEY_B, visionPoseTracking, underDefense);
+    processCamera(CCamera, limelightcOnline, RAW_POSE_KEY_C, visionPoseTracking, underDefense);
     updateCameraView(visionPoseTracking);
   }
 
   private void processCamera(
       LLCamera camera,
       boolean cameraOnline,
-      StructPublisher<Pose3d> rawFieldPose3dEntry,
+      String rawPoseKey,
       VisionPoseTracking visionPoseTracking,
       boolean underDefense) {
     if (!cameraOnline) return;
@@ -241,40 +211,42 @@ public class VisionSubsystem extends SubsystemBase {
 
     processLimelight(
         mt1Estimate,
-        rawFieldPose3dEntry,
+        rawPoseKey,
         maxAmbiguity,
         visionPoseTracking,
         rawFiducials,
         camera,
-        underDefense);
+        underDefense,
+        camera.getName());
     processLimelight(
         mt2Estimate,
-        rawFieldPose3dEntry,
+        rawPoseKey,
         maxAmbiguity,
         visionPoseTracking,
         rawFiducials,
         camera,
-        underDefense);
+        underDefense,
+        camera.getName());
   }
 
   private void processLimelight(
       BetterPoseEstimate estimate,
-      StructPublisher<Pose3d> rawFieldPoseEntry,
+      String rawPoseKey,
       double maxAmbiguity,
       VisionPoseTracking visionPoseTracking,
       RawFiducial[] rawFiducials,
       LLCamera camera,
-      boolean underDefense) {
+      boolean underDefense,
+      String cameraName) {
 
     if (estimate == null || estimate.tagCount <= 0) return;
+    Logger.recordOutput(rawPoseKey + (estimate.isMegaTag2 ? "_MT2" : "_MT1"), estimate.pose3d);
 
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
     if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
-      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp");
+      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp", cameraName);
       return;
     }
-
-    rawFieldPoseEntry.set(estimate.pose3d);
 
     if (RobotType.isAlpha()
         && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
@@ -283,7 +255,7 @@ public class VisionSubsystem extends SubsystemBase {
                 > VisionConstants.MAX_XY_VELO_ALPHA
             || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed");
+      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed", cameraName);
       return;
     }
 
@@ -296,12 +268,13 @@ public class VisionSubsystem extends SubsystemBase {
             estimate.pose3d.getRotation().getY(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || (lastFieldPose != null && lastFieldPose.equals(visionPose2d))) {
-      publishDiagnostics(estimate, visionPose2d, camera, "impossible-rotation or height");
+      publishDiagnostics(
+          estimate, visionPose2d, camera, "impossible-rotation or height", cameraName);
       return;
     }
 
     if (!isPoseOnField(visionPose2d)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "off-field");
+      publishDiagnostics(estimate, visionPose2d, camera, "off-field", cameraName);
       return;
     }
 
@@ -312,14 +285,14 @@ public class VisionSubsystem extends SubsystemBase {
         lastVisionPose,
         camera.getLastTimestampSeconds(),
         underDefense)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "velocity-implausible");
+      publishDiagnostics(estimate, visionPose2d, camera, "velocity-implausible", cameraName);
       return;
     }
 
     double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
-      SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
-      publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent");
+      Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
+      publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent", cameraName);
       return;
     }
 
@@ -327,15 +300,15 @@ public class VisionSubsystem extends SubsystemBase {
     if (estimate.isMegaTag2) {
       stdDevs =
           getEstimationStdDevsLimelightMT2(
-              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, camera.getName());
+              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, cameraName);
     } else {
       stdDevs =
           getEstimationStdDevsLimelightMT1(
-              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, camera.getName());
+              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, cameraName);
     }
 
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
-      publishDiagnostics(estimate, visionPose2d, camera, "ambiguity-or-range");
+      publishDiagnostics(estimate, visionPose2d, camera, "ambiguity-or-range", cameraName);
       return;
     }
 
@@ -351,12 +324,12 @@ public class VisionSubsystem extends SubsystemBase {
     if (m_showVisionOnField != null) {
       m_showVisionOnField.showPointInTimeVisionEstimate(
           ShowVisionOnField.FieldType.SIMULATION_FIELD,
-          camera.getName(),
+          cameraName,
           estimate.isMegaTag2,
           java.util.Optional.of(estimate.pose3d.toPose2d()));
     }
 
-    maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, camera.getName());
+    maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, cameraName);
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
@@ -370,14 +343,14 @@ public class VisionSubsystem extends SubsystemBase {
     camera.setLastTimestampSeconds(estimate.timestampSeconds);
 
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      fieldPose3dEntry.set(estimate.pose3d);
+      Logger.recordOutput("vision/fieldPose3d", estimate.pose3d);
       lastFieldPose = visionPose2d;
       rawVisionFieldObject.setPose(lastFieldPose);
       lastTimestampSeconds = estimate.timestampSeconds;
     }
 
-    SmartDashboard.putNumber("/vision/" + camera.getName() + "_tagSpread", spread);
-    publishDiagnostics(estimate, visionPose2d, camera, "none");
+    Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
+    publishDiagnostics(estimate, visionPose2d, camera, "none", cameraName);
   }
 
   private boolean isUnderDefense(VisionPoseTracking visionPoseTracking) {
@@ -489,7 +462,7 @@ public class VisionSubsystem extends SubsystemBase {
             && isPoseOnField(visionPose);
     if (odomOffField && visionTrusted) {
       drivetrain.resetTranslation(visionPose.getTranslation());
-      SmartDashboard.putString("/vision/" + cameraName + "_rejectReason", "odometry-reset");
+      Logger.recordOutput("vision/" + cameraName + "_rejectReason", "odometry-reset");
     }
   }
 
@@ -522,8 +495,8 @@ public class VisionSubsystem extends SubsystemBase {
             ? Double.MAX_VALUE
             : VisionConstants.STD_DEVS_MT1_THETA * ambiguityInflation;
 
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD xy", xy);
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt1 STD theta", theta);
+    Logger.recordOutput("vision/" + cameraName + " Mt1 STD xy", xy);
+    Logger.recordOutput("vision/" + cameraName + " Mt1 STD theta", theta);
     return VecBuilder.fill(xy, xy, theta);
   }
 
@@ -552,7 +525,7 @@ public class VisionSubsystem extends SubsystemBase {
             / Math.sqrt(harmonicSum)
             * ambiguityInflation;
 
-    SmartDashboard.putNumber("/vision/" + cameraName + " Mt2 STD xy", xy);
+    Logger.recordOutput("vision/" + cameraName + " Mt2 STD xy", xy);
     // θ = MAX_VALUE: heading comes from gyro, not vision
     return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
   }
@@ -580,16 +553,19 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   private void publishDiagnostics(
-      BetterPoseEstimate estimate, Pose2d visionPose2d, LLCamera camera, String rejectionReason) {
+      BetterPoseEstimate estimate,
+      Pose2d visionPose2d,
+      LLCamera camera,
+      String rejectionReason,
+      String cameraName) {
     if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      SmartDashboard.putString("/vision/" + camera.getName() + "_rejectReason", rejectionReason);
-      SmartDashboard.putNumber(
-          "/vision/" + camera.getName() + "_visionError",
+      Logger.recordOutput("vision/" + cameraName + "_rejectReason", rejectionReason);
+      Logger.recordOutput(
+          "vision/" + cameraName + "_visionError",
           getVisionPoseError(visionPose2d, estimate.timestampSeconds));
-      SmartDashboard.putNumber(
-          "/vision/" + camera.getName() + "_Last timestamp", camera.getLastTimestampSeconds());
-      SmartDashboard.putNumber(
-          "/vision/" + camera.getName() + "_Num targets", camera.getNumTargets());
+      Logger.recordOutput(
+          "vision/" + cameraName + "_Last timestamp", camera.getLastTimestampSeconds());
+      Logger.recordOutput("vision/" + cameraName + "_Num targets", camera.getNumTargets());
     }
   }
 
@@ -606,7 +582,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public boolean getDisableVision() {
-    return disableVision.get(false);
+    return disableVision.get();
   }
 
   public Pose2d getLastVisionPose2d() {
@@ -626,11 +602,14 @@ public class VisionSubsystem extends SubsystemBase {
 
   private void updateCameraView(VisionPoseTracking visionPoseTracking) {
     if (visionPoseTracking != null && visionPoseTracking.drivePose3d != null) {
-      compBotLeftCameraViewEntry.set(
+      Logger.recordOutput(
+          "vision/compBotLeftCameraView",
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_LEFT_CAMERA));
-      compBotFrontCameraViewEntry.set(
+      Logger.recordOutput(
+          "vision/compBotFrontCameraView",
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_FRONT_CAMERA));
-      compBotRightCameraViewEntry.set(
+      Logger.recordOutput(
+          "vision/compBotRightCameraView",
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_RIGHT_CAMERA));
     }
   }

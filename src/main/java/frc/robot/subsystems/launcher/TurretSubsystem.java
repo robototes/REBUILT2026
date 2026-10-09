@@ -13,9 +13,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Angle;
@@ -32,6 +29,7 @@ import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 
 public class TurretSubsystem extends SubsystemBase {
   private final TalonFX turretMotor;
@@ -39,6 +37,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final AnalogInput limitSwitch;
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
+  private static boolean useNormalizedTarget = false;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
@@ -73,25 +72,13 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 40;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 350; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -90; // degrees
-
-  private final BooleanPublisher zeroPublisher =
-      NetworkTableInstance.getDefault().getBooleanTopic("/Zero/turretZero").publish();
+  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 300; // degrees
+  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -40; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
-          .getStructArrayTopic("lines/turretRotation", Pose2d.struct)
+          .getStructArrayTopic("turretRotation", Pose2d.struct)
           .publish();
-
-  // Network tables
-
-  private final DoublePublisher posPub;
-  private final DoublePublisher targetPub;
-  private final DoublePublisher velocityPub;
-  private final DoublePublisher currentPub;
-  private final DoublePublisher ffPub;
-  private final DoublePublisher limitSwitchPub;
 
   // Status signals
   private final StatusSignal<Angle> positionSignal;
@@ -105,28 +92,16 @@ public class TurretSubsystem extends SubsystemBase {
             Hardware.TURRET_MOTOR_ID,
             RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
-    zeroPublisher.set(false);
     turretConfig();
     turretMotor.clearStickyFaults();
     turretRotation.set(new Pose2d[2]);
 
-    NetworkTableInstance inst = NetworkTableInstance.getDefault();
-    NetworkTable table = inst.getTable("SmartDashboard");
-
     positionSignal = turretMotor.getPosition();
-    posPub = table.getDoubleTopic("/Turret/Position").publish();
 
     velocitySignal = turretMotor.getVelocity();
-    velocityPub = table.getDoubleTopic("/Turret/Velocity").publish();
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
-    currentPub = table.getDoubleTopic("/Turret/Current").publish();
-
-    targetPub = table.getDoubleTopic("/Turret/Target").publish();
-
-    ffPub = table.getDoubleTopic("/Turret/FF Volts").publish();
-
-    limitSwitchPub = table.getDoubleTopic("/Turret/LimitSwitchCurrent").publish();
+    Logger.recordOutput("Zero/zeroedTurret", false);
   }
 
   public void turretConfig() {
@@ -168,7 +143,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public void setTurretRawPosition(double pos, double FFVelocity) {
     double feedforwardVolts = Units.radiansToRotations(FFVelocity) * kV;
-    ffPub.set(feedforwardVolts);
+    Logger.recordOutput("/Turret/FF Volts", feedforwardVolts);
     turretMotor.setControl(request.withPosition(pos).withFeedForward(feedforwardVolts));
     targetPos = pos;
   }
@@ -183,7 +158,7 @@ public class TurretSubsystem extends SubsystemBase {
             () -> {
               turretMotor.setPosition(0);
               targetPos = 0;
-              zeroPublisher.set(true);
+              Logger.recordOutput("Zero/zeroedTurret", true);
             })
         .withName("zeroed turret");
   }
@@ -215,8 +190,8 @@ public class TurretSubsystem extends SubsystemBase {
           // Shift so 0° = backward
           degrees += 180.0;
 
-          // Normalize to [-90, 270] (input modulus always need 360)
-          degrees = MathUtil.inputModulus(degrees, TURRET_MIN, TURRET_MAX);
+          // Normalize to [-40, 300] (input modulus always need 360)
+          degrees = toRange(degrees, TURRET_MIN, TURRET_MAX);
 
           // Clamp to soft limits
           degrees = MathUtil.clamp(degrees, TURRET_MIN, TURRET_MAX);
@@ -266,23 +241,38 @@ public class TurretSubsystem extends SubsystemBase {
               double[] candidates = {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
               };
-
+              if (currentDegrees >= TURRET_MIN && currentDegrees <= TURRET_MAX) {
+                targetPos = Units.degreesToRadians(normalizedTarget);
+                useNormalizedTarget = true;
+              }
               double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
               double bestDist = Double.MAX_VALUE;
+              double bestFallbackDist = Double.MAX_VALUE;
+              double fallbackTarget = 0;
 
               for (double candidate : candidates) {
+                double dist = Math.abs(candidate - currentDegrees);
                 if (candidate >= TURRET_MIN && candidate <= TURRET_MAX) {
-                  double dist = Math.abs(candidate - currentDegrees);
                   if (dist < bestDist) {
                     bestDist = dist;
                     finalTarget = candidate;
                   }
+                } else {
+                  if (dist < bestFallbackDist) {
+                    bestFallbackDist = dist;
+                    fallbackTarget = candidate;
+                  }
                 }
               }
 
-              // System.out.println(Units.degreesToRotations(finalTarget));
-              setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
-              targetPos = Units.degreesToRotations(finalTarget);
+              if (bestDist < Double.MAX_VALUE) {
+                targetPos = Units.degreesToRotations(finalTarget);
+              } else {
+                targetPos = Units.degreesToRotations(fallbackTarget);
+              }
+
+              // System.out.println(Units.degreesToRotations(targetPos));
+              setTurretRawPosition(targetPos, -FFV);
             },
             () -> turretMotor.stopMotor())
         .withName("Set Turret Position: SOTM calculation");
@@ -291,11 +281,15 @@ public class TurretSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
-    posPub.set(positionSignal.getValueAsDouble()); // Rotations
-    velocityPub.set(velocitySignal.getValueAsDouble()); // RPS
-    currentPub.set(statorCurrentSignal.getValueAsDouble()); // Amps
-    targetPub.set(targetPos);
-    limitSwitchPub.set(limitSwitch.getVoltage());
+    Logger.recordOutput("/Turret/Position", positionSignal.getValueAsDouble());
+
+    Logger.recordOutput("/Turret/Velocity", velocitySignal.getValueAsDouble());
+
+    Logger.recordOutput("/Turret/Current", statorCurrentSignal.getValueAsDouble());
+
+    Logger.recordOutput("/Turret/Target", targetPos);
+
+    Logger.recordOutput("/Turret/LimitSwitchCurrent", limitSwitch.getVoltage());
   }
 
   public void brakeTurret() {
@@ -320,5 +314,18 @@ public class TurretSubsystem extends SubsystemBase {
   public boolean atLimitSwitch() {
     double velo = velocitySignal.getValueAsDouble();
     return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
+  }
+
+  /**
+   * Map an angle (degrees) to its equivalent in [min, max], or the nearest limit if none exists.
+   */
+  public static double toRange(double deg, double min, double max) {
+    // Equivalent angle in [min, min + 360)
+    double c = MathUtil.inputModulus(deg, min, min + 360.0);
+    if (c <= max) {
+      return c; // reachable equivalent exists
+    }
+    // c is in the unreachable gap (max, min + 360): snap to the closer limit
+    return (c - max) < (min + 360.0 - c) ? max : min;
   }
 }

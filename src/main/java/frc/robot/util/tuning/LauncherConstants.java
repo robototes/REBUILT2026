@@ -6,28 +6,16 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.robotType.RobotType;
+import org.littletonrobotics.junction.Logger;
 
 public class LauncherConstants {
   private static final Transform2d LAUNCHER_OFFSET =
       RobotType.isAlpha()
           ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
           : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
-
-  private static final NetworkTable table =
-      NetworkTableInstance.getDefault().getTable("/SmartDashboard/LiveLauncherData");
-  private static final StructPublisher<Pose2d> turretPose =
-      table.getStructTopic("Turret Pose", Pose2d.struct).publish();
-  private static final DoublePublisher turretToHubDistance =
-      table.getDoubleTopic("Turret to hub distance").publish();
-  private static final DoublePublisher turretToTargetDistance =
-      table.getDoubleTopic("Turret to target distance").publish();
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
@@ -151,10 +139,11 @@ public class LauncherConstants {
 
   public static void UpdateNT(Pose2d robot) {
     Pose2d result = robot.transformBy(LAUNCHER_OFFSET);
-    turretPose.set(result);
+    Logger.recordOutput("Turret Pose", result);
     distToHub = AllianceUtils.getHubTranslation2d().minus(result.getTranslation()).getNorm();
-    turretToHubDistance.set(distToHub);
-    turretToTargetDistance.set(
+    Logger.recordOutput("Turret distance to Hub", distToHub);
+    Logger.recordOutput(
+        "Turret distance to Target",
         GetTargetFromPose.getTargetLocation(result).minus(result.getTranslation()).getNorm());
   }
 
