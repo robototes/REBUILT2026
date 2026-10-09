@@ -1,4 +1,4 @@
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems.auto.PathPlanner;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.RobotConfig;

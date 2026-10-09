@@ -577,7 +577,7 @@ public class FuelSim {
       spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
     }
 
-    spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    // spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
   }
 
   protected void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {

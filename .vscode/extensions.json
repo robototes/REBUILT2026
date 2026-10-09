@@ -1,0 +1,10 @@
+{
+  // Recommended extensions for working with Java tests in this workspace.
+  "recommendations": [
+    "vscjava.vscode-java-pack",          // Java Extension Pack (convenience bundle)
+    "vscjava.vscode-java-test",         // Java Test Runner (Test Explorer integration)
+    "redhat.java",                      // Language Support for Java(TM) by Red Hat
+    "vscjava.vscode-java-dependency",   // Java Project Dependency Viewer
+    "vscjava.vscode-java-debug"         // Java Debugger
+  ]
+}

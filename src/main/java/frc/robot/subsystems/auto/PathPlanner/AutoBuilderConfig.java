@@ -1,4 +1,4 @@
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems.auto.PathPlanner;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
