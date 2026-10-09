@@ -124,6 +124,7 @@ public class CustomSendableChooser<V> implements Sendable, AutoCloseable {
 
   public void clear() {
     m_map.clear();
+    m_selected = null;
   }
 
   private String m_selected;

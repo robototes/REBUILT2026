@@ -37,6 +37,7 @@ public class TurretSubsystem extends SubsystemBase {
   private final AnalogInput limitSwitch;
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
+  private static boolean useNormalizedTarget = false;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
@@ -240,23 +241,38 @@ public class TurretSubsystem extends SubsystemBase {
               double[] candidates = {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
               };
-
+              if (currentDegrees >= TURRET_MIN && currentDegrees <= TURRET_MAX) {
+                targetPos = Units.degreesToRadians(normalizedTarget);
+                useNormalizedTarget = true;
+              }
               double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
               double bestDist = Double.MAX_VALUE;
+              double bestFallbackDist = Double.MAX_VALUE;
+              double fallbackTarget = 0;
 
               for (double candidate : candidates) {
+                double dist = Math.abs(candidate - currentDegrees);
                 if (candidate >= TURRET_MIN && candidate <= TURRET_MAX) {
-                  double dist = Math.abs(candidate - currentDegrees);
                   if (dist < bestDist) {
                     bestDist = dist;
                     finalTarget = candidate;
                   }
+                } else {
+                  if (dist < bestFallbackDist) {
+                    bestFallbackDist = dist;
+                    fallbackTarget = candidate;
+                  }
                 }
               }
 
-              // System.out.println(Units.degreesToRotations(finalTarget));
-              setTurretRawPosition(Units.degreesToRotations(finalTarget), -FFV);
-              targetPos = normalizedTarget;
+              if (bestDist < Double.MAX_VALUE) {
+                targetPos = Units.degreesToRotations(finalTarget);
+              } else {
+                targetPos = Units.degreesToRotations(fallbackTarget);
+              }
+
+              // System.out.println(Units.degreesToRotations(targetPos));
+              setTurretRawPosition(targetPos, -FFV);
             },
             () -> turretMotor.stopMotor())
         .withName("Set Turret Position: SOTM calculation");
