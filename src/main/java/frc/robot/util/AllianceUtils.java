@@ -27,16 +27,24 @@ public final class AllianceUtils {
           .toTranslation2d()
           .interpolate(FIELD_LAYOUT.getTagPose(21).get().getTranslation().toTranslation2d(), 0.5);
 
+  public static DriverStation.Alliance populateAlliance() {
+    if (!DriverStation.getAlliance().isEmpty()) {
+      DriverStation.Alliance alliance = DriverStation.getAlliance().get();
+      return alliance;
+    }
+    return null;
+  }
+
   public static boolean isBlue() {
     if (!DriverStation.getAlliance().isEmpty()) {
-      return DriverStation.getAlliance().get().equals(DriverStation.Alliance.Blue);
+      return populateAlliance().equals(DriverStation.Alliance.Blue);
     }
     return false;
   }
 
   public static boolean isRed() {
     if (!DriverStation.getAlliance().isEmpty()) {
-      return DriverStation.getAlliance().get().equals(DriverStation.Alliance.Red);
+      return populateAlliance().equals(DriverStation.Alliance.Red);
     }
     return false;
   }

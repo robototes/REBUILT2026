@@ -125,6 +125,7 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d robotField;
   private final FieldObject2d rawVisionFieldObject;
   private BooleanSubscriber disableVision;
+  private SwerveDriveState swerveDriveState;
 
   private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
   private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
@@ -202,7 +203,6 @@ public class VisionSubsystem extends SubsystemBase {
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
 
-    SwerveDriveState swerveDriveState = drivetrain.getState();
     visionPoseTracking =
         new VisionPoseTracking(
             swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
@@ -360,7 +360,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
-    robotField.setRobotPose(drivetrain.getState().Pose);
+    robotField.setRobotPose(swerveDriveState.Pose);
 
     if (estimate.isMegaTag2) {
       camera.setlastPoseMT2(visionPose2d);
@@ -481,7 +481,7 @@ public class VisionSubsystem extends SubsystemBase {
    */
   private void maybeResetToVision(
       Pose2d visionPose, double maxAmbiguity, int tagCount, String cameraName) {
-    Pose2d odomPose = drivetrain.getState().Pose;
+    Pose2d odomPose = swerveDriveState.Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
     boolean visionTrusted =
         maxAmbiguity < VisionConstants.RESET_MAX_AMBIGUITY
@@ -654,5 +654,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void setShowVisionOnField(ShowVisionOnField m_showVisionOnField) {
     this.m_showVisionOnField = m_showVisionOnField;
+  }
+
+  public void updateSwerveDriveState(SwerveDriveState swerveDriveState) {
+    this.swerveDriveState = swerveDriveState;
   }
 }

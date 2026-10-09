@@ -102,6 +102,7 @@ public class LaunchCalculator {
   private static final double FAST_SLIP_THRESHOLD_ENTER = 2.0; // m/s
   private static final double FAST_SLIP_THRESHOLD_EXIT = 0.5; // m/s (hysteresis)
   private boolean slipFastMode = false;
+  private SwerveDriveState swerveDriveState;
 
   // Safety caps on the filtered slip. Prevents a runaway pose-estimator glitch, such as
   // a bad vision measurement that spikes the derivative, from injecting nonsense into the
@@ -271,11 +272,10 @@ public class LaunchCalculator {
    */
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
-    SwerveDriveState driveState = drivetrain.getState();
-    Pose2d currentPose = driveState.Pose;
-    ChassisSpeeds currentSpeeds = driveState.Speeds;
+    Pose2d currentPose = swerveDriveState.Pose;
+    ChassisSpeeds currentSpeeds = swerveDriveState.Speeds;
     double currentTurretOmega = turretSubsystem.getOmega();
-    double timestamp = driveState.Timestamp;
+    double timestamp = swerveDriveState.Timestamp;
 
     // Run slip detection every cycle regardless of cache — keeps lastModuleVelocity
     // fresh and NT logs continuous even when the cache is hit.
@@ -359,7 +359,7 @@ public class LaunchCalculator {
     lastPose = currentPose;
     lastTurretOmega = currentTurretOmega;
 
-    cachedParams = calculate(driveState, turretSubsystem, isSlipping);
+    cachedParams = calculate(swerveDriveState, turretSubsystem, isSlipping);
 
     // Update differentiation state AFTER calculate() so that calculate() sees the previous
     // cycle's state (giving a real non-zero poseDt / speedsDt), and the next cycle sees
@@ -624,5 +624,9 @@ public class LaunchCalculator {
     double dx = Math.abs(turretPose.getX() - nearestTag.getX());
     double dy = Math.abs(turretPose.getY() - nearestTag.getY());
     return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;
+  }
+
+  public static void updateSwerveDriveState(SwerveDriveState swerveDriveState) {
+    LaunchCalculator.getInstance().swerveDriveState = swerveDriveState;
   }
 }
