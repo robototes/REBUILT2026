@@ -52,29 +52,29 @@
             }
           },
           {
-            "title": "BLine Delay",
-            "x": 256.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "BLine Delay",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
             "title": "Auto Chooser",
             "x": 0.0,
             "y": 128.0,
-            "width": 896.0,
+            "width": 256.0,
             "height": 128.0,
             "type": "Split Button Chooser",
             "properties": {
-              "topic": "/SmartDashboard/BLine/Auto Chooser",
+              "topic": "/SmartDashboard/Auto Chooser",
               "period": 0.06
+            }
+          },
+          {
+            "title": "Auto Delay",
+            "x": 0.0,
+            "y": 384.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/BLine Delays/Auto Delay",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
             }
           }
         ]
