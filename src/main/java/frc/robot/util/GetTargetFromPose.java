@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -9,7 +10,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.tuning.NtTunableBoolean;
 
 public class GetTargetFromPose {
@@ -45,22 +45,22 @@ public class GetTargetFromPose {
   private static Translation2d BALLING_POSE = new Translation2d(-0.9779, -0.2286);
   private static Pose2d RIGHT_BASKETBALL_COURT_CORNER = new Pose2d(0, 0, new Rotation2d());
 
-  public static Translation2d getTargetLocation(CommandSwerveDrivetrain drivetrain) {
+  public static Translation2d getTargetLocation(SwerveDriveState swerveDriveState) {
     if (BALLING.get()) {
       return BALLING_POSE;
     }
     if (AllianceUtils.isBlue()) {
-      if (drivetrain.getState().Pose.getX() <= allianceLineX + robotOffset) {
+      if (swerveDriveState.Pose.getX() <= allianceLineX + robotOffset) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+      } else if (swerveDriveState.Pose.getY() >= (fieldWidth / 2)) {
         return pointLeftFieldTop;
       } else {
         return pointLeftFieldBottom;
       }
     } else if (AllianceUtils.isRed()) {
-      if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
+      if (swerveDriveState.Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+      } else if (swerveDriveState.Pose.getY() >= (fieldWidth / 2)) {
         return pointRightFieldTop;
       } else {
         return pointRightFieldBottom;
@@ -95,7 +95,7 @@ public class GetTargetFromPose {
     }
   }
 
-  public static Trigger autoShoot(CommandSwerveDrivetrain drivetrain) {
+  public static Trigger autoShoot(SwerveDriveState swerveDriveState) {
     return new Trigger(
         () -> {
           if (DriverStation.isAutonomousEnabled()) return false;
@@ -105,8 +105,8 @@ public class GetTargetFromPose {
 
           boolean pastAllianceLine =
               AllianceUtils.isBlue()
-                  ? drivetrain.getState().Pose.getX() > (allianceLineX + robotOffset)
-                  : drivetrain.getState().Pose.getX() < (fieldLength - allianceLineX - robotOffset);
+                  ? swerveDriveState.Pose.getX() > (allianceLineX + robotOffset)
+                  : swerveDriveState.Pose.getX() < (fieldLength - allianceLineX - robotOffset);
 
           if (!shiftInfo.active() && shiftInfo.remainingTime() > 5.0 && pastAllianceLine) {
             return true;

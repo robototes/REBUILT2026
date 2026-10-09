@@ -6,6 +6,7 @@ package frc.robot;
 
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -34,6 +35,7 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.subsystems.launcher.LaunchCalculator;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -66,6 +68,7 @@ public class Robot extends TimedRobot {
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
+  private final double interval = 0.1; // seconds
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -190,7 +193,7 @@ public class Robot extends TimedRobot {
       // needs that info and doesnt want it delayed 20ms.
       m_simWrapper.robotPeriodic();
     }
-
+    updateSwerveDriveState(subsystems.drivebaseSubsystem.getState());
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
@@ -203,7 +206,10 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
-    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
+    if (Timer.getFPGATimestamp() - time > interval) {
+      LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
+      time = Timer.getFPGATimestamp();
+    }
 
     SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
   }
@@ -419,6 +425,20 @@ public class Robot extends TimedRobot {
 
       // $VISIONSIM - Clean reset
       m_simWrapper.resetSimPose(pose);
+    }
+  }
+
+  private void updateSwerveDriveState(SwerveDriveState swerveDriveState) {
+    if (subsystems.drivebaseSubsystem != null) {
+      if (subsystems.visionSubsystem != null) {
+        subsystems.visionSubsystem.updateSwerveDriveState(swerveDriveState);
+      }
+      if (subsystems.launcherSubsystem != null) {
+        LaunchCalculator.updateSwerveDriveState(swerveDriveState);
+      }
+      if (subsystems.turretSubsystem != null) {
+        subsystems.turretSubsystem.updateSwerveDriveState(swerveDriveState);
+      }
     }
   }
 }

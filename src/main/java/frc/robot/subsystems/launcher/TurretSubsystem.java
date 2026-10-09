@@ -10,6 +10,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
@@ -64,6 +65,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double kV =
       0; // volts per requested rps RobotType.isAlpha() ? 0.884766 / 1.125 : 12 / 1.29;
   private static final double kA = 0; // 0.12;
+
+  private SwerveDriveState swerveDriveState;
 
   // Current limits
   private static final int STATOR_CURRENT_LIMIT = 40; // amps
@@ -210,7 +213,7 @@ public class TurretSubsystem extends SubsystemBase {
           degrees -= 90.0;
 
           // Subtract robot angle
-          degrees -= driveTrain.getState().Pose.getRotation().getDegrees();
+          degrees -= swerveDriveState.Pose.getRotation().getDegrees();
 
           // Shift so 0° = backward
           degrees += 180.0;
@@ -320,5 +323,9 @@ public class TurretSubsystem extends SubsystemBase {
   public boolean atLimitSwitch() {
     double velo = velocitySignal.getValueAsDouble();
     return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
+  }
+
+  public void updateSwerveDriveState(SwerveDriveState swerveDriveState) {
+    this.swerveDriveState = swerveDriveState;
   }
 }
