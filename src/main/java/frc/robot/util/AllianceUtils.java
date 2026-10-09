@@ -27,7 +27,6 @@ public final class AllianceUtils {
           .toTranslation2d()
           .interpolate(FIELD_LAYOUT.getTagPose(21).get().getTranslation().toTranslation2d(), 0.5);
 
-
   public static DriverStation.Alliance populateAlliance() {
     if (!DriverStation.getAlliance().isEmpty()) {
       DriverStation.Alliance alliance = DriverStation.getAlliance().get();
@@ -38,6 +37,7 @@ public final class AllianceUtils {
     }
     return null;
   }
+
   public static boolean isBlue() {
     if (!DriverStation.getAlliance().isEmpty()) {
       return populateAlliance().equals(DriverStation.Alliance.Blue);
