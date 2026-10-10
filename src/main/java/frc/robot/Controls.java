@@ -464,6 +464,7 @@ public class Controls {
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
+    // TODO: Make this work in the future
     (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
         .or(driverController.povLeft())
         .onTrue(
@@ -489,8 +490,9 @@ public class Controls {
             Commands.runOnce(() -> turretSkipped = !turretSkipped)
                 .withName("Toggle Turret Skipped"));
 
-    driverController.b().onTrue(s.turretSubsystem.offsetTurretCommand(1));
-    driverController.x().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
+    driverController.povRight().onTrue(s.turretSubsystem.offsetTurretCommand(1));
+    driverController.povLeft().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
+
 
     connected(turretTestController)
         .and(turretTestController.povUp())
