@@ -8,12 +8,12 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.simulation.RobotSim;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 public class RollerSim extends SubsystemBase {
   // flywheel sim variables
@@ -24,7 +24,8 @@ public class RollerSim extends SubsystemBase {
   private final TalonFXSimState leftRollerSimState;
   private final TalonFXSimState rightRollerSimState;
 
-  private final MechanismLigament2d roller;
+  private final LoggedMechanismLigament2d roller;
+  LoggedMechanism2d mech = new LoggedMechanism2d(40, 40);
 
   private final double ROLLERS_GEAR_RATIO = 1.0; // tune this
 
@@ -48,12 +49,11 @@ public class RollerSim extends SubsystemBase {
     rightRollerSimState.setMotorType(MotorType.KrakenX60);
 
     // visualization
-    Mechanism2d mech = new Mechanism2d(40, 40);
-    MechanismRoot2d root = mech.getRoot("root", 20, 20);
+    LoggedMechanismRoot2d root = mech.getRoot("root", 20, 20);
 
-    roller = root.append(new MechanismLigament2d("roller", 2, 0));
+    roller = root.append(new LoggedMechanismLigament2d("roller", 2, 0));
 
-    SmartDashboard.putData("Roller", mech);
+    Logger.recordOutput("Roller", mech);
   }
 
   // update sim
@@ -71,5 +71,6 @@ public class RollerSim extends SubsystemBase {
 
     leftRollerSimState.setRotorVelocity(leftRPS * ROLLERS_GEAR_RATIO);
     rightRollerSimState.setRotorVelocity(rightRPS * ROLLERS_GEAR_RATIO);
+    Logger.recordOutput("Roller", mech);
   }
 }

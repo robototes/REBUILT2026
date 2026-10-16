@@ -5,6 +5,7 @@ public class Hardware {
   public static final int INTAKE_PIVOT_MOTOR_ID = 15;
   public static final int INTAKE_MOTOR_ONE_ID = 16;
   public static final int INTAKE_MOTOR_TWO_ID = 17;
+  public static final int BLOCKER_MOTOR_ID = 18;
 
   // Launcher Motors (20-29)
   public static final int FLYWHEEL_ONE_ID = 20;
