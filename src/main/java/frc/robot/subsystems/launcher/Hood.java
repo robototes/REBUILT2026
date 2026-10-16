@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.Robot;
-import frc.robot.util.tuning.NtTunableDouble;
+import frc.robot.util.CustomLoggedNetworkNumber;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -38,7 +38,7 @@ public class Hood extends SubsystemBase {
   private final PositionVoltage request = new PositionVoltage(0);
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
 
-  public NtTunableDouble targetPosition;
+  public CustomLoggedNetworkNumber targetPosition;
   private long lastPositionUpdateTime = 0;
 
   // mechanism gear ratio = 104.65278
@@ -75,7 +75,7 @@ public class Hood extends SubsystemBase {
   }
 
   public void initializeNT() {
-    targetPosition = new NtTunableDouble("Tuning/hood/hoodTuner", 0.0);
+    targetPosition = new CustomLoggedNetworkNumber("Tuning/hood/hoodTuner", 0.0);
   }
 
   public void configureMotor() {
