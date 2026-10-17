@@ -97,6 +97,8 @@ public class Controls {
           .withDeadband(SWERVE_DEADBAND)
           .withRotationalDeadband(SWERVE_DEADBAND)
           .withDriveRequestType(DriveRequestType.Velocity);
+  private final SwerveRequest.SwerveDriveBrake brake =
+      new SwerveRequest.SwerveDriveBrake();
 
   private Trigger readyToShoot = new Trigger(() -> false);
   private Trigger turretAtZero = new Trigger(() -> false);
@@ -203,7 +205,7 @@ public class Controls {
                     && Math.abs(rot) < JOYSTICK_DEADBAND;
 
                 if (inDeadband) {
-                    return new SwerveDriveBrake();
+                    return brake;
                 }
 
                 return drive
