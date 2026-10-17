@@ -16,7 +16,10 @@ import frc.robot.subsystems.auto.AutoLogic.StartPosition;
 public class BLineSetup {
     public static FollowPath.Builder pathBuilder;
     private static FollowPath.Builder continuingPathBuilder;
-    public static Path blinePath = new Path("j");
+    public static Path leftTrench = new Path("trenchleft");
+    public static Path leftTrench2 = new Path("trenchleft2");
+    public static Path rightTrench = new Path("trenchright");
+    public static Path rightTrench2 = new Path("trench2right");
 
     public static boolean isMirrored() {
         return AutoLogic.getSelectedAutoStartingPose() == StartPosition.LEFT_TRENCH.startPose;
