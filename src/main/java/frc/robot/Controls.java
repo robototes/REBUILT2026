@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
@@ -29,11 +28,9 @@ import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
-import java.util.Optional;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -97,8 +94,7 @@ public class Controls {
           .withDeadband(SWERVE_DEADBAND)
           .withRotationalDeadband(SWERVE_DEADBAND)
           .withDriveRequestType(DriveRequestType.Velocity);
-  private final SwerveRequest.SwerveDriveBrake brake =
-      new SwerveRequest.SwerveDriveBrake();
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
   private Trigger readyToShoot = new Trigger(() -> false);
   private Trigger turretAtZero = new Trigger(() -> false);
@@ -194,25 +190,25 @@ public class Controls {
         // s.drivebaseSubsystem will execute this command periodically
 
         // applying the request to drive with the inputs
-        s.drivebaseSubsystem.applyRequest(() -> {
-                double x = getDriveX();
-                double y = getDriveY();
-                double rot = getDriveRotate();
+        s.drivebaseSubsystem
+            .applyRequest(
+                () -> {
+                  double x = getDriveX();
+                  double y = getDriveY();
+                  double rot = getDriveRotate();
 
-                boolean inDeadband =
-                        Math.abs(x) < JOYSTICK_DEADBAND
-                    && Math.abs(y) < JOYSTICK_DEADBAND
-                    && Math.abs(rot) < JOYSTICK_DEADBAND;
+                  boolean inDeadband =
+                      Math.abs(x) < JOYSTICK_DEADBAND
+                          && Math.abs(y) < JOYSTICK_DEADBAND
+                          && Math.abs(rot) < JOYSTICK_DEADBAND;
 
-                if (inDeadband) {
+                  if (inDeadband) {
                     return brake;
-                }
+                  }
 
-                return drive
-                        .withVelocityX(x)
-                        .withVelocityY(y)
-                        .withRotationalRate(rot);
-            }).withName("Drive"));
+                  return drive.withVelocityX(x).withVelocityY(y).withRotationalRate(rot);
+                })
+            .withName("Drive"));
 
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
     // driverController.b().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kReverse));
