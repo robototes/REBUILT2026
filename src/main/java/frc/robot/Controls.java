@@ -192,14 +192,25 @@ public class Controls {
         // s.drivebaseSubsystem will execute this command periodically
 
         // applying the request to drive with the inputs
-        s.drivebaseSubsystem
-            .applyRequest(
-                () ->
-                    drive
-                        .withVelocityX(getDriveX())
-                        .withVelocityY(getDriveY())
-                        .withRotationalRate(getDriveRotate()))
-            .withName("Drive"));
+        s.drivebaseSubsystem.applyRequest(() -> {
+                double x = getDriveX();
+                double y = getDriveY();
+                double rot = getDriveRotate();
+
+                boolean inDeadband =
+                        Math.abs(x) < JOYSTICK_DEADBAND
+                    && Math.abs(y) < JOYSTICK_DEADBAND
+                    && Math.abs(rot) < JOYSTICK_DEADBAND;
+
+                if (inDeadband) {
+                    return new SwerveDriveBrake();
+                }
+
+                return drive
+                        .withVelocityX(x)
+                        .withVelocityY(y)
+                        .withRotationalRate(rot);
+            }).withName("Drive"));
 
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
     // driverController.b().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kReverse));
@@ -215,9 +226,9 @@ public class Controls {
     //             .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
     //             .withName("Reset gyro"));
 
-    driverController
-        .a()
-        .whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
+    // driverController
+    //     .a()
+    //     .whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
 
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
@@ -489,7 +500,7 @@ public class Controls {
                 .withName("Zero Turret on Limit Switch"));
 
     driverController
-        .y()
+        .povRight()
         .toggleOnTrue(
             s.turretSubsystem
                 .run(
@@ -501,11 +512,11 @@ public class Controls {
             Commands.runOnce(() -> turretKillActive = !turretKillActive)
                 .withName("Toggle Turret Kill"));
 
-    driverController
-        .povRight()
-        .onTrue(
-            Commands.runOnce(() -> turretSkipped = !turretSkipped)
-                .withName("Toggle Turret Skipped"));
+    // driverController
+    //     .povRight()
+    //     .onTrue(
+    //         Commands.runOnce(() -> turretSkipped = !turretSkipped)
+    //             .withName("Toggle Turret Skipped"));
 
     driverController.b().onTrue(s.turretSubsystem.offsetTurretCommand(1));
     driverController.x().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
