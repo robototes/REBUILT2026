@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
@@ -108,6 +109,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
     Logger.recordOutput("Zero/zeroedTurret", false);
+
+    SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset*360.0));
   }
 
   public void turretConfig() {
@@ -151,6 +154,7 @@ public class TurretSubsystem extends SubsystemBase {
     return runOnce(
             () -> {
               manualOffset += offsetJogAmount * direction;
+              SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset*360.0));
             })
         .withName("Changed Turret Offset");
   }

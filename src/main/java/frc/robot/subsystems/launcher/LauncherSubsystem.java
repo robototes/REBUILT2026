@@ -3,6 +3,7 @@ package frc.robot.subsystems.launcher;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -26,8 +27,8 @@ public class LauncherSubsystem extends SubsystemBase {
   private LaunchingParameters launchParameters;
   private final double MIN_FAR_DIST = 6.0; // Meters
 
-  public double flywheelOffset = 1.0;
-  private static double fwOffsetJogAmount = 1.0;
+  public double flywheelOffset = 0.0; // Starting offset added in RPS
+  private static double fwOffsetJogAmount = 1.0; // Jog amount in RPS
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -38,6 +39,7 @@ public class LauncherSubsystem extends SubsystemBase {
     Logger.recordOutput("AutoAim/turretAtTarget", false);
     Logger.recordOutput("AutoAim/NotUnderClimb", false);
     Logger.recordOutput("AutoAim/NotUnderTrench", false);
+    SmartDashboard.putNumber("Flywheel Offset [RPS]", flywheelOffset);
   }
 
   public Command launcherAimCommand() {
@@ -63,6 +65,7 @@ public class LauncherSubsystem extends SubsystemBase {
     return runOnce(
             () -> {
               flywheelOffset += fwOffsetJogAmount * direction;
+              SmartDashboard.putNumber("Flywheel Offset [RPS]", flywheelOffset);
             })
         .withName("Changed Flywheel Offset");
   }
