@@ -1,6 +1,7 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -80,11 +81,10 @@ public class LauncherSubsystem extends SubsystemBase {
     turretAtTarget =
         s.turretSubsystem.atTarget(
             () ->
-                Math.min(
-                    Units.degreesToRadians(20),
-                    Math.max(
-                        Units.degreesToRadians(4),
-                        Math.atan(0.3 / LauncherConstants.distToHub()))));
+                MathUtil.clamp(
+                    Math.atan(0.3 / LauncherConstants.distToHub()),
+                    Units.degreesToRadians(5),
+                    Units.degreesToRadians(7)));
     Logger.recordOutput("AutoAim/turretAtTarget", turretAtTarget);
 
     notUnderClimb =
