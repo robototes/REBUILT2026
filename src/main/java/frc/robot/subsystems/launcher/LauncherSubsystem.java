@@ -24,10 +24,10 @@ public class LauncherSubsystem extends SubsystemBase {
   private boolean notGoingToBeUnderTrench;
 
   private LaunchingParameters launchParameters;
-  private final double MIN_FAR_DIST = 6; // Meters
+  private final double MIN_FAR_DIST = 6.0; // Meters
 
-  private double flywheelOffset = 1;
-  private static double fwOffsetJogAmount = 0.01;
+  public double flywheelOffset = 1.0;
+  private static double fwOffsetJogAmount = 1.0;
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -48,7 +48,7 @@ public class LauncherSubsystem extends SubsystemBase {
                       .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
               this.launchParameters = para;
               hoodGoal = para.targetHood();
-              flywheelsGoal = para.targetFlywheels() * flywheelOffset;
+              flywheelsGoal = para.targetFlywheels() + flywheelOffset;
 
               Logger.recordOutput("AutoAim/hoodGoal", hoodGoal);
               Logger.recordOutput("AutoAim/flywheelGoal", flywheelsGoal);

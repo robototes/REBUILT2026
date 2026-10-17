@@ -49,7 +49,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  private double manualOffset = 0.0; // Manual jogging to correct for skip
+  public double manualOffset = 0.0; // Manual jogging to correct for skip
 
   // The turret pulley has 120 teeth, so each jog is 1 tooth. This is a resolution of 8" at 10' from
   // the turret
