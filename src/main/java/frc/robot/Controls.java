@@ -88,7 +88,7 @@ public class Controls {
           .in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
   private static final double DRIVE_INPUT_SCALE = 1;
-  private static final double JOYSTICK_DEADBAND = 0.1;
+  private static final double JOYSTICK_DEADBAND = 0.03;
   private static final double SWERVE_DEADBAND = 0.001;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
@@ -507,8 +507,8 @@ public class Controls {
             Commands.runOnce(() -> turretSkipped = !turretSkipped)
                 .withName("Toggle Turret Skipped"));
 
-    driverController.povRight().onTrue(s.turretSubsystem.offsetTurretCommand(1));
-    driverController.povLeft().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
+    driverController.b().onTrue(s.turretSubsystem.offsetTurretCommand(1));
+    driverController.x().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
 
     connected(turretTestController)
         .and(turretTestController.povUp())
