@@ -32,6 +32,7 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.subsystems.auto.BLineSetup;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -198,6 +199,7 @@ public class Robot extends LoggedRobot {
       autoSmartDashboardTimer.start();
 
       AutoLogic.initAdvantageKit();
+      BLineSetup.configure(subsystems);
       CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());

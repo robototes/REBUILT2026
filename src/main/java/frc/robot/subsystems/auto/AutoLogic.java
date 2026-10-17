@@ -266,6 +266,7 @@ public class AutoLogic {
       NamedCommands.registerCommand("intake", intakeCommand());
     }
     NamedCommands.registerCommand("climb", climbCommand());
+    NamedCommands.registerCommand("bline", BLineSetup.buildPath(BLineSetup.blinePath, false, s));
   }
 
   public static Command launcherCommand() {
