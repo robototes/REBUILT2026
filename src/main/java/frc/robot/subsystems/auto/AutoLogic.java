@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.util.CustomLoggedDashboardChooser;
 import frc.robot.util.simulation.FuelSim;
@@ -57,7 +58,7 @@ public class AutoLogic {
   private static AutoPath defaultPath;
 
   private static List<AutoPath> rebuiltPaths = List.of();
-
+  public static Map<AutoPath, Path> blinePaths;
   private static Map<Integer, List<AutoPath>> commandsMap = Map.of();
 
   private static final Map<String, AutoPath> namesToAuto = new HashMap<>();
@@ -234,13 +235,60 @@ public class AutoLogic {
     double delay = autoDelayEntry.getDouble(0.0);
 
     AutoPath path = namesToAuto.get(getSelectedAutoName());
+
     if (path == null) {
       path = defaultPath;
     }
 
     String autoName = path.getAutoName();
+    Command command;
 
-    return Commands.waitSeconds(delay).andThen(AutoBuilder.buildAuto(autoName)).withName(autoName);
+    switch (path.getAutoName()) {
+      case "LT-Neutral":
+        command =
+            AutoBuilder.buildAuto(autoName)
+                .andThen(BLineSetup.buildPath(BLineSetup.leftTrench, true, s))
+                .andThen(launcherCommand())
+                .withName(autoName);
+        break;
+
+      case "RT-Neutral":
+        command =
+            AutoBuilder.buildAuto(autoName)
+                .andThen(BLineSetup.buildPath(BLineSetup.rightTrench, true, s))
+                .andThen(launcherCommand())
+                .withName(autoName);
+        break;
+
+      case "RT-DoubleNeutral":
+        command =
+            AutoBuilder.buildAuto("RT-Neutral")
+                .andThen(BLineSetup.buildPath(BLineSetup.rightTrench, true, s))
+                .andThen(launcherCommand())
+                .andThen(AutoBuilder.buildAuto("RT-DoubleNeutral"))
+                .andThen(BLineSetup.buildPath(BLineSetup.rightTrench2, true, s))
+                .andThen(launcherCommand())
+                .withName(autoName);
+        break;
+
+      case "LT-DoubleNeutral":
+        command =
+            AutoBuilder.buildAuto("LT-Neutral")
+                .andThen(BLineSetup.buildPath(BLineSetup.leftTrench, true, s))
+                .andThen(launcherCommand())
+                .andThen(AutoBuilder.buildAuto("LT-DoubleNeutral"))
+                .andThen(BLineSetup.buildPath(BLineSetup.leftTrench2, true, s))
+                .andThen(launcherCommand())
+                .withName(autoName);
+        break;
+
+      default:
+        command =
+            Commands.waitSeconds(delay).andThen(AutoBuilder.buildAuto(autoName)).withName(autoName);
+        break;
+    }
+
+    return command;
   }
 
   /* ---------------- PathPlanner ---------------- */
@@ -266,10 +314,17 @@ public class AutoLogic {
       NamedCommands.registerCommand("intake", intakeCommand());
     }
     NamedCommands.registerCommand("climb", climbCommand());
-    NamedCommands.registerCommand("blineLeftTrench", BLineSetup.buildPath(BLineSetup.leftTrench,true, s).withName(("BLINE")).andThen(Commands.print("Running bline")));
-    NamedCommands.registerCommand("blineLeftTrench2", BLineSetup.buildPath(BLineSetup.leftTrench2,false, s));
-    NamedCommands.registerCommand("blineRightTrench", BLineSetup.buildPath(BLineSetup.rightTrench,false, s));
-    NamedCommands.registerCommand("blineRightTrench2", BLineSetup.buildPath(BLineSetup.rightTrench2,false, s));
+    NamedCommands.registerCommand(
+        "blineLeftTrench",
+        BLineSetup.buildPath(BLineSetup.leftTrench, true, s)
+            .withName(("BLINE"))
+            .andThen(Commands.print("Running bline")));
+    NamedCommands.registerCommand(
+        "blineLeftTrench2", BLineSetup.buildPath(BLineSetup.leftTrench2, false, s));
+    NamedCommands.registerCommand(
+        "blineRightTrench", BLineSetup.buildPath(BLineSetup.rightTrench, false, s));
+    NamedCommands.registerCommand(
+        "blineRightTrench2", BLineSetup.buildPath(BLineSetup.rightTrench2, false, s));
   }
 
   public static Command launcherCommand() {

@@ -1,9 +1,6 @@
 package frc.robot.subsystems.auto;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,17 +11,17 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.AutoLogic.StartPosition;
 
 public class BLineSetup {
-    public static FollowPath.Builder pathBuilder;
-    private static FollowPath.Builder continuingPathBuilder;
-    public static Path leftTrench = new Path("trenchleft");
-    public static Path leftTrench2 = new Path("trenchleft2");
-    public static Path rightTrench = new Path("trenchright");
-    public static Path rightTrench2 = new Path("trench2right");
+  public static FollowPath.Builder pathBuilder;
+  private static FollowPath.Builder continuingPathBuilder;
+  public static Path leftTrench = new Path("trenchleft");
+  public static Path leftTrench2 = new Path("trenchleft2");
+  public static Path rightTrench = new Path("trenchright");
+  public static Path rightTrench2 = new Path("trench2right");
 
-    public static boolean isMirrored() {
-        return AutoLogic.getSelectedAutoStartingPose() == StartPosition.LEFT_TRENCH.startPose;
-
+  public static boolean isMirrored() {
+    return AutoLogic.getSelectedAutoStartingPose() == StartPosition.LEFT_TRENCH.startPose;
   }
+
   public static void configure(Subsystems s) {
     pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
     continuingPathBuilder = createPathBuilder(s);
@@ -45,12 +42,11 @@ public class BLineSetup {
         .withDefaultShouldFlip()
         .withShouldMirror(BLineSetup::isMirrored);
   }
-   public static Command buildPath(Path path, boolean resetPose, Subsystems s) {
+
+  public static Command buildPath(Path path, boolean resetPose, Subsystems s) {
     if (s == null || pathBuilder == null || continuingPathBuilder == null) {
       return Commands.none();
     }
     return (resetPose ? pathBuilder : continuingPathBuilder).build(path);
   }
-
-
 }
