@@ -317,19 +317,19 @@ public class Controls {
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
 
-    driverController
-        .x()
-        .onTrue(
-            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
-                .withName("Enable Alliance Win Override")
-                .ignoringDisable(true));
+    // driverController
+    //     .x()
+    //     .onTrue(
+    //         Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
+    //             .withName("Enable Alliance Win Override")
+    //             .ignoringDisable(true));
 
-    driverController
-        .b()
-        .onTrue(
-            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
-                .withName("Disable Alliance Win Override")
-                .ignoringDisable(true));
+    // driverController
+    //     .b()
+    //     .onTrue(
+    //         Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
+    //             .withName("Disable Alliance Win Override")
+    //             .ignoringDisable(true));
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
