@@ -3,20 +3,6 @@
   "grid_size": 128,
   "tabs": [
     {
-      "name": "Teleoperated",
-      "grid_layout": {
-        "layouts": [],
-        "containers": []
-      }
-    },
-    {
-      "name": "Autonomous",
-      "grid_layout": {
-        "layouts": [],
-        "containers": []
-      }
-    },
-    {
       "name": "Autos",
       "grid_layout": {
         "layouts": [],
@@ -24,9 +10,9 @@
           {
             "title": "Selected auto",
             "x": 0.0,
-            "y": 0.0,
-            "width": 1152.0,
-            "height": 896.0,
+            "y": 256.0,
+            "width": 896.0,
+            "height": 384.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Selected auto",
@@ -44,10 +30,10 @@
           },
           {
             "title": "Start pose",
-            "x": 1152.0,
+            "x": 896.0,
             "y": 256.0,
             "width": 640.0,
-            "height": 640.0,
+            "height": 384.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Start pose",
@@ -65,7 +51,7 @@
           },
           {
             "title": "Starting Position",
-            "x": 1152.0,
+            "x": 896.0,
             "y": 128.0,
             "width": 128.0,
             "height": 128.0,
@@ -78,7 +64,7 @@
           },
           {
             "title": "Auto Key",
-            "x": 1152.0,
+            "x": 896.0,
             "y": 0.0,
             "width": 640.0,
             "height": 128.0,
@@ -92,7 +78,7 @@
           },
           {
             "title": "Est. Time (s)",
-            "x": 1664.0,
+            "x": 1408.0,
             "y": 128.0,
             "width": 128.0,
             "height": 128.0,
@@ -106,7 +92,7 @@
           },
           {
             "title": "Available Auto Variants",
-            "x": 1280.0,
+            "x": 1024.0,
             "y": 128.0,
             "width": 384.0,
             "height": 128.0,
@@ -115,6 +101,32 @@
               "topic": "/SmartDashboard/Available Auto Variants",
               "period": 0.06,
               "sort_options": false
+            }
+          },
+          {
+            "title": "Flywheel Offset [RPS]",
+            "x": 128.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Large Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Flywheel Offset [RPS]",
+              "period": 0.033,
+              "data_type": "double"
+            }
+          },
+          {
+            "title": "Turret Offset [Deg]",
+            "x": 384.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Large Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Turret Offset [Deg]",
+              "period": 0.033,
+              "data_type": "double"
             }
           }
         ]

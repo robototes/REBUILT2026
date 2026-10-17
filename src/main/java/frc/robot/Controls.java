@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
@@ -29,11 +28,9 @@ import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.HubShiftUtil;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.robotType.RobotTypesEnum;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
-import java.util.Optional;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -88,7 +85,7 @@ public class Controls {
           .in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
   private static final double DRIVE_INPUT_SCALE = 1;
-  private static final double JOYSTICK_DEADBAND = 0.1;
+  private static final double JOYSTICK_DEADBAND = 0.03;
   private static final double SWERVE_DEADBAND = 0.001;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
@@ -97,6 +94,7 @@ public class Controls {
           .withDeadband(SWERVE_DEADBAND)
           .withRotationalDeadband(SWERVE_DEADBAND)
           .withDriveRequestType(DriveRequestType.Velocity);
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
   private Trigger readyToShoot = new Trigger(() -> false);
   private Trigger turretAtZero = new Trigger(() -> false);
@@ -194,11 +192,22 @@ public class Controls {
         // applying the request to drive with the inputs
         s.drivebaseSubsystem
             .applyRequest(
-                () ->
-                    drive
-                        .withVelocityX(getDriveX())
-                        .withVelocityY(getDriveY())
-                        .withRotationalRate(getDriveRotate()))
+                () -> {
+                  double x = getDriveX();
+                  double y = getDriveY();
+                  double rot = getDriveRotate();
+
+                  boolean inDeadband =
+                      Math.abs(x) < JOYSTICK_DEADBAND
+                          && Math.abs(y) < JOYSTICK_DEADBAND
+                          && Math.abs(rot) < JOYSTICK_DEADBAND;
+
+                  if (inDeadband) {
+                    return brake;
+                  }
+
+                  return drive.withVelocityX(x).withVelocityY(y).withRotationalRate(rot);
+                })
             .withName("Drive"));
 
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
@@ -215,9 +224,9 @@ public class Controls {
     //             .alongWith(rumble(driverController, 0.5, Seconds.of(0.3)))
     //             .withName("Reset gyro"));
 
-    driverController
-        .a()
-        .whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
+    // driverController
+    //     .a()
+    //     .whileTrue(Commands.run(() -> s.drivebaseSubsystem.setControl(new SwerveDriveBrake())));
 
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
@@ -317,19 +326,19 @@ public class Controls {
                 .ignoringDisable(true)
                 .withName("Zero Subsystems"));
 
-    driverController
-        .x()
-        .onTrue(
-            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
-                .withName("Enable Alliance Win Override")
-                .ignoringDisable(true));
+    // driverController
+    //     .x()
+    //     .onTrue(
+    //         Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(false)))
+    //             .withName("Enable Alliance Win Override")
+    //             .ignoringDisable(true));
 
-    driverController
-        .b()
-        .onTrue(
-            Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
-                .withName("Disable Alliance Win Override")
-                .ignoringDisable(true));
+    // driverController
+    //     .b()
+    //     .onTrue(
+    //         Commands.runOnce(() -> HubShiftUtil.setAllianceWinOverride(() -> Optional.of(true)))
+    //             .withName("Disable Alliance Win Override")
+    //             .ignoringDisable(true));
 
     connected(launcherTuningController)
         .and(launcherTuningController.start())
@@ -343,7 +352,10 @@ public class Controls {
   }
 
   private void updateIntakeMode() {
-    if (driverController.leftTrigger().getAsBoolean()) {
+    if (connected(indexingTestController).getAsBoolean()
+        && indexingTestController.rightTrigger().getAsBoolean()) {
+      intakeMode = IntakeMode.BLOCK;
+    } else if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
       ledsMode = LEDMode.INTAKE;
     } else if (driverController.leftBumper().getAsBoolean()) {
@@ -376,6 +388,7 @@ public class Controls {
                     case INTAKE ->
                         s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
+                    case BLOCK -> s.intakeSubsystem.holdAtExtake();
                   }
                 },
                 s.intakeSubsystem)
@@ -411,6 +424,19 @@ public class Controls {
     connected(intakeTestController)
         .and(intakeTestController.y())
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+
+    if (s.blocker != null) {
+      // Need to add requirements here
+      connected(indexingTestController)
+          .and(indexingTestController.rightTrigger())
+          .onTrue(
+              Commands.parallel(
+                  Commands.runOnce(() -> intakeMode = IntakeMode.BLOCK),
+                  s.blocker.blockerOutCommand()))
+          .onFalse(
+              Commands.parallel(
+                  Commands.runOnce(() -> updateIntakeMode()), s.blocker.blockerInCommand()));
+    }
   }
 
   /**
@@ -464,6 +490,7 @@ public class Controls {
     s.turretSubsystem.setDefaultCommand(
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
+    // TODO: Make this work in the future
     (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
         .or(driverController.povLeft())
         .onTrue(
@@ -471,7 +498,7 @@ public class Controls {
                 .withName("Zero Turret on Limit Switch"));
 
     driverController
-        .y()
+        .povRight()
         .toggleOnTrue(
             s.turretSubsystem
                 .run(
@@ -482,11 +509,18 @@ public class Controls {
         .onTrue(
             Commands.runOnce(() -> turretKillActive = !turretKillActive)
                 .withName("Toggle Turret Kill"));
-    driverController
-        .povRight()
-        .onTrue(
-            Commands.runOnce(() -> turretSkipped = !turretSkipped)
-                .withName("Toggle Turret Skipped"));
+
+    // driverController
+    //     .povRight()
+    //     .onTrue(
+    //         Commands.runOnce(() -> turretSkipped = !turretSkipped)
+    //             .withName("Toggle Turret Skipped"));
+
+    driverController.b().onTrue(s.turretSubsystem.offsetTurretCommand(1));
+    driverController.x().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
+
+    driverController.a().onTrue(s.launcherSubsystem.offsetFlywheelCommand(-1));
+    driverController.y().onTrue(s.launcherSubsystem.offsetFlywheelCommand(1));
 
     connected(turretTestController)
         .and(turretTestController.povUp())

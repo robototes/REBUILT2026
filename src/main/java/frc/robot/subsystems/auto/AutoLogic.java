@@ -13,20 +13,21 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
+import frc.robot.util.CustomLoggedDashboardChooser;
 import frc.robot.util.simulation.FuelSim;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
 public class AutoLogic {
 
@@ -64,18 +65,20 @@ public class AutoLogic {
 
   /* ---------------- Choosers ---------------- */
 
-  private static final SendableChooser<StartPosition> startPositionChooser =
-      new SendableChooser<>();
+  private static final LoggedDashboardChooser<StartPosition> startPositionChooser =
+      new LoggedDashboardChooser<StartPosition>("Starting Position");
 
-  private static final DynamicSendableChooser<String> availableAutos =
-      new DynamicSendableChooser<>();
+  private static final CustomLoggedDashboardChooser<String> availableAutos =
+      new CustomLoggedDashboardChooser<String>("Available Auto Variants");
 
-  private static final SendableChooser<Integer> gameObjects = new SendableChooser<>();
+  private static final LoggedDashboardChooser<Integer> gameObjects =
+      new LoggedDashboardChooser<Integer>("Game Objects");
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
+  public static LoggedNetworkString loggedKeys = new LoggedNetworkString("Auto Key");
 
   public static List<AutoPath> getAutos() {
     if (rebuiltPaths != null) {
@@ -145,46 +148,53 @@ public class AutoLogic {
     }
   }
 
-  public static void initSmartDashBoard() {
+  public static void initAdvantageKit() {
     requirePathsInitialized();
 
-    startPositionChooser.setDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
+    startPositionChooser.addDefaultOption(StartPosition.MISC.title, StartPosition.MISC);
 
     for (StartPosition pos : StartPosition.values()) {
       startPositionChooser.addOption(pos.title, pos);
     }
 
-    gameObjects.setDefaultOption("0", 0);
+    gameObjects.addDefaultOption("0", 0);
     for (int i = 1; i < commandsMap.size(); i++) {
       gameObjects.addOption(String.valueOf(i), i);
     }
 
     autoDelayEntry.setDouble(0.0);
 
-    SmartDashboard.putData("Starting Position", startPositionChooser);
-    SmartDashboard.putData("Auto Mode", gameObjects);
-    SmartDashboard.putData("Available Auto Variants", availableAutos);
-    SmartDashboard.putString("Auto Key", keys);
+    loggedKeys.set(keys);
 
-    startPositionChooser.onChange(v -> filterAutos(gameObjects.getSelected()));
-    gameObjects.onChange(v -> filterAutos(gameObjects.getSelected()));
+    startPositionChooser.onChange(v -> filterAutos(gameObjects.get()));
+    gameObjects.onChange(v -> filterAutos(gameObjects.get()));
 
-    filterAutos(gameObjects.getSelected());
+    filterAutos(gameObjects.get());
   }
 
   /* ---------------- Filtering ---------------- */
 
-  public static void filterAutos(int numGameObjects) {
+  public static void filterAutos(Integer numGameObject) {
     requirePathsInitialized();
 
     availableAutos.clearOptions();
-    availableAutos.setDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
+    availableAutos.addDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
-    List<AutoPath> autoList = commandsMap.get(numGameObjects);
+    // Map.of(...).get(null) throws an NPE, so never pass null to commandsMap
+    int key = (numGameObject != null) ? numGameObject : 0;
+
+    List<AutoPath> autoList = commandsMap.get(key);
     if (autoList == null) return;
 
+    // Selected key from the sendable chooser (the title string); can be null if no default is set
+    String selectedTitle = startPositionChooser.getSendableChooser().getSelected();
+    if (selectedTitle == null) {
+      selectedTitle = StartPosition.MISC.title;
+    }
+
     for (AutoPath auto : autoList) {
-      if (auto.getStartPose().equals(startPositionChooser.getSelected())) {
+      StartPosition pos = auto.getStartPose();
+      if (pos != null && pos.title.equals(selectedTitle)) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }
@@ -193,11 +203,11 @@ public class AutoLogic {
   /* ---------------- Getters ---------------- */
 
   public static String getSelectedAutoName() {
-    return availableAutos.getSelectedName();
+    return availableAutos.get();
   }
 
   public static boolean chooserHasAutoSelected() {
-    return availableAutos.getSelected() != null;
+    return availableAutos.get() != null;
   }
 
   public static Pose2d getSelectedAutoStartingPose() {

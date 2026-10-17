@@ -19,20 +19,20 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableBoolean;
-import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class Feeder extends SubsystemBase {
   private final double D_TARGET_RPS = 95;
-  private final NtTunableBoolean TUNABLE_ENABLE =
-      new NtTunableBoolean("SmartDashboard/Tunables/FeederRPS", false);
-  private final NtTunableDouble TARGET_RPS =
-      new NtTunableDouble("SmartDashboard/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
+  private final LoggedNetworkBoolean TUNABLE_ENABLE =
+      new LoggedNetworkBoolean("Tuning/FeederRPS", false);
+  private final LoggedNetworkNumber TARGET_RPS =
+      new LoggedNetworkNumber("Tuning/FeederSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
       new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 
@@ -128,7 +128,9 @@ public class Feeder extends SubsystemBase {
   public void periodic() {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, feederRPS);
     // Log on NT at all times
-    SmartDashboard.putNumber("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
+    Logger.recordOutput("FeederSubsystem/VelocityRPS", feederRPS.getValueAsDouble());
+    Logger.recordOutput("FeederSubsystem/StatorCurrent", statorCurrent.getValueAsDouble());
+    Logger.recordOutput("FeederSubsystem/supplyCurrent", supplyCurrent.getValueAsDouble());
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
