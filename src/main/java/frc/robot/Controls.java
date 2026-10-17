@@ -519,6 +519,9 @@ public class Controls {
     driverController.b().onTrue(s.turretSubsystem.offsetTurretCommand(1));
     driverController.x().onTrue(s.turretSubsystem.offsetTurretCommand(-1));
 
+    driverController.a().onTrue(s.launcherSubsystem.offsetFlywheelCommand(-1));
+    driverController.y().onTrue(s.launcherSubsystem.offsetFlywheelCommand(1));
+
     connected(turretTestController)
         .and(turretTestController.povUp())
         .onTrue(s.turretSubsystem.setTurretPosition(TurretSubsystem.FRONT_POSITION));

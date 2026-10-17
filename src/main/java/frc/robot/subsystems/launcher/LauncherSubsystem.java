@@ -26,6 +26,9 @@ public class LauncherSubsystem extends SubsystemBase {
   private LaunchingParameters launchParameters;
   private final double MIN_FAR_DIST = 6; // Meters
 
+  private double flywheelOffset = 1;
+  private static double fwOffsetJogAmount = 0.01;
+
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
     Logger.recordOutput("AutoAim/hoodGoal", 0.0);
@@ -45,7 +48,7 @@ public class LauncherSubsystem extends SubsystemBase {
                       .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
               this.launchParameters = para;
               hoodGoal = para.targetHood();
-              flywheelsGoal = para.targetFlywheels();
+              flywheelsGoal = para.targetFlywheels() * flywheelOffset;
 
               Logger.recordOutput("AutoAim/hoodGoal", hoodGoal);
               Logger.recordOutput("AutoAim/flywheelGoal", flywheelsGoal);
@@ -54,6 +57,14 @@ public class LauncherSubsystem extends SubsystemBase {
               s.flywheels.setVelocityRPS(flywheelsGoal);
             })
         .withName("Launcher Aim Command");
+  }
+
+  public Command offsetFlywheelCommand(int direction) {
+    return runOnce(
+            () -> {
+              flywheelOffset += fwOffsetJogAmount * direction;
+            })
+        .withName("Changed Flywheel Offset");
   }
 
   // TODO: add tolerance range calculation
