@@ -266,7 +266,7 @@ public class AutoLogic {
       NamedCommands.registerCommand("intake", intakeCommand());
     }
     NamedCommands.registerCommand("climb", climbCommand());
-    NamedCommands.registerCommand("blineLeftTrench", BLineSetup.buildPath(BLineSetup.leftTrench,false, s));
+    NamedCommands.registerCommand("blineLeftTrench", BLineSetup.buildPath(BLineSetup.leftTrench,true, s).withName(("BLINE")).andThen(Commands.print("Running bline")));
     NamedCommands.registerCommand("blineLeftTrench2", BLineSetup.buildPath(BLineSetup.leftTrench2,false, s));
     NamedCommands.registerCommand("blineRightTrench", BLineSetup.buildPath(BLineSetup.rightTrench,false, s));
     NamedCommands.registerCommand("blineRightTrench2", BLineSetup.buildPath(BLineSetup.rightTrench2,false, s));
