@@ -39,7 +39,6 @@ public class TurretSubsystem extends SubsystemBase {
   private final AnalogInput limitSwitch;
   private final VoltageOut voltageRequest = new VoltageOut(0).withIgnoreSoftwareLimits(true);
   private final CommandSwerveDrivetrain driveTrain;
-  private static boolean useNormalizedTarget = false;
 
   public static final double TURRET_MANUAL_SPEED = 3; // Volts
 
@@ -266,10 +265,6 @@ public class TurretSubsystem extends SubsystemBase {
               double[] candidates = {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,
               };
-              if (currentDegrees >= TURRET_MIN && currentDegrees <= TURRET_MAX) {
-                targetPos = Units.degreesToRadians(normalizedTarget);
-                useNormalizedTarget = true;
-              }
               double finalTarget = MathUtil.clamp(currentDegrees, TURRET_MIN, TURRET_MAX);
               double bestDist = Double.MAX_VALUE;
               double bestFallbackDist = Double.MAX_VALUE;
