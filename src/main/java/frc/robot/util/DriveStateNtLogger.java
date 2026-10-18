@@ -22,10 +22,7 @@ public class DriveStateNtLogger {
   private final double MaxSpeed;
 
   private static final String[] MODULE_KEYS = {
-    "Drive/Module 0",
-    "Drive/Module 1",
-    "Drive/Module 2",
-    "Drive/Module 3"
+    "Drive/Module 0", "Drive/Module 1", "Drive/Module 2", "Drive/Module 3"
   };
 
   /* Robot swerve drive state */
