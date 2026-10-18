@@ -12,6 +12,10 @@ import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
+
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+
 import org.littletonrobotics.junction.Logger;
 
 public class LauncherSubsystem extends SubsystemBase {
@@ -79,10 +83,9 @@ public class LauncherSubsystem extends SubsystemBase {
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
     Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
-    double distanceToTarget =
-        GetTargetFromPose.getTargetLocation(turretPose).getDistance(turretPose.getTranslation());
+    boolean passing = GetTargetFromPose.isPassing(turretPose);
 
-    if (distanceToTarget >= MIN_FAR_DIST) {
+    if (passing) {
       flywheelTolerance = 30;
     }
 
@@ -92,13 +95,18 @@ public class LauncherSubsystem extends SubsystemBase {
     hoodAtTarget = s.hood.atTargetPosition();
     Logger.recordOutput("AutoAim/hoodAtTarget", hoodAtTarget);
 
+    DoubleSupplier turretTolerance = () -> MathUtil.clamp(
+                    Math.atan(0.3 / LauncherConstants.distToHub()), //0.3 meters of error radially from center of hub
+                    Units.degreesToRadians(3), //lower bound for error, 5.7m equivalent
+                    Units.degreesToRadians(7)); //upper bound for error, 2.5m equivalent
+
+    //If we're passing, just get the ball out of the robot ASAP
+    if(passing) {
+      turretTolerance = () -> Units.degreesToRadians(20);
+    }
+
     turretAtTarget =
-        s.turretSubsystem.atTarget(
-            () ->
-                MathUtil.clamp(
-                    Math.atan(0.3 / LauncherConstants.distToHub()),
-                    Units.degreesToRadians(5),
-                    Units.degreesToRadians(7)));
+        s.turretSubsystem.atTarget(turretTolerance);
     Logger.recordOutput("AutoAim/turretAtTarget", turretAtTarget);
 
     notUnderClimb =
