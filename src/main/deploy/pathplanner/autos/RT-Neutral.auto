@@ -41,18 +41,6 @@
           "data": {
             "pathName": "NeutralRight-Intake"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "blineRightTrench"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
         }
       ]
     }
