@@ -21,6 +21,13 @@ public class DriveStateNtLogger {
   private final DriveStateSignalLogger telem;
   private final double MaxSpeed;
 
+  private static final String[] MODULE_KEYS = {
+    "Drive/Module 0",
+    "Drive/Module 1",
+    "Drive/Module 2",
+    "Drive/Module 3"
+  };
+
   /* Robot swerve drive state */
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
 
@@ -119,7 +126,7 @@ public class DriveStateNtLogger {
     driveTimestamp.set(state.Timestamp);
     driveOdometryFrequency.set(state.OdometryPeriod == 0 ? 0 : 1.0 / state.OdometryPeriod);
     for (int i = 0; i < 4; ++i) {
-      Logger.recordOutput("Drive/Module " + i, m_moduleMechanisms[i]);
+      Logger.recordOutput(MODULE_KEYS[i], m_moduleMechanisms[i]);
     }
   }
 }
