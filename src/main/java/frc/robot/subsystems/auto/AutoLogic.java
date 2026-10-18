@@ -264,7 +264,7 @@ public class AutoLogic {
         command =
             AutoBuilder.buildAuto("RT-Neutral")
                 .andThen(BLineSetup.buildPath(BLineSetup.rightTrench, true, s))
-                .andThen(launcherCommand())
+                .andThen(launcherSimCommand())
                 .andThen(AutoBuilder.buildAuto("RT-DoubleNeutral"))
                 .andThen(BLineSetup.buildPath(BLineSetup.rightTrench2, true, s))
                 .andThen(launcherCommand())
@@ -328,6 +328,7 @@ public class AutoLogic {
   }
 
   public static Command launcherCommand() {
+
     return Commands.parallel(
             Commands.runOnce(
                 () -> {

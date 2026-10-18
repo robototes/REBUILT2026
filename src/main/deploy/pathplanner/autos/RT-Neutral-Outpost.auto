@@ -43,9 +43,15 @@
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "blineLeftTrench"
+            "pathName": "BackFromIntakeRight"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Back-RightTrench"
           }
         },
         {
