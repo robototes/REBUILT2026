@@ -199,9 +199,9 @@ public class Controls {
                   double rot = getDriveRotate();
 
                   boolean inDeadband =
-                      Math.abs(x) < JOYSTICK_DEADBAND
-                          && Math.abs(y) < JOYSTICK_DEADBAND
-                          && Math.abs(rot) < JOYSTICK_DEADBAND;
+                      Math.abs(driverController.getLeftX()) < JOYSTICK_DEADBAND
+                          && Math.abs(driverController.getLeftY()) < JOYSTICK_DEADBAND
+                          && Math.abs(driverController.getRightX()) < JOYSTICK_DEADBAND;
 
                   if (inDeadband) {
                     return brake;
