@@ -77,7 +77,8 @@ public class LauncherConstants {
 
   // Hood, flywheel, and TOF are all implemented
   public static final LauncherDistanceDataPoint[] passingDistanceData = {
-    new LauncherDistanceDataPoint(2, 9, 40, 1), new LauncherDistanceDataPoint(8, 9, 90, 1.5)
+    new LauncherDistanceDataPoint(3, 9, 25, 1),
+    new LauncherDistanceDataPoint(12, 9, 90, 1.5)
   };
 
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
