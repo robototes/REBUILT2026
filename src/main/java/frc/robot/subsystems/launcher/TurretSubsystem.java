@@ -110,7 +110,7 @@ public class TurretSubsystem extends SubsystemBase {
     statorCurrentSignal = turretMotor.getStatorCurrent();
     Logger.recordOutput("Zero/zeroedTurret", false);
 
-    SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset*360.0));
+    SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset * 360.0));
   }
 
   public void turretConfig() {
@@ -154,7 +154,7 @@ public class TurretSubsystem extends SubsystemBase {
     return runOnce(
             () -> {
               manualOffset += offsetJogAmount * direction;
-              SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset*360.0));
+              SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset * 360.0));
             })
         .withName("Changed Turret Offset");
   }

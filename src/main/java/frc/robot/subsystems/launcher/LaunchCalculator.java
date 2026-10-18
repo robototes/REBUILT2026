@@ -486,6 +486,7 @@ public class LaunchCalculator {
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
+    boolean currentlyPassing = GetTargetFromPose.isPassing(turretPose);
 
     double distanceX = target.getX() - turretPose.getX();
     double distanceY = target.getY() - turretPose.getY();
@@ -496,7 +497,7 @@ public class LaunchCalculator {
     double trueDistance = distance;
     double trueDistanceX = distanceX;
     double trueDistanceY = distanceY;
-    double t = LauncherConstants.getTimeFromDistance(distance);
+    double t = LauncherConstants.getTimeFromDistance(distance, currentlyPassing);
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
@@ -504,12 +505,12 @@ public class LaunchCalculator {
       trueDistanceY = distanceY - turretVelocityY * t;
       trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
 
-      double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
+      double lookupT = LauncherConstants.getTimeFromDistance(trueDistance, currentlyPassing);
       double f = lookupT - t;
 
       double dDist_Dt =
           -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
-      double fPrime = (derivativeOfTOF(trueDistance) * dDist_Dt) - 1.0;
+      double fPrime = (derivativeOfTOF(trueDistance, currentlyPassing) * dDist_Dt) - 1.0;
 
       if (Math.abs(fPrime) > MIN_SLOPE) {
         t = t - f / fPrime;
@@ -538,8 +539,9 @@ public class LaunchCalculator {
 
     // Use launchSpeeds for trench check — consistent with the velocity used for all other
     // calculations and represents the predicted state at the moment of launch.
-    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeeds);
-    double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeeds, currentlyPassing);
+    double targetFlywheels =
+        LauncherConstants.getFlywheelSpeedFromDistance(trueDistance, currentlyPassing);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
@@ -553,9 +555,9 @@ public class LaunchCalculator {
    * @param distance instantaneous distance
    * @return the derivative of the TOF lookup table at the given distance
    */
-  public double derivativeOfTOF(double distance) {
-    double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
-    double max = LauncherConstants.getTimeFromDistance(distance + STEP_SIZE);
+  public double derivativeOfTOF(double distance, boolean passing) {
+    double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE, passing);
+    double max = LauncherConstants.getTimeFromDistance(distance + STEP_SIZE, passing);
     return (max - min) / (2 * STEP_SIZE);
   }
 
@@ -567,9 +569,10 @@ public class LaunchCalculator {
    * @param speeds chassis speeds at launch time
    * @return hood angle (unitless, defined by LauncherConstants interpolating map)
    */
-  public double getHoodAngle(Pose2d robotPose, double trueDist, ChassisSpeeds speeds) {
+  public double getHoodAngle(
+      Pose2d robotPose, double trueDist, ChassisSpeeds speeds, boolean passing) {
     if (isApproachingTrench(robotPose, speeds)) return 0;
-    return LauncherConstants.getHoodAngleFromDistance(trueDist);
+    return LauncherConstants.getHoodAngleFromDistance(trueDist, passing);
   }
 
   public static boolean isApproachingTrench(Pose2d robotPose, ChassisSpeeds speeds) {
