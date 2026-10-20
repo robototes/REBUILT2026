@@ -181,21 +181,20 @@ public class AutoLogic {
     availableAutos.clearOptions();
     availableAutos.addDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
-    // Map.of(...).get(null) throws an NPE, so never pass null to commandsMap
     int key = (numGameObject != null) ? numGameObject : 0;
 
     List<AutoPath> autoList = commandsMap.get(key);
     if (autoList == null) return;
 
     // Selected key from the sendable chooser (the title string); can be null if no default is set
-    String selectedTitle = startPositionChooser.getSendableChooser().getSelected();
-    if (selectedTitle == null) {
-      selectedTitle = StartPosition.MISC.title;
+    StartPosition selectedPos = startPositionChooser.get();
+    if (selectedPos == null) {
+      selectedPos = StartPosition.MISC;
     }
 
     for (AutoPath auto : autoList) {
       StartPosition pos = auto.getStartPose();
-      if (pos != null && pos.title.equals(selectedTitle)) {
+      if (pos == selectedPos) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }

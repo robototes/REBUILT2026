@@ -34,11 +34,11 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
   private final LoggableInputs inputs =
       new LoggableInputs() {
         public void toLog(LogTable table) {
-          table.put(key, selectedValue);
+          table.put(key, selectedValue != null ? selectedValue : "");
         }
 
         public void fromLog(LogTable table) {
-          selectedValue = table.get(key, selectedValue);
+          selectedValue = table.get(key, "");
         }
       };
 
