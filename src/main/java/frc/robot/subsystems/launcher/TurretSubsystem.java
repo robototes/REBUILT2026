@@ -29,7 +29,6 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -232,9 +231,9 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
-  public boolean atTarget(DoubleSupplier turretTolerance) {
+  public boolean atTarget(double turretTolerance) {
     return Math.abs(positionSignal.getValueAsDouble() - targetPos)
-        < Units.radiansToRotations(turretTolerance.getAsDouble());
+        < Units.radiansToRotations(turretTolerance);
   }
 
   /**

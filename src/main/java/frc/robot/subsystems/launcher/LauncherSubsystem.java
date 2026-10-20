@@ -65,7 +65,7 @@ public class LauncherSubsystem extends SubsystemBase {
     return runOnce(
             () -> {
               flywheelOffset += fwOffsetJogAmount * direction;
-              SmartDashboard.putNumber("Flywheel Offset [RPS]", flywheelOffset);
+              Logger.recordOutput("Launcher/Flywheel Offset [RPS]", flywheelOffset);
             })
         .withName("Changed Flywheel Offset");
   }
@@ -90,19 +90,18 @@ public class LauncherSubsystem extends SubsystemBase {
     hoodAtTarget = s.hood.atTargetPosition();
     Logger.recordOutput("AutoAim/hoodAtTarget", hoodAtTarget);
 
-    DoubleSupplier turretTolerance =
-        () ->
-            MathUtil.clamp(
-                Math.atan(
-                    0.3
-                        / LauncherConstants
-                            .distToHub()), // 0.3 meters of error radially from center of hub
-                Units.degreesToRadians(3), // lower bound for error, 5.7m equivalent
-                Units.degreesToRadians(7)); // upper bound for error, 2.5m equivalent
+    double turretTolerance =
+        MathUtil.clamp(
+            Math.atan(
+                0.3
+                    / LauncherConstants
+                        .distToHub()), // 0.3 meters of error radially from center of hub
+            Units.degreesToRadians(3), // lower bound for error, 5.7m equivalent
+            Units.degreesToRadians(7)); // upper bound for error, 2.5m equivalent
 
     // If we're passing, just get the ball out of the robot ASAP
     if (passing) {
-      turretTolerance = () -> Units.degreesToRadians(20);
+      turretTolerance = Units.degreesToRadians(20);
     }
 
     turretAtTarget = s.turretSubsystem.atTarget(turretTolerance);
