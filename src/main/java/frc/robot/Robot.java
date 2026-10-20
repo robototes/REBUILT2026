@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
@@ -62,7 +63,6 @@ public class Robot extends LoggedRobot {
 
   private final Controls controls;
   public final Subsystems subsystems;
-  private final PowerDistribution PDH;
   private final int APRILTAG_PIPELINE = 0;
   private final int THROTTLE_ON = 150;
   private final int THROTTLE_OFF = 0;
@@ -97,6 +97,7 @@ public class Robot extends LoggedRobot {
     if (currentMode != RobotMode.REPLAY) {
       Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick ("/U/logs")
       Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+      LoggedPowerDistribution.getInstance(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     } else {
       // NOTE: FOR REPLAY
       setUseTiming(false); // Run as fast as possible
@@ -119,7 +120,6 @@ public class Robot extends LoggedRobot {
       DataLogManager.start("", "", DATA_LOG_FLUSH_PERIOD_S);
       DriverStation.startDataLog(DataLogManager.getLog(), true);
     }
-    PDH = new PowerDistribution(Hardware.PDH_ID, PowerDistribution.ModuleType.kRev);
     LiveWindow.disableAllTelemetry();
     BuildInfo.logBuildInfo();
     // Start GC monitor to count garbage collections and publish to SmartDashboard
