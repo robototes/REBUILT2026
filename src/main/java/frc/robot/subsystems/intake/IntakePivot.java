@@ -11,9 +11,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -25,6 +22,7 @@ import frc.robot.Hardware;
 import frc.robot.Robot;
 import frc.robot.generated.CompTunerConstants;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 
 public class IntakePivot extends SubsystemBase {
   private final TalonFX pivotMotor;
@@ -41,6 +39,7 @@ public class IntakePivot extends SubsystemBase {
   public static final double LAUNCH_POS_OUT = -0.292;
   public static final double RETRACTED_POS = 0.0;
   public static final double EXTAKE_POS = -0.3;
+  public static final double SHOTBLOCK_POS = -0.25;
 
   // PID variables
   private static final double kP = 40;
@@ -69,24 +68,23 @@ public class IntakePivot extends SubsystemBase {
 
   // Simulator and NetworkTables
   private PivotSim pivotSim;
-  private DoublePublisher currentPosPub;
-  private DoublePublisher targetPosPub;
-  private BooleanPublisher zeroPublisher;
 
   // Status Signals
-  private final StatusSignal<Current> SS_intakePivotCurrent;
-  private final StatusSignal<Angle> SS_position;
+  private final StatusSignal<Current> intakePivotStatorCurrent;
+  private final StatusSignal<Current> intakePivotSupplyCurrent;
+  private final StatusSignal<Angle> position;
 
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     pivotConfig();
     pivotMotor.clearStickyFaults();
-    networktables();
     if (Robot.isSimulation()) {
       pivotSim = new PivotSim(pivotMotor);
     }
-    SS_intakePivotCurrent = pivotMotor.getStatorCurrent();
-    SS_position = pivotMotor.getPosition();
+    intakePivotStatorCurrent = pivotMotor.getStatorCurrent();
+    position = pivotMotor.getPosition();
+    intakePivotSupplyCurrent = pivotMotor.getSupplyCurrent();
+    Logger.recordOutput("Zero/intakePivotZero", false);
   }
 
   public void pivotConfig() {
@@ -122,18 +120,6 @@ public class IntakePivot extends SubsystemBase {
     pivotMotor.getConfigurator().apply(config);
   }
 
-  private void networktables() {
-    var nt = NetworkTableInstance.getDefault();
-    this.currentPosPub = nt.getDoubleTopic("intake/pivotCurrentPosition").publish();
-    this.targetPosPub = nt.getDoubleTopic("intake/pivotTargetPosition").publish();
-    this.zeroPublisher =
-        NetworkTableInstance.getDefault().getBooleanTopic("/Zero/intakePivotZero").publish();
-
-    currentPosPub.set(0.0); // default value
-    targetPosPub.set(0.0); // default value
-    zeroPublisher.set(false);
-  }
-
   public void setPivotPosition(double pos) {
     targetPos = pos;
     pivotMotor.setControl(request.withPosition(pos));
@@ -155,7 +141,7 @@ public class IntakePivot extends SubsystemBase {
             () -> {
               pivotMotor.setPosition(RETRACTED_POS);
               targetPos = RETRACTED_POS;
-              zeroPublisher.set(true);
+              Logger.recordOutput("Zero/intakePivotZero", true);
             })
         .withName("Zero Pivot");
   }
@@ -172,7 +158,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public double getPivotPosition() {
-    return SS_position.getValueAsDouble();
+    return position.getValueAsDouble();
   }
 
   public double getPivotTargetPosition() {
@@ -180,8 +166,7 @@ public class IntakePivot extends SubsystemBase {
   }
 
   public boolean isAtTarget(double degreeTolerance, double pose) {
-    return Math.abs(SS_position.getValueAsDouble() - pose)
-        < Units.degreesToRotations(degreeTolerance);
+    return Math.abs(position.getValueAsDouble() - pose) < Units.degreesToRotations(degreeTolerance);
   }
 
   public boolean isAtTarget(double degreeTolerance) {
@@ -197,10 +182,10 @@ public class IntakePivot extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.run(() -> SS_intakePivotCurrent.refresh())
+                            Commands.run(() -> intakePivotStatorCurrent.refresh())
                                 .until(
                                     () ->
-                                        SS_intakePivotCurrent.getValueAsDouble()
+                                        intakePivotStatorCurrent.getValueAsDouble()
                                             >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroPivot())
         .withTimeout(3)
@@ -210,9 +195,11 @@ public class IntakePivot extends SubsystemBase {
   @Override
   // update simulation
   public void periodic() {
-    StatusSignal.refreshAll(SS_position);
-    currentPosPub.set(getPivotPosition());
-    targetPosPub.set(getPivotTargetPosition());
+    StatusSignal.refreshAll(position, intakePivotStatorCurrent, intakePivotSupplyCurrent);
+    Logger.recordOutput("Intake/Pivot/pivotCurrentPosition", getPivotPosition());
+    Logger.recordOutput("Intake/Pivot/pivotTargetPosition", getPivotTargetPosition());
+    Logger.recordOutput("Intake/Pivot/pivotStator", intakePivotStatorCurrent.getValueAsDouble());
+    Logger.recordOutput("Intake/Pivot/pivotSupply", intakePivotSupplyCurrent.getValueAsDouble());
   }
 
   public void simulationPeriodic() {

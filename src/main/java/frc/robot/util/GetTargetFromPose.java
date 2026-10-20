@@ -10,7 +10,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
-import frc.robot.util.tuning.NtTunableBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 public class GetTargetFromPose {
   private static AprilTagFieldLayout aprilTagFieldLayout =
@@ -41,7 +41,8 @@ public class GetTargetFromPose {
   // use blue) then go into advantage scope to turn on "Balling". After that go to the
   // center grey line of the court and then line up the bumper gap with the gray line and the turret
   // side of the robot on the edge of the thick black line
-  public static NtTunableBoolean BALLING = new NtTunableBoolean("/Balling", false);
+  public static LoggedNetworkBoolean BALLING =
+      new LoggedNetworkBoolean("Tuning/NotTuning/Balling", false);
   private static Translation2d BALLING_POSE = new Translation2d(-0.9779, -0.2286);
   private static Pose2d RIGHT_BASKETBALL_COURT_CORNER = new Pose2d(0, 0, new Rotation2d());
 
