@@ -82,8 +82,6 @@ public class BLineLogic {
   public static Command bLineLaunching;
   public static Command bLineSimLaunching;
   private static StructPublisher<Pose2d> recoveryPose;
-  public static FollowPath.Builder pathBuilder;
-  private static FollowPath.Builder continuingPathBuilder;
   public static Path currentPath;
   public static FollowPath follow;
   public static int savedPathIndex = -1;
@@ -485,8 +483,9 @@ public class BLineLogic {
 
     List<BLinePath> sequence = getSelectedPathSequence();
 
-    if (sequence.isEmpty())
+    if (sequence.isEmpty()) {
       return Commands.runOnce(() -> buildPath(BLinePaths.Default.getPath(), true, true));
+    }
 
     List<Command> commands = new ArrayList<>();
     boolean firstPath = true;
@@ -531,11 +530,11 @@ public class BLineLogic {
 
   public static Command buildPath(Path path, boolean resetPose, boolean saveForRecovery) {
 
-    if (s == null || pathBuilder == null || continuingPathBuilder == null) {
+    if (s == null || BLineBuilder.pathBuilder == null || BLineBuilder.continuingPathBuilder == null) {
       return Commands.none();
     }
 
-    FollowPath command = (resetPose ? pathBuilder : continuingPathBuilder).build(path);
+    FollowPath command = (resetPose ? BLineBuilder.pathBuilder : BLineBuilder.continuingPathBuilder).build(path);
 
     if (saveForRecovery) {
       currentPath = path;
@@ -550,39 +549,5 @@ public class BLineLogic {
     return getSelectedAuto();
   }
 
-  public static void configure(Subsystems s) {
-    pathBuilder = createPathBuilder(s).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
-    continuingPathBuilder = createPathBuilder(s);
-  }
 
-  private static FollowPath.Builder createPathBuilder(Subsystems s) {
-
-    return new FollowPath.Builder(
-            s.drivebaseSubsystem,
-            () -> s.drivebaseSubsystem.getState().Pose,
-            () -> s.drivebaseSubsystem.getState().Speeds,
-            (speeds) ->
-                s.drivebaseSubsystem.setControl(
-                    new SwerveRequest.ApplyRobotSpeeds()
-                        .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
-            new PIDController(3.0, 0.0, 0.0),
-            new PIDController(5.0, 0.0, 0.0),
-            new PIDController(2.0, 0.0, 0.0))
-        .withDefaultShouldFlip()
-        .withShouldMirror(BLineLogic::isMirrored);
-  }
-
-  public static void updateRecoveryPose() {
-
-    recoveryPose.set(
-        StuckOnBallRecovery.getRecoveryPose(
-            s.drivebaseSubsystem.getState().Pose,
-            Rotation2d.fromDegrees(s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
-            Rotation2d.fromDegrees(
-                s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())));
-  }
-
-  private static void registerTriggersAndCommands(Subsystems s) {
-    BLineTriggers.registerTriggers(s);
-  }
 }

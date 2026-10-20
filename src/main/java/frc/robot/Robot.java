@@ -29,6 +29,7 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.BLine.BLineBuilder;
 import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.subsystems.auto.BLine.LegacyBLine.LegacyBLineLogic;
 import frc.robot.util.AllianceUtils;
@@ -140,7 +141,7 @@ public class Robot extends LoggedRobot {
         BLineLogic.init(
             subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
         // off
-        BLineLogic.configure(subsystems); // configure the autobuilder to run autos
+        BLineBuilder.configure(subsystems); // configure the autobuilder to run autos
         BLineLogic.initAdvantageKit(); // Logging
         // BLineAutonomousField.initAdvantageKit( // Visualization
         //  () -> "Autos", 0, 0, this.autonomousPeriodic());
