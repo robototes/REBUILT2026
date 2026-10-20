@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
+import frc.robot.util.CustomLoggedNetworkNumber;
 import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableDouble;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
@@ -39,7 +39,7 @@ public class Flywheels extends SubsystemBase {
 
   private VelocityTorqueCurrentFOC request = new VelocityTorqueCurrentFOC(0);
 
-  public NtTunableDouble targetVelocity;
+  public CustomLoggedNetworkNumber targetVelocity;
   private long lastPositionUpdateTime = 0;
 
   public final double FLYWHEEL_TOLERANCE = 10;
@@ -59,7 +59,7 @@ public class Flywheels extends SubsystemBase {
     flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
     flywheelTwo = new TalonFX(Hardware.FLYWHEEL_TWO_ID);
 
-    targetVelocity = new NtTunableDouble("Tuning/launcher/flywheelTuner", 0.0);
+    targetVelocity = new CustomLoggedNetworkNumber("Tuning/launcher/flywheelTuner", 0.0);
     configureMotors();
 
     flywheelOneRPS = flywheelOne.getVelocity();

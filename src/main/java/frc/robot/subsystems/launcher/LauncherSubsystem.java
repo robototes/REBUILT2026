@@ -4,7 +4,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -12,7 +11,6 @@ import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
-import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class LauncherSubsystem extends SubsystemBase {
@@ -41,7 +39,7 @@ public class LauncherSubsystem extends SubsystemBase {
     Logger.recordOutput("AutoAim/turretAtTarget", false);
     Logger.recordOutput("AutoAim/NotUnderClimb", false);
     Logger.recordOutput("AutoAim/NotUnderTrench", false);
-    SmartDashboard.putNumber("Flywheel Offset [RPS]", flywheelOffset);
+    Logger.recordOutput("Launcher/Flywheel Offset [RPS]", flywheelOffset);
   }
 
   public Command launcherAimCommand() {
