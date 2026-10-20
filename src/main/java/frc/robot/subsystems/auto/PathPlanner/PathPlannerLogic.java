@@ -1,8 +1,4 @@
-package frc.robot.subsystems.auto;
-
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Radians;
+package frc.robot.subsystems.auto.PathPlanner;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -20,15 +16,16 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Controls;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
+import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
-import frc.robot.util.simulation.FuelSim;
+import frc.robot.util.simulation.RobotSim;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
 
-public class AutoLogic {
+public class PathPlannerLogic {
 
   private static Subsystems s;
 
@@ -123,6 +120,7 @@ public class AutoLogic {
             new AutoPath("RT-Neutral", "RT-Neutral"),
             new AutoPath("RT-DoubleNeutral", "RT-DoubleNeutral"),
             new AutoPath("RT-BLOCK", "RT-BLOCK"),
+            new AutoPath("test", "BLINECOMPARE"),
             new AutoPath("LT-BLOCK", "LT-BLOCK"));
 
     rebuiltPaths = physicalRebuiltPaths;
@@ -274,19 +272,7 @@ public class AutoLogic {
   }
 
   public static Command launcherSimCommand() {
-    return Commands.sequence(
-            AutoDriveRotate.autoRotate(
-                s.drivebaseSubsystem, () -> 0, () -> 0, () -> 0), // SIM PURPOSES ONLY
-            Commands.run(
-                    () ->
-                        FuelSim.getInstance()
-                            .launchFuel(
-                                MetersPerSecond.of(6),
-                                Radians.of(s.hood.getHoodPosition()),
-                                Radians.of(s.turretSubsystem.getTurretPosition() + Math.PI),
-                                Meters.of(1.45)))
-                .withTimeout(3))
-        .withName("Auto Launcher Sim Command");
+    return RobotSim.launch(s, 2);
   }
 
   public static Command intakeCommand() {

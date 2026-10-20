@@ -1,4 +1,4 @@
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems.auto.Misc;
 
 import static edu.wpi.first.util.ErrorMessages.requireNonNullParam;
 

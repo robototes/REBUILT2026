@@ -1,4 +1,4 @@
-package frc.robot.subsystems.auto;
+package frc.robot.subsystems.auto.PathPlanner;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -14,7 +14,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 
-public class AutonomousField {
+public class PathPlannerAutonomousField {
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
   private static final double UPDATE_RATE = 0.05;
 
@@ -31,15 +31,12 @@ public class AutonomousField {
 
     speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
 
-    AutonomousField autonomousField =
-        new AutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
-
-    SmartDashboard.putData("Selected auto", autonomousField.getField());
-    SmartDashboard.putData("Start pose", autonomousField.getStartPose());
+    PathPlannerAutonomousField autonomousField =
+        new PathPlannerAutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
     addPeriodic.accept(
         () -> {
-          autonomousField.update(AutoLogic.getSelectedAutoName());
+          autonomousField.update(PathPlannerLogic.getSelectedAutoName());
           SmartDashboard.putNumber(
               "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
         },
@@ -69,15 +66,15 @@ public class AutonomousField {
 
   /* ---------------- Constructors ---------------- */
 
-  public AutonomousField() {
+  public PathPlannerAutonomousField() {
     this(() -> 1.0);
   }
 
-  public AutonomousField(double speedMultiplier) {
+  public PathPlannerAutonomousField(double speedMultiplier) {
     this(() -> speedMultiplier);
   }
 
-  public AutonomousField(DoubleSupplier speedMultiplier) {
+  public PathPlannerAutonomousField(DoubleSupplier speedMultiplier) {
     this.speedMultiplier = speedMultiplier;
   }
 
