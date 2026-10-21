@@ -48,4 +48,12 @@ public class IndexerSubsystem extends SubsystemBase {
           spindexerSubsystem.stopMotor();
         });
   }
+
+  public Command stopIndexer() {
+    return runOnce(
+        () -> {
+          feeder.stopMotor();
+          spindexerSubsystem.stopMotor();
+        });
+  }
 }

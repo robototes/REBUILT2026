@@ -302,13 +302,22 @@ public class Controls {
                         .repeatedly())
                 .withName("Launching Command"))
         .onFalse(
-            s.launcherSubsystem
-                .rawStowCommand()
-                .alongWith(
-                    Commands.runOnce(
-                        () -> {
-                          updateIntakeMode();
-                        }))
+            Commands.parallel(
+                    // Stop the indexer and bring the intake to the next state
+                    s.indexerSubsystem
+                        .stopIndexer()
+                        .alongWith(
+                            Commands.runOnce(
+                                () -> {
+                                  updateIntakeMode();
+                                })),
+                    // And at the same time clear any last balls that are still moving from inertia
+                    // This does add a delay from driver input to robot action, but hopefully it's
+                    // small enough to not be noticeable
+                    Commands.waitSeconds(0.1)
+                        .
+                        // Then stop the launcher.
+                        andThen(s.launcherSubsystem.rawStowCommand()))
                 .withName("Launching Finished"));
 
     driverController
