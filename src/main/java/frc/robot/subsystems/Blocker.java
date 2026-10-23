@@ -22,16 +22,16 @@ public class Blocker extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = -0.24;
+  public static final double DEPLOYED_POS = 0.24;
   public static final double RETRACTED_POS = 0;
   private static final double degreeTolerance = 3;
 
   // PID variables
-  private static final double kP = 10;
+  private static final double kP = 60;
   private static final double kI = 0;
   private static final double kD = 0;
   private static final double kG = 0;
-  private static final double kS = 0.15;
+  private static final double kS = 0.3;
   private static final double kV = 4.5;
   private static final double kA = 0;
 
@@ -48,8 +48,8 @@ public class Blocker extends SubsystemBase {
   private static final double GEAR_RATIO = 45;
 
   // Soft Limits
-  public static final double BLOCK_MIN = -0.25; // rotations
-  public static final double BLOCK_MAX = 0.0;
+  public static final double BLOCK_MIN = 0; // rotations
+  public static final double BLOCK_MAX = 0.25;
 
   // Status Signals
   private final StatusSignal<Current> SS_Current;
