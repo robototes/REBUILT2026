@@ -22,33 +22,33 @@ public class Blocker extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = 0;
+  public static final double DEPLOYED_POS = -0.24;
   public static final double RETRACTED_POS = 0;
-  private static final double degreeTolerance = 5;
+  private static final double degreeTolerance = 3;
 
   // PID variables
-  private static final double kP = 0;
+  private static final double kP = 10;
   private static final double kI = 0;
   private static final double kD = 0;
   private static final double kG = 0;
-  private static final double kS = 0;
-  private static final double kV = 0;
+  private static final double kS = 0.15;
+  private static final double kV = 4.5;
   private static final double kA = 0;
 
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 40; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 30; // amps
+  private static final int STATOR_CURRENT_LIMIT = 30; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 0;
-  private static final double ACCELERATION = 0;
+  private static final double CRUISE_VELOCITY = 2;
+  private static final double ACCELERATION = 6;
   private static final double JERK = 0;
 
   // Gear Ratio
   private static final double GEAR_RATIO = 45;
 
   // Soft Limits
-  public static final double BLOCK_MIN = -0.45; // rotations
+  public static final double BLOCK_MIN = -0.25; // rotations
   public static final double BLOCK_MAX = 0.0;
 
   // Status Signals

@@ -311,7 +311,8 @@ public class Controls {
                         Commands.parallel(
                             s.launcherSubsystem.zeroSubsystemCommand(),
                             s.intakePivot.zeroPivot(),
-                            s.turretSubsystem.zeroTurret()),
+                            s.turretSubsystem.zeroTurret(),
+                            s.blocker.zeroBlocker()),
                         () -> DriverStation.isEnabled()),
                     s.ledSubsystem.flashCommand(LEDSubsystem.LAUNCH_COLOR, 3, 0.2))
                 .ignoringDisable(true)
