@@ -11,7 +11,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import org.littletonrobotics.junction.Logger;
@@ -102,11 +101,11 @@ public class Blocker extends SubsystemBase {
   }
 
   public Command blockerInCommand() {
-    return Commands.runOnce(() -> setPivotPosition(RETRACTED_POS)).withName("Blocker In");
+    return runOnce(() -> setPivotPosition(RETRACTED_POS)).withName("Blocker In");
   }
 
   public Command blockerOutCommand() {
-    return Commands.runOnce(() -> setPivotPosition(DEPLOYED_POS)).withName("Blocker Out");
+    return runOnce(() -> setPivotPosition(DEPLOYED_POS)).withName("Blocker Out");
   }
 
   public Command zeroBlocker() {
@@ -134,15 +133,13 @@ public class Blocker extends SubsystemBase {
   @Override
   // update simulation
   public void periodic() {
-    StatusSignal.refreshAll(SS_position);
-    StatusSignal.refreshAll(SS_Current);
+    StatusSignal.refreshAll(SS_position, SS_Current);
     Logger.recordOutput("Blocker/blockerCurrent", getBlockerCurrent());
     Logger.recordOutput("Blocker/blockerCurrentPosition", getBlockerPosition());
     Logger.recordOutput("Blocker/blockerTargetPosition", getBlockerTargetPosition());
   }
 
   public boolean isAtTarget(double pose) {
-    return Math.abs(blockerMotor.getPosition().getValueAsDouble() - pose)
-        < Units.degreesToRotations(degreeTolerance);
+    return Math.abs(getBlockerPosition() - pose) < Units.degreesToRotations(degreeTolerance);
   }
 }

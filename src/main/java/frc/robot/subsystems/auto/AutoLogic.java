@@ -78,7 +78,8 @@ public class AutoLogic {
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
-  public static LoggedNetworkString loggedKeys = new LoggedNetworkString("Auto Key");
+  public static LoggedNetworkString loggedKeys =
+      new LoggedNetworkString("/SmartDashboard/Auto Key");
 
   public static List<AutoPath> getAutos() {
     if (rebuiltPaths != null) {
