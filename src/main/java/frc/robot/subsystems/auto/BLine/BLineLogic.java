@@ -14,6 +14,7 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.auto.BLine.Positions.Position;
 import frc.robot.subsystems.auto.BLine.TrenchSides.TrenchSide;
+import frc.robot.subsystems.auto.Misc.DynamicSendableChooser;
 import frc.robot.util.Elastic;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -131,24 +132,26 @@ public class BLineLogic implements BLineSystem {
     createPathChoosers();
   }
 
-  private static void createPathChoosers() {
+private static void createPathChoosers() {
+  pathChoosers.clear();
 
-    for (int i = 0; i < Robot.MAX_STEPS; i++) {
-
+  for (int i = 0; i < Robot.MAX_STEPS; i++) {
       LoggedDashboardChooser<String> chooser =
           new LoggedDashboardChooser<>("BLine/Path Step" + (i + 1));
 
       pathChoosers.add(i, chooser.getSendableChooser());
-    }
+  }
 
-    populateFirstChooser();
-    for (int i = 0; i < pathChoosers.size(); i++) {
-      int ind = i;
-      pathChoosers
+  populateFirstChooser();
+
+  for (int i = 0; i < pathChoosers.size(); i++) {
+    int ind = i;
+
+   pathChoosers
           .get(i)
           .onChange(
               value -> {
-                BLinePath selected = getSelectedPath(ind);
+                BLinePath selected = getSelectedPath(pathChoosers.indexOf(pathChoosers.get(ind)));
 
                 if (selected != null && selected.getShootMode() == BLinePath.ShootMode.UNLIMITED) {
                   Elastic.sendNotification(autoTimingWarning);
@@ -156,14 +159,15 @@ public class BLineLogic implements BLineSystem {
 
                 updatePathChoosers();
               });
-    }
   }
+}
 
   private static void populateFirstChooser() {
 
+
+
     SendableChooser<String> chooser = pathChoosers.get(0);
 
-    // chooser.clearOptions();
 
     for (BLinePath path : autos) {
 
@@ -180,14 +184,12 @@ public class BLineLogic implements BLineSystem {
       BLinePath currentPath = getSelectedPath(step);
 
       if (currentPath == null) {
-        clearChoosersAfter(step);
         break;
       }
 
       List<BLinePath> nextPaths = rebuiltPaths.get(currentPath);
 
       if (nextPaths == null || nextPaths.isEmpty()) {
-        clearChoosersAfter(step);
         break;
       }
 
@@ -203,7 +205,7 @@ public class BLineLogic implements BLineSystem {
         }
       }
 
-      SendableChooser<String> nextChooser = pathChoosers.get(step + 1);
+    SendableChooser<String> nextChooser = pathChoosers.get(step + 1);
       // nextChooser.clearOptions();
 
       for (BLinePath nextPath : nextPaths) {
@@ -223,21 +225,12 @@ public class BLineLogic implements BLineSystem {
     }
   }
 
-  private static void clearChoosersAfter(int step) {
-
-    for (int i = step + 1; i < pathChoosers.size(); i++) {
-
-      // pathChoosers.get(i).clearOptions();
-    }
-  }
-
   private static BLinePath getSelectedPath(int step) {
     if (step < 0 || step >= pathChoosers.size()) {
 
       return null;
     }
-
-    String selectedName = pathChoosers.get(step).getSelected();
+String selectedName = pathChoosers.get(step).getSelected();
 
     if (selectedName == null || REMOVE_OPTION.equals(selectedName)) {
       return null;
@@ -289,20 +282,18 @@ public class BLineLogic implements BLineSystem {
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-    // SmartDashboard.putData("BLine/Selected Auto", field);
-
     trenchSideChooser.onChange(
         value -> {
           updateInitialHeading();
-          // updateFieldDisplay();
+          updateFieldDisplay();
         });
 
     updatePathChoosers();
-    // updateFieldDisplay();
+    updateFieldDisplay();
   }
 
   public void updateFieldDisplay() {
-    // fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
+    startPoseField.setRobotPose(getSelectedAutoStartingPose());
   }
 
   public String getSelectedAutoName() {
