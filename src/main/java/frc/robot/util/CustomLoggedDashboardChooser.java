@@ -7,7 +7,6 @@
 
 package frc.robot.util;
 
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -117,13 +116,9 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
 
   public void clearOptions() {
     options.clear();
-     /*try {
-      Field mapField = CustomSendableChooser.class.getDeclaredField("m_map");
-      mapField.setAccessible(true);
-      ((Map<?, ?>) mapField.get(sendableChooser)).clear();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } */
+    sendableChooser.clear();
+    selectedValue = null;
+    previousValue = null;
   }
 
   /**

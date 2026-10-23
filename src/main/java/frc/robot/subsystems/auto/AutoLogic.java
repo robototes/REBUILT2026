@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
 public class AutoLogic {
@@ -116,7 +115,6 @@ public class AutoLogic {
     physicalRebuiltPaths =
         List.of(
             new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
-
             new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
             new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
             new AutoPath("LT-Neutral", "LT-Neutral"),

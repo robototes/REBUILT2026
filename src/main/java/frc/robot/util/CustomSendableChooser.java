@@ -9,6 +9,8 @@ import static edu.wpi.first.util.ErrorMessages.requireNonNullParam;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -123,8 +125,15 @@ public class CustomSendableChooser<V> implements Sendable, AutoCloseable {
   }
 
   public void clear() {
-    m_map.clear();
-    m_selected = null;
+    m_mutex.lock();
+    try {
+      m_map.clear();
+      m_selected = null;
+      m_defaultChoice = "";
+      m_previousVal = null;
+    } finally {
+      m_mutex.unlock();
+    }
   }
 
   private String m_selected;

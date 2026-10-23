@@ -137,20 +137,6 @@
             }
           },
           {
-            "title": "Auto Key",
-            "x": 1280.0,
-            "y": 0.0,
-            "width": 512.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Auto Key",
-              "period": 0.06,
-              "data_type": "string",
-              "show_submit_button": false
-            }
-          },
-          {
             "title": "Est. Time (s)",
             "x": 1152.0,
             "y": 128.0,
@@ -204,6 +190,20 @@
               "max_value": 4.0,
               "divisions": 5,
               "update_continuously": true
+            }
+          },
+          {
+            "title": "Auto Key",
+            "x": 1280.0,
+            "y": 0.0,
+            "width": 512.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/NetworkInputs/Auto Key",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": true
             }
           }
         ]
