@@ -169,8 +169,7 @@ public class CustomSendableChooser<V> implements Sendable, AutoCloseable {
           m_mutex.lock();
           try {
             m_selected = val;
-           if (!java.util.Objects.equals(m_selected, m_previousVal)
-    && m_listener != null) {
+            if (!java.util.Objects.equals(m_selected, m_previousVal) && m_listener != null) {
               choice = m_map.get(val);
               listener = m_listener;
             } else {
