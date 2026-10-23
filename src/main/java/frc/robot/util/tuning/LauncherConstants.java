@@ -53,13 +53,6 @@ public class LauncherConstants {
     }
   }
 
-  private static final LauncherDistanceDataPoint[] alphaDistanceData = {
-    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
-    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
-    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
-    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
-  };
-
   private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(1, 1.5, 35, 1.018),
     new LauncherDistanceDataPoint(1.5, 2.2, 38, 1.138),

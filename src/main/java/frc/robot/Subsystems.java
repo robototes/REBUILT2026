@@ -16,7 +16,6 @@ import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -82,10 +81,7 @@ public class Subsystems {
     // }
 
     if (DRIVEBASE_ENABLED) {
-      drivebaseSubsystem =
-          (RobotType.TYPE == RobotTypesEnum.ALPHA)
-              ? AlphaTunerConstants.createDrivetrain()
-              : CompTunerConstants.createDrivetrain();
+      drivebaseSubsystem = CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
     }

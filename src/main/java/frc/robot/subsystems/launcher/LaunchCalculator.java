@@ -87,18 +87,12 @@ public class LaunchCalculator {
   private static final double MIN_MOVING_SPEED_ENABLE = 0.1; // m/s
   private static final double MIN_MOVING_SPEED_DISABLE = 0.03; // m/s
 
-  // Low-pass filter for acceleration. 0 = no filtering, 1 = effectively disabled.
-  private static final double ACCEL_FILTER_ALPHA = 0.9;
-
-  // Variable-alpha low-pass filter for the slip estimate. Vision-correction noise and
   // real wheel slip live in different magnitude regimes:
   //   - Vision noise: <1 cm correction over 20 ms, single-frame transients.
   //   - Real stuck/push: wheels at 2 m/s vs robot at 0 = 2+ m/s, sustained over many frames.
   // We use a heavy filter (slow) below the threshold to reject noise, and a light filter
   // (fast) above it to track real events with minimal lag. Hysteresis on the threshold
   // prevents flicker between modes.
-  private static final double SLIP_FILTER_ALPHA_SLOW = 0.85; // noise rejection
-  private static final double SLIP_FILTER_ALPHA_FAST = 0.20; // fast tracking
   private static final double FAST_SLIP_THRESHOLD_ENTER = 2.0; // m/s
   private static final double FAST_SLIP_THRESHOLD_EXIT = 0.5; // m/s (hysteresis)
   private boolean slipFastMode = false;
@@ -292,27 +286,7 @@ public class LaunchCalculator {
     // Uses filteredAcceleration (not raw delta) to avoid noise-driven unnecessary cache misses.
     // Includes angular acceleration so aggressive rotation also busts the cache.
     double speedsDt = timestamp - lastWheelSpeedsTimestamp;
-    if (speedsDt > MIN_POSE_DT && speedsDt < MAX_POSE_DT) {
-      double rawAX =
-          (currentSpeeds.vxMetersPerSecond - lastWheelSpeeds.vxMetersPerSecond) / speedsDt;
-      double rawAY =
-          (currentSpeeds.vyMetersPerSecond - lastWheelSpeeds.vyMetersPerSecond) / speedsDt;
-      double rawAOmega =
-          (currentSpeeds.omegaRadiansPerSecond - lastWheelSpeeds.omegaRadiansPerSecond) / speedsDt;
-      filteredAcceleration =
-          new ChassisSpeeds(
-              ACCEL_FILTER_ALPHA * filteredAcceleration.vxMetersPerSecond
-                  + (1 - ACCEL_FILTER_ALPHA) * rawAX,
-              ACCEL_FILTER_ALPHA * filteredAcceleration.vyMetersPerSecond
-                  + (1 - ACCEL_FILTER_ALPHA) * rawAY,
-              ACCEL_FILTER_ALPHA * filteredAcceleration.omegaRadiansPerSecond
-                  + (1 - ACCEL_FILTER_ALPHA) * rawAOmega);
-    } else if (speedsDt >= MAX_POSE_DT) {
-      // speedsDt outside valid range means the system was disabled, restarted, or had a
-      // significant loop overrun. Reset to zero so stale acceleration from before the gap
-      // doesn't corrupt the phase delay prediction on the first active cycle.
-      filteredAcceleration = new ChassisSpeeds(0, 0, 0);
-    }
+  filteredAcceleration = new ChassisSpeeds(0, 0, 0);
 
     double filteredAccelMagnitude =
         Math.hypot(filteredAcceleration.vxMetersPerSecond, filteredAcceleration.vyMetersPerSecond);
@@ -434,12 +408,6 @@ public class LaunchCalculator {
       } else if (slipRawMag < FAST_SLIP_THRESHOLD_EXIT) {
         slipFastMode = false;
       }
-      double filterAlpha = slipFastMode ? SLIP_FILTER_ALPHA_FAST : SLIP_FILTER_ALPHA_SLOW;
-
-      double newSlipX = filterAlpha * filteredSlip.vxMetersPerSecond + (1 - filterAlpha) * slipRawX;
-      double newSlipY = filterAlpha * filteredSlip.vyMetersPerSecond + (1 - filterAlpha) * slipRawY;
-      double newSlipOmega =
-          filterAlpha * filteredSlip.omegaRadiansPerSecond + (1 - filterAlpha) * slipRawOmega;
 
       // Cap the filtered slip magnitude
       double newSlipMag = Math.hypot(newSlipX, newSlipY);

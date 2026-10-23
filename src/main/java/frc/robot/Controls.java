@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
@@ -78,10 +77,7 @@ public class Controls {
   public static boolean turretKillActive = false;
   public static boolean turretSkipped = false;
 
-  public static final double MaxSpeed =
-      (RobotType.TYPE == RobotTypesEnum.ALPHA)
-          ? AlphaTunerConstants.kSpeedAt12Volts.in(MetersPerSecond)
-          : CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+  public static final double MaxSpeed = CompTunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   // kSpeedAt12Volts desired top speed
   public static double MaxAngularRate =
       RotationsPerSecond.of(0.75)

@@ -1781,15 +1781,10 @@ public class LimelightHelpers {
   }
 
   /**
-   * Configures the complementary filter alpha value for IMU Assist Modes (Modes 3 and 4)
    *
    * @param limelightName Name/identifier of the Limelight
-   * @param alpha Defaults to .001. Higher values will cause the internal IMU to converge onto the
    *     assist source more rapidly.
    */
-  public static void SetIMUAssistAlpha(String limelightName, double alpha) {
-    setLimelightNTDouble(limelightName, "imuassistalpha_set", alpha);
-  }
 
   /**
    * Configures the throttle value. Set to 100-200 while disabled to reduce thermal

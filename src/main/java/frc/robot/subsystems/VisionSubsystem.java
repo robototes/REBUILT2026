@@ -63,9 +63,6 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double MAX_DISTANCE_MT1 = 2.0;
     private static final double MAX_DISTANCE_MT2 = 5.0;
 
-    // Velocity sanity (alpha bot only)
-    private static final double MAX_XY_VELO_ALPHA = 2.0;
-    private static final double MAX_TURN_VELO_ALPHA = 0.2;
 
     // Pose 3D sanity
     private static final double STALENESS_THRESHOLD = 1.0;
