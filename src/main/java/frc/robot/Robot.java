@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
+import frc.robot.subsystems.auto.BLine.BLineAutonomousField;
 import frc.robot.subsystems.auto.BLine.BLineBuilder;
 import frc.robot.subsystems.auto.BLine.BLineFactory;
 import frc.robot.subsystems.auto.BLine.BLineSystem;
@@ -65,6 +66,9 @@ public class Robot extends LoggedRobot {
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
   public static final BLineSystem bLineSystem = BLineFactory.create(BLineFactory.Mode.NEW);
+  private Runnable autoSmartDashboardUpdate;
+  private final Timer autoSmartDashboardTimer = new Timer();
+  private static final double UPDATE_RATE = 0.05;
 
   public static final int MAX_STEPS = 3; // Number of steps in auto chooser
 
@@ -128,6 +132,8 @@ public class Robot extends LoggedRobot {
       }
 
       bLineSystem.init(subsystems);
+      autoSmartDashboardUpdate = BLineAutonomousField.initAdvantageKit(() -> "Field", 0, 0);
+      autoSmartDashboardTimer.start();
       bLineSystem.initAdvantageKit();
     }
 
@@ -201,7 +207,9 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
-
+    if (autoSmartDashboardTimer.advanceIfElapsed(UPDATE_RATE)) {
+      autoSmartDashboardUpdate.run();
+    }
     SmartDashboard.putNumber("GCCount", GCMonitor.getGcCount());
   }
 

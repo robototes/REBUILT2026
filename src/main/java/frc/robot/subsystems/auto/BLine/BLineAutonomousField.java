@@ -7,6 +7,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Robot;
 import frc.robot.lib.BLine.Path;
 import java.util.List;
@@ -17,12 +18,11 @@ import java.util.function.Supplier;
 public class BLineAutonomousField {
 
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
-  private static final double UPDATE_RATE = 0.02;
   private static final double ASSUMED_SPEED_MPS = 3.0;
 
   /* ---------------- NetworkTables init ---------------- */
 
-  public static void initAdvantageKit(Supplier<String> tabName, int columnIndex, int rowIndex) {
+  public static Runnable initAdvantageKit(Supplier<String> tabName, int columnIndex, int rowIndex) {
 
     NetworkTableEntry speedMultiplier =
         NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
@@ -31,6 +31,13 @@ public class BLineAutonomousField {
 
     BLineAutonomousField autonomousField =
         new BLineAutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
+
+    SmartDashboard.putData("Selected auto", Robot.bLineSystem.getField());
+    SmartDashboard.putData("Start pose", Robot.bLineSystem.getStartPoseField());
+
+    return () -> {
+      autonomousField.update(Robot.bLineSystem.getSelectedAutoName());
+    };
   }
 
   /* ---------------- Path data ---------------- */
