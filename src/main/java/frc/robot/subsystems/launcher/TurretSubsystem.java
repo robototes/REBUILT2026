@@ -75,6 +75,9 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 300; // degrees
   public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -40; // degrees
 
+  private final TurretIOTalonFX io;
+  private final TurretIOInputsAutoLogged inputs;
+
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("turretRotation", Pose2d.struct)
@@ -87,6 +90,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
+
     turretMotor =
         new TalonFX(
             Hardware.TURRET_MOTOR_ID,
@@ -102,6 +106,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
     Logger.recordOutput("Zero/zeroedTurret", false);
+    io = new TurretIOTalonFX(turretMotor, limitSwitch);
+    inputs = new TurretIOInputsAutoLogged();
   }
 
   public void turretConfig() {
@@ -280,16 +286,20 @@ public class TurretSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Turret", inputs);
+
     StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
-    Logger.recordOutput("/Turret/Position", positionSignal.getValueAsDouble());
 
-    Logger.recordOutput("/Turret/Velocity", velocitySignal.getValueAsDouble());
+    inputs.positionSignal = positionSignal.getValueAsDouble();
 
-    Logger.recordOutput("/Turret/Current", statorCurrentSignal.getValueAsDouble());
+    inputs.velocitySignal = velocitySignal.getValueAsDouble();
+
+    inputs.statorCurrentSignal = statorCurrentSignal.getValueAsDouble();
 
     Logger.recordOutput("/Turret/Target", targetPos);
 
-    Logger.recordOutput("/Turret/LimitSwitchCurrent", limitSwitch.getVoltage());
+    inputs.limitSwitchCurrent = limitSwitch.getVoltage();
   }
 
   public void brakeTurret() {
