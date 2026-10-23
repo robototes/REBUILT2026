@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
+import frc.robot.subsystems.intake.IntakeIO.IntakeIOInputs;
 import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
@@ -40,6 +41,9 @@ public class IntakeRollers extends SubsystemBase {
   private final StatusSignal<Current> rollerRightStatorCurrent;
   private final StatusSignal<Current> rollerRightSupplyCurrent;
 
+  private IntakeIO[] io;
+  private IntakeIOInputsAutoLogged[] inputs;
+
   public IntakeRollers() {
     // define motors and configs
     leftRoller =
@@ -54,6 +58,8 @@ public class IntakeRollers extends SubsystemBase {
     // sim creator
     if (RobotBase.isSimulation()) {
       rollerSim = new RollerSim(leftRoller, rightRoller);
+
+      inputs = new IntakePivotIOTalonFX
     }
 
     rollerLeftVelocity = leftRoller.getVelocity();
@@ -122,6 +128,8 @@ public class IntakeRollers extends SubsystemBase {
         "Intake/Rollers/Left/leftRollerSupply", rollerLeftSupplyCurrent.getValueAsDouble());
     Logger.recordOutput(
         "Intake/Rollers/Right/rightRollerSupply", rollerRightSupplyCurrent.getValueAsDouble());
+
+
   }
 
   // update sim
