@@ -418,15 +418,13 @@ public class Controls {
 
     if (s.blocker != null) {
       // Need to add requirements here
-      connected(indexingTestController)
-          .and(indexingTestController.rightTrigger())
-          .onTrue(
+      connected(driverController)
+          .and(driverController.leftStick())
+          .toggleOnTrue(
               Commands.parallel(
-                  Commands.runOnce(() -> intakeMode = IntakeMode.BLOCK),
-                  s.blocker.blockerOutCommand()))
-          .onFalse(
-              Commands.parallel(
-                  Commands.runOnce(() -> updateIntakeMode()), s.blocker.blockerInCommand()));
+                  Commands.startEnd(
+                      () -> intakeMode = IntakeMode.BLOCK, () -> intakeMode = IntakeMode.INTAKE),
+                  s.blocker.deployedCommand()));
     }
   }
 
