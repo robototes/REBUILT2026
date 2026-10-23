@@ -65,13 +65,13 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
    * @param chooser The existing SendableChooser object.
    */
   @SuppressWarnings("unchecked")
-  public CustomLoggedDashboardChooser(String key, SendableChooser<V> chooser) {
+  public CustomLoggedDashboardChooser(String key, CustomSendableChooser<V> chooser) {
     this(key);
 
     // Get options map
     Map<String, V> options = new HashMap<>();
     try {
-      Field mapField = SendableChooser.class.getDeclaredField("m_map");
+      Field mapField = CustomSendableChooser.class.getDeclaredField("m_map");
       mapField.setAccessible(true);
       options = (Map<String, V>) mapField.get(chooser);
     } catch (NoSuchFieldException
@@ -84,7 +84,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
     // Get default option
     String defaultString = "";
     try {
-      Field defaultField = SendableChooser.class.getDeclaredField("m_defaultChoice");
+      Field defaultField = CustomSendableChooser.class.getDeclaredField("m_defaultChoice");
       defaultField.setAccessible(true);
       defaultString = (String) defaultField.get(chooser);
     } catch (NoSuchFieldException
@@ -117,13 +117,13 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
 
   public void clearOptions() {
     options.clear();
-    try {
-      Field mapField = SendableChooser.class.getDeclaredField("m_map");
+     /*try {
+      Field mapField = CustomSendableChooser.class.getDeclaredField("m_map");
       mapField.setAccessible(true);
       ((Map<?, ?>) mapField.get(sendableChooser)).clear();
     } catch (Exception e) {
       e.printStackTrace();
-    }
+    } */
   }
 
   /**
@@ -171,7 +171,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
     if (!Logger.hasReplaySource()) {
       selectedValue = sendableChooser.getSelected();
     }
-    Logger.processInputs(prefix + "/SmartDashboard", inputs);
+    Logger.processInputs(prefix + "/AdvantageKit", inputs);
     if (!java.util.Objects.equals(previousValue, selectedValue)) {
       if (listener != null) listener.accept(get());
       previousValue = selectedValue;

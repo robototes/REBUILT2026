@@ -52,7 +52,7 @@ public class CustomSendableChooser<V> implements Sendable, AutoCloseable {
   private Consumer<V> m_listener;
   private static final AtomicInteger s_instances = new AtomicInteger();
 
-  /** Instantiates a {@link SendableChooser}. */
+  /** Instantiates a {@link CustomSendableChooser}. */
   @SuppressWarnings("this-escape")
   public CustomSendableChooser() {
     m_instance = s_instances.getAndIncrement();

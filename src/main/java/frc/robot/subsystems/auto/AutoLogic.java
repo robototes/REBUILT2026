@@ -65,14 +65,14 @@ public class AutoLogic {
 
   /* ---------------- Choosers ---------------- */
 
-  private static final LoggedDashboardChooser<StartPosition> startPositionChooser =
-      new LoggedDashboardChooser<StartPosition>("Starting Position");
+  private static final CustomLoggedDashboardChooser<StartPosition> startPositionChooser =
+      new CustomLoggedDashboardChooser<StartPosition>("Starting Position");
 
   private static final CustomLoggedDashboardChooser<String> availableAutos =
       new CustomLoggedDashboardChooser<String>("Available Auto Variants");
 
-  private static final LoggedDashboardChooser<Integer> gameObjects =
-      new LoggedDashboardChooser<Integer>("Game Objects");
+  private static final CustomLoggedDashboardChooser<Integer> gameObjects =
+      new CustomLoggedDashboardChooser<Integer>("Game Objects");
 
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
@@ -116,6 +116,7 @@ public class AutoLogic {
     physicalRebuiltPaths =
         List.of(
             new AutoPath("C-Outpost-Depot", "C-Outpost-Depot"),
+
             new AutoPath("LeftTrench-Depot", "LeftTrench-Depot"),
             new AutoPath("LT-Neutral-Depot", "LT-Neutral-Depot"),
             new AutoPath("LT-Neutral", "LT-Neutral"),
