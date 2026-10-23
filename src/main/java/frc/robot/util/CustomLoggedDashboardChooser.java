@@ -34,11 +34,11 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
   private final LoggableInputs inputs =
       new LoggableInputs() {
         public void toLog(LogTable table) {
-          table.put(key, selectedValue != null ? selectedValue : "");
+          table.put(key, selectedValue);
         }
 
         public void fromLog(LogTable table) {
-          selectedValue = table.get(key, "");
+          selectedValue = table.get(key, selectedValue);
         }
       };
 
@@ -117,13 +117,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
 
   public void clearOptions() {
     options.clear();
-    try {
-      Field mapField = SendableChooser.class.getDeclaredField("m_map");
-      mapField.setAccessible(true);
-      ((Map<?, ?>) mapField.get(sendableChooser)).clear();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    sendableChooser.clear();
   }
 
   /**
@@ -172,7 +166,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
       selectedValue = sendableChooser.getSelected();
     }
     Logger.processInputs(prefix + "/SmartDashboard", inputs);
-    if (!java.util.Objects.equals(previousValue, selectedValue)) {
+    if (previousValue != selectedValue) {
       if (listener != null) listener.accept(get());
       previousValue = selectedValue;
     }

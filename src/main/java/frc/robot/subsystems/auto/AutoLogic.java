@@ -78,7 +78,8 @@ public class AutoLogic {
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
-  public static LoggedNetworkString loggedKeys = new LoggedNetworkString("Auto Key");
+  public static LoggedNetworkString loggedKeys =
+      new LoggedNetworkString("/SmartDashboard/Auto Key");
 
   public static List<AutoPath> getAutos() {
     if (rebuiltPaths != null) {
@@ -180,20 +181,21 @@ public class AutoLogic {
     availableAutos.clearOptions();
     availableAutos.addDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
+    // Map.of(...).get(null) throws an NPE, so never pass null to commandsMap
     int key = (numGameObject != null) ? numGameObject : 0;
 
     List<AutoPath> autoList = commandsMap.get(key);
     if (autoList == null) return;
 
     // Selected key from the sendable chooser (the title string); can be null if no default is set
-    StartPosition selectedPos = startPositionChooser.get();
-    if (selectedPos == null) {
-      selectedPos = StartPosition.MISC;
+    String selectedTitle = startPositionChooser.getSendableChooser().getSelected();
+    if (selectedTitle == null) {
+      selectedTitle = StartPosition.MISC.title;
     }
 
     for (AutoPath auto : autoList) {
       StartPosition pos = auto.getStartPose();
-      if (pos == selectedPos) {
+      if (pos != null && pos.title.equals(selectedTitle)) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }
