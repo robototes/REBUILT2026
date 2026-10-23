@@ -64,7 +64,7 @@ public class Robot extends LoggedRobot {
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
-  private final BLineSystem bLineSystem = BLineFactory.create(BLineFactory.Mode.NEW);
+  public static final BLineSystem bLineSystem = BLineFactory.create(BLineFactory.Mode.NEW);
 
   public static final int MAX_STEPS = 3; // Number of steps in auto chooser
 

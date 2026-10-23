@@ -30,7 +30,6 @@ public class LegacyBLineLogic implements BLineSystem {
   private static Subsystems s;
   public static Field2d field = new Field2d();
   public static Field2d fieldPoseStart = new Field2d();
-
   private static final List<LegacyBLinePath> autos = new ArrayList<>();
   private static final LoggedDashboardChooser<Position> startPositionChooser =
       new LoggedDashboardChooser<Position>("BLine/Start Position");
@@ -44,7 +43,6 @@ public class LegacyBLineLogic implements BLineSystem {
       new LoggedNetworkNumber("BLine/Initial Heading (Deg)", 0);
   private static final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("BLine Delays").getEntry("Auto Delay");
-
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
   private static final LoggedNetworkString loggedKeys =
       new LoggedNetworkString("BLine/Auto Key", keys);
@@ -333,5 +331,15 @@ public class LegacyBLineLogic implements BLineSystem {
     }
     Pose2d start = selected.getPath().getStartPose();
     initialHeading.set(Math.round(start.getRotation().getDegrees()));
+  }
+
+  @Override
+  public Field2d getField() {
+    return field;
+  }
+
+  @Override
+  public Field2d getStartPoseField() {
+    return fieldPoseStart;
   }
 }

@@ -28,6 +28,7 @@ public class BLineLogic implements BLineSystem {
   private static Subsystems s;
 
   public static Field2d field = new Field2d();
+  public static Field2d startPoseField = new Field2d();
 
   private static final String REMOVE_OPTION = "REMOVE";
   private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser =
@@ -488,5 +489,15 @@ public class BLineLogic implements BLineSystem {
     }
 
     return command;
+  }
+
+  @Override
+  public Field2d getField() {
+    return field;
+  }
+
+  @Override
+  public Field2d getStartPoseField() {
+    return startPoseField;
   }
 }

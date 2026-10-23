@@ -7,6 +7,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Robot;
 import frc.robot.lib.BLine.Path;
 import java.util.List;
 import java.util.Optional;
@@ -188,7 +189,7 @@ public class BLineAutonomousField {
 
       paths = sequence.stream().flatMap(bLinePath -> bLinePath.getAllPaths().stream()).toList();
 
-      startingPose = BLineFactory.getSelectedAutoStartingPose();
+      startingPose = Robot.bLineSystem.getSelectedAutoStartingPose();
 
       pathIndex = 0;
       distanceAlongCurrentPath = 0;
@@ -246,7 +247,7 @@ public class BLineAutonomousField {
       return;
     }
 
-    // BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
-    // BLineLogic.fieldPoseStart.setRobotPose(startingPose);
+    Robot.bLineSystem.getField().setRobotPose(getUpdatedPose(autoName));
+    Robot.bLineSystem.getStartPoseField().setRobotPose(startingPose);
   }
 }
