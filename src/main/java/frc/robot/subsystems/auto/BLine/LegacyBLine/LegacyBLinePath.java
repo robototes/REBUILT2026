@@ -2,11 +2,13 @@ package frc.robot.subsystems.auto.BLine.LegacyBLine;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.lib.BLine.Path;
-import frc.robot.subsystems.auto.BLine.BLineLogic.Position;
+import frc.robot.subsystems.auto.BLine.BLinePathBase;
+import frc.robot.subsystems.auto.BLine.Positions;
+import frc.robot.subsystems.auto.BLine.Positions.Position;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LegacyBLinePath {
+public class LegacyBLinePath implements BLinePathBase {
 
   private final String displayName;
   private final String startingPosName;
@@ -14,7 +16,7 @@ public class LegacyBLinePath {
   private final Path path;
   private final List<Path> allPaths;
   private final List<String> displayedPaths; // Make it final
-  private Position positionType;
+  private Positions.Position positionType;
   private Pose2d startPose;
 
   public LegacyBLinePath(String displayName, String startingPosName, String... displayedPathNames) {
@@ -57,13 +59,18 @@ public class LegacyBLinePath {
     if (positionType == Position.TRENCH) {
       return LegacyBLineLogic.getTrenchPose();
     }
+
     return startPose;
   }
 
-  public Pose2d setStartPose2d(Position pos) {
+  public void setStartPose2d(Positions.Position pos) {
     this.positionType = pos;
     this.startPose = pos.pose;
-    return getStartPose2d();
+  }
+
+  public void setStartPose2d(Pose2d pos) {
+    this.positionType = null;
+    this.startPose = pos;
   }
 
   public boolean isVision() {
@@ -78,7 +85,7 @@ public class LegacyBLinePath {
     return allPaths;
   }
 
-  public Position getStartPositionType() {
+  public Positions.Position getStartPositionType() {
     return positionType;
   }
 }

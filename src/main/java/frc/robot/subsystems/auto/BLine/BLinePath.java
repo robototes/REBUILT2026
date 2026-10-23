@@ -3,13 +3,13 @@ package frc.robot.subsystems.auto.BLine;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.lib.BLine.Path;
-import frc.robot.subsystems.auto.BLine.BLineLogic.Position;
+import frc.robot.subsystems.auto.BLine.Positions.Position;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BLinePath {
+public class BLinePath implements BLinePathBase {
 
-  private ShootMode shootMode;
+  private final ShootMode shootMode;
   private final String displayName;
   private final boolean vision;
   private final Path path;
@@ -92,15 +92,13 @@ public class BLinePath {
     return startPose;
   }
 
-  public Pose2d setStartPose2d(Position pos) {
+  public void setStartPose2d(Position pos) {
     this.positionType = pos;
     this.startPose = pos.pose;
-    return getStartPose2d();
   }
 
-  public Pose2d setStartPose2d(Pose2d pos) {
+  public void setStartPose2d(Pose2d pos) {
     this.startPose = pos;
-    return getStartPose2d();
   }
 
   public boolean isVision() {

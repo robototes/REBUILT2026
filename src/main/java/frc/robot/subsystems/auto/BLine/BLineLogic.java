@@ -1,24 +1,19 @@
 package frc.robot.subsystems.auto.BLine;
 
-import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
 import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
-import frc.robot.subsystems.auto.Misc.StuckOnBallRecovery;
+import frc.robot.subsystems.auto.BLine.Positions.Position;
+import frc.robot.subsystems.auto.BLine.TrenchSides.TrenchSide;
 import frc.robot.util.Elastic;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,48 +23,11 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
-public class BLineLogic {
+public class BLineLogic implements BLineSystem {
 
   private static Subsystems s;
 
   public static Field2d field = new Field2d();
-  private static Boolean enableAutoUnbeach = true;
-  private static Boolean enableLaunchOnTheMove = true;
-
-  private static final Pose2d RIGHT_TRENCH_POSE =
-      new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90));
-
-  private static final Pose2d LEFT_TRENCH_POSE =
-      new Pose2d(4.013, 7.597, Rotation2d.fromDegrees(90));
-
-  public enum Position {
-    TRENCH("Trench", new Pose2d(4.013, 0.473, Rotation2d.fromDegrees(-90))),
-
-    CENTER("Center", new Pose2d(3.600, 4.035, Rotation2d.fromDegrees(0))),
-    DEPOT("Depot", new Pose2d(1.59, 2.10, Rotation2d.fromDegrees(0))),
-    BUMP("Bump", new Pose2d(3.38, 2.45, Rotation2d.fromDegrees(-90))),
-    MISC("Misc", new Pose2d());
-
-    public final String title;
-    public final Pose2d pose;
-
-    Position(String title, Pose2d pose) {
-
-      this.title = title;
-      this.pose = pose;
-    }
-  }
-
-  public enum TrenchSide {
-    RIGHT("Right"),
-    LEFT("Left");
-
-    public final String title;
-
-    TrenchSide(String title) {
-      this.title = title;
-    }
-  }
 
   private static final String REMOVE_OPTION = "REMOVE";
   private static final LoggedDashboardChooser<TrenchSide> trenchSideChooser =
@@ -80,8 +38,6 @@ public class BLineLogic {
   private static final Map<String, BLinePath> namesToAuto = new HashMap<>();
   private static boolean pathsInitialized = false;
   public static Command bLineLaunching;
-  public static Command bLineSimLaunching;
-  private static StructPublisher<Pose2d> recoveryPose;
   public static Path currentPath;
   public static FollowPath follow;
   public static int savedPathIndex = -1;
@@ -101,26 +57,18 @@ public class BLineLogic {
   private static LoggedNetworkString key = new LoggedNetworkString("Auto Keys", keys);
 
   public static boolean isMirrored() {
-
     return getSelectedAutoPath().getStartPositionType() == Position.TRENCH
-        && trenchSideChooser.getSendableChooser().getSelected() == TrenchSide.LEFT.title;
+        && trenchSideChooser.get() == TrenchSide.LEFT;
   }
 
   static Pose2d getTrenchPose() {
 
-    return isMirrored() ? LEFT_TRENCH_POSE : RIGHT_TRENCH_POSE;
+    return isMirrored() ? Positions.LEFT_TRENCH_POSE : Positions.RIGHT_TRENCH_POSE;
   }
 
-  public static void init(Subsystems subsystems) {
+  public void init(Subsystems subsystems) {
 
     s = subsystems;
-    AutosCommands.launcherCommand(s);
-
-    recoveryPose =
-        NetworkTableInstance.getDefault()
-            .getTable("BLine")
-            .getStructTopic("RecoveryPose", Pose2d.struct)
-            .publish();
 
     BLineTriggers.registerTriggers(s);
 
@@ -199,7 +147,7 @@ public class BLineLogic {
           .get(i)
           .onChange(
               value -> {
-                BLinePath selected = getSelectedPath(pathChoosers.indexOf(pathChoosers.get(ind)));
+                BLinePath selected = getSelectedPath(ind);
 
                 if (selected != null && selected.getShootMode() == BLinePath.ShootMode.UNLIMITED) {
                   Elastic.sendNotification(autoTimingWarning);
@@ -327,7 +275,7 @@ public class BLineLogic {
     updatePathChoosers();
   }
 
-  public static void initAdvantageKit() {
+  public void initAdvantageKit() {
     autoDelayEntries.clear();
 
     for (int i = 0; i < pathChoosers.size(); i++) {
@@ -340,28 +288,23 @@ public class BLineLogic {
 
     trenchSideChooser.addOption(TrenchSide.LEFT.title, TrenchSide.LEFT);
 
-    //SmartDashboard.putData("BLine/Selected Auto", field);
-
-    BLineTriggers.enableSotm.set(enableLaunchOnTheMove);
-    BLineTriggers.enableUnbeach.set(enableAutoUnbeach);
-
-
+    // SmartDashboard.putData("BLine/Selected Auto", field);
 
     trenchSideChooser.onChange(
         value -> {
           updateInitialHeading();
-         // updateFieldDisplay();
+          // updateFieldDisplay();
         });
 
     updatePathChoosers();
-   // updateFieldDisplay();
+    // updateFieldDisplay();
   }
 
-  public static void updateFieldDisplay() {
-    //fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
+  public void updateFieldDisplay() {
+    // fieldPoseStart.setRobotPose(getSelectedAutoStartingPose());
   }
 
-  public static String getSelectedAutoName() {
+  public String getSelectedAutoName() {
 
     List<BLinePath> sequence = getSelectedPathSequence();
 
@@ -393,7 +336,7 @@ public class BLineLogic {
     return selected;
   }
 
-  public static Pose2d getSelectedAutoStartingPose() {
+  public Pose2d getSelectedAutoStartingPose() {
 
     BLinePath selected = getSelectedAutoPath();
 
@@ -418,7 +361,7 @@ public class BLineLogic {
     return paths;
   }
 
-  public static List<BLinePath> getBLinePaths() {
+  public List<BLinePath> getBLinePaths() {
 
     return autos;
   }
@@ -478,13 +421,13 @@ public class BLineLogic {
     initialHeading.set(Math.round(start.getRotation().getDegrees()));
   }
 
-  public static Command getSelectedAuto() {
+  public Command getSelectedAuto() {
     if (s == null) return Commands.none();
 
     List<BLinePath> sequence = getSelectedPathSequence();
 
     if (sequence.isEmpty()) {
-      return Commands.runOnce(() -> buildPath(BLinePaths.Default.getPath(), true, true));
+      return buildPath(BLinePaths.Default.getPath(), true, true);
     }
 
     List<Command> commands = new ArrayList<>();
@@ -530,11 +473,14 @@ public class BLineLogic {
 
   public static Command buildPath(Path path, boolean resetPose, boolean saveForRecovery) {
 
-    if (s == null || BLineBuilder.pathBuilder == null || BLineBuilder.continuingPathBuilder == null) {
+    if (s == null
+        || BLineBuilder.pathBuilder == null
+        || BLineBuilder.continuingPathBuilder == null) {
       return Commands.none();
     }
 
-    FollowPath command = (resetPose ? BLineBuilder.pathBuilder : BLineBuilder.continuingPathBuilder).build(path);
+    FollowPath command =
+        (resetPose ? BLineBuilder.pathBuilder : BLineBuilder.continuingPathBuilder).build(path);
 
     if (saveForRecovery) {
       currentPath = path;
@@ -543,11 +489,4 @@ public class BLineLogic {
 
     return command;
   }
-
-  public static Command handleAutos() {
-
-    return getSelectedAuto();
-  }
-
-
 }

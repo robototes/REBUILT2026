@@ -188,7 +188,7 @@ public class BLineAutonomousField {
 
       paths = sequence.stream().flatMap(bLinePath -> bLinePath.getAllPaths().stream()).toList();
 
-      startingPose = BLineLogic.getSelectedAutoStartingPose();
+      startingPose = BLineFactory.getSelectedAutoStartingPose();
 
       pathIndex = 0;
       distanceAlongCurrentPath = 0;
@@ -246,7 +246,7 @@ public class BLineAutonomousField {
       return;
     }
 
-   // BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
-   // BLineLogic.fieldPoseStart.setRobotPose(startingPose);
+    // BLineLogic.field.setRobotPose(getUpdatedPose(autoName));
+    // BLineLogic.fieldPoseStart.setRobotPose(startingPose);
   }
 }

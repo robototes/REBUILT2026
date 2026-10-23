@@ -1,7 +1,7 @@
 package frc.robot.subsystems.auto.BLine;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.robot.subsystems.auto.BLine.BLineLogic.Position;
+import frc.robot.subsystems.auto.BLine.Positions.Position;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -25,13 +25,12 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.lib.BLine.FollowPath;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.BLine.BLineBuilder;
-import frc.robot.subsystems.auto.BLine.BLineLogic;
-import frc.robot.subsystems.auto.BLine.LegacyBLine.LegacyBLineLogic;
+import frc.robot.subsystems.auto.BLine.BLineFactory;
+import frc.robot.subsystems.auto.BLine.BLineSystem;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -42,7 +41,6 @@ import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
 import org.littletonrobotics.junction.LoggedRobot;
-import org.littletonrobotics.junction.Logger;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -66,7 +64,9 @@ public class Robot extends LoggedRobot {
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
-  public static final int MAX_STEPS = 1; // Number of steps in auto chooser
+  private final BLineSystem bLineSystem = BLineFactory.create(BLineFactory.Mode.NEW);
+
+  public static final int MAX_STEPS = 3; // Number of steps in auto chooser
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -107,6 +107,7 @@ public class Robot extends LoggedRobot {
     } else {
       m_simWrapper = null;
     }
+    BLineBuilder.configure(subsystems);
 
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation() && m_simWrapper != null) {
@@ -126,27 +127,8 @@ public class Robot extends LoggedRobot {
         robotSim = null;
       }
 
-
-      // BLINE STUFF
-      if (MAX_STEPS <= 1) {
-        // BLINE STUFF
-        LegacyBLineLogic.init(subsystems); // Handling init and unit test cases
-        LegacyBLineLogic.configure(subsystems); // configure the autobuilder to run autos
-        LegacyBLineLogic.initAdvantageKit(); // Logging
-        // TODO REPLACE WITH TELEMETRY LIB
-        // BLineAutonomousField.initSmartDashBoard( // Visualization
-        //    () -> "Autos", 0, 0, this::addPeriodic);
-      } else {
-
-        BLineLogic.init(
-            subsystems); // Handling init and unit test cases, and toggles autounbech feature on or
-        // off
-        BLineBuilder.configure(subsystems); // configure the autobuilder to run autos
-        BLineLogic.initAdvantageKit(); // Logging
-        // BLineAutonomousField.initAdvantageKit( // Visualization
-        //  () -> "Autos", 0, 0, this.autonomousPeriodic());
-
-      }
+      bLineSystem.init(subsystems);
+      bLineSystem.initAdvantageKit();
     }
 
     CommandScheduler.getInstance()
@@ -303,11 +285,9 @@ public class Robot extends LoggedRobot {
 
       robotSim.resetFuelSim();
     }
-    if (MAX_STEPS <= 1) {
-      CommandScheduler.getInstance().schedule(LegacyBLineLogic.handleAutos());
-    } else {
-      CommandScheduler.getInstance().schedule(BLineLogic.handleAutos());
-    }
+
+    CommandScheduler.getInstance().schedule(bLineSystem.getSelectedAuto());
+
     double initialYaw = SmartDashboard.getNumber("/Selected auto/Robot/2", 0);
     if (subsystems.visionSubsystem != null) {
       if (subsystems.visionSubsystem.limelightaOnline) {
@@ -439,5 +419,9 @@ public class Robot extends LoggedRobot {
       // $VISIONSIM - Clean reset
       m_simWrapper.resetSimPose(pose);
     }
+  }
+
+  public BLineSystem getSystem() {
+    return bLineSystem;
   }
 }
