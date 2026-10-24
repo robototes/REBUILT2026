@@ -29,7 +29,7 @@ import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
 public class AutoLogic {
-
+  protected static final String prefix = "NetworkInputs";
   private static Subsystems s;
 
   /* ---------------- Start positions ---------------- */
@@ -65,16 +65,16 @@ public class AutoLogic {
   /* ---------------- Choosers ---------------- */
 
   private static final CustomLoggedDashboardChooser<StartPosition> startPositionChooser =
-      new CustomLoggedDashboardChooser<StartPosition>("Starting Position");
+      new CustomLoggedDashboardChooser<>("Starting Position");
 
   private static final CustomLoggedDashboardChooser<String> availableAutos =
-      new CustomLoggedDashboardChooser<String>("Available Auto Variants");
+      new CustomLoggedDashboardChooser<>("Available Auto Variants");
 
   private static final CustomLoggedDashboardChooser<Integer> gameObjects =
-      new CustomLoggedDashboardChooser<Integer>("Game Objects");
+      new CustomLoggedDashboardChooser<>("Game Objects");
 
   private static final NetworkTableEntry autoDelayEntry =
-      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
+      NetworkTableInstance.getDefault().getTable(prefix + "/Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
   public static LoggedNetworkString loggedKeys = new LoggedNetworkString("Auto Key");
