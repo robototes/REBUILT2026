@@ -20,14 +20,15 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
 import frc.robot.util.robotType.RobotType;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -49,6 +50,12 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Positions
   private double targetPos;
+  public double manualOffset = 0.0; // Manual jogging to correct for skip
+
+  // The turret pulley has 120 teeth, so each jog is 1 tooth. This is a resolution of 8" at 10' from
+  // the turret
+  private static final double offsetJogAmount = 1.0 / 120.0;
+
   public static final double FRONT_POSITION = 0;
   public static final double LEFT_POSITION = -0.15;
   public static final double RIGHT_POSITION = 0.15;
@@ -102,6 +109,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
     Logger.recordOutput("Zero/zeroedTurret", false);
+
+    Logger.recordOutput("Turret/Turret Offset [Deg]", Math.round(manualOffset * 360.0));
   }
 
   public void turretConfig() {
@@ -139,6 +148,15 @@ public class TurretSubsystem extends SubsystemBase {
               targetPos = pos;
             })
         .withName("Set Turret Position");
+  }
+
+  public Command offsetTurretCommand(int direction) { // 1 is positive offset, -1 is negative offset
+    return Commands.runOnce(
+            () -> {
+              manualOffset += offsetJogAmount * direction;
+              SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset * 360.0));
+            })
+        .withName("Changed Turret Offset");
   }
 
   public void setTurretRawPosition(double pos, double FFVelocity) {
@@ -213,9 +231,9 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
-  public boolean atTarget(DoubleSupplier turretTolerance) {
+  public boolean atTarget(double turretTolerance) {
     return Math.abs(positionSignal.getValueAsDouble() - targetPos)
-        < Units.radiansToRotations(turretTolerance.getAsDouble());
+        < Units.radiansToRotations(turretTolerance);
   }
 
   /**
@@ -237,6 +255,12 @@ public class TurretSubsystem extends SubsystemBase {
 
               double normalizedTarget =
                   MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
+
+              normalizedTarget =
+                  normalizedTarget
+                      + manualOffset
+                          * 360; // Changing the target to account for jogging from driver. Convert
+              // from rotations to degrees
 
               double[] candidates = {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,

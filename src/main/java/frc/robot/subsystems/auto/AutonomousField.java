@@ -12,9 +12,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class AutonomousField {
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
+  protected static final String prefix = "NetworkInputs";
+
+  private static LoggedNetworkNumber est_Time = new LoggedNetworkNumber("Est. Time (s)", 0.0);
 
   /* ---------------- NetworkTables init ---------------- */
 
@@ -29,13 +33,12 @@ public class AutonomousField {
     AutonomousField autonomousField =
         new AutonomousField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
-    SmartDashboard.putData("Selected auto", autonomousField.getField());
-    SmartDashboard.putData("Start pose", autonomousField.getStartPose());
+    SmartDashboard.putData("Autos/Start Pose", autonomousField.getStartPose());
+    SmartDashboard.putData("Autos/Selected Auto", autonomousField.getField());
 
     return () -> {
       autonomousField.update(AutoLogic.getSelectedAutoName());
-      SmartDashboard.putNumber(
-          "Est. Time (s)", Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
+      est_Time.set(Math.round(autonomousField.autoTotalTime() * 100.0) / 100.0);
     };
   }
 

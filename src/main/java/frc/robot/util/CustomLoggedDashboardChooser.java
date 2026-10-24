@@ -7,8 +7,9 @@
 
 package frc.robot.util;
 
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.util.sendable.SendableRegistry;
+import edu.wpi.first.wpilibj.smartdashboard.SendableBuilderImpl;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,20 +26,21 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkInput;
  */
 public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
   private final String key;
+  private final SendableBuilderImpl chooserBuilder = new SendableBuilderImpl();
   private String selectedValue = null;
   private String previousValue = null;
-  private CustomSendableChooser<String> sendableChooser = new CustomSendableChooser<>();
+  private final CustomSendableChooser<String> sendableChooser = new CustomSendableChooser<>();
   private Map<String, V> options = new HashMap<>();
   private Consumer<V> listener = null;
 
   private final LoggableInputs inputs =
       new LoggableInputs() {
         public void toLog(LogTable table) {
-          table.put(key, selectedValue);
+          table.put(key, selectedValue != null ? selectedValue : "");
         }
 
         public void fromLog(LogTable table) {
-          selectedValue = table.get(key, selectedValue);
+          selectedValue = table.get(key, "");
         }
       };
 
@@ -50,8 +52,13 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
    */
   public CustomLoggedDashboardChooser(String key) {
     this.key = key;
-    SmartDashboard.putData(key, sendableChooser);
-    periodic();
+
+    SendableRegistry.add(sendableChooser, key);
+    chooserBuilder.setTable(NetworkTableInstance.getDefault().getTable("Autos").getSubTable(key));
+
+    SendableRegistry.publish(sendableChooser, chooserBuilder);
+    chooserBuilder.startListeners();
+
     Logger.registerDashboardInput(this);
   }
 
@@ -65,13 +72,13 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
    * @param chooser The existing SendableChooser object.
    */
   @SuppressWarnings("unchecked")
-  public CustomLoggedDashboardChooser(String key, SendableChooser<V> chooser) {
+  public CustomLoggedDashboardChooser(String key, CustomSendableChooser<V> chooser) {
     this(key);
 
     // Get options map
     Map<String, V> options = new HashMap<>();
     try {
-      Field mapField = SendableChooser.class.getDeclaredField("m_map");
+      Field mapField = CustomSendableChooser.class.getDeclaredField("m_map");
       mapField.setAccessible(true);
       options = (Map<String, V>) mapField.get(chooser);
     } catch (NoSuchFieldException
@@ -84,7 +91,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
     // Get default option
     String defaultString = "";
     try {
-      Field defaultField = SendableChooser.class.getDeclaredField("m_defaultChoice");
+      Field defaultField = CustomSendableChooser.class.getDeclaredField("m_defaultChoice");
       defaultField.setAccessible(true);
       defaultString = (String) defaultField.get(chooser);
     } catch (NoSuchFieldException
@@ -118,6 +125,8 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
   public void clearOptions() {
     options.clear();
     sendableChooser.clear();
+    selectedValue = null;
+    previousValue = null;
   }
 
   /**
@@ -162,12 +171,18 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
   }
 
   public void periodic() {
+    chooserBuilder.update();
+
     if (!Logger.hasReplaySource()) {
       selectedValue = sendableChooser.getSelected();
     }
-    Logger.processInputs(prefix + "/SmartDashboard", inputs);
-    if (previousValue != selectedValue) {
-      if (listener != null) listener.accept(get());
+
+    Logger.processInputs(prefix + "/Autos", inputs);
+
+    if (!java.util.Objects.equals(previousValue, selectedValue)) {
+      if (listener != null) {
+        listener.accept(get());
+      }
       previousValue = selectedValue;
     }
   }

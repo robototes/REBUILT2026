@@ -26,11 +26,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.json.simple.parser.ParseException;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
 public class AutoLogic {
-
+  protected static final String prefix = "NetworkInputs";
   private static Subsystems s;
 
   /* ---------------- Start positions ---------------- */
@@ -65,17 +64,17 @@ public class AutoLogic {
 
   /* ---------------- Choosers ---------------- */
 
-  private static final LoggedDashboardChooser<StartPosition> startPositionChooser =
-      new LoggedDashboardChooser<StartPosition>("Starting Position");
+  private static final CustomLoggedDashboardChooser<StartPosition> startPositionChooser =
+      new CustomLoggedDashboardChooser<>("Starting Position");
 
   private static final CustomLoggedDashboardChooser<String> availableAutos =
-      new CustomLoggedDashboardChooser<String>("Available Auto Variants");
+      new CustomLoggedDashboardChooser<>("Available Auto Variants");
 
-  private static final LoggedDashboardChooser<Integer> gameObjects =
-      new LoggedDashboardChooser<Integer>("Game Objects");
+  private static final CustomLoggedDashboardChooser<Integer> gameObjects =
+      new CustomLoggedDashboardChooser<>("Game Objects");
 
   private static final NetworkTableEntry autoDelayEntry =
-      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
+      NetworkTableInstance.getDefault().getTable(prefix + "/Autos").getEntry("Auto Delay");
 
   public static final String keys = "RB=Right Bump, LB=Left Bump, LT=Left Trench, RT=Right Trench";
   public static LoggedNetworkString loggedKeys = new LoggedNetworkString("Auto Key");
@@ -180,21 +179,20 @@ public class AutoLogic {
     availableAutos.clearOptions();
     availableAutos.addDefaultOption(defaultPath.getDisplayName(), defaultPath.getDisplayName());
 
-    // Map.of(...).get(null) throws an NPE, so never pass null to commandsMap
     int key = (numGameObject != null) ? numGameObject : 0;
 
     List<AutoPath> autoList = commandsMap.get(key);
     if (autoList == null) return;
 
     // Selected key from the sendable chooser (the title string); can be null if no default is set
-    String selectedTitle = startPositionChooser.getSendableChooser().getSelected();
-    if (selectedTitle == null) {
-      selectedTitle = StartPosition.MISC.title;
+    StartPosition selectedPos = startPositionChooser.get();
+    if (selectedPos == null) {
+      selectedPos = StartPosition.MISC;
     }
 
     for (AutoPath auto : autoList) {
       StartPosition pos = auto.getStartPose();
-      if (pos != null && pos.title.equals(selectedTitle)) {
+      if (pos == selectedPos) {
         availableAutos.addOption(auto.getDisplayName(), auto.getDisplayName());
       }
     }
