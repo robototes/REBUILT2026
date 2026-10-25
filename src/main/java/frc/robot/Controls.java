@@ -6,6 +6,8 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
@@ -267,9 +269,9 @@ public class Controls {
     driverController
         .rightTrigger()
         .or(readyToShoot)
-        .and(driverController.rightBumper().negate())
         .whileTrue(
             Commands.parallel(
+                    s.blocker.retract(),
                     Commands.either(
                         AutoDriveRotate.autoRotate(
                             s.drivebaseSubsystem,
@@ -291,12 +293,14 @@ public class Controls {
                                     s.indexerSubsystem.runIndexer(
                                         () -> s.flywheels.getTargetSpeed()),
                                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH)
-                                        .andThen(Commands.runOnce(() -> updateIntakeMode())))
+                                        .andThen(Commands.runOnce(() -> { intakeMode = IntakeMode.LAUNCH;
+                                        s.intakePivot.restartTimer();})))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
                                 .andThen(
                                     Commands.runOnce(
                                         () -> {
-                                          updateIntakeMode();
+                                          intakeMode = IntakeMode.LAUNCH;
+                                        s.intakePivot.restartTimer();
                                           ledsMode = LEDMode.LAUNCHING;
                                         })))
                         .repeatedly())
@@ -363,8 +367,7 @@ public class Controls {
   }
 
   private void updateIntakeMode() {
-    if (connected(indexingTestController).getAsBoolean()
-        && indexingTestController.rightTrigger().getAsBoolean()) {
+    if (driverController.rightBumper().getAsBoolean()) {
       intakeMode = IntakeMode.BLOCK;
     } else if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
@@ -400,29 +403,50 @@ public class Controls {
                         s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                     case BLOCK -> s.intakeSubsystem.holdAtExtake();
-                  }
+                  };
+                  Logger.recordOutput("Mode", intakeMode);
                 },
                 s.intakeSubsystem)
             .withName("Intake Default Command"));
     driverController
         .leftTrigger()
         .whileTrue(
+            Commands.parallel(s.blocker.retract(),
             Commands.runOnce(
-                    () -> {
-                      updateIntakeMode();
-                    })
+
+                      () ->
+                      updateIntakeMode()))
+
                 .withName("Intaking"))
         .onFalse(Commands.runOnce(() -> updateIntakeMode()).withName("Intaking Finished"));
     driverController
         .povUp()
-        .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Deploy Intake"));
+        .onTrue(
+          Commands.parallel(s.blocker.retract(),
+            Commands.runOnce(
+                    () ->
+                      intakeMode = IntakeMode.DEPLOYED
+                    ))
+                .withName("Deploy Intake"));
     driverController
         .povDown()
         .onTrue(
-            Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED).withName("Retract Intake"));
+          Commands.parallel(s.blocker.retract(),
+            Commands.runOnce(
+                       () ->
+                      intakeMode = IntakeMode.RETRACTED
+                    ))
+                .withName("Retract Intake"));
     driverController
         .leftBumper()
-        .whileTrue(Commands.runOnce(() -> intakeMode = IntakeMode.EXTAKE).withName("Extaking"))
+        .whileTrue(
+          Commands.parallel(s.blocker.retract(),
+            Commands.runOnce(
+
+                      () ->
+                      intakeMode = IntakeMode.EXTAKE
+            ))
+                .withName("Extaking"))
         .onFalse(
             Commands.runOnce(() -> intakeMode = IntakeMode.DEPLOYED).withName("Extaking Finished"));
 
@@ -439,12 +463,12 @@ public class Controls {
     if (s.blocker != null) {
       // Need to add requirements here
       connected(driverController)
-          .and(driverController.leftStick())
-          .toggleOnTrue(
+          .and(driverController.rightBumper())
+          .onTrue(
               Commands.parallel(
-                  Commands.startEnd(
-                      () -> intakeMode = IntakeMode.BLOCK, () -> intakeMode = IntakeMode.INTAKE),
-                  s.blocker.deployedCommand()));
+                  Commands.runOnce(
+                      () -> intakeMode = IntakeMode.BLOCK),
+                  s.blocker.deploy()));
     }
   }
 

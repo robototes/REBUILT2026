@@ -11,6 +11,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import org.littletonrobotics.junction.Logger;
@@ -110,6 +111,14 @@ public class Blocker extends SubsystemBase {
           setPivotPosition(RETRACTED_POS);
           // anything else that should happen on end
         });
+  }
+
+  public Command deploy() {
+    return Commands.runOnce(() -> setPivotPosition(DEPLOYED_POS));
+  }
+
+  public Command retract() {
+    return Commands.runOnce(() -> setPivotPosition(RETRACTED_POS));
   }
 
   public Command zeroBlocker() {

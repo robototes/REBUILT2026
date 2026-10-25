@@ -71,7 +71,7 @@ public class Robot extends LoggedRobot {
   private final RobotSim robotSim;
   private final LoggedMechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
-  private static final double BROWNOUT_VOLTAGE = 7.0;
+  private static final double BROWNOUT_VOLTAGE = 5.5;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
