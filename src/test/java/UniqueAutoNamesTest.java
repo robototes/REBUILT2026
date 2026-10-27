@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 public class UniqueAutoNamesTest {
   @Test
   public void validateUniqueAutoNames() {
-    UnitTestHelpers.setup();
+    //TODO add object of type autos for setup()
+   // UnitTestHelpers.setup();
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 

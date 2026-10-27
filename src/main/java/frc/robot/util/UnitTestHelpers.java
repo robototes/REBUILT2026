@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import edu.wpi.first.util.struct.parser.ParseException;
-import frc.robot.subsystems.auto.BLine.BLineLogic;
+import frc.robot.subsystems.auto.BLine.Autos;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -15,10 +15,11 @@ import org.json.simple.parser.JSONParser;
 
 public class UnitTestHelpers {
   public static final String PATHS_PATH = "src/main/deploy/autos/paths";
+  private final Autos autos = new Autos();
 
   // @BeforeEach
-  public static void setup() {
-    BLineLogic.unitTestInit();
+  public void setup() {
+    autos.unitTestInit();
   }
 
   // ==================== METHODS ====================

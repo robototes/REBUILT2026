@@ -1,5 +1,4 @@
 import edu.wpi.first.util.struct.parser.ParseException;
-import frc.robot.subsystems.auto.BLine.BLineLogic;
 import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.HashMap;
@@ -8,11 +7,11 @@ import org.junit.jupiter.api.Test;
 
 public class JSONComparisionTest {
   private final int MINIMUM_FILE_COUNT = 2;
-
+//TODO add Autos object for unit test init call
   @Test
   public void compareJSONContents()
       throws ParseException, ParseException, org.json.simple.parser.ParseException {
-    BLineLogic.unitTestInit();
+   // BLineLogic.unitTestInit();
     File deployDir = new File(UnitTestHelpers.PATHS_PATH);
 
     if (!deployDir.exists() || !deployDir.isDirectory()) {

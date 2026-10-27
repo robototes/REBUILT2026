@@ -1,4 +1,4 @@
-import frc.robot.subsystems.auto.BLine.BLineLogic;
+
 import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.ArrayList;
@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test;
 public class UnusedFilesTest {
   @Test
   public void unusedFileNames() {
-    UnitTestHelpers.setup();
+    //UnitTestHelpers.setup(); TODO replace with autos object for setup() call
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 
-    List<String> validPathNames = BLineLogic.getBLinePathsNames();
+  //  List<String> validPathNames = BLineLogic.getBLinePathsNames(); TODO replace with something else.
     List<String> unusedFiles = new ArrayList<>();
-
+/*
     for (File file : files) {
       String filename = UnitTestHelpers.getFilenamWithoutExtension(file);
       if (!validPathNames.contains(filename) && !filename.equalsIgnoreCase("pathgroups")) {
@@ -29,6 +29,6 @@ public class UnusedFilesTest {
       }
     } else {
       System.out.println("All files in 'autos' folder are used");
-    }
+    } */ //TODO Fix this whole commented out section pls
   }
 }

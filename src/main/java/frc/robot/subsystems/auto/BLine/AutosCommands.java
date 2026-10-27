@@ -56,45 +56,7 @@ public class AutosCommands {
     return Commands.none();
   }
 
-  public static Command resume(Subsystems s) {
-
-    if (BLineLogic.follow == null) {
-      return Commands.none();
-    }
-
-    int i = BLineLogic.savedPathIndex;
-
-    var flat =
-        BLineLogic.getSelectedAutoPath().getPath().getPathElementsWithConstraintsNoWaypoints();
-    List<Path.PathElement> remaining = new ArrayList<>();
-    remaining.add(
-        new Path.TranslationTarget(s.drivebaseSubsystem.getState().Pose.getTranslation()));
-
-    for (int j = i; j < flat.size(); j++) {
-      remaining.add(flat.get(j).getFirst().copy());
-    }
-
-    Path remainder =
-        new Path(remaining, BLineLogic.getSelectedAutoPath().getPath().getPathConstraints());
-    return BLineLogic.buildPath(remainder, false, true);
-  }
-
-  public static Command recoverCommand(Subsystems s) {
-
-    return Commands.sequence(
-            BLineLogic.buildPath(
-                StuckOnBallRecovery.getRecoverySegment(
-                    () -> s.drivebaseSubsystem.getState().Pose,
-                    () ->
-                        Rotation2d.fromDegrees(
-                            s.drivebaseSubsystem.getPigeon2().getPitch().getValueAsDouble()),
-                    () ->
-                        Rotation2d.fromDegrees(
-                            s.drivebaseSubsystem.getPigeon2().getRoll().getValueAsDouble())),
-                false,
-                false))
-        .until(() -> !s.drivebaseSubsystem.isBeached(StuckOnBallRecovery.STUCK_ANGLE_THRESHOLD));
-  }
+ 
 
   public static Command stowCommand(Subsystems s) {
 
