@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.AlphaTunerConstants;
-import frc.robot.subsystems.intake.IntakeIO.IntakeIOInputs;
 import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
@@ -41,8 +40,8 @@ public class IntakeRollers extends SubsystemBase {
   private final StatusSignal<Current> rollerRightStatorCurrent;
   private final StatusSignal<Current> rollerRightSupplyCurrent;
 
-  private IntakeIO[] io;
-  private IntakeIOInputsAutoLogged[] inputs;
+  private final IntakeIO io;
+  private final IntakeIOInputsAutoLogged inputs;
 
   public IntakeRollers() {
     // define motors and configs
@@ -55,11 +54,12 @@ public class IntakeRollers extends SubsystemBase {
     leftRoller.clearStickyFaults();
     rightRoller.clearStickyFaults();
 
+    io = new IntakeRollerIOTalonFX(leftRoller, rightRoller);
+    inputs = new IntakeIOInputsAutoLogged();
+
     // sim creator
     if (RobotBase.isSimulation()) {
       rollerSim = new RollerSim(leftRoller, rightRoller);
-
-      inputs = new IntakePivotIOTalonFX
     }
 
     rollerLeftVelocity = leftRoller.getVelocity();
@@ -116,20 +116,8 @@ public class IntakeRollers extends SubsystemBase {
         rollerLeftSupplyCurrent,
         rollerRightStatorCurrent,
         rollerRightSupplyCurrent);
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerSpeed", rollerLeftVelocity.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerSpeed", rollerRightVelocity.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerStator", rollerLeftStatorCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerStator", rollerRightStatorCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerSupply", rollerLeftSupplyCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerSupply", rollerRightSupplyCurrent.getValueAsDouble());
-
-
+        io.updateInputs(inputs);
+        Logger.processInputs("Intake Rollers", inputs);
   }
 
   // update sim
