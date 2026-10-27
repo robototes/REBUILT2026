@@ -7,9 +7,7 @@ public class IntakeRollerIOTalonFX implements IntakeIO {
   private TalonFX rollerMotor1;
   private TalonFX rollerMotor2;
 
-  public IntakeRollerIOTalonFX(
-      TalonFX rollerMotor1a,
-      TalonFX rollerMotor2a) {
+  public IntakeRollerIOTalonFX(TalonFX rollerMotor1a, TalonFX rollerMotor2a) {
     rollerMotor1 = rollerMotor1a;
     rollerMotor2 = rollerMotor2a;
   }

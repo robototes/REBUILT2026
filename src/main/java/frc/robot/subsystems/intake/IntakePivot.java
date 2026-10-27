@@ -74,8 +74,8 @@ public class IntakePivot extends SubsystemBase {
   private final StatusSignal<Current> intakePivotSupplyCurrent;
   private final StatusSignal<Angle> position;
 
-  private final IntakeIO io;
-  private final IntakeIOInputsAutoLogged inputs;
+  private final PivotIO io;
+  private final PivotIOInputsAutoLogged inputs;
 
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
@@ -90,6 +90,7 @@ public class IntakePivot extends SubsystemBase {
     Logger.recordOutput("Zero/intakePivotZero", false);
 
     io = new IntakePivotIOTalonFX(pivotMotor);
+    inputs = new PivotIOInputsAutoLogged();
   }
 
   public void pivotConfig() {
@@ -201,7 +202,8 @@ public class IntakePivot extends SubsystemBase {
   // update simulation
   public void periodic() {
     StatusSignal.refreshAll(position, intakePivotStatorCurrent, intakePivotSupplyCurrent);
-    Logger.recordOutput("Intake/Pivot/pivotTargetPosition", getPivotTargetPosition());
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake Pivot", inputs);
   }
 
   public void simulationPeriodic() {

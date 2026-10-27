@@ -116,8 +116,8 @@ public class IntakeRollers extends SubsystemBase {
         rollerLeftSupplyCurrent,
         rollerRightStatorCurrent,
         rollerRightSupplyCurrent);
-        io.updateInputs(inputs);
-        Logger.processInputs("Intake Rollers", inputs);
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake Rollers", inputs);
   }
 
   // update sim
