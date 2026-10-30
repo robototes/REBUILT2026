@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.vision;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -14,9 +14,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -24,25 +21,29 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
+import frc.robot.subsystems.vision.VisionIO.PoseObservation;
+import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
+import frc.robot.subsystems.vision.VisionIO.TagObservation;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.BetterPoseEstimate;
-import frc.robot.util.LLCamera;
-import frc.robot.util.LimelightHelpers.RawFiducial;
 import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class VisionSubsystem extends SubsystemBase {
-  private static final String LIMELIGHT_A = Hardware.LIMELIGHT_A;
-  private static final String LIMELIGHT_B = Hardware.LIMELIGHT_B;
-  private static final String LIMELIGHT_C = Hardware.LIMELIGHT_C;
+
+  private static final String[] CAMERA_NAMES = {
+    Hardware.LIMELIGHT_A, Hardware.LIMELIGHT_B, Hardware.LIMELIGHT_C
+  };
+  private static final int CAM_A = 0;
+  private static final int CAM_B = 1;
+  private static final int CAM_C = 2;
 
   public boolean limelightaOnline = false;
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
 
-  private Matrix<N3, N1> stdDevs = null;
+  private static final String VISION_TABLE = "/vision";
 
   private static LoggedNetworkNumber A_XY_MT2 =
       new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
@@ -71,7 +72,6 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double MAX_TURN_VELO_ALPHA = 0.2;
 
     // Pose 3D sanity
-    private static final double STALENESS_THRESHOLD = 1.0;
     private static final double ROTATION_TOLERANCE = 12.0;
 
     // Field boundary
@@ -129,13 +129,24 @@ public class VisionSubsystem extends SubsystemBase {
   private final LoggedNetworkBoolean disableVision =
       new LoggedNetworkBoolean("disableVision", false);
 
-  private final LLCamera ACamera = new LLCamera(LIMELIGHT_A);
-  private final LLCamera BCamera = new LLCamera(LIMELIGHT_B);
-  private final LLCamera CCamera = new LLCamera(LIMELIGHT_C);
-
   private static final String RAW_POSE_KEY_A = "vision/rawFieldPose3dA";
   private static final String RAW_POSE_KEY_B = "vision/rawFieldPose3dB";
   private static final String RAW_POSE_KEY_C = "vision/rawFieldPose3dC";
+  private static final String[] RAW_POSE_KEYS = {RAW_POSE_KEY_A, RAW_POSE_KEY_B, RAW_POSE_KEY_C};
+
+  /**
+   * Per-camera processing state. This used to live inside LLCamera. It is derived from accepted
+   * measurements (not from hardware).
+   */
+  private static class CameraState {
+    double lastTimestampSeconds = 0;
+    Pose2d lastPoseMT1 = null;
+    Pose2d lastPoseMT2 = null;
+  }
+
+  private final VisionIO[] io;
+  private final VisionIOInputsAutoLogged[] inputs;
+  private final CameraState[] cameraStates;
 
   private double lastTimestampSeconds = 0;
   private Pose2d lastFieldPose = null;
@@ -147,8 +158,16 @@ public class VisionSubsystem extends SubsystemBase {
   private VisionPoseTracking visionPoseTracking;
   private ShowVisionOnField m_showVisionOnField;
 
-  public VisionSubsystem(CommandSwerveDrivetrain drivetrain) {
+  // Locked to 3 ios
+  public VisionSubsystem(CommandSwerveDrivetrain drivetrain, VisionIO[] io) {
     this.drivetrain = drivetrain;
+    this.io = io;
+    inputs = new VisionIOInputsAutoLogged[io.length];
+    cameraStates = new CameraState[io.length];
+    for (int i = 0; i < io.length; i++) {
+      inputs[i] = new VisionIOInputsAutoLogged();
+      cameraStates[i] = new CameraState();
+    }
 
     // TODO: Log this with Telemetry WPILib 2027 no support or workaround from advantage kit
     robotField = new Field2d();
@@ -166,17 +185,26 @@ public class VisionSubsystem extends SubsystemBase {
     Logger.recordOutput("vision/limelight-c_time since last reading", 0.0);
   }
 
+  /** Must be called once per robot loop. */
   public void update() {
+    // 1. Logic + outputs
     if (getDisableVision()) {
-      Logger.recordOutput("/vision/limelight-a_rejectReason", "vision-disabled");
-      Logger.recordOutput("/vision/limelight-b_rejectReason", "vision-disabled");
-      Logger.recordOutput("/vision/limelight-c_rejectReason", "vision-disabled");
+      for (String name : CAMERA_NAMES) {
+        Logger.recordOutput("/vision/" + name + "_rejectReason", "vision-disabled");
+      }
       return;
     }
 
-    limelightaOnline = isLimeLightOnline(LIMELIGHT_A);
-    limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
-    limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
+    // 2. Read + log inputs (or load them from the log in replay). This always runs, even when
+    //    vision is disabled, so the log stays complete.
+    for (int i = 0; i < io.length; i++) {
+      io[i].updateInputs(inputs[i]);
+      Logger.processInputs(VISION_TABLE + CAMERA_NAMES[i], inputs[i]);
+    }
+
+    limelightaOnline = inputs[CAM_A].connected;
+    limelightbOnline = inputs[CAM_B].connected;
+    limelightcOnline = inputs[CAM_C].connected;
 
     SwerveDriveState swerveDriveState = drivetrain.getState();
     visionPoseTracking =
@@ -189,62 +217,48 @@ public class VisionSubsystem extends SubsystemBase {
     boolean underDefense = isUnderDefense(visionPoseTracking);
     Logger.recordOutput("vision/underDefense", underDefense);
 
-    processCamera(ACamera, limelightaOnline, RAW_POSE_KEY_A, visionPoseTracking, underDefense);
-    processCamera(BCamera, limelightbOnline, RAW_POSE_KEY_B, visionPoseTracking, underDefense);
-    processCamera(CCamera, limelightcOnline, RAW_POSE_KEY_C, visionPoseTracking, underDefense);
+    processCamera(CAM_A, visionPoseTracking, underDefense);
+    processCamera(CAM_B, visionPoseTracking, underDefense);
+    processCamera(CAM_C, visionPoseTracking, underDefense);
     updateCameraView(visionPoseTracking);
   }
 
   private void processCamera(
-      LLCamera camera,
-      boolean cameraOnline,
-      String rawPoseKey,
-      VisionPoseTracking visionPoseTracking,
-      boolean underDefense) {
-    if (!cameraOnline) return;
-    RawFiducial[] rawFiducials = camera.getRawFiducials();
-    if (rawFiducials == null) return;
+      int cameraIndex, VisionPoseTracking visionPoseTracking, boolean underDefense) {
+    VisionIOInputsAutoLogged cameraInputs = inputs[cameraIndex];
+    if (!cameraInputs.connected) return;
 
-    double maxAmbiguity = getMaxAmbiguity(rawFiducials);
-    BetterPoseEstimate mt1Estimate = camera.getBetterPoseEstimate();
-    BetterPoseEstimate mt2Estimate = camera.getPoseEstimateMegatag2();
+    TagObservation[] fiducials = cameraInputs.fiducials;
+    double maxAmbiguity = getMaxAmbiguity(fiducials);
 
-    processLimelight(
-        mt1Estimate,
-        rawPoseKey,
-        maxAmbiguity,
-        visionPoseTracking,
-        rawFiducials,
-        camera,
-        underDefense,
-        camera.getName());
-    processLimelight(
-        mt2Estimate,
-        rawPoseKey,
-        maxAmbiguity,
-        visionPoseTracking,
-        rawFiducials,
-        camera,
-        underDefense,
-        camera.getName());
+    // Observations are processed MT1 then MT2.
+    for (PoseObservation observation : cameraInputs.poseObservations) {
+      processLimelight(
+          observation, cameraIndex, maxAmbiguity, visionPoseTracking, fiducials, underDefense);
+    }
   }
 
   private void processLimelight(
-      BetterPoseEstimate estimate,
-      String rawPoseKey,
+      PoseObservation observation,
+      int cameraIndex,
       double maxAmbiguity,
       VisionPoseTracking visionPoseTracking,
-      RawFiducial[] rawFiducials,
-      LLCamera camera,
-      boolean underDefense,
-      String cameraName) {
+      TagObservation[] fiducials,
+      boolean underDefense) {
 
-    if (estimate == null || estimate.tagCount <= 0) return;
-    Logger.recordOutput(rawPoseKey + (estimate.isMegaTag2 ? "_MT2" : "_MT1"), estimate.pose3d);
+    if (observation == null || observation.tagCount() <= 0) return;
 
-    Pose2d visionPose2d = estimate.pose3d.toPose2d();
-    if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
-      publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp", cameraName);
+    String cameraName = CAMERA_NAMES[cameraIndex];
+    CameraState state = cameraStates[cameraIndex];
+    boolean isMegaTag2 = observation.type() == PoseObservationType.MEGATAG_2;
+    Pose3d pose3d = observation.pose();
+    double timestamp = observation.timestamp();
+
+    Logger.recordOutput(RAW_POSE_KEYS[cameraIndex] + (isMegaTag2 ? "_MT2" : "_MT1"), pose3d);
+
+    Pose2d visionPose2d = pose3d.toPose2d();
+    if (timestamp == state.lastTimestampSeconds) {
+      publishDiagnostics(observation, visionPose2d, cameraIndex, "stale-timestamp");
       return;
     }
 
@@ -255,60 +269,56 @@ public class VisionSubsystem extends SubsystemBase {
                 > VisionConstants.MAX_XY_VELO_ALPHA
             || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
                 > VisionConstants.MAX_TURN_VELO_ALPHA)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed", cameraName);
+      publishDiagnostics(observation, visionPose2d, cameraIndex, "alpha-max-speed");
       return;
     }
 
     if (!MathUtil.isNear(
             0,
-            estimate.pose3d.getRotation().getX(),
+            pose3d.getRotation().getX(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || !MathUtil.isNear(
             0,
-            estimate.pose3d.getRotation().getY(),
+            pose3d.getRotation().getY(),
             Units.degreesToRadians(VisionConstants.ROTATION_TOLERANCE))
         || (lastFieldPose != null && lastFieldPose.equals(visionPose2d))) {
-      publishDiagnostics(
-          estimate, visionPose2d, camera, "impossible-rotation or height", cameraName);
+      publishDiagnostics(observation, visionPose2d, cameraIndex, "impossible-rotation or height");
       return;
     }
 
     if (!isPoseOnField(visionPose2d)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "off-field", cameraName);
+      publishDiagnostics(observation, visionPose2d, cameraIndex, "off-field");
       return;
     }
 
-    Pose2d lastVisionPose = estimate.isMegaTag2 ? camera.getlastPoseMT2() : camera.getlastPoseMT1();
+    Pose2d lastVisionPose = isMegaTag2 ? state.lastPoseMT2 : state.lastPoseMT1;
     if (!isVelocityPlausible(
-        visionPose2d,
-        estimate.timestampSeconds,
-        lastVisionPose,
-        camera.getLastTimestampSeconds(),
-        underDefense)) {
-      publishDiagnostics(estimate, visionPose2d, camera, "velocity-implausible", cameraName);
+        visionPose2d, timestamp, lastVisionPose, state.lastTimestampSeconds, underDefense)) {
+      publishDiagnostics(observation, visionPose2d, cameraIndex, "velocity-implausible");
       return;
     }
 
-    double spread = getMultiTagSpread(rawFiducials, estimate.pose3d, AllianceUtils.FIELD_LAYOUT);
+    double spread = getMultiTagSpread(fiducials, pose3d, AllianceUtils.FIELD_LAYOUT);
     if (spread > VisionConstants.SPREAD_REJECT) {
       Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
-      publishDiagnostics(estimate, visionPose2d, camera, "inter-tag-inconsistent", cameraName);
+      publishDiagnostics(observation, visionPose2d, cameraIndex, "inter-tag-inconsistent");
       return;
     }
 
-    double avgTagDist = estimate.avgTagDist;
-    if (estimate.isMegaTag2) {
+    double avgTagDist = observation.averageTagDistance();
+    Matrix<N3, N1> stdDevs;
+    if (isMegaTag2) {
       stdDevs =
           getEstimationStdDevsLimelightMT2(
-              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, cameraName);
+              avgTagDist, observation.tagCount(), maxAmbiguity, fiducials, cameraName);
     } else {
       stdDevs =
           getEstimationStdDevsLimelightMT1(
-              avgTagDist, estimate.tagCount, maxAmbiguity, rawFiducials, cameraName);
+              avgTagDist, observation.tagCount(), maxAmbiguity, fiducials, cameraName);
     }
 
     if (stdDevs.get(0, 0) >= Double.MAX_VALUE) {
-      publishDiagnostics(estimate, visionPose2d, camera, "ambiguity-or-range", cameraName);
+      publishDiagnostics(observation, visionPose2d, cameraIndex, "ambiguity-or-range");
       return;
     }
 
@@ -325,32 +335,31 @@ public class VisionSubsystem extends SubsystemBase {
       m_showVisionOnField.showPointInTimeVisionEstimate(
           ShowVisionOnField.FieldType.SIMULATION_FIELD,
           cameraName,
-          estimate.isMegaTag2,
-          java.util.Optional.of(estimate.pose3d.toPose2d()));
+          isMegaTag2,
+          java.util.Optional.of(pose3d.toPose2d()));
     }
 
-    maybeResetToVision(visionPose2d, maxAmbiguity, estimate.tagCount, cameraName);
+    maybeResetToVision(visionPose2d, maxAmbiguity, observation.tagCount(), cameraName);
 
-    drivetrain.addVisionMeasurement(
-        visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
+    drivetrain.addVisionMeasurement(visionPose2d, Utils.fpgaToCurrentTime(timestamp), stdDevs);
     robotField.setRobotPose(drivetrain.getState().Pose);
 
-    if (estimate.isMegaTag2) {
-      camera.setlastPoseMT2(visionPose2d);
+    if (isMegaTag2) {
+      state.lastPoseMT2 = visionPose2d;
     } else {
-      camera.setlastPoseMT1(visionPose2d);
+      state.lastPoseMT1 = visionPose2d;
     }
-    camera.setLastTimestampSeconds(estimate.timestampSeconds);
+    state.lastTimestampSeconds = timestamp;
 
-    if (estimate.timestampSeconds >= lastTimestampSeconds) {
-      Logger.recordOutput("vision/fieldPose3d", estimate.pose3d);
+    if (timestamp >= lastTimestampSeconds) {
+      Logger.recordOutput("vision/fieldPose3d", pose3d);
       lastFieldPose = visionPose2d;
       rawVisionFieldObject.setPose(lastFieldPose);
-      lastTimestampSeconds = estimate.timestampSeconds;
+      lastTimestampSeconds = timestamp;
     }
 
     Logger.recordOutput("vision/" + cameraName + "_tagSpread", spread);
-    publishDiagnostics(estimate, visionPose2d, camera, "none", cameraName);
+    publishDiagnostics(observation, visionPose2d, cameraIndex, "none");
   }
 
   private boolean isUnderDefense(VisionPoseTracking visionPoseTracking) {
@@ -365,7 +374,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     boolean positionDiverged = false;
     if (lastFieldPose != null) {
-      double timeSinceVision = Timer.getFPGATimestamp() - lastTimestampSeconds;
+      double timeSinceVision = now() - lastTimestampSeconds;
       Pose2d drivePose = visionPoseTracking.drivePose3d.toPose2d();
       double disagreement = lastFieldPose.getTranslation().getDistance(drivePose.getTranslation());
       double expectedDrift =
@@ -375,6 +384,14 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     return likelySpun || positionDiverged;
+  }
+
+  /**
+   * Replay-safe replacement for Timer.getFPGATimestamp(). Logger.getTimestamp() returns
+   * microseconds and follows the logged clock during replay.
+   */
+  private static double now() {
+    return Logger.getTimestamp() / 1.0e6;
   }
 
   /**
@@ -414,8 +431,8 @@ public class VisionSubsystem extends SubsystemBase {
    * RMS spread of per-tag independent distance estimates vs the reported pose.
    *
    * <p>Both sides are full 3D distances: distancePerPose = 3D Euclidean from reported robot origin
-   * (Z=0) to tag (Z=tagHeight) rf.distToRobot = 3D distance reported by Limelight from robot origin
-   * to tag
+   * (Z=0) to tag (Z=tagHeight) rf.distToRobot() = 3D distance reported by Limelight from robot
+   * origin to tag
    *
    * <p>This makes both sides consistent. No camera height constant needed because distToRobot is
    * already robot-origin referenced (Limelight applies the robot-to-camera transform internally).
@@ -424,13 +441,13 @@ public class VisionSubsystem extends SubsystemBase {
    * SPREAD_REJECT+1 if any tag ID is unknown (immediate hard reject).
    */
   private double getMultiTagSpread(
-      RawFiducial[] fiducials, Pose3d reportedPose, AprilTagFieldLayout aprilTagFieldLayout) {
+      TagObservation[] fiducials, Pose3d reportedPose, AprilTagFieldLayout aprilTagFieldLayout) {
     if (aprilTagFieldLayout == null || fiducials == null || fiducials.length < 2) return 0.0;
 
     double sumSqErr = 0;
     int count = 0;
-    for (RawFiducial rf : fiducials) {
-      var tagPoseOpt = aprilTagFieldLayout.getTagPose(rf.id);
+    for (TagObservation rf : fiducials) {
+      var tagPoseOpt = aprilTagFieldLayout.getTagPose(rf.id());
       if (tagPoseOpt.isEmpty()) {
         // Unknown tag ID — could be a misread. Reject the whole observation.
         return VisionConstants.SPREAD_REJECT + 1.0;
@@ -439,7 +456,7 @@ public class VisionSubsystem extends SubsystemBase {
           reportedPose
               .getTranslation()
               .getDistance(tagPoseOpt.get().getTranslation()); // what the pose says
-      double err = distancePerPose - rf.distToRobot;
+      double err = distancePerPose - rf.distToRobot();
       sumSqErr += err * err;
       count++;
     }
@@ -471,7 +488,7 @@ public class VisionSubsystem extends SubsystemBase {
       double avgTagDist,
       int numOfTags,
       double maxAmbiguity,
-      RawFiducial[] rawFiducials,
+      TagObservation[] fiducials,
       String cameraName) {
 
     if (maxAmbiguity >= VisionConstants.MAX_AMBIGUITY) {
@@ -482,7 +499,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     double ambiguityInflation = 1.0 / Math.pow(1.0 - maxAmbiguity, 2.0);
-    double harmonicSum = computeHarmonicSum(rawFiducials);
+    double harmonicSum = computeHarmonicSum(fiducials);
     if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
     double xy =
@@ -505,7 +522,7 @@ public class VisionSubsystem extends SubsystemBase {
       double avgTagDist,
       int numOfTags,
       double maxAmbiguity,
-      RawFiducial[] rawFiducials,
+      TagObservation[] fiducials,
       String cameraName) {
 
     if (maxAmbiguity >= VisionConstants.MAX_AMBIGUITY) {
@@ -516,7 +533,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     double ambiguityInflation = 1.0 / Math.pow(1.0 - maxAmbiguity, 2.0);
-    double harmonicSum = computeHarmonicSum(rawFiducials);
+    double harmonicSum = computeHarmonicSum(fiducials);
     if (harmonicSum <= 0) harmonicSum = 1.0 / (avgTagDist * avgTagDist + 1e-6);
 
     double xy =
@@ -530,11 +547,11 @@ public class VisionSubsystem extends SubsystemBase {
     return VecBuilder.fill(xy, xy, Double.MAX_VALUE);
   }
 
-  private double computeHarmonicSum(RawFiducial[] rawFiducials) {
-    if (rawFiducials == null || rawFiducials.length == 0) return 0.0;
+  private double computeHarmonicSum(TagObservation[] fiducials) {
+    if (fiducials == null || fiducials.length == 0) return 0.0;
     double sum = 0.0;
-    for (RawFiducial rf : rawFiducials) {
-      double dist = rf.distToRobot > 0.01 ? rf.distToRobot : rf.distToCamera;
+    for (TagObservation rf : fiducials) {
+      double dist = rf.distToRobot() > 0.01 ? rf.distToRobot() : rf.distToCamera();
       if (dist > 0.01) sum += 1.0 / (dist * dist);
     }
     return sum;
@@ -545,35 +562,33 @@ public class VisionSubsystem extends SubsystemBase {
    * correct: one bad tag in a multi-tag solve poisons the whole observation regardless of how good
    * the other tags are.
    */
-  public double getMaxAmbiguity(RawFiducial[] rfs) {
-    if (rfs == null || rfs.length == 0) return 0;
+  public double getMaxAmbiguity(TagObservation[] fiducials) {
+    if (fiducials == null || fiducials.length == 0) return 0;
     double max = 0;
-    for (RawFiducial rf : rfs) max = Math.max(max, rf.ambiguity);
+    for (TagObservation rf : fiducials) max = Math.max(max, rf.ambiguity());
     return max;
   }
 
   private void publishDiagnostics(
-      BetterPoseEstimate estimate,
-      Pose2d visionPose2d,
-      LLCamera camera,
-      String rejectionReason,
-      String cameraName) {
-    if (estimate.timestampSeconds >= lastTimestampSeconds) {
+      PoseObservation observation, Pose2d visionPose2d, int cameraIndex, String rejectionReason) {
+    if (observation.timestamp() >= lastTimestampSeconds) {
+      String cameraName = CAMERA_NAMES[cameraIndex];
       Logger.recordOutput("vision/" + cameraName + "_rejectReason", rejectionReason);
       Logger.recordOutput(
           "vision/" + cameraName + "_visionError",
-          getVisionPoseError(visionPose2d, estimate.timestampSeconds));
+          getVisionPoseError(visionPose2d, observation.timestamp()));
       Logger.recordOutput(
-          "vision/" + cameraName + "_Last timestamp", camera.getLastTimestampSeconds());
-      Logger.recordOutput("vision/" + cameraName + "_Num targets", camera.getNumTargets());
+          "vision/" + cameraName + "_Last timestamp",
+          cameraStates[cameraIndex].lastTimestampSeconds);
+      Logger.recordOutput("vision/" + cameraName + "_Num targets", inputs[cameraIndex].numTargets);
     }
   }
 
   public int getNumTargets() {
     if (!RobotType.isAlpha()) {
-      return ACamera.getNumTargets() + BCamera.getNumTargets();
+      return inputs[CAM_A].numTargets + inputs[CAM_B].numTargets + inputs[CAM_C].numTargets;
     } else {
-      return CCamera.getNumTargets();
+      return inputs[CAM_C].numTargets;
     }
   }
 
@@ -590,7 +605,7 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public double getTimeSinceLastReading() {
-    return Timer.getFPGATimestamp() - lastTimestampSeconds;
+    return now() - lastTimestampSeconds;
   }
 
   public double getDistanceToTargetViaPoseEstimation(Pose2d yourPose, Pose2d targetPose) {
@@ -612,15 +627,6 @@ public class VisionSubsystem extends SubsystemBase {
           "vision/compBotRightCameraView",
           visionPoseTracking.drivePose3d.transformBy(COMP_BOT_RIGHT_CAMERA));
     }
-  }
-
-  public boolean isLimeLightOnline(String name) {
-    NetworkTable table = NetworkTableInstance.getDefault().getTable(name);
-    if (table == null) return false;
-    long lastChange = table.getEntry("hb").getLastChange();
-    if (lastChange == 0) return false;
-    double lastChangeSecs = lastChange / 1_000_000.0;
-    return (Timer.getFPGATimestamp() - lastChangeSecs) < VisionConstants.STALENESS_THRESHOLD;
   }
 
   private double getVisionPoseError(Pose2d visionPose2d, double timestampSeconds) {
