@@ -70,9 +70,9 @@ public class CompTunerConstants {
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
-                  .withSupplyCurrentLimit(Amps.of(80))
+                  .withSupplyCurrentLimit(Amps.of(40))
                   .withSupplyCurrentLimitEnable(true)
-                  .withSupplyCurrentLowerLimit(Amps.of(40))
+                  .withSupplyCurrentLowerLimit(Amps.of(25))
                   .withSupplyCurrentLowerTime(Seconds.of(2))
                   .withStatorCurrentLimit(Amps.of(kSlipCurrent.magnitude())) // keep slip guard
                   .withStatorCurrentLimitEnable(true));
@@ -84,7 +84,7 @@ public class CompTunerConstants {
                   // Swerve azimuth does not require much torque output, so we can set a relatively
                   // low
                   // stator current limit to help avoid brownouts without impacting performance.
-                  .withStatorCurrentLimit(Amps.of(60))
+                  .withStatorCurrentLimit(Amps.of(40))
                   .withStatorCurrentLimitEnable(true));
   private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
   // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
