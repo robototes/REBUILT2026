@@ -3,7 +3,6 @@ package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -75,7 +74,6 @@ public class IntakePivot extends SubsystemBase {
   private final StatusSignal<Current> intakePivotSupplyCurrent;
   private final StatusSignal<Angle> position;
 
-
   public IntakePivot() {
     pivotMotor = new TalonFX(Hardware.INTAKE_PIVOT_MOTOR_ID, CompTunerConstants.kCANBus);
     pivotConfig();
@@ -119,15 +117,12 @@ public class IntakePivot extends SubsystemBase {
     config.Slot0.kA = kA;
     config.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-
-
     pivotMotor.getConfigurator().apply(config);
   }
 
   public void setPivotPosition(double pos) {
     targetPos = pos;
     pivotMotor.setControl(request.withPosition(pos));
-    
   }
 
   public void restartTimer() {
