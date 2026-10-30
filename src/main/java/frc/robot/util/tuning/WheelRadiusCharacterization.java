@@ -64,14 +64,14 @@ public class WheelRadiusCharacterization {
                 Commands.runOnce(
                     () -> {
                       state.positions = drive.getWheelRotations();
-                      state.lastAngle = drive.getState().Pose.getRotation();
+                      state.lastAngle = drive.inputs.Pose.getRotation();
                       state.gyroDelta = 0.0;
                     }),
 
                 // Update gyro delta
                 Commands.run(
                         () -> {
-                          var rotation = drive.getState().Pose.getRotation();
+                          var rotation = drive.inputs.Pose.getRotation();
                           state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
                           state.lastAngle = rotation;
                         })

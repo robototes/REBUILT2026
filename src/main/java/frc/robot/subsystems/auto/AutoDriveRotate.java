@@ -71,7 +71,7 @@ public class AutoDriveRotate {
 
     @Override
     public void execute() {
-      Pose2d currentPose = drive.getState().Pose;
+      Pose2d currentPose = drive.inputs.Pose;
       Pose2d turretPose = currentPose.transformBy(LauncherConstants.turretTransform());
       Translation2d toTarget = targetTranslation.minus(turretPose.getTranslation());
       // The launcher faces the back of the robot so Math.PI is added to align the back of the robot
@@ -82,7 +82,7 @@ public class AutoDriveRotate {
                   + Math.toRadians(turretOffsetDegrees.getAsDouble()));
       double rotationOutput =
           pidRotate.calculate(
-              drive.getState().Pose.getRotation().getRadians(), targetRotate.getRadians());
+              drive.inputs.Pose.getRotation().getRadians(), targetRotate.getRadians());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(targetRotate.getDegrees());
       SwerveRequest request =

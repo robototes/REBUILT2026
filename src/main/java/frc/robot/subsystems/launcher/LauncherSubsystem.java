@@ -1,6 +1,5 @@
 package frc.robot.subsystems.launcher;
 
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -61,8 +60,9 @@ public class LauncherSubsystem extends SubsystemBase {
     if (launchParameters == null) {
       return false;
     }
-    SwerveDriveState driveState = s.drivebaseSubsystem.getState();
-    Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
+
+    Pose2d turretPose =
+        s.drivebaseSubsystem.inputs.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
     double distanceToTarget =
         GetTargetFromPose.getTargetLocation(turretPose).getDistance(turretPose.getTranslation());
@@ -89,11 +89,12 @@ public class LauncherSubsystem extends SubsystemBase {
 
     notUnderClimb =
         !LaunchCalculator.isUnderClimb(
-            driveState.Pose.transformBy(LauncherConstants.turretTransform()));
+            s.drivebaseSubsystem.inputs.Pose.transformBy(LauncherConstants.turretTransform()));
     Logger.recordOutput("AutoAim/NotUnderClimb", notUnderClimb);
 
     notGoingToBeUnderTrench =
-        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
+        !LaunchCalculator.isApproachingTrench(
+            s.drivebaseSubsystem.inputs.Pose, s.drivebaseSubsystem.inputs.Speeds);
     Logger.recordOutput("AutoAim/NotUnderTrench", notGoingToBeUnderTrench);
 
     return flywheelAtTarget

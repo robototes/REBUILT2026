@@ -256,7 +256,7 @@ public class Robot extends LoggedRobot {
     }
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
-    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
+    LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.inputs.Pose);
 
     Logger.recordOutput("GCCount", GCMonitor.getGcCount());
   }
@@ -433,7 +433,7 @@ public class Robot extends LoggedRobot {
 
   private void supplyYawToAllLimelights() {
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
-      double heading = subsystems.drivebaseSubsystem.getState().Pose.getRotation().getDegrees();
+      double heading = subsystems.drivebaseSubsystem.inputs.Pose.getRotation().getDegrees();
       if (subsystems.visionSubsystem.limelightaOnline) {
         supplyRobotYawToLimelight(Hardware.LIMELIGHT_A, heading);
       }

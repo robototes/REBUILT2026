@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -141,8 +140,7 @@ public class VisionSubsystem extends SubsystemBase {
   private Pose2d lastFieldPose = null;
   private CommandSwerveDrivetrain drivetrain;
 
-  private record VisionPoseTracking(
-      SwerveDriveState swerveState, ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
+  private record VisionPoseTracking(ChassisSpeeds swerveSpeeds, Pose3d drivePose3d) {}
 
   private VisionPoseTracking visionPoseTracking;
   private ShowVisionOnField m_showVisionOnField;
@@ -178,10 +176,8 @@ public class VisionSubsystem extends SubsystemBase {
     limelightbOnline = isLimeLightOnline(LIMELIGHT_B);
     limelightcOnline = isLimeLightOnline(LIMELIGHT_C);
 
-    SwerveDriveState swerveDriveState = drivetrain.getState();
     visionPoseTracking =
-        new VisionPoseTracking(
-            swerveDriveState, swerveDriveState.Speeds, new Pose3d(swerveDriveState.Pose));
+        new VisionPoseTracking(drivetrain.inputs.Speeds, new Pose3d(drivetrain.inputs.Pose));
 
     // Compute defense state once per update cycle so all cameras see the same value.
     // isUnderDefense() uses lastFieldPose and visionPoseTracking, both of which are
@@ -333,7 +329,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     drivetrain.addVisionMeasurement(
         visionPose2d, Utils.fpgaToCurrentTime(estimate.timestampSeconds), stdDevs);
-    robotField.setRobotPose(drivetrain.getState().Pose);
+    robotField.setRobotPose(drivetrain.inputs.Pose);
 
     if (estimate.isMegaTag2) {
       camera.setlastPoseMT2(visionPose2d);
@@ -454,7 +450,7 @@ public class VisionSubsystem extends SubsystemBase {
    */
   private void maybeResetToVision(
       Pose2d visionPose, double maxAmbiguity, int tagCount, String cameraName) {
-    Pose2d odomPose = drivetrain.getState().Pose;
+    Pose2d odomPose = drivetrain.inputs.Pose;
     boolean odomOffField = !isPoseOnField(odomPose);
     boolean visionTrusted =
         maxAmbiguity < VisionConstants.RESET_MAX_AMBIGUITY

@@ -97,6 +97,7 @@ public class Controls {
           .withDeadband(SWERVE_DEADBAND)
           .withRotationalDeadband(SWERVE_DEADBAND)
           .withDriveRequestType(DriveRequestType.Velocity);
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
   private Trigger readyToShoot = new Trigger(() -> false);
   private Trigger turretAtZero = new Trigger(() -> false);
@@ -194,11 +195,16 @@ public class Controls {
         // applying the request to drive with the inputs
         s.drivebaseSubsystem
             .applyRequest(
-                () ->
-                    drive
-                        .withVelocityX(getDriveX())
-                        .withVelocityY(getDriveY())
-                        .withRotationalRate(getDriveRotate()))
+                () -> {
+                  double x = getDriveX();
+                  double y = getDriveY();
+                  double rot = getDriveRotate();
+
+                  if (x == 0 && y == 0 && rot == 0) {
+                    return brake; // or an idle request
+                  }
+                  return drive.withVelocityX(x).withVelocityY(y).withRotationalRate(rot);
+                })
             .withName("Drive"));
 
     // driverController.a().whileTrue(s.drivebaseSubsystem.sysIdDynamic(Direction.kForward));
@@ -377,7 +383,7 @@ public class Controls {
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
                     case INTAKE ->
-                        s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
+                        s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.inputs.Speeds);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                     case BLOCK -> s.intakeSubsystem.holdAtExtake();
                   }
