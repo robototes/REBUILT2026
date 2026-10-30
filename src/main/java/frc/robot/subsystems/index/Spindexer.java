@@ -128,20 +128,21 @@ public class Spindexer extends SubsystemBase {
 
   @Override
   public void simulationPeriodic() {
-    io.SpindexerIOTalonFX(spindexerMotor);
-    inputs.rps = SpindexerMotor.getVelocity().getValueAsDouble();
-    inputs.stator = SpindexerMotor.getStatorCurrent().getValueAsDouble();
-    inputs.supply = SpindexerMotor.getSupplyCurrent().getValueAsDouble();
-    io.updateInputs(inputs);
-
     motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
   }
 
   @Override
   public void periodic() {
+    io.SpindexerIOTalonFX(spindexerMotor);
+    inputs.rps = spindexerRPS.getValueAsDouble();
+    inputs.stator = statorCurrent.getValueAsDouble();
+    inputs.supply = supplyCurrent.getValueAsDouble();
+    io.updateInputs(inputs);
+
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
     SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
+
     // Log stuff
     statorCurrentLog.append(statorCurrent.getValueAsDouble());
     supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
