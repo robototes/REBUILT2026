@@ -206,8 +206,6 @@ public class VisionSubsystem extends SubsystemBase {
     limelightbOnline = inputs[CAM_B].connected;
     limelightcOnline = inputs[CAM_C].connected;
 
-
-
     SwerveDriveState swerveDriveState = drivetrain.getState();
     visionPoseTracking =
         new VisionPoseTracking(
