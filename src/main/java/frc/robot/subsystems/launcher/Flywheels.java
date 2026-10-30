@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
+import frc.robot.subsystems.flywheel_IOs.FlywheelOneIO;
+import frc.robot.subsystems.flywheel_IOs.FlywheelOneIOTalonFX;
 import frc.robot.util.CustomLoggedNetworkNumber;
 import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
