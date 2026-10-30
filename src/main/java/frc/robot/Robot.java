@@ -371,9 +371,6 @@ public class Robot extends LoggedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
 
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }

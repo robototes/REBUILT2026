@@ -43,6 +43,8 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
 
+  private static final String VISION_TABLE = "/vision";
+
   private static LoggedNetworkNumber A_XY_MT2 =
       new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
   private static LoggedNetworkNumber A_XY_MT1 =
@@ -156,6 +158,7 @@ public class VisionSubsystem extends SubsystemBase {
   private VisionPoseTracking visionPoseTracking;
   private ShowVisionOnField m_showVisionOnField;
 
+  // Locked to 3 ios
   public VisionSubsystem(CommandSwerveDrivetrain drivetrain, VisionIO[] io) {
     this.drivetrain = drivetrain;
     this.io = io;
@@ -184,24 +187,26 @@ public class VisionSubsystem extends SubsystemBase {
 
   /** Must be called once per robot loop. */
   public void update() {
-    // 1. Read + log inputs (or load them from the log in replay). This always runs, even when
-    //    vision is disabled, so the log stays complete.
-    for (int i = 0; i < io.length; i++) {
-      io[i].updateInputs(inputs[i]);
-      Logger.processInputs("vision/" + CAMERA_NAMES[i], inputs[i]);
-    }
-
-    limelightaOnline = inputs[CAM_A].connected;
-    limelightbOnline = inputs[CAM_B].connected;
-    limelightcOnline = inputs[CAM_C].connected;
-
-    // 2. Logic + outputs
+    // 1. Logic + outputs
     if (getDisableVision()) {
       for (String name : CAMERA_NAMES) {
         Logger.recordOutput("/vision/" + name + "_rejectReason", "vision-disabled");
       }
       return;
     }
+
+    // 2. Read + log inputs (or load them from the log in replay). This always runs, even when
+    //    vision is disabled, so the log stays complete.
+    for (int i = 0; i < io.length; i++) {
+      io[i].updateInputs(inputs[i]);
+      Logger.processInputs(VISION_TABLE + CAMERA_NAMES[i], inputs[i]);
+    }
+
+    limelightaOnline = inputs[CAM_A].connected;
+    limelightbOnline = inputs[CAM_B].connected;
+    limelightcOnline = inputs[CAM_C].connected;
+
+
 
     SwerveDriveState swerveDriveState = drivetrain.getState();
     visionPoseTracking =

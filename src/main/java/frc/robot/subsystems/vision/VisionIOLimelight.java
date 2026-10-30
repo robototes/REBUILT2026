@@ -28,9 +28,9 @@ public class VisionIOLimelight implements VisionIO {
   @Override
   public void updateInputs(VisionIOInputs inputs) {
     inputs.connected = isOnline();
-    inputs.numTargets = camera.getNumTargets();
 
     if (!inputs.connected) {
+      inputs.numTargets = camera.getNumTargets();
       inputs.fiducials = new TagObservation[0];
       inputs.poseObservations = new PoseObservation[0];
       return;
