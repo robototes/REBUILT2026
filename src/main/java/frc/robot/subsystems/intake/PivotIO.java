@@ -6,6 +6,7 @@ public interface PivotIO {
   @AutoLog
   public static class PivotIOInputs {
     public double currentPos = 0; // pivot position
+    public double targetPos = 0;
     public boolean isConnected = false;
     public double motorTemp = 0;
     // pivot stator and supply

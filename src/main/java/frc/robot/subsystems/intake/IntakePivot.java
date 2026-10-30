@@ -204,6 +204,7 @@ public class IntakePivot extends SubsystemBase {
     StatusSignal.refreshAll(position, intakePivotStatorCurrent, intakePivotSupplyCurrent);
     io.updateInputs(inputs);
     Logger.processInputs("Intake Pivot", inputs);
+    Logger.recordOutput("Intake Pivot/Target Pos", getPivotTargetPosition());
   }
 
   public void simulationPeriodic() {
