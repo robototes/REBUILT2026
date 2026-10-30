@@ -118,46 +118,19 @@ public class LauncherConstants {
     }
   }
 
-  // private static InterpolatingDoubleTreeMap activeFlywheelMap() {
-  //   return GetTargetFromPose.BALLING.get() ? flywheelMapBalling : flywheelMap;
-  // }
-
   private static InterpolatingDoubleTreeMap activeFlywheelMap(boolean passing) {
     return GetTargetFromPose.BALLING.get()
         ? flywheelMapBalling
         : passing ? passingFlywheelMap : flywheelMap;
   }
 
-  // private static InterpolatingDoubleTreeMap activeHoodMap() {
-  //   return GetTargetFromPose.BALLING.get() ? hoodMapBalling : hoodMap;
-  // }
-
   private static InterpolatingDoubleTreeMap activeHoodMap(boolean passing) {
     return GetTargetFromPose.BALLING.get() ? hoodMapBalling : passing ? passingHoodMap : hoodMap;
   }
 
-  // private static InterpolatingDoubleTreeMap activeTimeMap() {
-  //   return GetTargetFromPose.BALLING.get() ? timeMapBalling : timeMap;
-  // }
-
   private static InterpolatingDoubleTreeMap activeTimeMap(boolean passing) {
     return GetTargetFromPose.BALLING.get() ? timeMapBalling : passing ? passingTimeMap : timeMap;
   }
-
-  // public static void update(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
-  //   Pose2d turret = LaunchCalculator.estimatedPose;
-  //   double turret_to_hub_dist = LaunchCalculator.estimatedDist;
-  //   LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
-  //   double turretAngle = params.turretAngle().getRadians();
-  //   Pose2d updatedTarget =
-  //       new Pose2d(
-  //           new Translation2d(
-  //               turret_to_hub_dist * Math.cos(turretAngle),
-  //               turret_to_hub_dist * Math.sin(turretAngle)),
-  //           Rotation2d.kZero);
-  //   var array = new Pose2d[] {turret, updatedTarget};
-  //   turretToTarget.set(array, 0);
-  // }
 
   public static double getFlywheelSpeedFromDistance(double distance, boolean passing) {
     return activeFlywheelMap(passing).get(distance);

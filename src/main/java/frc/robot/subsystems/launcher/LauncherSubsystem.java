@@ -57,7 +57,9 @@ public class LauncherSubsystem extends SubsystemBase {
 
               s.hood.setHoodPosition(hoodGoal);
               s.flywheels.setVelocityRPS(flywheelsGoal);
-            })
+            },
+            s.flywheels,
+            s.hood)
         .withName("Launcher Aim Command");
   }
 
@@ -65,7 +67,7 @@ public class LauncherSubsystem extends SubsystemBase {
     return runOnce(
             () -> {
               flywheelOffset += fwOffsetJogAmount * direction;
-              Logger.recordOutput("Launcher/Flywheel Offset [RPS]", flywheelOffset);
+              Logger.recordOutput("Flywheel Offset [RPS]", flywheelOffset);
             })
         .withName("Changed Flywheel Offset");
   }

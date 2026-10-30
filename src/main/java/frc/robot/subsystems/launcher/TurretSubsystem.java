@@ -20,7 +20,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -154,7 +153,7 @@ public class TurretSubsystem extends SubsystemBase {
     return Commands.runOnce(
             () -> {
               manualOffset += offsetJogAmount * direction;
-              SmartDashboard.putNumber("Turret Offset [Deg]", Math.round(manualOffset * 360.0));
+              Logger.recordOutput("Turret Offset [Deg]", Math.round(manualOffset * 360.0));
             })
         .withName("Changed Turret Offset");
   }

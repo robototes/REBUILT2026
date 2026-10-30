@@ -24,7 +24,9 @@ public class IndexerSubsystem extends SubsystemBase {
             () -> {
               feeder.stopMotor();
               spindexerSubsystem.stopMotor();
-            })
+            },
+            spindexerSubsystem,
+            feeder)
         .withName("Run Indexer");
   }
 
@@ -46,7 +48,9 @@ public class IndexerSubsystem extends SubsystemBase {
         () -> {
           feeder.stopMotor();
           spindexerSubsystem.stopMotor();
-        });
+        },
+        spindexerSubsystem,
+        feeder);
   }
 
   public Command stopIndexer() {

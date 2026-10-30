@@ -54,7 +54,7 @@
             "height": 128.0,
             "type": "Text Display",
             "properties": {
-              "topic": "/SmartDashboard/Flywheel Offset [RPS]",
+              "topic": "/AdvantageKit/RealOutputs/Flywheel Offset [RPS]",
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": false
@@ -68,7 +68,7 @@
             "height": 128.0,
             "type": "Text Display",
             "properties": {
-              "topic": "/SmartDashboard/Turret Offset [Deg]",
+              "topic": "/AdvantageKit/RealOutputs/Turret Offset [Deg]",
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": false
