@@ -40,6 +40,9 @@ public class IntakeRollers extends SubsystemBase {
   private final StatusSignal<Current> rollerRightStatorCurrent;
   private final StatusSignal<Current> rollerRightSupplyCurrent;
 
+  private final IntakeIO io;
+  private final IntakeIOInputsAutoLogged inputs;
+
   public IntakeRollers() {
     // define motors and configs
     leftRoller =
@@ -50,6 +53,9 @@ public class IntakeRollers extends SubsystemBase {
     motorConfigs();
     leftRoller.clearStickyFaults();
     rightRoller.clearStickyFaults();
+
+    io = new IntakeRollerIOTalonFX(leftRoller, rightRoller);
+    inputs = new IntakeIOInputsAutoLogged();
 
     // sim creator
     if (RobotBase.isSimulation()) {
@@ -110,18 +116,8 @@ public class IntakeRollers extends SubsystemBase {
         rollerLeftSupplyCurrent,
         rollerRightStatorCurrent,
         rollerRightSupplyCurrent);
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerSpeed", rollerLeftVelocity.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerSpeed", rollerRightVelocity.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerStator", rollerLeftStatorCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerStator", rollerRightStatorCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerSupply", rollerLeftSupplyCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerSupply", rollerRightSupplyCurrent.getValueAsDouble());
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake Rollers", inputs);
   }
 
   // update sim
