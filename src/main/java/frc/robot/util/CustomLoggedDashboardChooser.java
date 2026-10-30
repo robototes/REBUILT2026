@@ -117,6 +117,7 @@ public class CustomLoggedDashboardChooser<V> extends LoggedNetworkInput {
 
   public void clearOptions() {
     options.clear();
+    sendableChooser.clear();
     try {
       Field mapField = SendableChooser.class.getDeclaredField("m_map");
       mapField.setAccessible(true);
