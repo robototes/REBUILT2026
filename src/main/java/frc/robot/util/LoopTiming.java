@@ -30,6 +30,7 @@ public final class LoopTiming {
   private final Map<String, Sample> schedulerSamples = new HashMap<>();
   private final Map<String, Sample> periodicSamples = new HashMap<>();
   private final CommandScheduler scheduler;
+  private final LoopRuntimeMetrics runtimeMetrics = new LoopRuntimeMetrics();
   private Map<?, ?> robotEpochs;
   private Map<?, ?> schedulerEpochs;
   private Field schedulerDisabled;
@@ -82,6 +83,7 @@ public final class LoopTiming {
 
   public void beginLoop() {
     long start = RobotController.getFPGATime();
+    runtimeMetrics.begin();
     for (Sample sample : samples) {
       sample.microseconds = 0;
     }
@@ -124,11 +126,13 @@ public final class LoopTiming {
         reportUnavailable(exception);
       }
     }
+    runtimeMetrics.end();
     long publishStart = RobotController.getFPGATime();
     collectionTime += publishStart - start;
     for (Sample sample : samples) {
       Logger.recordOutput(sample.key, sample.microseconds / 1000.0);
     }
+    runtimeMetrics.publish();
     long end = RobotController.getFPGATime();
     Logger.recordOutput("LoopTiming/CollectionMS", collectionTime / 1000.0);
     Logger.recordOutput("LoopTiming/PublishMS", (end - publishStart) / 1000.0);

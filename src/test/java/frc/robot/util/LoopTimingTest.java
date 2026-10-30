@@ -156,6 +156,16 @@ class LoopTimingTest {
       robot.cycle();
       LogTable first = outputs(logs);
       assertTrue(first.get("WatchdogEpochsAvailable", false));
+      assertTrue(first.get("Thread/WallMS", -1.0) >= 0);
+      if (first.get("Thread/CpuTimeAvailable", false)) {
+        assertTrue(first.get("Thread/CpuMS", -1.0) >= 0);
+        assertTrue(first.get("Thread/OffCpuMS", -1.0) >= 0);
+      } else {
+        assertEquals(-1.0, first.get("Thread/CpuMS", 0.0));
+        assertEquals(-1.0, first.get("Thread/OffCpuMS", 0.0));
+      }
+      assertTrue(first.get("GC/CollectionCountAvailable", false));
+      assertTrue(first.get("GC/Collections", -1L) >= 0);
       assertEquals(7.0, first.get("SchedulerEpochs/TimingSubsystem.periodic()MS", -1.0), 0.001);
       assertEquals(5.0, first.get("SchedulerEpochs/TimingCommand.execute()MS", -1.0), 0.001);
       assertEquals(2.0, first.get("SchedulerEpochs/TimingCommand.initialize()MS", -1.0), 0.001);

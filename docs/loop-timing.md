@@ -12,6 +12,11 @@ replay), all durations have an `MS` suffix and are in milliseconds:
 | `RobotPeriodic/*` | This robot's vision simulation/update, autonomous field dashboard, complete scheduler invocation, drive state, launcher NetworkTables, GC logging, and DataLog resume work. |
 | `CollectionMS`, `PublishMS` | Additional timing collection and sample-publication overhead on the main thread. |
 | `WatchdogEpochsAvailable` | Whether the WPILib watchdog integration is working. |
+| `Thread/WallMS`, `Thread/CpuMS`, `Thread/OffCpuMS` | Active-loop elapsed time, main-thread CPU time, and nonnegative wall minus CPU time. |
+| `Thread/UserMS`, `Thread/SystemMS` | Main-thread user-mode CPU time and nonnegative total CPU minus user time. |
+| `Thread/CpuTimeAvailable`, `Thread/UserTimeAvailable` | Whether the corresponding CPU counters were valid for this loop. |
+| `GC/Collections`, `GC/CollectionTimeMS`, `GC/ActivityDetected` | JVM-wide collection-count/time deltas and whether either delta detected activity during the active loop. |
+| `GC/CollectionCountAvailable`, `GC/CollectionTimeAvailable` | Whether all cached collectors supplied valid, monotonic counters for that measurement. |
 
 Graph `TotalMS` alongside `RobotPeriodic/SchedulerMS`, the largest subsystem and
 command epochs, and the dashboard epochs to locate spikes. Values for previously
@@ -23,6 +28,52 @@ distinct names.
 Existing telemetry settings are unchanged: `Robot` still disables LiveWindow
 telemetry. Its epoch measures the update call's actual cost, even when that call
 only checks whether telemetry is disabled.
+
+## CPU versus off-CPU and GC
+
+Graph `Thread/WallMS`, `Thread/CpuMS`, `Thread/OffCpuMS`, and
+`GC/CollectionTimeMS` together. High wall **and** CPU suggests expensive computation;
+high wall with low CPU suggests the main thread was not running. Off-CPU is
+**not an I/O-wait measurement**: it also includes lock contention, sleeping,
+stop-the-world GC, and OS scheduling/preemption. CPU used by other threads,
+including receiver, odometry, and GC threads, is not main-thread CPU.
+`SystemMS` is kernel-mode CPU execution, not time blocked in an I/O operation.
+User/system counters may have coarser resolution than their nanosecond units
+suggest; derived differences are clamped to zero to handle sampling skew.
+
+The `ThreadMXBean` and collector beans are cached at startup. Current-thread CPU
+accounting is enabled only if supported and permitted; no contention monitoring,
+thread enumeration, stack sampling, new GC listeners, or background threads are
+added. Unsupported CPU accounting emits one Driver Station warning and keeps
+wall/GC diagnostics active. Unavailable CPU/GC numeric values are **-1**, not
+zero, with separate availability flags. User-time support may be unavailable
+even when total CPU accounting works.
+
+Each active loop gets a fresh baseline, so the robot's intentional wait between
+20 ms iterations is excluded. CPU and `System.nanoTime()` wall time are bracketed
+inside `beginLoop()`/`endLoop()`; this interval includes the framework and epoch
+collection, but excludes final metric publication and AdvantageKit's work
+outside `loopFunc()`. It is slightly different from `TotalMS`. `System.nanoTime()`
+is used for CPU comparison even in simulation/replay; advancing or pausing the
+simulated FPGA clock does not advance this real elapsed clock. CPU and user-time
+reads have small boundary skew rather than an atomic snapshot.
+
+GC counters are polled before and after the loop, avoiding notification-delivery
+latency. `ActivityDetected` is a **GC activity detector**, not an exact pause
+duration. With Serial GC on the roboRIO, a nonzero collection-time delta is useful
+evidence of a GC-related stall; concurrent collectors can perform work without
+stopping the main thread, and aggregate collector times may overlap. The counters
+are approximate milliseconds, so a collection may increment the count without
+incrementing time. Boundary-spanning collections may be attributed to an adjacent
+loop or missed by these deltas; collections entirely between loops are excluded.
+Do not subtract GC time from `OffCpuMS` to infer I/O time. Existing
+`LoggedRobot/GCTimeMS` and `LoggedRobot/GCCounts` cover the broader between-update
+interval and can help correlate activity outside the measured loop.
+
+These are whole-loop CPU measurements. Individual command/subsystem watchdog
+epochs remain wall-only; their completed wall slices do not contain historical
+thread CPU counters. Correlate a CPU/off-CPU spike with those slices rather than
+treating them as per-command CPU attribution.
 
 ## Cost and interpretation
 
@@ -39,7 +90,7 @@ Private fields are version-sensitive. If access or the epoch format becomes
 incompatible after a WPILib upgrade, a Driver Station warning and
 `WatchdogEpochsAvailable=false` explicitly identify the loss of epoch detail.
 The explicit robotPeriodic slices, total, and overrun counter remain active.
-Run `.\gradlew.bat test --tests frc.robot.util.LoopTimingTest` after an upgrade.
+Run `.\gradlew.bat test --tests "frc.robot.util.Loop*Test"` after an upgrade.
 
 Watchdog epochs are **elapsed timing slices, not isolated CPU measurements**:
 
