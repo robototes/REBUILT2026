@@ -51,17 +51,17 @@ public class GetTargetFromPose {
       return BALLING_POSE;
     }
     if (AllianceUtils.isBlue()) {
-      if (drivetrain.getState().Pose.getX() <= allianceLineX + robotOffset) {
+      if (drivetrain.inputs.Pose.getX() <= allianceLineX + robotOffset) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+      } else if (drivetrain.inputs.Pose.getY() >= (fieldWidth / 2)) {
         return pointLeftFieldTop;
       } else {
         return pointLeftFieldBottom;
       }
     } else if (AllianceUtils.isRed()) {
-      if (drivetrain.getState().Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
+      if (drivetrain.inputs.Pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
         return AllianceUtils.getHubTranslation2d();
-      } else if (drivetrain.getState().Pose.getY() >= (fieldWidth / 2)) {
+      } else if (drivetrain.inputs.Pose.getY() >= (fieldWidth / 2)) {
         return pointRightFieldTop;
       } else {
         return pointRightFieldBottom;
@@ -106,8 +106,8 @@ public class GetTargetFromPose {
 
           boolean pastAllianceLine =
               AllianceUtils.isBlue()
-                  ? drivetrain.getState().Pose.getX() > (allianceLineX + robotOffset)
-                  : drivetrain.getState().Pose.getX() < (fieldLength - allianceLineX - robotOffset);
+                  ? drivetrain.inputs.Pose.getX() > (allianceLineX + robotOffset)
+                  : drivetrain.inputs.Pose.getX() < (fieldLength - allianceLineX - robotOffset);
 
           if (!shiftInfo.active() && shiftInfo.remainingTime() > 5.0 && pastAllianceLine) {
             return true;

@@ -30,6 +30,7 @@ import frc.robot.generated.CompTunerConstants;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -58,6 +59,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       new SwerveRequest.SysIdSwerveSteerGains();
   private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization =
       new SwerveRequest.SysIdSwerveRotation();
+
+  private final DrivebaseIO io;
+  public final DrivebaseIOInputsAutoLogged inputs;
 
   /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
   private final SysIdRoutine m_sysIdRoutineTranslation =
@@ -126,6 +130,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    io = new DrivebaseIOCTRE(getState());
+    inputs = new DrivebaseIOInputsAutoLogged();
   }
 
   /**
@@ -147,6 +153,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+
+    io = new DrivebaseIOCTRE(getState());
+    inputs = new DrivebaseIOInputsAutoLogged();
   }
 
   /**
@@ -179,6 +188,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+
+    io = new DrivebaseIOCTRE(getState());
+    inputs = new DrivebaseIOInputsAutoLogged();
   }
 
   /**
@@ -222,6 +234,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
+    io.updateInputs(inputs);
+    Logger.processInputs("Drivebase", inputs);
+
     if (RobotBase.isSimulation()
         || !m_hasAppliedOperatorPerspective
         || DriverStation.isDisabled()) {
