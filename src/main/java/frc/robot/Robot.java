@@ -39,6 +39,7 @@ import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.GCMonitor;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.LoopTiming;
 import frc.robot.util.robotType.RobotMode;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
@@ -78,6 +79,7 @@ public class Robot extends LoggedRobot {
   private Runnable autoSmartDashboardUpdate;
   private final Timer autoSmartDashboardTimer = new Timer();
   private static final double UPDATE_RATE = 0.05;
+  private final LoopTiming loopTiming;
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -112,6 +114,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
     // be added.
+    loopTiming = new LoopTiming(this, CommandScheduler.getInstance());
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
@@ -217,6 +220,14 @@ public class Robot extends LoggedRobot {
     }
   }
 
+  @Override
+  protected void loopFunc() {
+    long start = RobotController.getFPGATime();
+    loopTiming.beginLoop();
+    super.loopFunc();
+    loopTiming.endLoop(start, getPeriod());
+  }
+
   /**
    * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
    * that you want ran during disabled, autonomous, teleoperated and test.
@@ -226,12 +237,14 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotPeriodic() {
+    loopTiming.resetCheckpoint();
     // Resume logging every X seconds
     double time = Timer.getFPGATimestamp();
     if (time - LAST_TIME >= 1) {
       LAST_TIME = time;
       DataLogManager.getLog().resume();
     }
+    loopTiming.checkpoint("DataLogResume");
 
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation() && m_simWrapper != null) {
@@ -240,10 +253,12 @@ public class Robot extends LoggedRobot {
       // needs that info and doesnt want it delayed 20ms.
       m_simWrapper.robotPeriodic();
     }
+    loopTiming.checkpoint("VisionSimulation");
 
     if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
       subsystems.visionSubsystem.update();
     }
+    loopTiming.checkpoint("VisionUpdate");
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
 
@@ -254,11 +269,18 @@ public class Robot extends LoggedRobot {
     if (autoSmartDashboardUpdate != null && autoSmartDashboardTimer.advanceIfElapsed(UPDATE_RATE)) {
       autoSmartDashboardUpdate.run();
     }
+    loopTiming.checkpoint("AutoDashboard");
     CommandScheduler.getInstance().run();
+    loopTiming.checkpoint("Scheduler");
+    loopTiming.captureScheduler();
+    loopTiming.resetCheckpoint();
     driveBaseSim.update();
+    loopTiming.checkpoint("DriveStateUpdate");
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
+    loopTiming.checkpoint("LauncherNT");
 
     Logger.recordOutput("GCCount", GCMonitor.getGcCount());
+    loopTiming.checkpoint("GCLogging");
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
