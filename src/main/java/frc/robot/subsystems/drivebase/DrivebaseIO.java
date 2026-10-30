@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drivebase;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -18,5 +19,5 @@ public interface DrivebaseIO {
     public int FailedDaqs = 0;
   }
 
-  public default void updateInputs(DrivebaseIOInputs inputs) {}
+  public default void updateInputs(DrivebaseIOInputs inputs, SwerveDriveState state) {}
 }
