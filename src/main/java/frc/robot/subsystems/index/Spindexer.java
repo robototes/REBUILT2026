@@ -24,6 +24,8 @@ import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
+import frc.robot.subsystems.index.SpindexerIO;
+import frc.robot.subsystems.index.SpindexerIOTalonFX;
 
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
@@ -40,6 +42,9 @@ public class Spindexer extends SubsystemBase {
       new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
 
   private final FlywheelSim motorSim;
+
+  private final SpindexerIOTalonFX io;
+  private final SpindexerIOInputs inputs;
 
   // Logs
   private final StatusSignal<AngularVelocity> spindexerRPS;
@@ -123,6 +128,12 @@ public class Spindexer extends SubsystemBase {
 
   @Override
   public void simulationPeriodic() {
+    io.SpindexerIOTalonFX(spindexerMotor);
+    inputs.rps = SpindexerMotor.getVelocity().getValueAsDouble();
+    inputs.stator = SpindexerMotor.getStatorCurrent().getValueAsDouble();
+    inputs.supply = SpindexerMotor.getSupplyCurrent().getValueAsDouble();
+    io.updateInputs(inputs);
+
     motorSim.setInput(spindexerMotor.getSimState().getMotorVoltage());
     motorSim.update(TimedRobot.kDefaultPeriod); // every 20 ms
   }
