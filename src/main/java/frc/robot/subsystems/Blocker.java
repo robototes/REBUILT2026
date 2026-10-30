@@ -22,7 +22,7 @@ public class Blocker extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = 0.24;
+  public static final double DEPLOYED_POS = 0.35;
   public static final double RETRACTED_POS = 0;
   private static final double degreeTolerance = 3;
 
@@ -49,7 +49,7 @@ public class Blocker extends SubsystemBase {
 
   // Soft Limits
   public static final double BLOCK_MIN = 0; // rotations
-  public static final double BLOCK_MAX = 0.25;
+  public static final double BLOCK_MAX = 0.36;
 
   // Status Signals
   private final StatusSignal<Current> SS_Current;

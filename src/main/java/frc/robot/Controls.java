@@ -284,7 +284,7 @@ public class Controls {
                                     .withVelocityX(getDriveX())
                                     .withVelocityY(getDriveY())
                                     .withRotationalRate(getDriveRotate())),
-                        () -> (turretKillActive && !turretSkipped)),
+                        () -> (!turretSkipped)),
                     s.launcherSubsystem.launcherAimCommand(),
                     Commands.runOnce(() -> ledsMode = LEDMode.LAUNCHING),
                     Commands.waitUntil(() -> s.launcherSubsystem.isAtTarget())
@@ -292,9 +292,9 @@ public class Controls {
                             Commands.parallel(
                                     s.indexerSubsystem.runIndexer(
                                         () -> s.flywheels.getTargetSpeed()),
-                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH)
-                                        .andThen(Commands.runOnce(() -> { intakeMode = IntakeMode.LAUNCH;
-                                        s.intakePivot.restartTimer();})))
+                                    Commands.runOnce(() -> ledsMode = LEDMode.LAUNCH),
+                                        Commands.runOnce(() -> { intakeMode = IntakeMode.LAUNCH;
+                                        s.intakePivot.restartTimer();}))
                                 .onlyWhile(() -> s.launcherSubsystem.isAtTarget())
                                 .andThen(
                                     Commands.runOnce(
@@ -524,11 +524,11 @@ public class Controls {
         s.turretSubsystem.rotateToTargetWithCalc().withName("Turret Default Command"));
 
     // TODO: Make this work in the future
-    (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
-        .or(driverController.povLeft())
-        .onTrue(
-            Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
-                .withName("Zero Turret on Limit Switch"));
+    // (turretAtZero.and(new Trigger(() -> s.turretSubsystem.getTurretPosition() < 0.5)))
+    //     .or(driverController.povLeft())
+    //     .onTrue(
+    //         Commands.runOnce(() -> s.turretSubsystem.zeroTurretPosistion())
+    //             .withName("Zero Turret on Limit Switch"));
 
     driverController
         .povRight()
