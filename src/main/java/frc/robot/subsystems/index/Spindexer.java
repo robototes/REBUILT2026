@@ -57,6 +57,7 @@ public class Spindexer extends SubsystemBase {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
     spindexerMotor.clearStickyFaults();
+    io.SpindexerIOTalonFX(spindexerMotor);
 
     if (RobotBase.isSimulation()) {
       LinearSystem spindexerMotorSystem =
@@ -134,7 +135,6 @@ public class Spindexer extends SubsystemBase {
 
   @Override
   public void periodic() {
-    io.SpindexerIOTalonFX(spindexerMotor);
     inputs.rps = spindexerRPS.getValueAsDouble();
     inputs.stator = statorCurrent.getValueAsDouble();
     inputs.supply = supplyCurrent.getValueAsDouble();
