@@ -9,13 +9,13 @@ public interface DrivebaseIO {
 
   @AutoLog
   public static class DrivebaseIOInputs {
-    public Pose2d Pose;
-    public ChassisSpeeds Speeds;
-    public Rotation2d RawHeading;
-    public double Timestamp;
-    public double OdometryPeriod;
-    public int SuccessfulDaqs;
-    public int FailedDaqs;
+    public Pose2d Pose = new Pose2d();
+    public ChassisSpeeds Speeds = new ChassisSpeeds();
+    public Rotation2d RawHeading = new Rotation2d();
+    public double Timestamp = 0;
+    public double OdometryPeriod = 0;
+    public int SuccessfulDaqs = 0;
+    public int FailedDaqs = 0;
   }
 
   public default void updateInputs(DrivebaseIOInputs inputs) {}
