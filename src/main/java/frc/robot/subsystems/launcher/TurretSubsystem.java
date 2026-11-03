@@ -286,20 +286,10 @@ public class TurretSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
     io.updateInputs(inputs);
     Logger.processInputs("Turret", inputs);
-
-    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
-
-    inputs.positionSignal = positionSignal.getValueAsDouble();
-
-    inputs.velocitySignal = velocitySignal.getValueAsDouble();
-
-    inputs.statorCurrentSignal = statorCurrentSignal.getValueAsDouble();
-
     Logger.recordOutput("/Turret/Target", targetPos);
-
-    inputs.limitSwitchCurrent = limitSwitch.getVoltage();
   }
 
   public void brakeTurret() {
