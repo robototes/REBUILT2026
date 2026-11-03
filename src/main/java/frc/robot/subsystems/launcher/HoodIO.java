@@ -10,9 +10,9 @@ import edu.wpi.first.units.measure.Angle;
 public interface HoodIO  {
 
     public static class HoodIOInputs {
-        public double hoodStatorCurrent;
-        StatusSignal<Current> hoodSupplyCurrent;
-        StatusSignal<Angle> position;
+        public double hoodStatorCurrent = 0;
+        public double hoodSupplyCurrent = 0;
+        public double position = 0;
     }
 
     public default void updateInputs(HoodIOInputs inputs) {}
