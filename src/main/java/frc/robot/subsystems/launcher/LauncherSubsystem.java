@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -61,8 +62,8 @@ public class LauncherSubsystem extends SubsystemBase {
       return false;
     }
 
-    Pose2d turretPose =
-        s.drivebaseSubsystem.inputs.Pose.transformBy(LauncherConstants.turretTransform());
+    SwerveDriveState driveState = s.drivebaseSubsystem.getState();
+    Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
     double distanceToTarget =
         GetTargetFromPose.getTargetLocation(turretPose).getDistance(turretPose.getTranslation());

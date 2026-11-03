@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -244,6 +245,7 @@ public class LaunchCalculator {
    */
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
+    SwerveDriveState driveState = drivetrain.getState();
     Pose2d currentPose = drivetrain.inputs.Pose;
     ChassisSpeeds currentSpeeds = drivetrain.inputs.Speeds;
     double currentTurretOmega = turretSubsystem.getOmega();
