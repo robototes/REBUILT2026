@@ -83,8 +83,11 @@ public class LaunchCalculator {
   private static final double MIN_MOVING_SPEED_ENABLE = 0.1; // m/s
   private static final double MIN_MOVING_SPEED_DISABLE = 0.03; // m/s
 
-  // real wheel slip live in different magnitude regimes:
+  // Low-pass filter for acceleration. 0 = no filtering, 1 = effectively disabled.
   private static final double ACCEL_FILTER_ALPHA = 0.9;
+
+  // Variable-alpha low-pass filter for the slip estimate. Vision-correction noise and
+  // real wheel slip live in different magnitude regimes:
   //   - Vision noise: <1 cm correction over 20 ms, single-frame transients.
   //   - Real stuck/push: wheels at 2 m/s vs robot at 0 = 2+ m/s, sustained over many frames.
   // We use a heavy filter (slow) below the threshold to reject noise, and a light filter
@@ -262,9 +265,7 @@ public class LaunchCalculator {
     // Compute filtered acceleration for cache-bust check.
     // Uses filteredAcceleration (not raw delta) to avoid noise-driven unnecessary cache misses.
     // Includes angular acceleration so aggressive rotation also busts the cache.
-
     double speedsDt = timestamp - lastWheelSpeedsTimestamp;
-
     if (speedsDt > MIN_POSE_DT && speedsDt < MAX_POSE_DT) {
       double rawAX =
           (currentSpeeds.vxMetersPerSecond - lastWheelSpeeds.vxMetersPerSecond) / speedsDt;
