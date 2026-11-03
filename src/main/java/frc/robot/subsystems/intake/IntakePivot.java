@@ -70,9 +70,6 @@ public class IntakePivot extends SubsystemBase {
   private PivotSim pivotSim;
 
   // Status Signals
-  private final StatusSignal<Current> intakePivotStatorCurrent;
-  private final StatusSignal<Current> intakePivotSupplyCurrent;
-  private final StatusSignal<Angle> position;
 
   private final PivotIO io;
   private final PivotIOInputsAutoLogged inputs;
