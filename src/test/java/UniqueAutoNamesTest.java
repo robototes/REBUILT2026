@@ -1,14 +1,16 @@
+import frc.robot.subsystems.auto.BLine.Autos;
 import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 
 public class UniqueAutoNamesTest {
-  @Test
+  @BeforeEach
   public void validateUniqueAutoNames() {
-    //TODO add object of type autos for setup()
-   // UnitTestHelpers.setup();
+    Autos autos = new Autos();
+    // TODO add object of type autos for setup()
+    autos.unitTestInit();
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 

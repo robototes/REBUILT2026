@@ -7,12 +7,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class AutoFilePathsTest {
-  private static final UnitTestHelpers helper = new UnitTestHelpers();
-  //TODO Fix the auto.toString() probably and getPaths initialization handling for unit testing
+
+  // TODO Fix the auto.toString() probably and getPaths initialization handling for unit testing
 
   @Test
   public void validatePathFiles() {
-    helper.setup();
+    Autos autos = new Autos();
+    autos.unitTestInit();
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;
 
@@ -21,11 +22,10 @@ public class AutoFilePathsTest {
 
     for (Path auto : Autos.getPaths()) {
 
-        if (!validFileNames.contains(auto.toString())) {
-          invalidPaths.add(
-              "Auto '" + auto.toString() + "' references missing path: " + auto.toString());
-        }
-
+      if (!validFileNames.contains(auto.toString())) {
+        invalidPaths.add(
+            "Auto '" + auto.toString() + "' references missing path: " + auto.toString());
+      }
     }
 
     if (!invalidPaths.isEmpty()) {
