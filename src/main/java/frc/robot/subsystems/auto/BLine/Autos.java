@@ -12,6 +12,7 @@ import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.util.AllianceFlipUtil;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class Autos {
   private Map<String, Supplier<Command>> autos = new LinkedHashMap<>();
   private FollowPath.Builder pathBuilder;
   private static boolean pathsInitialized = false;
-  private static List<Path> paths;
+  private static List<Path> paths = new ArrayList<>();
 
   // TODO add back in autonoumsfield
   // TODO add LoggedDashboardChooer for AdvantageKit logging
@@ -89,7 +90,10 @@ public class Autos {
     Path3 = new Path("TrenchDepot".toLowerCase());
     Path4 = new Path("TrenchtoBump".toLowerCase());
     TRENCH_START_LEFT = AllianceFlipUtil.flipped(Path1.getStartPose());
-   
+    paths.add(Path1);
+    paths.add(Path2);
+    paths.add(Path3);
+    paths.add(Path4);
   }
 
   public static List<Path> getPaths() {

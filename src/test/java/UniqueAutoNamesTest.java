@@ -3,10 +3,10 @@ import frc.robot.util.UnitTestHelpers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class UniqueAutoNamesTest {
-  @BeforeEach
+  @Test
   public void validateUniqueAutoNames() {
     Autos autos = new Autos();
     // TODO add object of type autos for setup()
