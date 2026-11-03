@@ -19,10 +19,10 @@ public class AutoFilePathsTest {
 
     List<String> validFileNames = UnitTestHelpers.getValidFileNames(files);
     List<String> invalidPaths = new ArrayList<>();
+    List<Path> tempPaths = autos.getPaths();
+    for (Path auto : tempPaths) {
 
-    for (Path auto : Autos.getPaths()) {
-
-      if (!validFileNames.contains(auto.toString())) {
+      if (!validFileNames.contains(autos.getMap().get(auto))) {
         invalidPaths.add(
             "Auto '" + auto.toString() + "' references missing path: " + auto.toString());
       }

@@ -13,6 +13,7 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.util.AllianceFlipUtil;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,12 +22,13 @@ import java.util.function.Supplier;
 
 public class Autos {
 
-  private static Subsystems systems;
+  private Subsystems systems;
   private AutoChooser autoChooser = new AutoChooser();
   private Map<String, Supplier<Command>> autos = new LinkedHashMap<>();
   private FollowPath.Builder pathBuilder;
   private static boolean pathsInitialized = false;
   private static List<Path> paths = new ArrayList<>();
+  private static Map<Path, String> pathsMap = new HashMap<>();
 
   // TODO add back in autonoumsfield
   // TODO add LoggedDashboardChooer for AdvantageKit logging
@@ -90,14 +92,24 @@ public class Autos {
     Path3 = new Path("TrenchDepot".toLowerCase());
     Path4 = new Path("TrenchtoBump".toLowerCase());
     TRENCH_START_LEFT = AllianceFlipUtil.flipped(Path1.getStartPose());
-    paths.add(Path1);
-    paths.add(Path2);
-    paths.add(Path3);
-    paths.add(Path4);
+    pathsMap.put(Path1, "FirstNeutralBump".toLowerCase());
+    pathsMap.put(Path2, "bumptotrench".toLowerCase());
+    pathsMap.put(Path3, "TrenchDepot".toLowerCase());
+    pathsMap.put(Path4, "TrenchtoBump".toLowerCase());
   }
 
-  public static List<Path> getPaths() {
+  public List<Path> getPaths() {
     return paths;
+  }
+
+  public Map<Path, String> getMap() {
+    return pathsMap;
+  }
+
+  public List<String> getBLinePathsNames() {
+    List<String> strings = new ArrayList<>();
+    strings.addAll(pathsMap.values());
+    return strings;
   }
 
   // ============= AUTO REGISTRATION =============
