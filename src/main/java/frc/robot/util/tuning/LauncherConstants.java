@@ -8,7 +8,6 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 
 public class LauncherConstants {

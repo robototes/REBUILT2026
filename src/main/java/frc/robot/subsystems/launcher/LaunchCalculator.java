@@ -89,6 +89,8 @@ public class LaunchCalculator {
   // We use a heavy filter (slow) below the threshold to reject noise, and a light filter
   // (fast) above it to track real events with minimal lag. Hysteresis on the threshold
   // prevents flicker between modes.
+  private static final double SLIP_FILTER_ALPHA_SLOW = 0.85; // noise rejection
+  private static final double SLIP_FILTER_ALPHA_FAST = 0.20; // fast tracking
   private static final double FAST_SLIP_THRESHOLD_ENTER = 2.0; // m/s
   private static final double FAST_SLIP_THRESHOLD_EXIT = 0.5; // m/s (hysteresis)
   private boolean slipFastMode = false;
@@ -260,7 +262,7 @@ public class LaunchCalculator {
     // Uses filteredAcceleration (not raw delta) to avoid noise-driven unnecessary cache misses.
     // Includes angular acceleration so aggressive rotation also busts the cache.
     double speedsDt = timestamp - lastWheelSpeedsTimestamp;
-  filteredAcceleration = new ChassisSpeeds(0, 0, 0);
+    filteredAcceleration = new ChassisSpeeds(0, 0, 0);
 
     double filteredAccelMagnitude =
         Math.hypot(filteredAcceleration.vxMetersPerSecond, filteredAcceleration.vyMetersPerSecond);
@@ -382,6 +384,12 @@ public class LaunchCalculator {
       } else if (slipRawMag < FAST_SLIP_THRESHOLD_EXIT) {
         slipFastMode = false;
       }
+      double filterAlpha = slipFastMode ? SLIP_FILTER_ALPHA_FAST : SLIP_FILTER_ALPHA_SLOW;
+
+      double newSlipX = filterAlpha * filteredSlip.vxMetersPerSecond + (1 - filterAlpha) * slipRawX;
+      double newSlipY = filterAlpha * filteredSlip.vyMetersPerSecond + (1 - filterAlpha) * slipRawY;
+      double newSlipOmega =
+          filterAlpha * filteredSlip.omegaRadiansPerSecond + (1 - filterAlpha) * slipRawOmega;
 
       // Cap the filtered slip magnitude
       double newSlipMag = Math.hypot(newSlipX, newSlipY);

@@ -1781,10 +1781,11 @@ public class LimelightHelpers {
   }
 
   /**
-   *
-   * @param limelightName Name/identifier of the Limelight
-   *     assist source more rapidly.
+   * @param limelightName Name/identifier of the Limelight assist source more rapidly.
    */
+  public static void SetIMUAssistAlpha(String limelightName, double alpha) {
+    setLimelightNTDouble(limelightName, "imuassistalpha_set", alpha);
+  }
 
   /**
    * Configures the throttle value. Set to 100-200 while disabled to reduce thermal
