@@ -84,6 +84,7 @@ public class LaunchCalculator {
   private static final double MIN_MOVING_SPEED_DISABLE = 0.03; // m/s
 
   // real wheel slip live in different magnitude regimes:
+  private static final double ACCEL_FILTER_ALPHA = 0.9;
   //   - Vision noise: <1 cm correction over 20 ms, single-frame transients.
   //   - Real stuck/push: wheels at 2 m/s vs robot at 0 = 2+ m/s, sustained over many frames.
   // We use a heavy filter (slow) below the threshold to reject noise, and a light filter
@@ -261,8 +262,30 @@ public class LaunchCalculator {
     // Compute filtered acceleration for cache-bust check.
     // Uses filteredAcceleration (not raw delta) to avoid noise-driven unnecessary cache misses.
     // Includes angular acceleration so aggressive rotation also busts the cache.
+
     double speedsDt = timestamp - lastWheelSpeedsTimestamp;
-    filteredAcceleration = new ChassisSpeeds(0, 0, 0);
+
+    if (speedsDt > MIN_POSE_DT && speedsDt < MAX_POSE_DT) {
+      double rawAX =
+          (currentSpeeds.vxMetersPerSecond - lastWheelSpeeds.vxMetersPerSecond) / speedsDt;
+      double rawAY =
+          (currentSpeeds.vyMetersPerSecond - lastWheelSpeeds.vyMetersPerSecond) / speedsDt;
+      double rawAOmega =
+          (currentSpeeds.omegaRadiansPerSecond - lastWheelSpeeds.omegaRadiansPerSecond) / speedsDt;
+      filteredAcceleration =
+          new ChassisSpeeds(
+              ACCEL_FILTER_ALPHA * filteredAcceleration.vxMetersPerSecond
+                  + (1 - ACCEL_FILTER_ALPHA) * rawAX,
+              ACCEL_FILTER_ALPHA * filteredAcceleration.vyMetersPerSecond
+                  + (1 - ACCEL_FILTER_ALPHA) * rawAY,
+              ACCEL_FILTER_ALPHA * filteredAcceleration.omegaRadiansPerSecond
+                  + (1 - ACCEL_FILTER_ALPHA) * rawAOmega);
+    } else if (speedsDt >= MAX_POSE_DT) {
+      // speedsDt outside valid range means the system was disabled, restarted, or had a
+      // significant loop overrun. Reset to zero so stale acceleration from before the gap
+      // doesn't corrupt the phase delay prediction on the first active cycle.
+      filteredAcceleration = new ChassisSpeeds(0, 0, 0);
+    }
 
     double filteredAccelMagnitude =
         Math.hypot(filteredAcceleration.vxMetersPerSecond, filteredAcceleration.vyMetersPerSecond);
