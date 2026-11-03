@@ -9,8 +9,6 @@ import org.junit.jupiter.api.Test;
 public class JSONComparisionTest {
   private final int MINIMUM_FILE_COUNT = 2;
 
-  // TODO add Autos object for unit test init call
-
   @Test
   public void compareJSONContents()
       throws ParseException, ParseException, org.json.simple.parser.ParseException {

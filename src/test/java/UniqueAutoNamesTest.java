@@ -9,7 +9,6 @@ public class UniqueAutoNamesTest {
   @Test
   public void validateUniqueAutoNames() {
     Autos autos = new Autos();
-    // TODO add object of type autos for setup()
     autos.unitTestInit();
     File[] files = UnitTestHelpers.getAutosFiles();
     if (files == null) return;

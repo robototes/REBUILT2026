@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 
 public class AutoFilePathsTest {
 
-  // TODO Fix the auto.toString() probably and getPaths initialization handling for unit testing
-
   @Test
   public void validatePathFiles() {
     Autos autos = new Autos();

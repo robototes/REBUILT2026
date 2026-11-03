@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class Autos {
 
@@ -29,9 +30,11 @@ public class Autos {
   private static boolean pathsInitialized = false;
   private static List<Path> paths = new ArrayList<>();
   private static Map<Path, String> pathsMap = new HashMap<>();
+  private static Map<String, Path> pathsMap2 = new HashMap<>();
+  private static LoggedDashboardChooser<String> loggedAutoChooser =
+      new LoggedDashboardChooser<>("Auto Chooser");
 
   // TODO add back in autonoumsfield
-  // TODO add LoggedDashboardChooer for AdvantageKit logging
 
   // ============= BLINE PATHS =============
   /**
@@ -96,6 +99,10 @@ public class Autos {
     pathsMap.put(Path2, "bumptotrench".toLowerCase());
     pathsMap.put(Path3, "TrenchDepot".toLowerCase());
     pathsMap.put(Path4, "TrenchtoBump".toLowerCase());
+    pathsMap.forEach(
+        (Path p, String s) -> {
+          pathsMap2.put(s, p);
+        });
   }
 
   public List<Path> getPaths() {
@@ -120,6 +127,11 @@ public class Autos {
 
     // Register all autos with the chooser for driver station selection
     autos.forEach(autoChooser::addCmd);
+    autos.forEach(
+        (String s, Supplier<Command> p) -> {
+          loggedAutoChooser.addOption(s, s);
+        });
+    pathsMap2.forEach((s, p) -> loggedAutoChooser.addOption(s, s));
   }
 
   /**
@@ -132,7 +144,7 @@ public class Autos {
    * @return a command that follows the path with sensor-based early termination
    */
   public Command selectedCommand() {
-    return autoChooser.selectedCommand();
+    return pathBuilder.build(pathsMap2.get(loggedAutoChooser.get()));
   }
 
   public String getSelectedPathName() {

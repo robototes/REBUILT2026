@@ -32,6 +32,5 @@ public class UnusedFilesTest {
     } else {
       System.out.println("All files in 'autos' folder are used");
     }
-    // TODO Fix this whole commented out section pls
   }
 }
