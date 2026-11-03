@@ -94,7 +94,6 @@ public class Autos {
     Path2 = new Path("bumptotrench".toLowerCase());
     Path3 = new Path("TrenchDepot".toLowerCase());
     Path4 = new Path("TrenchtoBump".toLowerCase());
-    TRENCH_START_LEFT = AllianceFlipUtil.flipped(Path1.getStartPose());
     pathsMap.put(Path1, "FirstNeutralBump".toLowerCase());
     pathsMap.put(Path2, "bumptotrench".toLowerCase());
     pathsMap.put(Path3, "TrenchDepot".toLowerCase());
@@ -144,7 +143,10 @@ public class Autos {
    * @return a command that follows the path with sensor-based early termination
    */
   public Command selectedCommand() {
-    return pathBuilder.build(pathsMap2.get(loggedAutoChooser.get()));
+    //TODO Fix this null error selected stuff
+    autoChooser.select(loggedAutoChooser.get());
+    return autoChooser.selectedCommand();
+
   }
 
   public String getSelectedPathName() {
