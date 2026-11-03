@@ -60,7 +60,7 @@ public class AutoBuilderConfig {
     }
   }
 
-  public static String setRobot(boolean unitTest) throws IOException, ParseException {
+  public static String setRobot(boolean unitTest) {
     if (unitTest) {
       return "sim";
     }
