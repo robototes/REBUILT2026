@@ -1,6 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 public class IntakeRollerIOTalonFX implements IntakeIO {
@@ -15,16 +14,15 @@ public class IntakeRollerIOTalonFX implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    StatusSignal.refreshAll(
-        inputs.currentVelocityMotor1,
-        inputs.currentVelocityMotor2,
-        inputs.statorCurrentRoller1,
-        inputs.supplyCurrentRoller1,
-        inputs.statorCurrentRoller2,
-        inputs.supplyCurrentRoller2,
-        inputs.isConnected1,
-        inputs.isConnected2,
-        inputs.motorTemp1,
-        inputs.motorTemp2);
+    inputs.currentVelocityMotor1 = rollerMotor1.getVelocity().getValueAsDouble();
+    inputs.currentVelocityMotor2 = rollerMotor2.getVelocity().getValueAsDouble();
+    inputs.statorCurrentRoller1 = rollerMotor1.getStatorCurrent().getValueAsDouble();
+    inputs.supplyCurrentRoller1 = rollerMotor1.getSupplyCurrent().getValueAsDouble();
+    inputs.statorCurrentRoller2 = rollerMotor2.getStatorCurrent().getValueAsDouble();
+    inputs.supplyCurrentRoller2 = rollerMotor2.getSupplyCurrent().getValueAsDouble();
+    inputs.isConnected1 = rollerMotor1.isConnected();
+    inputs.isConnected2 = rollerMotor2.isConnected();
+    inputs.motorTemp1 = rollerMotor1.getDeviceTemp().getValueAsDouble();
+    inputs.motorTemp2 = rollerMotor2.getDeviceTemp().getValueAsDouble();
   }
 }

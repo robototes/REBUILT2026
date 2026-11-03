@@ -109,13 +109,6 @@ public class IntakeRollers extends SubsystemBase {
   @Override
   // update networktables
   public void periodic() {
-    StatusSignal.refreshAll(
-        rollerLeftVelocity,
-        rollerRightVelocity,
-        rollerLeftStatorCurrent,
-        rollerLeftSupplyCurrent,
-        rollerRightStatorCurrent,
-        rollerRightSupplyCurrent);
     io.updateInputs(inputs);
     Logger.processInputs("Intake/Rollers", inputs);
   }

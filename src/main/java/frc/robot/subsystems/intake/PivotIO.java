@@ -1,18 +1,16 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.StatusSignal;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface PivotIO {
   @AutoLog
   public static class PivotIOInputs {
-    public StatusSignal currentPos; // pivot position
-    public StatusSignal targetPos;
-    public StatusSignal isConnected;
-    public StatusSignal motorTemp;
+    public double currentPos; // pivot position
+    public boolean isConnected;
+    public double motorTemp;
     // pivot stator and supply
-    public StatusSignal statorCurrentPivot;
-    public StatusSignal supplyCurrentPivot;
+    public double statorCurrentPivot;
+    public double supplyCurrentPivot;
   }
 
   public default void updateInputs(PivotIOInputs inputs) {}
