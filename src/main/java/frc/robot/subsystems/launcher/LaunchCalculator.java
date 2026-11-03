@@ -246,10 +246,10 @@ public class LaunchCalculator {
   public LaunchingParameters getParameters(
       CommandSwerveDrivetrain drivetrain, TurretSubsystem turretSubsystem) {
     SwerveDriveState driveState = drivetrain.getState();
-    Pose2d currentPose = driveState.Pose;
-    ChassisSpeeds currentSpeeds = driveState.Speeds;
+    Pose2d currentPose = drivetrain.inputs.Pose;
+    ChassisSpeeds currentSpeeds = drivetrain.inputs.Speeds;
     double currentTurretOmega = turretSubsystem.getOmega();
-    double timestamp = driveState.Timestamp;
+    double timestamp = drivetrain.inputs.Timestamp;
 
     // Run slip detection every cycle regardless of cache — keeps lastModuleVelocity
     // fresh and NT logs continuous even when the cache is hit.
@@ -333,7 +333,13 @@ public class LaunchCalculator {
     lastPose = currentPose;
     lastTurretOmega = currentTurretOmega;
 
-    cachedParams = calculate(driveState, turretSubsystem, isSlipping);
+    cachedParams =
+        calculate(
+            drivetrain.inputs.Pose,
+            drivetrain.inputs.Speeds,
+            drivetrain.inputs.Timestamp,
+            turretSubsystem,
+            isSlipping);
 
     // Update differentiation state AFTER calculate() so that calculate() sees the previous
     // cycle's state (giving a real non-zero poseDt / speedsDt), and the next cycle sees
@@ -367,11 +373,11 @@ public class LaunchCalculator {
    * @return LaunchingParameters record holding all the target values
    */
   public LaunchingParameters calculate(
-      SwerveDriveState driveState, TurretSubsystem turretSubsystem, boolean isSlipping) {
-
-    Pose2d estimatedPose = driveState.Pose;
-    ChassisSpeeds wheelSpeeds = driveState.Speeds;
-    double timestamp = driveState.Timestamp;
+      Pose2d estimatedPose,
+      ChassisSpeeds wheelSpeeds,
+      double timestamp,
+      TurretSubsystem turretSubsystem,
+      boolean isSlipping) {
 
     // --- DEFENSE COMPENSATION: Slip filter with hysteresis gate ---
     // When still, tiny estimator corrections divided by a small dt produce large fake velocities.
