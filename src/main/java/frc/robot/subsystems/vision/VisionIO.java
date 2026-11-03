@@ -15,9 +15,6 @@ public interface VisionIO {
     /** True if the camera's online is fresh. */
     public boolean connected = false;
 
-    /** Number of targets the camera currently reports. */
-    public int numTargets = 0;
-
     /** Raw per-tag data for the current frame (shared by the MT1 and MT2 solves). */
     public TagObservation[] fiducials = new TagObservation[0];
 

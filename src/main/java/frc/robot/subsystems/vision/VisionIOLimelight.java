@@ -30,12 +30,9 @@ public class VisionIOLimelight implements VisionIO {
     inputs.connected = isOnline();
 
     if (!inputs.connected) {
-      inputs.numTargets = camera.getNumTargets();
       inputs.fiducials = new TagObservation[0];
       inputs.poseObservations = new PoseObservation[0];
       return;
-    } else {
-      inputs.numTargets = 0;
     }
 
     RawFiducial[] rawFiducials = camera.getRawFiducials();

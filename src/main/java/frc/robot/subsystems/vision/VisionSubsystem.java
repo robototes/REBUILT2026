@@ -194,7 +194,6 @@ public class VisionSubsystem extends SubsystemBase {
         for (int i = 0; i < io.length; i++) {
           inputs[i].connected = false;
           inputs[i].fiducials = new TagObservation[0];
-          inputs[i].numTargets = 0;
           inputs[i].poseObservations = new PoseObservation[0];
         }
       }
@@ -586,15 +585,19 @@ public class VisionSubsystem extends SubsystemBase {
       Logger.recordOutput(
           "vision/" + cameraName + "_Last timestamp",
           cameraStates[cameraIndex].lastTimestampSeconds);
-      Logger.recordOutput("vision/" + cameraName + "_Num targets", inputs[cameraIndex].numTargets);
+      Logger.recordOutput(
+          "vision/" + cameraName + "_Num targets",
+          inputs[cameraIndex].poseObservations[0].tagCount());
     }
   }
 
   public int getNumTargets() {
     if (!RobotType.isAlpha()) {
-      return inputs[CAM_A].numTargets + inputs[CAM_B].numTargets + inputs[CAM_C].numTargets;
+      return inputs[CAM_A].poseObservations[0].tagCount()
+          + inputs[CAM_B].poseObservations[0].tagCount()
+          + inputs[CAM_C].poseObservations[0].tagCount();
     } else {
-      return inputs[CAM_C].numTargets;
+      return inputs[CAM_C].poseObservations[0].tagCount();
     }
   }
 
