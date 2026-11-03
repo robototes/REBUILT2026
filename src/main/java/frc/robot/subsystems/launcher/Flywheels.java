@@ -56,6 +56,8 @@ public class Flywheels extends SubsystemBase {
   private StatusSignal<Current> flywheelTwoStatorCurrent;
   private StatusSignal<Current> flywheelTwoSupplyCurrent;
 
+  
+
   // Constructor
   public Flywheels() {
     flywheelOne = new TalonFX(Hardware.FLYWHEEL_ONE_ID);
