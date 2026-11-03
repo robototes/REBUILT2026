@@ -43,7 +43,7 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
 
-  private static final String VISION_TABLE = "/vision";
+  private static final String VISION_TABLE = "/vision ";
 
   private static LoggedNetworkNumber A_XY_MT2 =
       new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
@@ -191,6 +191,12 @@ public class VisionSubsystem extends SubsystemBase {
     if (getDisableVision()) {
       for (String name : CAMERA_NAMES) {
         Logger.recordOutput("/vision/" + name + "_rejectReason", "vision-disabled");
+        for (int i = 0; i < io.length; i++) {
+          inputs[i].connected = false;
+          inputs[i].fiducials = new TagObservation[0];
+          inputs[i].numTargets = 0;
+          inputs[i].poseObservations = new PoseObservation[0];
+        }
       }
       return;
     }
