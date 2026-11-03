@@ -339,7 +339,10 @@ public class Controls {
   }
 
   private void updateIntakeMode() {
-    if (driverController.leftTrigger().getAsBoolean()) {
+    if (connected(indexingTestController).getAsBoolean()
+        && indexingTestController.rightTrigger().getAsBoolean()) {
+      intakeMode = IntakeMode.BLOCK;
+    } else if (driverController.leftTrigger().getAsBoolean()) {
       intakeMode = IntakeMode.INTAKE;
       ledsMode = LEDMode.INTAKE;
     } else if (driverController.leftBumper().getAsBoolean()) {
@@ -372,6 +375,7 @@ public class Controls {
                     case INTAKE ->
                         s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
+                    case BLOCK -> s.intakeSubsystem.holdAtExtake();
                   }
                 },
                 s.intakeSubsystem)
@@ -407,6 +411,19 @@ public class Controls {
     connected(intakeTestController)
         .and(intakeTestController.y())
         .onTrue(Commands.runOnce(() -> intakeMode = IntakeMode.RETRACTED));
+
+    if (s.blocker != null) {
+      // Need to add requirements here
+      connected(indexingTestController)
+          .and(indexingTestController.rightTrigger())
+          .onTrue(
+              Commands.parallel(
+                  Commands.runOnce(() -> intakeMode = IntakeMode.BLOCK),
+                  s.blocker.blockerOutCommand()))
+          .onFalse(
+              Commands.parallel(
+                  Commands.runOnce(() -> updateIntakeMode()), s.blocker.blockerInCommand()));
+    }
   }
 
   /**

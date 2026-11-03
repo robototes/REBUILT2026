@@ -12,7 +12,8 @@ public class IntakeSubsystem extends SubsystemBase {
     SPIN,
     LAUNCH,
     INTAKE,
-    EXTAKE
+    EXTAKE,
+    BLOCK
   }
 
   protected IntakePivot intakePivot;
@@ -66,5 +67,10 @@ public class IntakeSubsystem extends SubsystemBase {
   public void extakeIntake() {
     intakePivot.setPivotPosition(IntakePivot.EXTAKE_POS);
     intakeRollers.runRollers(-intakeRollers.TARGET_RPS);
+  }
+
+  public void holdAtExtake() {
+    intakeRollers.stopMotor();
+    intakePivot.setPivotPosition(IntakePivot.SHOTBLOCK_POS);
   }
 }
