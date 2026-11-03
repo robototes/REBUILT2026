@@ -203,8 +203,8 @@ public class IntakePivot extends SubsystemBase {
   public void periodic() {
     StatusSignal.refreshAll(position, intakePivotStatorCurrent, intakePivotSupplyCurrent);
     io.updateInputs(inputs);
-    Logger.processInputs("Intake Pivot", inputs);
-    Logger.recordOutput("Intake Pivot/Target Pos", getPivotTargetPosition());
+    Logger.processInputs("Intake/Pivot", inputs);
+    Logger.recordOutput("Intake/Pivot/Target Pos", getPivotTargetPosition());
   }
 
   public void simulationPeriodic() {

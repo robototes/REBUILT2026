@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 public class IntakePivotIOTalonFX implements PivotIO {
@@ -11,10 +12,12 @@ public class IntakePivotIOTalonFX implements PivotIO {
 
   @Override
   public void updateInputs(PivotIOInputs inputs) {
-    inputs.currentPos = pivotMotor.getPosition().getValueAsDouble();
-    inputs.statorCurrentPivot = pivotMotor.getStatorCurrent().getValueAsDouble();
-    inputs.supplyCurrentPivot = pivotMotor.getSupplyCurrent().getValueAsDouble();
-    inputs.isConnected = pivotMotor.isConnected();
-    inputs.motorTemp = pivotMotor.getDeviceTemp().getValueAsDouble();
+    StatusSignal.refreshAll(
+        inputs.currentPos,
+        inputs.targetPos,
+        inputs.isConnected,
+        inputs.motorTemp,
+        inputs.statorCurrentPivot,
+        inputs.supplyCurrentPivot);
   }
 }
