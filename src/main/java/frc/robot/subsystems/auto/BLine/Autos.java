@@ -5,6 +5,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -13,180 +14,145 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.util.AllianceFlipUtil;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class Autos {
 
   private Subsystems systems;
-  private AutoChooser autoChooser = new AutoChooser();
-  private Map<String, Supplier<Command>> autos = new LinkedHashMap<>();
-  private FollowPath.Builder pathBuilder;
-  private static boolean pathsInitialized = false;
-  private static List<Path> paths = new ArrayList<>();
-  private static Map<Path, String> pathsMap = new HashMap<>();
-  private static Map<String, Path> pathsMap2 = new HashMap<>();
-  private static LoggedDashboardChooser<String> loggedAutoChooser =
-      new LoggedDashboardChooser<>("Auto Chooser");
 
-  // TODO add back in autonoumsfield
+  private final AutoChooser autoChooser = new AutoChooser();
+
+  private FollowPath.Builder pathBuilder;
+
+  private boolean pathsInitialized = false;
+  private boolean autosRegistered = false;
+
+  private final List<Path> paths = new ArrayList<>();
+  private final Map<String, List<Path>> pathsMap = new LinkedHashMap<>();
 
   // ============= BLINE PATHS =============
-  /**
-   * BLine trajectory paths for autonomous routines. Each Path references a trajectory file (in
-   * lowercase)
-   */
-  private Path Path1;
 
-  private Path Path2;
-  private Path Path3;
-  private Path Path4;
+  private final Path Path1 = new Path("FirstNeutralTrench");
+  private final Path Path2 = new Path("SecondNeutralTrench");
+
   public Supplier<Pose2d> TRENCH_START_LEFT;
 
-  // BLine Paths
-
-  // Constructor
-  public Autos() {}
+  // ============= CONFIGURATION =============
 
   public void configure(Subsystems s) {
 
-    // ===== BLINE PATH FOLLOWING CONFIGURATION =====
+    systems = s;
+
+    initializePaths();
+
     pathBuilder =
         new FollowPath.Builder(
                 s.drivebaseSubsystem,
                 () -> s.drivebaseSubsystem.getState().Pose,
                 () -> s.drivebaseSubsystem.getState().Speeds,
-                (speeds) ->
+                speeds ->
                     s.drivebaseSubsystem.setControl(
                         new SwerveRequest.ApplyRobotSpeeds()
                             .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
                 new PIDController(3.0, 0.0, 0.0),
                 new PIDController(5.0, 0.0, 0.0),
                 new PIDController(2.0, 0.0, 0.0))
-            .withDefaultShouldFlip(); // Auto-flip trajectory when on red alliance
+            .withDefaultShouldFlip();
 
     registerAutos();
   }
 
   public void init(Subsystems s) {
-    this.systems = s;
-    if (pathsInitialized) {
-      return;
-    }
-
+    systems = s;
     initializePaths();
-
-    pathsInitialized = true;
+    FollowPath.registerEventTrigger("intake", AutosCommands.intakeCommand());
+    FollowPath.registerEventTrigger("shoot", AutosCommands.launcherCommand(5, s));
+    SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   public void unitTestInit() {
-
     initializePaths();
   }
 
+  // ============= PATH INITIALIZATION =============
+
   public void initializePaths() {
-    Path1 = new Path("FirstNeutralBump".toLowerCase());
-    Path2 = new Path("bumptotrench".toLowerCase());
-    Path3 = new Path("TrenchDepot".toLowerCase());
-    Path4 = new Path("TrenchtoBump".toLowerCase());
-    pathsMap.put(Path1, "FirstNeutralBump".toLowerCase());
-    pathsMap.put(Path2, "bumptotrench".toLowerCase());
-    pathsMap.put(Path3, "TrenchDepot".toLowerCase());
-    pathsMap.put(Path4, "TrenchtoBump".toLowerCase());
-    pathsMap.forEach(
-        (Path p, String s) -> {
-          pathsMap2.put(s, p);
-        });
+
+    if (pathsInitialized) return;
+
+    pathsMap.put("SingleNeutralTrench", List.of(Path1));
+    pathsMap.put("bumptotrench", List.of(Path1, Path2));
+
+    pathsMap.values().forEach(pathList -> pathList.forEach(p -> paths.add(p)));
+    TRENCH_START_LEFT = AllianceFlipUtil.flipped(Path1.getStartPose());
+
+    pathsInitialized = true;
   }
 
   public List<Path> getPaths() {
     return paths;
   }
 
-  public Map<Path, String> getMap() {
+  public Map<String, List<Path>> getMap() {
     return pathsMap;
   }
 
   public List<String> getBLinePathsNames() {
-    List<String> strings = new ArrayList<>();
-    strings.addAll(pathsMap.values());
-    return strings;
+    return new ArrayList<>(pathsMap.keySet());
   }
 
   // ============= AUTO REGISTRATION =============
-  /** Registers all autonomous routines with the auto chooser. */
+
   private void registerAutos() {
-    // Format as follows: autos.put(name, () -> auto.flipped(), c -> Commands...
-    // pathBuilder.build(path))
 
-    // Register all autos with the chooser for driver station selection
-    autos.forEach(autoChooser::addCmd);
-    autos.forEach(
-        (String s, Supplier<Command> p) -> {
-          loggedAutoChooser.addOption(s, s);
-        });
-    pathsMap2.forEach((s, p) -> loggedAutoChooser.addOption(s, s));
+    if (autosRegistered) return;
+
+    autoChooser.addCmd(
+        "SingleNeutralTrench",
+        () -> auto(TRENCH_START_LEFT.get(), c -> c.addCommands(pathBuilder.build(Path1))));
+
+    autoChooser.addCmd(
+        "DoubleNeutralTrench",
+        () ->
+            auto(
+                AllianceFlipUtil.flipped(Path2.getStartPose()).get(),
+                c -> c.addCommands(pathBuilder.build(Path1), pathBuilder.build(Path2))));
+
+    autosRegistered = true;
   }
 
-  /**
-   * Runs a path command until it times out or the robot is close to a wall/obstacle but only after
-   * a specified event marker has fired in the trajectory.
-   *
-   * @param path the BLine path command to follow
-   * @param eventKey the path event marker name that must fire before sensor termination is active
-   * @param timeoutSeconds maximum time to allow the path to run (safety limit)
-   * @return a command that follows the path with sensor-based early termination
-   */
+  // ============= AUTO SELECTION =============
+
   public Command selectedCommand() {
-    //TODO Fix this null error selected stuff
-    autoChooser.select(loggedAutoChooser.get());
-    return autoChooser.selectedCommand();
-
-  }
-
-  public String getSelectedPathName() {
-    return selectedCommand().getName();
-  }
-
-  public AutoChooser getAutoChooser() {
-    return autoChooser;
+    Command selected = autoChooser.selectedCommand();
+    return selected != null ? selected : Commands.none();
   }
 
   // ============= AUTO BUILDER HELPERS =============
 
-  /**
-   * Constructs an autonomous routine with a starting pose and a sequence of commands.
-   *
-   * @param startPose the initial robot pose for odometry reset
-   * @param builder a {@link Consumer} that accepts a {@link SequentialCommandGroup} to which
-   *     commands should be added in the desired order
-   * @return a {@link Command} that resets odometry and executes the command sequence
-   */
   private Command auto(Pose2d startPose, Consumer<SequentialCommandGroup> builder) {
+
     SequentialCommandGroup group = new SequentialCommandGroup();
-    // reset odometry
+
     group.addCommands(
         Commands.runOnce(
             () -> systems.drivebaseSubsystem.resetPose(startPose), systems.drivebaseSubsystem));
+
     builder.accept(group);
+
     return group;
   }
 
-  /**
-   * Constructs an autonomous routine with a sequence of commands (no pose reset).
-   *
-   * @param builder a {@link Consumer} that accepts a {@link SequentialCommandGroup} to which
-   *     commands should be added in the desired order
-   * @return a {@link Command} that executes the command sequence
-   */
   private Command auto(Consumer<SequentialCommandGroup> builder) {
+
     SequentialCommandGroup group = new SequentialCommandGroup();
+
     builder.accept(group);
+
     return group;
   }
 }
