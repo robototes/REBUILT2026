@@ -113,14 +113,14 @@ public class Autos {
 
     autoChooser.addCmd(
         "SingleNeutralTrench",
-        () -> auto(TRENCH_START_LEFT.get(), c -> c.addCommands(pathBuilder.build(Path1))));
+        () -> auto(TRENCH_START_LEFT.get(), c -> c.addCommands(pathBuilder.build(Path1), AutosCommands.launcherCommand(systems))));
 
     autoChooser.addCmd(
         "DoubleNeutralTrench",
         () ->
             auto(
                 AllianceFlipUtil.flipped(Path2.getStartPose()).get(),
-                c -> c.addCommands(pathBuilder.build(Path1), pathBuilder.build(Path2))));
+                c -> c.addCommands(pathBuilder.build(Path1), AutosCommands.launcherCommand(5,systems), pathBuilder.build(Path2), AutosCommands.launcherCommand(systems))));
 
     autosRegistered = true;
   }
