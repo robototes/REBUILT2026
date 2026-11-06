@@ -415,8 +415,9 @@ public class Robot extends LoggedRobot {
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
-      LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
+
       // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
       LimelightHelpers.SetIMUMode(limelightName, 0);
       LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
 

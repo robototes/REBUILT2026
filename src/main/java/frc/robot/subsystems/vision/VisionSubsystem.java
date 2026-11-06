@@ -25,7 +25,9 @@ import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
 import frc.robot.subsystems.vision.VisionIO.TagObservation;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.robotType.RobotType;
+import frc.robot.util.BetterPoseEstimate;
+import frc.robot.util.LLCamera;
+import frc.robot.util.LimelightHelpers.RawFiducial;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -66,10 +68,6 @@ public class VisionSubsystem extends SubsystemBase {
     // Range gates
     private static final double MAX_DISTANCE_MT1 = 2.0;
     private static final double MAX_DISTANCE_MT2 = 5.0;
-
-    // Velocity sanity (alpha bot only)
-    private static final double MAX_XY_VELO_ALPHA = 2.0;
-    private static final double MAX_TURN_VELO_ALPHA = 0.2;
 
     // Pose 3D sanity
     private static final double ROTATION_TOLERANCE = 12.0;
@@ -264,17 +262,6 @@ public class VisionSubsystem extends SubsystemBase {
     Pose2d visionPose2d = pose3d.toPose2d();
     if (timestamp == state.lastTimestampSeconds) {
       publishDiagnostics(observation, visionPose2d, cameraIndex, "stale-timestamp");
-      return;
-    }
-
-    if (RobotType.isAlpha()
-        && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
-                > VisionConstants.MAX_XY_VELO_ALPHA
-            || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
-                > VisionConstants.MAX_TURN_VELO_ALPHA)) {
-      publishDiagnostics(observation, visionPose2d, cameraIndex, "alpha-max-speed");
       return;
     }
 
@@ -592,13 +579,11 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public int getNumTargets() {
-    if (!RobotType.isAlpha()) {
-      return inputs[CAM_A].poseObservations[0].tagCount()
-          + inputs[CAM_B].poseObservations[0].tagCount()
-          + inputs[CAM_C].poseObservations[0].tagCount();
-    } else {
-      return inputs[CAM_C].poseObservations[0].tagCount();
-    }
+
+      return inputs[CAM_A].fiducials.length
+          + inputs[CAM_B].fiducials.length
+          + inputs[CAM_C].fiducials.length;
+
   }
 
   public double getLastTimestampSeconds() {
