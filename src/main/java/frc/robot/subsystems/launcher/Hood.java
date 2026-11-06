@@ -2,7 +2,6 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -12,8 +11,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.networktables.TimestampedDouble;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -56,9 +53,8 @@ public class Hood extends SubsystemBase {
   private static final double AUTO_ZERO_VOLTAGE = -1.5;
 
   // Status signals
-  private final StatusSignal<Current> hoodStatorCurrent;
-  private final StatusSignal<Current> hoodSupplyCurrent;
-  private final StatusSignal<Angle> position;
+  private final HoodIO io;
+  private final HoodIOInputsAutoLogged inputs;
 
   public Hood() {
     hood = new TalonFX(Hardware.HOOD_MOTOR_ID);
@@ -69,9 +65,8 @@ public class Hood extends SubsystemBase {
     if (RobotBase.isSimulation()) {
       hoodSim = new HoodSim(hood);
     }
-    hoodStatorCurrent = hood.getStatorCurrent();
-    hoodSupplyCurrent = hood.getSupplyCurrent();
-    position = hood.getPosition();
+    io = new HoodIOTalonFX(hood);
+    inputs = new HoodIOInputsAutoLogged();
   }
 
   public void initializeNT() {
@@ -125,10 +120,9 @@ public class Hood extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(position, hoodStatorCurrent, hoodSupplyCurrent);
-    Logger.recordOutput("Hood/position", position.getValueAsDouble());
-    Logger.recordOutput("Hood/statorCurrent", hoodStatorCurrent.getValueAsDouble());
-    Logger.recordOutput("Hood/supplyCurrent", hoodSupplyCurrent.getValueAsDouble());
+    io.updateInputs(inputs);
+    Logger.processInputs("Hood", inputs);
+
     Logger.recordOutput("Hood/goal", request.Position);
     if (TUNER_CONTROLLED.get()) {
       if (targetPosition.hasChangedSince(lastPositionUpdateTime)) {
@@ -140,7 +134,7 @@ public class Hood extends SubsystemBase {
   }
 
   public double getHoodPosition() {
-    return position.getValueAsDouble();
+    return inputs.position;
   }
 
   public void setHoodPosition(double positionRotations) {
@@ -171,7 +165,7 @@ public class Hood extends SubsystemBase {
 
   public boolean atTargetPosition() {
     return DriverStation.isEnabled()
-        && Math.abs(position.getValueAsDouble() - request.Position) < TARGET_TOLERANCE;
+        && Math.abs(inputs.position - request.Position) < TARGET_TOLERANCE;
   }
 
   public Command voltageControl(Supplier<Voltage> voltageSupplier) {
@@ -192,16 +186,9 @@ public class Hood extends SubsystemBase {
     }
     return Commands.sequence(
             voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
-                .withDeadline(
-                    Commands.waitSeconds(0.5)
-                        .andThen(
-                            Commands.run(() -> hoodStatorCurrent.refresh())
-                                .until(
-                                    () ->
-                                        hoodStatorCurrent.getValueAsDouble()
-                                            >= (STATOR_CURRENT_LIMIT - 1)))),
+                .until(() -> inputs.hoodStatorCurrent >= (STATOR_CURRENT_LIMIT - 1))
+                .withTimeout(3.0),
             zeroHoodCommand())
-        .withTimeout(3)
         .withName("Automatic Zero Hood");
   }
 
