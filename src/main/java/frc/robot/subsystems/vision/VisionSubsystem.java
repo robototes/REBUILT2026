@@ -45,7 +45,7 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
 
-  private static final String VISION_TABLE = "/vision ";
+  private static final String VISION_TABLE = "/vision/";
 
   private static LoggedNetworkNumber A_XY_MT2 =
       new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
