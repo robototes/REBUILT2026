@@ -2,7 +2,6 @@ package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 
@@ -23,6 +22,7 @@ public class IntakePivotIOTalonFX implements PivotIO {
 
   @Override
   public void updateInputs(PivotIOInputs inputs) {
+    StatusSignal.refreshAll(position, intakePivotStatorCurrent, intakePivotSupplyCurrent);
     inputs.currentPos = position.getValueAsDouble();
     inputs.isConnected = isConnected.getTimestamp().getLatency() < 0.5;
     inputs.motorTemp = pivotMotor.getDeviceTemp().getValueAsDouble();
