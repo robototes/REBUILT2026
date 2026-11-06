@@ -25,9 +25,6 @@ import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
 import frc.robot.subsystems.vision.VisionIO.TagObservation;
 import frc.robot.util.AllianceUtils;
-import frc.robot.util.BetterPoseEstimate;
-import frc.robot.util.LLCamera;
-import frc.robot.util.LimelightHelpers.RawFiducial;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -580,10 +577,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   public int getNumTargets() {
 
-      return inputs[CAM_A].fiducials.length
-          + inputs[CAM_B].fiducials.length
-          + inputs[CAM_C].fiducials.length;
-
+    return inputs[CAM_A].fiducials.length
+        + inputs[CAM_B].fiducials.length
+        + inputs[CAM_C].fiducials.length;
   }
 
   public double getLastTimestampSeconds() {
