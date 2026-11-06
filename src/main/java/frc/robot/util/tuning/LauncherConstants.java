@@ -8,14 +8,11 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 
 public class LauncherConstants {
   private static final Transform2d LAUNCHER_OFFSET =
-      RobotType.isAlpha()
-          ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
-          : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+      new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
@@ -43,13 +40,6 @@ public class LauncherConstants {
           distance, flywheelPower, hoodAngle, time);
     }
   }
-
-  private static final LauncherDistanceDataPoint[] alphaDistanceData = {
-    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
-    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
-    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
-    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
-  };
 
   private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(1, 1.5, 35, 1.018),
@@ -95,8 +85,7 @@ public class LauncherConstants {
   private static final InterpolatingDoubleTreeMap timeMapBalling = new InterpolatingDoubleTreeMap();
 
   static {
-    LauncherDistanceDataPoint[] distanceData =
-        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+    LauncherDistanceDataPoint[] distanceData = compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
