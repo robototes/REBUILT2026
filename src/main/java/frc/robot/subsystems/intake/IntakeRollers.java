@@ -1,14 +1,11 @@
 package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
@@ -30,13 +27,8 @@ public class IntakeRollers extends SubsystemBase {
       new LoggedNetworkNumber("Tuning/intake/TargetVelocityRPS", TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest = new VelocityTorqueCurrentFOC(0);
 
-  // status signals
-  private final StatusSignal<AngularVelocity> rollerLeftVelocity;
-  private final StatusSignal<Current> rollerLeftStatorCurrent;
-  private final StatusSignal<Current> rollerLeftSupplyCurrent;
-  private final StatusSignal<AngularVelocity> rollerRightVelocity;
-  private final StatusSignal<Current> rollerRightStatorCurrent;
-  private final StatusSignal<Current> rollerRightSupplyCurrent;
+  private final IntakeIO io;
+  private final IntakeIOInputsAutoLogged inputs;
 
   public IntakeRollers() {
     // define motors and configs
@@ -46,17 +38,13 @@ public class IntakeRollers extends SubsystemBase {
     leftRoller.clearStickyFaults();
     rightRoller.clearStickyFaults();
 
+    io = new IntakeRollerIOTalonFX(leftRoller, rightRoller);
+    inputs = new IntakeIOInputsAutoLogged();
+
     // sim creator
     if (RobotBase.isSimulation()) {
       rollerSim = new RollerSim(leftRoller, rightRoller);
     }
-
-    rollerLeftVelocity = leftRoller.getVelocity();
-    rollerRightVelocity = rightRoller.getVelocity();
-    rollerLeftStatorCurrent = leftRoller.getStatorCurrent();
-    rollerLeftSupplyCurrent = leftRoller.getSupplyCurrent();
-    rollerRightStatorCurrent = rightRoller.getStatorCurrent();
-    rollerRightSupplyCurrent = rightRoller.getSupplyCurrent();
   }
 
   // roller configs
@@ -98,25 +86,8 @@ public class IntakeRollers extends SubsystemBase {
   @Override
   // update networktables
   public void periodic() {
-    StatusSignal.refreshAll(
-        rollerLeftVelocity,
-        rollerRightVelocity,
-        rollerLeftStatorCurrent,
-        rollerLeftSupplyCurrent,
-        rollerRightStatorCurrent,
-        rollerRightSupplyCurrent);
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerSpeed", rollerLeftVelocity.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerSpeed", rollerRightVelocity.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerStator", rollerLeftStatorCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerStator", rollerRightStatorCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Left/leftRollerSupply", rollerLeftSupplyCurrent.getValueAsDouble());
-    Logger.recordOutput(
-        "Intake/Rollers/Right/rightRollerSupply", rollerRightSupplyCurrent.getValueAsDouble());
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake/Rollers", inputs);
   }
 
   // update sim
