@@ -47,34 +47,7 @@
           "data": {
             "name": "launch"
           }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "DepotR-Outpost"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "intake"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "launch"
-          }
-        }
-      ]
-    }
+        }]}
   },
   "resetOdom": true,
   "folder": "COMP",
