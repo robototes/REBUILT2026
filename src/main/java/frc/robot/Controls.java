@@ -28,7 +28,6 @@ import frc.robot.subsystems.auto.AutoDriveRotate;
 import frc.robot.subsystems.intake.IntakeSubsystem.IntakeMode;
 import frc.robot.subsystems.launcher.TurretSubsystem;
 import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.HubShiftUtil;
 import frc.robot.util.tuning.WheelRadiusCharacterization;
 import org.littletonrobotics.junction.Logger;
 
