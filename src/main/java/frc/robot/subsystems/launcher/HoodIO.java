@@ -1,12 +1,5 @@
 package frc.robot.subsystems.launcher;
 
-import java.io.ObjectInputFilter.Status;
-
-import com.ctre.phoenix6.StatusSignal;
-
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Angle;
-
 public interface HoodIO  {
 
     public static class HoodIOInputs {
@@ -16,5 +9,4 @@ public interface HoodIO  {
     }
 
     public default void updateInputs(HoodIOInputs inputs) {}
-
 }
