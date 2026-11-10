@@ -39,6 +39,7 @@ import frc.robot.util.LimelightHelpers;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
 import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -146,6 +147,7 @@ public class Robot extends LoggedRobot {
 
     logger = new DriveStateSignalLogger();
     subsystems.drivebaseSubsystem.registerTelemetry(logger::telemeterize);
+
     driveBaseSim = logger.DrivebaseSim(Controls.MaxSpeed);
 
     // Explicitly register struct schemas with the DataLog
@@ -157,6 +159,7 @@ public class Robot extends LoggedRobot {
       log.addSchema(SwerveModuleState.struct);
       log.addSchema(SwerveModulePosition.struct);
     }
+    Logger.start();
   }
 
   /**

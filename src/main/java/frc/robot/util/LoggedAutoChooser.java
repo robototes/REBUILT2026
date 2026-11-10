@@ -39,21 +39,17 @@ public class LoggedAutoChooser {
     }
 
    private void onChange(String option) {
-    System.out.println("calling onchange");
+
     alliance = DriverStation.getAlliance();
 
     if (option == null) {
-        System.out.println(option + "is null");
+
         selectedAuto = Commands.none();
 
         return;
     }
 
-    if (alliance.isEmpty()) {
 
-        selectedAuto = Commands.none();
-        return;
-    }
 
     Supplier<Command> supplier = choices.get(option);
 
@@ -68,7 +64,7 @@ public class LoggedAutoChooser {
     }
 
     selectedAuto = supplier.get();
-    System.out.print("we got here");
+
 }
 
     /**
