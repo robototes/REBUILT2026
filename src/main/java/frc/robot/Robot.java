@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
-
-import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -29,9 +26,9 @@ import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
 import frc.robot.sim.SimWrapper;
-import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
+import frc.robot.subsystems.auto.BLine.Autos;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -78,6 +75,7 @@ public class Robot extends LoggedRobot {
   private Runnable autoSmartDashboardUpdate;
   private final Timer autoSmartDashboardTimer = new Timer();
   private static final double UPDATE_RATE = 0.05;
+  private Autos autos;
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -133,6 +131,9 @@ public class Robot extends LoggedRobot {
     mechanismRobot = new LoggedMechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     Logger.recordOutput("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
+    autos = new Autos();
+    autos.init(subsystems);
+    autos.configure(subsystems);
 
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation()) {
@@ -152,10 +153,10 @@ public class Robot extends LoggedRobot {
 
     controls = new Controls(subsystems, m_simWrapper);
 
-    if (DRIVEBASE_ENABLED) {
+    /*if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
     }
-    AutoLogic.init(subsystems);
+    */ AutoLogic.init(subsystems);
     if (Robot.isSimulation()) {
       robotSim = new RobotSim(subsystems.drivebaseSubsystem);
     } else {
@@ -193,12 +194,12 @@ public class Robot extends LoggedRobot {
         .onCommandInterrupt((Command command) -> logCommandFunction.accept(command, false));
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
-      AutoLogic.initCommandsAndPaths(false);
+      // AutoLogic.initCommandsAndPaths(false);
       autoSmartDashboardUpdate = AutonomousField.initSmartDashBoard(() -> "Field", 0, 0);
       autoSmartDashboardTimer.start();
 
-      AutoLogic.initAdvantageKit();
-      CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
+      //   AutoLogic.initAdvantageKit();
+      //  CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     }
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
@@ -340,7 +341,8 @@ public class Robot extends LoggedRobot {
         robotSim.resetFuelSim();
       }
 
-      CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+      // CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+      CommandScheduler.getInstance().schedule(autos.selectedCommand());
       Pose2d startingPose = AutoLogic.getSelectedAutoStartingPose();
       double initialYaw = startingPose != null ? startingPose.getRotation().getDegrees() : 0.0;
       if (subsystems.visionSubsystem != null) {

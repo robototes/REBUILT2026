@@ -1,0 +1,36 @@
+import frc.robot.subsystems.auto.BLine.Autos;
+import frc.robot.util.UnitTestHelpers;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+public class UnusedFilesTest {
+
+  @Test
+  public void unusedFileNames() {
+    Autos autos = new Autos();
+    autos.unitTestInit();
+    File[] files = UnitTestHelpers.getAutosFiles();
+    if (files == null) return;
+    List<String> validPathNames = autos.getBLinePathsNames();
+
+    List<String> unusedFiles = new ArrayList<>();
+
+    for (File file : files) {
+      String filename = UnitTestHelpers.getFilenamWithoutExtension(file);
+      if (!validPathNames.contains(filename) && !filename.equalsIgnoreCase("pathgroups")) {
+        unusedFiles.add(file.getName());
+      }
+    }
+
+    if (!unusedFiles.isEmpty()) {
+      System.out.println("WARNING: Unused BLine Paths found:");
+      for (String file : unusedFiles) {
+        System.out.println("  - " + file);
+      }
+    } else {
+      System.out.println("All files in 'autos' folder are used");
+    }
+  }
+}

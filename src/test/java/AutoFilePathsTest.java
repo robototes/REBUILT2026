@@ -1,0 +1,38 @@
+import frc.robot.lib.BLine.Path;
+import frc.robot.subsystems.auto.BLine.Autos;
+import frc.robot.util.UnitTestHelpers;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+public class AutoFilePathsTest {
+
+  @Test
+  public void validatePathFiles() {
+    Autos autos = new Autos();
+    autos.unitTestInit();
+    File[] files = UnitTestHelpers.getAutosFiles();
+    if (files == null) return;
+
+    List<String> validFileNames = UnitTestHelpers.getValidFileNames(files);
+    List<String> invalidPaths = new ArrayList<>();
+    List<Path> tempPaths = autos.getPaths();
+    for (Path auto : tempPaths) {
+
+      if (!validFileNames.contains(autos.getMap().get(auto))) {
+        invalidPaths.add(
+            "Auto '" + auto.toString() + "' references missing path: " + auto.toString());
+      }
+    }
+
+    if (!invalidPaths.isEmpty()) {
+      System.out.println("WARNING: Autos reference invalid path files:");
+      for (String invalid : invalidPaths) {
+        System.out.println("  - " + invalid);
+      }
+    } else {
+      System.out.println("All autos only reference valid path files");
+    }
+  }
+}
