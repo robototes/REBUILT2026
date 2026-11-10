@@ -85,6 +85,9 @@ public class LoggedAutoChooser {
   public Command selectedCommand() {
     return selectedAuto;
   }
+  public String getSelected() {
+    return impl.get();
+  }
 
   /**
    * Gets a Command that schedules the selected auto routine.

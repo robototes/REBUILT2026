@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
@@ -156,7 +157,7 @@ public class Robot extends LoggedRobot {
     /*if (DRIVEBASE_ENABLED) {
       AutoBuilderConfig.buildAuto(subsystems.drivebaseSubsystem, false);
     }
-    */ AutoLogic.init(subsystems);
+    AutoLogic.init(subsystems); */
     if (Robot.isSimulation()) {
       robotSim = new RobotSim(subsystems.drivebaseSubsystem);
     } else {
@@ -195,8 +196,8 @@ public class Robot extends LoggedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       // AutoLogic.initCommandsAndPaths(false);
-      autoSmartDashboardUpdate = AutonomousField.initSmartDashBoard(() -> "Field", 0, 0);
-      autoSmartDashboardTimer.start();
+      //autoSmartDashboardUpdate = AutonomousField.initSmartDashBoard(() -> "Field", 0, 0);
+     // autoSmartDashboardTimer.start();
 
       //   AutoLogic.initAdvantageKit();
       //  CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
@@ -336,14 +337,14 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
-    if (AutoLogic.getSelectedAuto() != null) {
+    if (autos.selectedCommand() != null) {
       if (Robot.isSimulation()) {
         robotSim.resetFuelSim();
       }
 
       // CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      CommandScheduler.getInstance().schedule(autos.selectedCommand());
-      Pose2d startingPose = AutoLogic.getSelectedAutoStartingPose();
+      CommandScheduler.getInstance().schedule(Commands.waitSeconds(autos.getDelay()).andThen(autos.selectedCommand()));
+      Pose2d startingPose = autos.getSelectedAutoStartingPose();
       double initialYaw = startingPose != null ? startingPose.getRotation().getDegrees() : 0.0;
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {

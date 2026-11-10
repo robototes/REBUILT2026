@@ -19,12 +19,14 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 public class Autos {
 
   private Subsystems systems;
 
   private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
-
+  private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay",0.0);
   private FollowPath.Builder pathBuilder;
 
   private boolean pathsInitialized = false;
@@ -96,6 +98,9 @@ public class Autos {
   public List<Path> getPaths() {
     return paths;
   }
+  public Path getPath(int index) {
+    return paths.get(index);
+  }
 
   public Map<String, List<Path>> getMap() {
     return pathsMap;
@@ -148,8 +153,15 @@ public class Autos {
   public Command selectedCommand() {
     return autoChooser.selectedCommand();
   }
+  public Pose2d getSelectedAutoStartingPose() {
 
-  // ============= AUTO BUILDER HELPERS =============
+  return getPath(0).getStartPose();
+  }
+  public double getDelay() {
+    return autoDelay.get();
+  }
+
+  // ============= AUTO BUILDER HELPERS =============s
 
   private Command auto(Pose2d startPose, Consumer<SequentialCommandGroup> builder) {
 
