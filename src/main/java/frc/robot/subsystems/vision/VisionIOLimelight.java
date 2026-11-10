@@ -15,6 +15,8 @@ import java.util.List;
  * heartbeat check.
  */
 public class VisionIOLimelight implements VisionIO {
+  private static final TagObservation[] NO_FIDUCIALS = new TagObservation[0];
+  private static final PoseObservation[] NO_POSES = new PoseObservation[0];
   private static final double STALENESS_THRESHOLD = 1.0; // seconds
 
   private final LLCamera camera;
@@ -30,15 +32,15 @@ public class VisionIOLimelight implements VisionIO {
     inputs.connected = isOnline();
 
     if (!inputs.connected) {
-      inputs.fiducials = new TagObservation[0];
-      inputs.poseObservations = new PoseObservation[0];
+      inputs.fiducials = NO_FIDUCIALS;
+      inputs.poseObservations = NO_POSES;
       return;
     }
 
     RawFiducial[] rawFiducials = camera.getRawFiducials();
     if (rawFiducials == null) {
-      inputs.fiducials = new TagObservation[0];
-      inputs.poseObservations = new PoseObservation[0];
+      inputs.fiducials = NO_FIDUCIALS;
+      inputs.poseObservations = NO_POSES;
       return;
     }
 

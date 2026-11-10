@@ -42,7 +42,7 @@ public class VisionSubsystem extends SubsystemBase {
   public boolean limelightbOnline = false;
   public boolean limelightcOnline = false;
 
-  private static final String VISION_TABLE = "/vision/";
+  private static final String VISION_TABLE = "vision/";
 
   private static LoggedNetworkNumber A_XY_MT2 =
       new LoggedNetworkNumber("Tuning/vision/A_XY_MT2", 0.07);
@@ -182,7 +182,15 @@ public class VisionSubsystem extends SubsystemBase {
 
   /** Must be called once per robot loop. */
   public void update() {
-    // 1. Logic + outputs
+
+    // 1. Read + log inputs (or load them from the log in replay). This always runs, even when
+    //    vision is disabled, so the log stays complete.
+    for (int i = 0; i < io.length; i++) {
+      io[i].updateInputs(inputs[i]);
+      Logger.processInputs(VISION_TABLE + CAMERA_NAMES[i], inputs[i]);
+    }
+
+    // 2. Logic + outputs
     if (getDisableVision()) {
       for (String name : CAMERA_NAMES) {
         Logger.recordOutput("/vision/" + name + "_rejectReason", "vision-disabled");
@@ -193,13 +201,6 @@ public class VisionSubsystem extends SubsystemBase {
         }
       }
       return;
-    }
-
-    // 2. Read + log inputs (or load them from the log in replay). This always runs, even when
-    //    vision is disabled, so the log stays complete.
-    for (int i = 0; i < io.length; i++) {
-      io[i].updateInputs(inputs[i]);
-      Logger.processInputs(VISION_TABLE + CAMERA_NAMES[i], inputs[i]);
     }
 
     limelightaOnline = inputs[CAM_A].connected;
@@ -569,9 +570,7 @@ public class VisionSubsystem extends SubsystemBase {
       Logger.recordOutput(
           "vision/" + cameraName + "_Last timestamp",
           cameraStates[cameraIndex].lastTimestampSeconds);
-      Logger.recordOutput(
-          "vision/" + cameraName + "_Num targets",
-          inputs[cameraIndex].poseObservations[0].tagCount());
+      Logger.recordOutput("vision/" + cameraName + "_Num targets", observation.tagCount());
     }
   }
 
