@@ -1,6 +1,5 @@
 package frc.robot.subsystems.auto.BLine;
 
-import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -13,7 +12,10 @@ import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.LoggedAutoChooser;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +26,7 @@ public class Autos {
 
   private Subsystems systems;
 
-  private final AutoChooser autoChooser = new AutoChooser();
+  private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
 
   private FollowPath.Builder pathBuilder;
 
@@ -38,6 +40,7 @@ public class Autos {
 
   private final Path Path1 = new Path("FirstNeutralTrench");
   private final Path Path2 = new Path("SecondNeutralTrench");
+  private final Path Path3 = new Path("default");
 
   public Supplier<Pose2d> TRENCH_START_LEFT;
 
@@ -71,7 +74,6 @@ public class Autos {
     initializePaths();
     FollowPath.registerEventTrigger("intake", AutosCommands.intakeCommand());
     FollowPath.registerEventTrigger("shoot", AutosCommands.launcherCommand(5, s));
-    SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   public void unitTestInit() {
@@ -86,6 +88,7 @@ public class Autos {
 
     pathsMap.put("SingleNeutralTrench", List.of(Path1));
     pathsMap.put("bumptotrench", List.of(Path1, Path2));
+    pathsMap.put("default", List.of(Path3));
 
     pathsMap.values().forEach(pathList -> pathList.forEach(p -> paths.add(p)));
     TRENCH_START_LEFT = AllianceFlipUtil.flipped(Path1.getStartPose());
@@ -109,11 +112,25 @@ public class Autos {
 
   private void registerAutos() {
 
+
     if (autosRegistered) return;
+    autoChooser.addCmd(
+    "Default Auto",
+    () -> auto(
+        TRENCH_START_LEFT.get(),
+        c -> c.addCommands(
+            pathBuilder.build(Path3),
+            AutosCommands.launcherCommand(systems)
+        )
+    )
+);
+
+
 
     autoChooser.addCmd(
         "SingleNeutralTrench",
         () -> auto(TRENCH_START_LEFT.get(), c -> c.addCommands(pathBuilder.build(Path1), AutosCommands.launcherCommand(systems))));
+
 
     autoChooser.addCmd(
         "DoubleNeutralTrench",
@@ -128,8 +145,7 @@ public class Autos {
   // ============= AUTO SELECTION =============
 
   public Command selectedCommand() {
-    Command selected = autoChooser.selectedCommand();
-    return selected != null ? selected : Commands.none();
+    return  autoChooser.selectedCommand();
   }
 
   // ============= AUTO BUILDER HELPERS =============
@@ -146,6 +162,9 @@ public class Autos {
 
     return group;
   }
+
+
+
 
   private Command auto(Consumer<SequentialCommandGroup> builder) {
 
