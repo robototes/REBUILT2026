@@ -1,14 +1,12 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Subsystems;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
-import frc.robot.util.GetTargetFromPose;
 import frc.robot.util.tuning.LauncherConstants;
 import org.littletonrobotics.junction.Logger;
 
@@ -40,12 +38,8 @@ public class LauncherSubsystem extends SubsystemBase {
   public Command launcherAimCommand() {
     return Commands.run(
             () -> {
-              LaunchingParameters para =
-                  LaunchCalculator.getInstance()
-                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
-              this.launchParameters = para;
-              hoodGoal = para.targetHood();
-              flywheelsGoal = para.targetFlywheels();
+              hoodGoal = launchParameters.targetHood();
+              flywheelsGoal = launchParameters.targetFlywheels();
 
               Logger.recordOutput("AutoAim/hoodGoal", hoodGoal);
               Logger.recordOutput("AutoAim/flywheelGoal", flywheelsGoal);
@@ -56,18 +50,20 @@ public class LauncherSubsystem extends SubsystemBase {
         .withName("Launcher Aim Command");
   }
 
+  public void periodic() {
+    this.launchParameters =
+        LaunchCalculator.getInstance().getParameters(s.drivebaseSubsystem, s.turretSubsystem);
+  }
+
   // TODO: add tolerance range calculation
   public boolean isAtTarget() {
     if (launchParameters == null) {
       return false;
     }
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
-    Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
-    double distanceToTarget =
-        GetTargetFromPose.getTargetLocation(turretPose).getDistance(turretPose.getTranslation());
 
-    if (distanceToTarget >= MIN_FAR_DIST) {
+    if (launchParameters.distance() >= MIN_FAR_DIST) {
       flywheelTolerance = 30;
     }
 

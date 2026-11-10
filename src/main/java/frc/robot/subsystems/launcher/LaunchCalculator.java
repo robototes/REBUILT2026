@@ -147,6 +147,8 @@ public class LaunchCalculator {
       Rotation2d targetTurret,
       double targetFlywheels,
       double targetTurretFeedforward,
+      double distance,
+      double trueDistance,
       Pose2d turretPose) {}
 
   static {
@@ -320,6 +322,8 @@ public class LaunchCalculator {
                 cachedParams.targetTurret,
                 cachedParams.targetFlywheels,
                 0,
+                cachedParams.distance,
+                cachedParams.trueDistance,
                 cachedParams.turretPose);
       }
       // Update differentiation state on cache hit so deltas stay valid next cycle.
@@ -543,7 +547,13 @@ public class LaunchCalculator {
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
     return new LaunchingParameters(
-        targetHood, targetTurret, targetFlywheels, feedforwardAngularVelocity, turretPose);
+        targetHood,
+        targetTurret,
+        targetFlywheels,
+        feedforwardAngularVelocity,
+        distance,
+        trueDistance,
+        turretPose);
   }
 
   /**
