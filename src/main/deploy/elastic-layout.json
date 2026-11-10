@@ -6,14 +6,75 @@
       "name": "Teleoperated",
       "grid_layout": {
         "layouts": [],
-        "containers": []
-      }
-    },
-    {
-      "name": "Autonomous",
-      "grid_layout": {
-        "layouts": [],
-        "containers": []
+        "containers": [
+          {
+            "title": "limelight-a",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 640.0,
+            "height": 512.0,
+            "type": "Camera Stream",
+            "properties": {
+              "topic": "/CameraPublisher/limelight-a",
+              "period": 0.06,
+              "rotation_turns": 0
+            }
+          },
+          {
+            "title": "limelight-c",
+            "x": 1152.0,
+            "y": 0.0,
+            "width": 640.0,
+            "height": 512.0,
+            "type": "Camera Stream",
+            "properties": {
+              "topic": "/CameraPublisher/limelight-c",
+              "period": 0.06,
+              "rotation_turns": 0
+            }
+          },
+          {
+            "title": "limelight-b",
+            "x": 0.0,
+            "y": 512.0,
+            "width": 640.0,
+            "height": 512.0,
+            "type": "Camera Stream",
+            "properties": {
+              "topic": "/CameraPublisher/limelight-b",
+              "period": 0.06,
+              "rotation_turns": 0
+            }
+          },
+          {
+            "title": "Flywheel Offset [RPS]",
+            "x": 1152.0,
+            "y": 512.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/RealOutputs/Flywheel Offset [RPS]",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Turret Offset [Deg]",
+            "x": 1408.0,
+            "y": 512.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/RealOutputs/Turret Offset [Deg]",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          }
+        ]
       }
     },
     {
@@ -25,8 +86,8 @@
             "title": "Selected auto",
             "x": 0.0,
             "y": 0.0,
-            "width": 1152.0,
-            "height": 896.0,
+            "width": 1024.0,
+            "height": 640.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Selected auto",
@@ -44,10 +105,10 @@
           },
           {
             "title": "Start pose",
-            "x": 1152.0,
-            "y": 256.0,
-            "width": 640.0,
-            "height": 640.0,
+            "x": 1024.0,
+            "y": 384.0,
+            "width": 768.0,
+            "height": 384.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Start pose",
@@ -65,22 +126,21 @@
           },
           {
             "title": "Starting Position",
-            "x": 1152.0,
+            "x": 1280.0,
             "y": 128.0,
-            "width": 128.0,
+            "width": 512.0,
             "height": 128.0,
-            "type": "ComboBox Chooser",
+            "type": "Split Button Chooser",
             "properties": {
               "topic": "/SmartDashboard/Starting Position",
-              "period": 0.06,
-              "sort_options": false
+              "period": 0.06
             }
           },
           {
             "title": "Auto Key",
-            "x": 1152.0,
+            "x": 1280.0,
             "y": 0.0,
-            "width": 640.0,
+            "width": 512.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
@@ -92,29 +152,58 @@
           },
           {
             "title": "Est. Time (s)",
-            "x": 1664.0,
+            "x": 1152.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Large Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Est. Time (s)",
+              "period": 0.06,
+              "data_type": "double"
+            }
+          },
+          {
+            "title": "Available Auto Variants",
+            "x": 1024.0,
+            "y": 256.0,
+            "width": 768.0,
+            "height": 128.0,
+            "type": "Split Button Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/Available Auto Variants",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "Auto Delay",
+            "x": 1024.0,
             "y": 128.0,
             "width": 128.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
-              "topic": "/SmartDashboard/Est. Time (s)",
+              "topic": "/Autos/Auto Delay",
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": false
             }
           },
           {
-            "title": "Available Auto Variants",
-            "x": 1280.0,
-            "y": 128.0,
-            "width": 384.0,
+            "title": "DisplaySpeed",
+            "x": 1024.0,
+            "y": 0.0,
+            "width": 256.0,
             "height": 128.0,
-            "type": "ComboBox Chooser",
+            "type": "Number Slider",
             "properties": {
-              "topic": "/SmartDashboard/Available Auto Variants",
+              "topic": "/Autos/DisplaySpeed",
               "period": 0.06,
-              "sort_options": false
+              "data_type": "double",
+              "min_value": -4.0,
+              "max_value": 4.0,
+              "divisions": 5,
+              "update_continuously": true
             }
           }
         ]

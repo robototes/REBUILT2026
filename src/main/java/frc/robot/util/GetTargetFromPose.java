@@ -96,6 +96,27 @@ public class GetTargetFromPose {
     }
   }
 
+  public static boolean isPassing(Pose2d pose) {
+    if (BALLING.get()) {
+      return false;
+    }
+    if (AllianceUtils.isBlue()) {
+      if (pose.getX() <= allianceLineX + robotOffset) {
+        return false;
+      } else {
+        return true;
+      }
+    } else if (AllianceUtils.isRed()) {
+      if (pose.getX() >= (fieldLength - allianceLineX - robotOffset)) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return false;
+    }
+  }
+
   public static Trigger autoShoot(CommandSwerveDrivetrain drivetrain) {
     return new Trigger(
         () -> {
