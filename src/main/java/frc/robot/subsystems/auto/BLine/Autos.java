@@ -4,6 +4,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -28,6 +30,9 @@ public class Autos {
   private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
   private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay",0.0);
   private FollowPath.Builder pathBuilder;
+  private  final NetworkTableEntry autoDelayEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
+
+
 
   private boolean pathsInitialized = false;
   private boolean autosRegistered = false;
@@ -48,7 +53,7 @@ public class Autos {
   public void configure(Subsystems s) {
 
     systems = s;
-
+    autoDelayEntry.setDefaultDouble(0.0);
     initializePaths();
 
     pathBuilder =
@@ -157,9 +162,7 @@ public class Autos {
 
   return getPath(0).getStartPose();
   }
-  public double getDelay() {
-    return autoDelay.get();
-  }
+
 
   // ============= AUTO BUILDER HELPERS =============s
 
@@ -183,5 +186,9 @@ public class Autos {
     builder.accept(group);
 
     return group;
+  }
+  public double getDelay() {
+        double delay = autoDelayEntry.getDouble(0.0);
+        return delay;
   }
 }
