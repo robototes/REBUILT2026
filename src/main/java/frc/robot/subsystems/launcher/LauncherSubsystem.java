@@ -1,7 +1,6 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,10 +24,7 @@ public class LauncherSubsystem extends SubsystemBase {
   private boolean notGoingToBeUnderTrench;
 
   private LaunchingParameters launchParameters;
-  private final double MIN_FAR_DIST = 6.0; // Meters
-
-  public double flywheelOffset = 0.0; // Starting offset added in RPS
-  private static double fwOffsetJogAmount = 1.0; // Jog amount in RPS
+  private final double MIN_FAR_DIST = 6; // Meters
 
   public LauncherSubsystem(Subsystems s) {
     this.s = s;
@@ -39,7 +35,6 @@ public class LauncherSubsystem extends SubsystemBase {
     Logger.recordOutput("AutoAim/turretAtTarget", false);
     Logger.recordOutput("AutoAim/NotUnderClimb", false);
     Logger.recordOutput("AutoAim/NotUnderTrench", false);
-    Logger.recordOutput("Launcher/Flywheel Offset [RPS]", flywheelOffset);
   }
 
   public Command launcherAimCommand() {
@@ -50,26 +45,15 @@ public class LauncherSubsystem extends SubsystemBase {
                       .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
               this.launchParameters = para;
               hoodGoal = para.targetHood();
-              flywheelsGoal = para.targetFlywheels() + flywheelOffset;
+              flywheelsGoal = para.targetFlywheels();
 
               Logger.recordOutput("AutoAim/hoodGoal", hoodGoal);
               Logger.recordOutput("AutoAim/flywheelGoal", flywheelsGoal);
 
               s.hood.setHoodPosition(hoodGoal);
               s.flywheels.setVelocityRPS(flywheelsGoal);
-            },
-            s.flywheels,
-            s.hood)
-        .withName("Launcher Aim Command");
-  }
-
-  public Command offsetFlywheelCommand(int direction) {
-    return runOnce(
-            () -> {
-              flywheelOffset += fwOffsetJogAmount * direction;
-              Logger.recordOutput("Flywheel Offset [RPS]", flywheelOffset);
             })
-        .withName("Changed Flywheel Offset");
+        .withName("Launcher Aim Command");
   }
 
   // TODO: add tolerance range calculation
@@ -80,9 +64,10 @@ public class LauncherSubsystem extends SubsystemBase {
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
     Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
-    boolean passing = GetTargetFromPose.isPassing(turretPose);
+    double distanceToTarget =
+        GetTargetFromPose.getTargetLocation(turretPose).getDistance(turretPose.getTranslation());
 
-    if (passing) {
+    if (distanceToTarget >= MIN_FAR_DIST) {
       flywheelTolerance = 30;
     }
 
@@ -92,21 +77,14 @@ public class LauncherSubsystem extends SubsystemBase {
     hoodAtTarget = s.hood.atTargetPosition();
     Logger.recordOutput("AutoAim/hoodAtTarget", hoodAtTarget);
 
-    double turretTolerance =
-        MathUtil.clamp(
-            Math.atan(
-                0.3
-                    / LauncherConstants
-                        .distToHub()), // 0.3 meters of error radially from center of hub
-            Units.degreesToRadians(3), // lower bound for error, 5.7m equivalent
-            Units.degreesToRadians(7)); // upper bound for error, 2.5m equivalent
-
-    // If we're passing, just get the ball out of the robot ASAP
-    if (passing) {
-      turretTolerance = Units.degreesToRadians(20);
-    }
-
-    turretAtTarget = s.turretSubsystem.atTarget(turretTolerance);
+    turretAtTarget =
+        s.turretSubsystem.atTarget(
+            () ->
+                Math.min(
+                    Units.degreesToRadians(20),
+                    Math.max(
+                        Units.degreesToRadians(4),
+                        Math.atan(0.3 / LauncherConstants.distToHub()))));
     Logger.recordOutput("AutoAim/turretAtTarget", turretAtTarget);
 
     notUnderClimb =

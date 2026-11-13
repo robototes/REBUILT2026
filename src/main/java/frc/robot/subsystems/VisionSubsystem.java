@@ -28,6 +28,7 @@ import frc.robot.util.AllianceUtils;
 import frc.robot.util.BetterPoseEstimate;
 import frc.robot.util.LLCamera;
 import frc.robot.util.LimelightHelpers.RawFiducial;
+import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -64,6 +65,10 @@ public class VisionSubsystem extends SubsystemBase {
     // Range gates
     private static final double MAX_DISTANCE_MT1 = 2.0;
     private static final double MAX_DISTANCE_MT2 = 5.0;
+
+    // Velocity sanity (alpha bot only)
+    private static final double MAX_XY_VELO_ALPHA = 2.0;
+    private static final double MAX_TURN_VELO_ALPHA = 0.2;
 
     // Pose 3D sanity
     private static final double STALENESS_THRESHOLD = 1.0;
@@ -240,6 +245,17 @@ public class VisionSubsystem extends SubsystemBase {
     Pose2d visionPose2d = estimate.pose3d.toPose2d();
     if (estimate.timestampSeconds == camera.getLastTimestampSeconds()) {
       publishDiagnostics(estimate, visionPose2d, camera, "stale-timestamp", cameraName);
+      return;
+    }
+
+    if (RobotType.isAlpha()
+        && (Math.abs(visionPoseTracking.swerveSpeeds.vxMetersPerSecond)
+                > VisionConstants.MAX_XY_VELO_ALPHA
+            || Math.abs(visionPoseTracking.swerveSpeeds.vyMetersPerSecond)
+                > VisionConstants.MAX_XY_VELO_ALPHA
+            || Math.abs(visionPoseTracking.swerveSpeeds.omegaRadiansPerSecond)
+                > VisionConstants.MAX_TURN_VELO_ALPHA)) {
+      publishDiagnostics(estimate, visionPose2d, camera, "alpha-max-speed", cameraName);
       return;
     }
 
@@ -554,7 +570,11 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public int getNumTargets() {
-    return ACamera.getNumTargets() + BCamera.getNumTargets();
+    if (!RobotType.isAlpha()) {
+      return ACamera.getNumTargets() + BCamera.getNumTargets();
+    } else {
+      return CCamera.getNumTargets();
+    }
   }
 
   public double getLastTimestampSeconds() {

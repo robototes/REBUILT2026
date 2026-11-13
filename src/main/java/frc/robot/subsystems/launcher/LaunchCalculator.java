@@ -135,11 +135,11 @@ public class LaunchCalculator {
   private static final double TURRET_TO_TRENCH_TOLERANCE_Y = Units.inchesToMeters(24.97);
   private static final double TRENCH_LOOKAHEAD = 0.5; // seconds
   private static final int TRENCH_LOOKAHEAD_SAMPLES = 10;
-  private static final List<Translation2d> trenchTags = new ArrayList<>();
+  private static final List<Pose2d> trenchTags = new ArrayList<>();
   private static final int[] tags = {1, 6, 7, 12, 17, 22, 23, 28}; // Trench tags
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_X = Units.inchesToMeters(47.0 / 2);
   private static final double TURRET_TO_UNDERCLIMB_TOLERANCE_Y = Units.inchesToMeters(11.38);
-  private static final List<Translation2d> underclimbTags = new ArrayList<>();
+  private static final List<Pose2d> underclimbTags = new ArrayList<>();
   private static final int[] underclimbTagIds = {15, 31};
 
   public record LaunchingParameters(
@@ -153,7 +153,7 @@ public class LaunchCalculator {
     for (int tag : tags) {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
-        trenchTags.add(t.get().getTranslation().toTranslation2d());
+        trenchTags.add(t.get().toPose2d());
       } else {
         edu.wpi.first.wpilibj.DriverStation.reportWarning(
             "Tag " + tag + " not found in launch calculator", false);
@@ -162,7 +162,7 @@ public class LaunchCalculator {
     for (int tag : underclimbTagIds) {
       Optional<Pose3d> t = field.getTagPose(tag);
       if (t.isPresent()) {
-        underclimbTags.add(t.get().getTranslation().toTranslation2d());
+        underclimbTags.add(t.get().toPose2d());
       } else {
         edu.wpi.first.wpilibj.DriverStation.reportWarning(
             "Tag " + tag + " not found in launch calculator", false);
@@ -254,7 +254,6 @@ public class LaunchCalculator {
     // Run slip detection every cycle regardless of cache — keeps lastModuleVelocity
     // fresh and NT logs continuous even when the cache is hit.
     // boolean isSlipping = detectSlip(drivetrain.getModules());
-    // TODO implement slip detection
     boolean isSlipping =
         false; // Disable slip detection for now since it needs tuning and we don't have defense
     // yet.
@@ -486,7 +485,6 @@ public class LaunchCalculator {
     // Target translation
     Pose2d turretPose = estimatedPose.transformBy(turretTransform);
     Translation2d target = GetTargetFromPose.getTargetLocation(turretPose);
-    boolean currentlyPassing = GetTargetFromPose.isPassing(turretPose);
 
     double distanceX = target.getX() - turretPose.getX();
     double distanceY = target.getY() - turretPose.getY();
@@ -497,7 +495,7 @@ public class LaunchCalculator {
     double trueDistance = distance;
     double trueDistanceX = distanceX;
     double trueDistanceY = distanceY;
-    double t = LauncherConstants.getTimeFromDistance(distance, currentlyPassing);
+    double t = LauncherConstants.getTimeFromDistance(distance);
     for (int i = 0; i < NEWTON_METHOD_MAX_ITERATIONS; i++) {
       double prevT = t;
 
@@ -505,12 +503,12 @@ public class LaunchCalculator {
       trueDistanceY = distanceY - turretVelocityY * t;
       trueDistance = Math.hypot(trueDistanceX, trueDistanceY);
 
-      double lookupT = LauncherConstants.getTimeFromDistance(trueDistance, currentlyPassing);
+      double lookupT = LauncherConstants.getTimeFromDistance(trueDistance);
       double f = lookupT - t;
 
       double dDist_Dt =
           -(trueDistanceX * turretVelocityX + trueDistanceY * turretVelocityY) / trueDistance;
-      double fPrime = (derivativeOfTOF(trueDistance, currentlyPassing) * dDist_Dt) - 1.0;
+      double fPrime = (derivativeOfTOF(trueDistance) * dDist_Dt) - 1.0;
 
       if (Math.abs(fPrime) > MIN_SLOPE) {
         t = t - f / fPrime;
@@ -539,9 +537,8 @@ public class LaunchCalculator {
 
     // Use launchSpeeds for trench check — consistent with the velocity used for all other
     // calculations and represents the predicted state at the moment of launch.
-    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeeds, currentlyPassing);
-    double targetFlywheels =
-        LauncherConstants.getFlywheelSpeedFromDistance(trueDistance, currentlyPassing);
+    double targetHood = getHoodAngle(estimatedPose, trueDistance, launchSpeeds);
+    double targetFlywheels = LauncherConstants.getFlywheelSpeedFromDistance(trueDistance);
     Rotation2d targetTurret =
         targetAngleFieldRelative.minus(robotAngle).rotateBy(Rotation2d.k180deg);
 
@@ -555,9 +552,9 @@ public class LaunchCalculator {
    * @param distance instantaneous distance
    * @return the derivative of the TOF lookup table at the given distance
    */
-  public double derivativeOfTOF(double distance, boolean passing) {
-    double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE, passing);
-    double max = LauncherConstants.getTimeFromDistance(distance + STEP_SIZE, passing);
+  public double derivativeOfTOF(double distance) {
+    double min = LauncherConstants.getTimeFromDistance(distance - STEP_SIZE);
+    double max = LauncherConstants.getTimeFromDistance(distance + STEP_SIZE);
     return (max - min) / (2 * STEP_SIZE);
   }
 
@@ -569,10 +566,9 @@ public class LaunchCalculator {
    * @param speeds chassis speeds at launch time
    * @return hood angle (unitless, defined by LauncherConstants interpolating map)
    */
-  public double getHoodAngle(
-      Pose2d robotPose, double trueDist, ChassisSpeeds speeds, boolean passing) {
+  public double getHoodAngle(Pose2d robotPose, double trueDist, ChassisSpeeds speeds) {
     if (isApproachingTrench(robotPose, speeds)) return 0;
-    return LauncherConstants.getHoodAngleFromDistance(trueDist, passing);
+    return LauncherConstants.getHoodAngleFromDistance(trueDist);
   }
 
   public static boolean isApproachingTrench(Pose2d robotPose, ChassisSpeeds speeds) {
@@ -591,28 +587,16 @@ public class LaunchCalculator {
   }
 
   public static boolean isCloseToTrench(Pose2d pose) {
-    double poseX = pose.getX();
-    double poseY = pose.getY();
-    for (int i = 0; i < trenchTags.size(); i++) {
-      Translation2d tag = trenchTags.get(i);
-      if (Math.abs(poseX - tag.getX()) < TURRET_TO_TRENCH_TOLERANCE_X
-          && Math.abs(poseY - tag.getY()) < TURRET_TO_TRENCH_TOLERANCE_Y) {
-        return true;
-      }
-    }
-    return false;
+    Pose2d nearestTag = pose.nearest(trenchTags);
+    double dx = Math.abs(pose.getX() - nearestTag.getX());
+    double dy = Math.abs(pose.getY() - nearestTag.getY());
+    return dx < TURRET_TO_TRENCH_TOLERANCE_X && dy < TURRET_TO_TRENCH_TOLERANCE_Y;
   }
 
   public static boolean isUnderClimb(Pose2d turretPose) {
-    double turretX = turretPose.getX();
-    double turretY = turretPose.getY();
-    for (int i = 0; i < underclimbTags.size(); i++) {
-      Translation2d tag = underclimbTags.get(i);
-      if (Math.abs(turretX - tag.getX()) < TURRET_TO_UNDERCLIMB_TOLERANCE_X
-          && Math.abs(turretY - tag.getY()) < TURRET_TO_UNDERCLIMB_TOLERANCE_Y) {
-        return true;
-      }
-    }
-    return false;
+    Pose2d nearestTag = turretPose.nearest(underclimbTags);
+    double dx = Math.abs(turretPose.getX() - nearestTag.getX());
+    double dy = Math.abs(turretPose.getY() - nearestTag.getY());
+    return dx < TURRET_TO_UNDERCLIMB_TOLERANCE_X && dy < TURRET_TO_UNDERCLIMB_TOLERANCE_Y;
   }
 }

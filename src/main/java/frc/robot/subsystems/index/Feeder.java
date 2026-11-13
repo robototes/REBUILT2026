@@ -1,5 +1,6 @@
 package frc.robot.subsystems.index;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -21,6 +22,7 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
+import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -45,7 +47,10 @@ public class Feeder extends SubsystemBase {
   private final StatusSignal<Current> supplyCurrent;
 
   public Feeder() {
-    feedMotor = new TalonFX(Hardware.FEEDER_MOTOR_ID, CompTunerConstants.kCANBus);
+    feedMotor =
+        new TalonFX(
+            Hardware.FEEDER_MOTOR_ID,
+            (RobotType.isAlpha()) ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
     feederConfig();
     feedMotor.clearStickyFaults();
 
