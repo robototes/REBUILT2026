@@ -35,6 +35,15 @@ public class IntakeRollerIOTalonFX implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
+    StatusSignal.refreshAll(
+        rollerLeftStatorCurrent,
+        rollerLeftSupplyCurrent,
+        rollerLeftTemp,
+        rollerLeftVelocity,
+        rollerRightStatorCurrent,
+        rollerRightSupplyCurrent,
+        rollerRightTemp,
+        rollerRightVelocity);
     inputs.currentVelocityMotor1 = rollerLeftVelocity.getValueAsDouble();
     inputs.currentVelocityMotor2 = rollerRightVelocity.getValueAsDouble();
     inputs.statorCurrentRoller1 = rollerLeftStatorCurrent.getValueAsDouble();

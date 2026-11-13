@@ -177,9 +177,14 @@ public class IntakePivot extends SubsystemBase {
     }
     return Commands.sequence(
             voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
-                .until(() -> inputs.statorCurrentPivot >= (STATOR_CURRENT_LIMIT - 1))
-                .withTimeout(2.0),
-            zeroPivot())
+                .withDeadline(
+                    Commands.waitSeconds(0.5)
+                        .andThen(
+                            Commands.waitSeconds(2.0)
+                                .until(
+                                    () -> inputs.statorCurrentPivot >= (STATOR_CURRENT_LIMIT - 1))
+                                .andThen(zeroPivot()))),
+            Commands.waitSeconds(3.0))
         .withName("Automatic Zero Pivot");
   }
 
