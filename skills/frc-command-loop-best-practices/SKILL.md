@@ -27,12 +27,12 @@ Understanding target hardware constraints determines how software budgets, concu
 
 ## 2. Execution Model & Real-Time Constraints
 
-In WPILib Command-Based programming, the robot runtime operates on a cooperative scheduling loop driven by `TimedRobot` executing by default at **20 ms (50 Hz)**.
+In WPILib Command-Based programming, the robot runtime operates on a cooperative scheduling loop driven by an `IterativeRobotBase` subclass—such as `LoggedRobot` (used by `Robot.java` in this project) or `TimedRobot`—executing by default at **20 ms (50 Hz)**.
 
 ### 2.1 The 20 ms Cycle & Overrun Mechanics
 
 * **Default Loop Period (20 ms / 50 Hz):** Every 20 ms, the main thread runs Driver Station packet ingestion, subsystem `periodic()` calls, active command lifecycle steps (`execute()`, `isFinished()`), and telemetry dispatch.
-* **TimedRobot Overrun Warning:** `TimedRobot` prints a loop overrun warning (`Loop time of 0.020000s overrun to 0.02xxxxs!`) as soon as any single iteration exceeds the configured loop period ($20\text{ ms}$ by default).
+* **Loop Overrun Warning:** `IterativeRobotBase` (extended by both `LoggedRobot` and `TimedRobot`) prints a loop overrun warning (`Loop time of 0.020000s overrun to 0.02xxxxs!`) as soon as any single iteration exceeds the configured loop period ($20\text{ ms}$ by default).
 * **Severe Overruns ($\ge 50\text{ ms}$):** If loop execution takes $\ge 50\text{ ms}$, more than two entire control cycles are dropped, triggering Driver Station packet drops, brownout safety states, and CAN buffer saturation.
 * **Consequences of Overruns:**
   * Jitter and degraded stability in feedback controllers (PIDF / ProfiledPID).
@@ -240,7 +240,7 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     // Lock-free atomic reference for high-frequency worker thread updates
-    private final AtomicReference<OdometrySnapshot> latestSnapshot = 
+    private final AtomicReference<OdometrySnapshot> latestSnapshot =
         new AtomicReference<>(new OdometrySnapshot(0.0));
 
     // Pre-allocated SwerveModulePosition and Rotation2d instances
