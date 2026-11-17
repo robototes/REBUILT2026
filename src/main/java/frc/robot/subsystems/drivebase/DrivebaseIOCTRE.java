@@ -1,7 +1,6 @@
 package frc.robot.subsystems.drivebase;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
-import frc.robot.subsystems.drivebase.DrivebaseIO.DrivebaseIOInputs;
 
 public class DrivebaseIOCTRE implements DrivebaseIO {
   private SwerveDriveState state;
