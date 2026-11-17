@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "project_id": "workspace-4c4922b3-170f-4ef6-8b49-91448a23c9ce",
+  "project_id": "workspace-c86620a7-dee4-4190-a9bb-b5b198e71e5d",
   "display_name": "autos",
   "editor_config": {
     "gui": {
@@ -25,34 +25,17 @@
   },
   "paths": [
     {
-      "path_id": "path-36cd8062-5654-4f9e-8c67-58c81c22b719",
+      "path_id": "path-d76b56cc-7ab3-4d69-9d35-a2f7e6744cbb",
       "display_name": "FirstNeutralTrench",
-      "file_name": "FirstNeutralTrench.json",
-      "editor_metadata": {
-        "ranged_constraints": [
-          {
-            "key": "max_velocity_meters_per_sec",
-            "value": 2.25,
-            "start_ordinal": 1,
-            "end_ordinal": 1,
-            "source": "auto_velocity",
-            "auto_velocity": {
-              "velocity_safety_factor": 1,
-              "acceleration_safety_factor": 1,
-              "merge_tolerance_meters_per_sec": 0.3,
-              "input_signature": "{\"solverVersion\":15,\"pathElements\":[{\"type\":\"waypoint\",\"xMeters\":15.16213690608912,\"yMeters\":8.07,\"handoffRadiusMeters\":\"auto\",\"rotationRadians\":0,\"profiledRotation\":true}],\"scalarConstraints\":{\"maxVelocityMps\":null,\"maxAccelerationMps2\":null,\"maxVelocityDegPerSec\":null,\"maxAccelerationDegPerSec\":null},\"rangedConstraints\":[],\"config\":{\"maxVelocityMps\":4.5,\"maxAccelerationMps2\":6,\"handoffRadiusMeters\":0.2,\"maxVelocityDegPerSec\":720,\"maxAccelerationDegPerSec\":1500,\"autoVelocityVelocitySafetyFactor\":1,\"autoVelocityAccelerationSafetyFactor\":1},\"options\":{\"velocitySafetyFactor\":1,\"accelerationSafetyFactor\":1,\"sampleStepMeters\":null,\"mergeToleranceMps\":0.3,\"includeGeneratedRadiiInCacheKey\":false}}"
-            }
-          }
-        ]
-      }
+      "file_name": "FirstNeutralTrench.json"
     },
     {
-      "path_id": "path-b9addd49-ea29-4127-b2f9-2b42c8e10808",
+      "path_id": "path-54465eb0-062a-48e8-b284-56219dc8cc7b",
       "display_name": "SecondNeutralTrench",
       "file_name": "SecondNeutralTrench.json"
     },
     {
-      "path_id": "path-3709aaad-e5e6-4b7b-acff-dca725a10c32",
+      "path_id": "path-5e61b901-c94e-4766-90cc-a62921ab2f50",
       "display_name": "default",
       "file_name": "default.json"
     }
