@@ -44,12 +44,9 @@ public class Spindexer extends SubsystemBase {
   private final SpindexerIO.SpindexerIOInputs inputs;
 
   // Logs
-  private final StatusSignal<AngularVelocity> spindexerRPS;
   private final DoubleLogEntry statorCurrentLog;
   private final DoubleLogEntry supplyCurrentLog;
   private final DoubleLogEntry velocityLog;
-  private final StatusSignal<Current> statorCurrent;
-  private final StatusSignal<Current> supplyCurrent;
 
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
@@ -70,12 +67,6 @@ public class Spindexer extends SubsystemBase {
 
     // Instiate log variables
     DataLog log = DataLogManager.getLog();
-    statorCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/statorCurrent");
-    supplyCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/supplyCurrent");
-    velocityLog = new DoubleLogEntry(log, "/SpindexerLogs/velocityRPS");
-    statorCurrent = spindexerMotor.getStatorCurrent();
-    supplyCurrent = spindexerMotor.getSupplyCurrent();
-    spindexerRPS = spindexerMotor.getVelocity();
   }
 
   public void spindexerConfig() {
@@ -142,8 +133,5 @@ public class Spindexer extends SubsystemBase {
     velocityLog.append(inputs.velocityRPS);
     statorCurrentLog.append(inputs.statorCurrentAmps);
     supplyCurrentLog.append(inputs.supplyCurrentAmps);
-    Logger.recordOutput("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
-    Logger.recordOutput("SpindexerSubsystem/StatorCurrent", statorCurrent.getValueAsDouble());
-    Logger.recordOutput("SpindexerSubsystem/SupplyCurrent", supplyCurrent.getValueAsDouble());
   }
 }
