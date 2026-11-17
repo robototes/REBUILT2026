@@ -19,5 +19,5 @@ public interface DrivebaseIO {
     public int FailedDaqs = 0;
   }
 
-  public default void updateInputs(DrivebaseIOInputs inputs, SwerveDriveState state) {}
+  public default void updateInputs(DrivebaseIOInputs inputs) {}
 }
