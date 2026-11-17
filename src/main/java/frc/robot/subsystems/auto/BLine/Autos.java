@@ -73,14 +73,16 @@ public class Autos {
                             .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
                 new PIDController(3.0, 0.0, 0.0),
                 new PIDController(5.0, 0.0, 0.0),
-                new PIDController(2.0, 0.0, 0.0)).withDefaultShouldFlip().withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
+                new PIDController(2.0, 0.0, 0.0)).withDefaultShouldFlip().
+                withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
+
     registerAutos();
   }
 
   public void init(Subsystems s) {
 
     systems = s;
-    
+
     initializePaths();
     FollowPath.registerEventTrigger("intake", AutosCommands.intakeCommand());
     FollowPath.registerEventTrigger("shoot", AutosCommands.launcherCommand(5, s));
@@ -188,7 +190,7 @@ public Path getSelectedPath() {
 
   // ============= AUTO BUILDER HELPERS =============s
 
-  private Command auto(Pose2d startPose, Consumer<SequentialCommandGroup> builder) {
+  private Command auto(Pose2d startPose, Consumer<Command> builder) {
 
     SequentialCommandGroup group = new SequentialCommandGroup();
 
@@ -196,7 +198,7 @@ public Path getSelectedPath() {
        // Commands.runOnce(
         //    () -> systems.drivebaseSubsystem.resetPose(startPose), systems.drivebaseSubsystem));
 
-    builder.accept(group);
+    builder.accept(Commands.runOnce(()-> systems.drivebaseSubsystem.resetRotation(getSelectedPath().getInitialModuleDirection())));
 
     return group;
   }

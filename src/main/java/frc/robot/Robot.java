@@ -350,7 +350,7 @@ public class Robot extends LoggedRobot {
 
 
 
-        subsystems.drivebaseSubsystem.resetRotation(autos.getSelectedPath().getInitialModuleDirection());
+
 
       CommandScheduler.getInstance().schedule(autos.selectedCommand());
       Pose2d startingPose = autos.getSelectedAutoStartingPose();
