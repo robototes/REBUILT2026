@@ -11,8 +11,7 @@ public class DrivebaseIOCTRE implements DrivebaseIO {
   }
 
   @Override
-  public void updateInputs(DrivebaseIOInputs inputs, SwerveDriveState state) {
-    this.state = state;
+  public void updateInputs(DrivebaseIOInputs inputs) {
     inputs.Pose = state.Pose;
     inputs.Speeds = state.Speeds;
     inputs.RawHeading = state.RawHeading;
