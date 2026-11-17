@@ -24,14 +24,12 @@ import frc.robot.Hardware;
 import frc.robot.util.robotType.RobotType;
 import frc.robot.util.tuning.NtTunableBoolean;
 import frc.robot.util.tuning.NtTunableDouble;
-import frc.robot.subsystems.index.SpindexerIO;
-import frc.robot.subsystems.index.SpindexerIOTalonFX;
 
 public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
   private final double D_TARGET_RPS = 70;
-  private final double D_TARGET_ACCEL = 1000; // Rotations /s /s
+  private final double D_TARGET_ACCEL = 1000; //rotations
   private final NtTunableBoolean TUNABLE_ENABLE =
       new NtTunableBoolean("SmartDashboard/Tunables/TuneSpindexer", false);
   private final NtTunableDouble TARGET_ACCEL =
@@ -39,17 +37,18 @@ public class Spindexer extends SubsystemBase {
   private final NtTunableDouble TARGET_RPS =
       new NtTunableDouble("SmartDashboard/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
-      new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
+      new VelocityTorqueCurrentFOC(D_TARGET_RPS); //rotations
 
   private final FlywheelSim motorSim;
 
-  private final SpindexerIOTalonFX io;
-  private final SpindexerIOInputs inputs;
+  private final SpindexerIO io;
+  private final SpindexerIO.SpindexerIOInputs inputs;
 
   // Logs
   private final StatusSignal<AngularVelocity> spindexerRPS;
   private final DoubleLogEntry statorCurrentLog;
   private final DoubleLogEntry supplyCurrentLog;
+  private final DoubleLogEntry velocityLog;
   private final StatusSignal<Current> statorCurrent;
   private final StatusSignal<Current> supplyCurrent;
 
@@ -57,7 +56,8 @@ public class Spindexer extends SubsystemBase {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
     spindexerMotor.clearStickyFaults();
-    io.SpindexerIOTalonFX(spindexerMotor);
+    io = new SpindexerIOTalonFX(spindexerMotor);
+    inputs = new SpindexerIO.SpindexerIOInputs();
 
     if (RobotBase.isSimulation()) {
       LinearSystem spindexerMotorSystem =
@@ -73,26 +73,24 @@ public class Spindexer extends SubsystemBase {
     DataLog log = DataLogManager.getLog();
     statorCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/statorCurrent");
     supplyCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/supplyCurrent");
+    velocityLog = new DoubleLogEntry(log, "/SpindexerLogs/velocityRPS");
     statorCurrent = spindexerMotor.getStatorCurrent();
     supplyCurrent = spindexerMotor.getSupplyCurrent();
     spindexerRPS = spindexerMotor.getVelocity();
   }
 
   public void spindexerConfig() {
-    // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
+    //DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = spindexerMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
-    // Inverting motor output direction
     talonFXConfiguration.MotorOutput.Inverted =
         (RobotType.isAlpha())
             ? InvertedValue.Clockwise_Positive
             : InvertedValue.CounterClockwise_Positive;
-    // Setting the motor to brake when not moving
-    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast; //break when not moving
 
-    // enabling current limits
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 50;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
@@ -135,16 +133,15 @@ public class Spindexer extends SubsystemBase {
 
   @Override
   public void periodic() {
-    inputs.rps = spindexerRPS.getValueAsDouble();
-    inputs.stator = statorCurrent.getValueAsDouble();
-    inputs.supply = supplyCurrent.getValueAsDouble();
+    StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
+
     io.updateInputs(inputs);
 
-    StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
-    SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
+    SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", inputs.velocityRPS);
 
-    // Log stuff
-    statorCurrentLog.append(statorCurrent.getValueAsDouble());
-    supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
+    //log stuff
+    velocityLog.append(inputs.velocityRPS);
+    statorCurrentLog.append(inputs.statorCurrentAmps);
+    supplyCurrentLog.append(inputs.supplyCurrentAmps);
   }
 }

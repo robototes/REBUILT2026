@@ -1,15 +1,12 @@
-package frc.robot.subsystems.spindexer;
-
-import org.littletonrobotics.junction.AutoLog;
+package frc.robot.subsystems.index;
 
 public interface SpindexerIO {
 
-  @AutoLog
   public static class SpindexerIOInputs {
-    public double rps;
-    public double stator;
-    public double supply;
+    public double velocityRPS = 0.0;
+    public double statorCurrentAmps = 0.0;
+    public double supplyCurrentAmps = 0.0;
   }
 
-  public default void updateInputs(SpindexerIOInputs inputs) {}
+  public void updateInputs(SpindexerIOInputs inputs);
 }
