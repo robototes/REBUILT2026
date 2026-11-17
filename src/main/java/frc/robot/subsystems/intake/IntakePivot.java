@@ -180,11 +180,10 @@ public class IntakePivot extends SubsystemBase {
                 .withDeadline(
                     Commands.waitSeconds(0.5)
                         .andThen(
-                            Commands.waitSeconds(2.0)
-                                .until(
-                                    () -> inputs.statorCurrentPivot >= (STATOR_CURRENT_LIMIT - 1))
-                                .andThen(zeroPivot()))),
-            Commands.waitSeconds(3.0))
+                            Commands.waitUntil(
+                                () -> inputs.statorCurrentPivot >= (STATOR_CURRENT_LIMIT - 1)))),
+            zeroPivot())
+        .withTimeout(3.0)
         .withName("Automatic Zero Pivot");
   }
 
