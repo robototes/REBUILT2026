@@ -9,6 +9,7 @@ public interface HoodIO {
     public double hoodStatorCurrent = 0;
     public double hoodSupplyCurrent = 0;
     public double position = 0;
+    public double temp = 0;
   }
 
   public default void updateInputs(HoodIOInputs inputs) {}
