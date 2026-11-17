@@ -42,7 +42,7 @@ public class BLinesField {
     List<Path> selectedPaths = autos.getSelectedPaths();
 
     for (Path path : selectedPaths) {
-        BLineField.drawPath(field, path);
+        BLineField.drawPath(field, "Preview", path);
     }
 
     autonomousField.update(

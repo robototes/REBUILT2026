@@ -202,7 +202,7 @@ public class Autos {
   public List<Path> getSelectedPaths() {
     String selectedAuto = autoChooser.getSelected();
     SmartDashboard.putString("AUOTNOTN", selectedAuto);
-    return pathsMap.getOrDefault(selectedAuto, List.of(Path1));
+    return pathsMap.getOrDefault(selectedAuto, pathsMap.get(selectedAuto));
 }
 
 
