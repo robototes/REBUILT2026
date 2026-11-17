@@ -7,17 +7,14 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Subsystems;
-import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.lib.BLine.Path.PathElement;
 import frc.robot.util.AllianceFlipUtil;
-import frc.robot.util.AllianceUtils;
 import frc.robot.util.LoggedAutoChooser;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -25,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class Autos {
@@ -33,11 +29,10 @@ public class Autos {
   private Subsystems systems;
 
   private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
-  private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay",0.0);
+  private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 0.0);
   private FollowPath.Builder pathBuilder;
-  private  final NetworkTableEntry autoDelayEntry = NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
-
-
+  private final NetworkTableEntry autoDelayEntry =
+      NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
   private boolean pathsInitialized = false;
   private boolean autosRegistered = false;
@@ -50,14 +45,13 @@ public class Autos {
   private final Path Path1 = new Path("FirstNeutralTrench");
   private final Path Path2 = new Path("SecondNeutralTrench");
   private final Path Path3 = new Path("default");
-    private final Field2d field = new Field2d();
+  private final Field2d field = new Field2d();
 
   public Supplier<Pose2d> TRENCH_START_LEFT;
 
   // ============= CONFIGURATION =============
 
   public void configure(Subsystems s) {
-
 
     systems = s;
     autoDelayEntry.setDefaultDouble(0.0);
@@ -74,8 +68,9 @@ public class Autos {
                             .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
                 new PIDController(3.0, 0.0, 0.0),
                 new PIDController(5.0, 0.0, 0.0),
-                new PIDController(2.0, 0.0, 0.0)).withDefaultShouldFlip().
-                withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
+                new PIDController(2.0, 0.0, 0.0))
+            .withDefaultShouldFlip()
+            .withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
 
     registerAutos();
   }
@@ -112,6 +107,7 @@ public class Autos {
   public List<Path> getPaths() {
     return paths;
   }
+
   public Path getPath(int index) {
     return paths.get(index);
   }
@@ -119,10 +115,11 @@ public class Autos {
   public Map<String, List<Path>> getMap() {
     return pathsMap;
   }
+
   public Path getPathsToDraw() {
     Path ultraPath = new Path();
     for (Path path : getPaths()) {
-      for(PathElement element : path.getPathElements()) {
+      for (PathElement element : path.getPathElements()) {
         ultraPath.addPathElement(element);
       }
     }
@@ -152,33 +149,34 @@ public class Autos {
 
   private void registerAutos() {
 
-
     if (autosRegistered) return;
     autoChooser.addCmd(
         "Default Auto",
         () ->
             auto(
-
                 c ->
-                    c.addCommands(Commands.waitSeconds(getDelay()),
-                        pathBuilder.build(Path3), AutosCommands.launcherCommand(systems))));
+                    c.addCommands(
+                        Commands.waitSeconds(getDelay()),
+                        pathBuilder.build(Path3),
+                        AutosCommands.launcherCommand(systems))));
 
     autoChooser.addCmd(
         "SingleNeutralTrench",
         () ->
             auto(
-
                 c ->
-                    c.addCommands(Commands.waitSeconds(getDelay()),
-                        pathBuilder.build(Path1), AutosCommands.launcherCommand(systems))));
+                    c.addCommands(
+                        Commands.waitSeconds(getDelay()),
+                        pathBuilder.build(Path1),
+                        AutosCommands.launcherCommand(systems))));
 
     autoChooser.addCmd(
         "DoubleNeutralTrench",
         () ->
             auto(
-
                 c ->
-                    c.addCommands(Commands.waitSeconds(getDelay()),
+                    c.addCommands(
+                        Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path1),
                         AutosCommands.launcherCommand(5, systems),
                         pathBuilder.build(Path2),
@@ -192,20 +190,21 @@ public class Autos {
   public Command selectedCommand() {
     return autoChooser.selectedCommand();
   }
+
   public Pose2d getSelectedAutoStartingPose() {
 
-  return getPath(0).getStartPose();
+    return getPath(0).getStartPose();
   }
+
   public Autos get() {
     return this;
   }
+
   public List<Path> getSelectedPaths() {
     String selectedAuto = autoChooser.getSelected();
-    SmartDashboard.putString("AUOTNOTN", selectedAuto);
-    return pathsMap.getOrDefault(selectedAuto, pathsMap.get(selectedAuto));
-}
-
-
+    System.out.println("SELECTED WAS " + selectedAuto);
+    return pathsMap.getOrDefault(selectedAuto, List.of(Path3));
+  }
 
   // ============= AUTO BUILDER HELPERS =============s
 
@@ -213,11 +212,15 @@ public class Autos {
 
     SequentialCommandGroup group = new SequentialCommandGroup();
 
-   // group.addCommands(
-       // Commands.runOnce(
-        //    () -> systems.drivebaseSubsystem.resetPose(startPose), systems.drivebaseSubsystem));
+    // group.addCommands(
+    // Commands.runOnce(
+    //    () -> systems.drivebaseSubsystem.resetPose(startPose), systems.drivebaseSubsystem));
 
-    builder.accept(Commands.runOnce(()-> systems.drivebaseSubsystem.resetRotation(getSelectedPath().getInitialModuleDirection())));
+    builder.accept(
+        Commands.runOnce(
+            () ->
+                systems.drivebaseSubsystem.resetRotation(
+                    getSelectedPath().getInitialModuleDirection())));
 
     return group;
   }
@@ -230,8 +233,9 @@ public class Autos {
 
     return group;
   }
+
   public double getDelay() {
-        double delay = autoDelayEntry.getDouble(0.0);
-        return delay;
+    double delay = autoDelayEntry.getDouble(0.0);
+    return delay;
   }
 }
