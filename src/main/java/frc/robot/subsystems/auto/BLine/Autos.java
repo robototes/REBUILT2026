@@ -144,7 +144,7 @@ public Path getSelectedPath() {
             auto(
                 TRENCH_START_LEFT.get(),
                 c ->
-                    c.addCommands(Commands.runOnce(() ->BLineField.drawPath(field, Path3)),
+                    c.addCommands(Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path3), AutosCommands.launcherCommand(systems))));
 
     autoChooser.addCmd(
@@ -153,7 +153,7 @@ public Path getSelectedPath() {
             auto(
                 TRENCH_START_LEFT.get(),
                 c ->
-                    c.addCommands(Commands.runOnce(() ->BLineField.drawPath(field, Path1)),
+                    c.addCommands(Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path1), AutosCommands.launcherCommand(systems))));
 
     autoChooser.addCmd(
@@ -162,7 +162,7 @@ public Path getSelectedPath() {
             auto(
                 AllianceFlipUtil.flipped(Path2.getStartPose()).get(),
                 c ->
-                    c.addCommands( Commands.runOnce(() ->BLineField.drawPath(field, Path1)),
+                    c.addCommands(Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path1),
                         AutosCommands.launcherCommand(5, systems),
                         pathBuilder.build(Path2),
