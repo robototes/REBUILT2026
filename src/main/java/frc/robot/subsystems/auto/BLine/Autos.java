@@ -119,17 +119,20 @@ public class Autos {
     return pathsMap;
   }
 
-public Path getSelectedPath() {
+  public Path getSelectedPath() {
     String selectedAuto = autoChooser.getSelected();
-
     List<Path> selectedPaths = pathsMap.get(selectedAuto);
 
     if (selectedPaths == null || selectedPaths.isEmpty()) {
-        return null;
+      throw new IllegalStateException(
+          "No BLine path for selected auto '"
+              + selectedAuto
+              + "'. Expected one of: "
+              + pathsMap.keySet());
     }
 
     return selectedPaths.get(0);
-}
+  }
 
   public List<String> getBLinePathsNames() {
     return new ArrayList<>(pathsMap.keySet());
