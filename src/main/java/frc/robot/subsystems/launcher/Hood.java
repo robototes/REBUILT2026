@@ -186,11 +186,15 @@ public class Hood extends SubsystemBase {
     }
     return Commands.sequence(
             voltageControl(() -> Volts.of(AUTO_ZERO_VOLTAGE))
-                .until(() -> inputs.hoodStatorCurrent >= (STATOR_CURRENT_LIMIT - 1))
-                .withTimeout(3.0),
+                .withDeadline(
+                    Commands.waitSeconds(0.5)
+                        .andThen(
+                            Commands.waitUntil(
+                                () -> inputs.hoodStatorCurrent >= (STATOR_CURRENT_LIMIT - 1)))),
             zeroHoodCommand())
+        .withTimeout(3.0)
         .withName("Automatic Zero Hood");
-  }
+}
 
   @Override
   public void simulationPeriodic() {
