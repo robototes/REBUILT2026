@@ -194,7 +194,7 @@ public class Hood extends SubsystemBase {
             zeroHoodCommand())
         .withTimeout(3.0)
         .withName("Automatic Zero Hood");
-}
+  }
 
   @Override
   public void simulationPeriodic() {
