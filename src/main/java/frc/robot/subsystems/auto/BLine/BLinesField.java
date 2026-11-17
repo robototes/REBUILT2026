@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.Path;
 
+import java.io.ObjectInputStream.GetField;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -16,24 +17,28 @@ import java.util.function.Supplier;
 public class BLinesField {
   private static final double DEFAULT_PLAYBACK_SPEED = 1.0;
 
-
-  /* ---------------- NetworkTables init ---------------- */
-
-  public static Runnable initSmartDashBoard(
-      Supplier<String> tabName, int columnIndex, int rowIndex,Autos autos) {
-
-    NetworkTableEntry speedMultiplier =
-        NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
-
-    speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
-
-    BLinesField autonomousField =
-        new BLinesField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
-
-    SmartDashboard.putData("Selected auto", autonomousField.getField());
-    SmartDashboard.putData("Start pose", autonomousField.getStartPose());
-
-    return () -> {
+  private final static Field2d field = new Field2d();
+    private final Field2d fieldPoseStart = new Field2d();
+  
+  
+    /* ---------------- NetworkTables init ---------------- */
+  
+    public static Runnable initSmartDashBoard(
+        Supplier<String> tabName, int columnIndex, int rowIndex,Autos autos) {
+  
+      NetworkTableEntry speedMultiplier =
+          NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
+  
+      speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
+  
+      BLinesField autonomousField =
+          new BLinesField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
+  
+      SmartDashboard.putData("Selected auto", autonomousField.getField());
+      SmartDashboard.putData("Start pose", autonomousField.getStartPose());
+  
+      return () -> {
+         BLineField.drawPath(field, autos.getSelectedPath());
       autonomousField.update(autos.getSelectedPath());
 
     };
@@ -41,8 +46,6 @@ public class BLinesField {
 
   /* ---------------- Display ---------------- */
 
-  private final Field2d field = new Field2d();
-  private final Field2d fieldPoseStart = new Field2d();
 
   /* ---------------- Auto data ---------------- */
 
@@ -90,14 +93,14 @@ public class BLinesField {
   /* ---------------- Periodic update ---------------- */
 
   public void update(Path autoPath) {
+
+
+    fieldPoseStart.setRobotPose(autoPath.getStartPose());
     if (DriverStation.isEnabled()) {
         return;
     }
 
-    if (autoPath == null) {
 
-        return;
-    }
 
     if (!autoPath.isValid()) {
 
@@ -106,8 +109,7 @@ public class BLinesField {
 
 
 
-    BLineField.drawPath(field, autoPath);
-    fieldPoseStart.setRobotPose(autoPath.getStartPose());
+
 }
 
   /* ---------------- Timing ---------------- */

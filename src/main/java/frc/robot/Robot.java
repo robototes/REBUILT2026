@@ -197,8 +197,8 @@ public class Robot extends LoggedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       // AutoLogic.initCommandsAndPaths(false);
-      autoSmartDashboardUpdate = BLinesField.initSmartDashBoard(() -> "Field", 0, 0,autos);
-      autoSmartDashboardTimer.start();
+      //autoSmartDashboardUpdate = BLinesField.initSmartDashBoard(() -> "Field", 0, 0,autos);
+      //autoSmartDashboardTimer.start();
 
       //   AutoLogic.initAdvantageKit();
       //  CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
