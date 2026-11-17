@@ -2,7 +2,6 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -21,13 +20,12 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.launcher.LaunchCalculator.LaunchingParameters;
-import frc.robot.util.robotType.RobotType;
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -49,19 +47,24 @@ public class TurretSubsystem extends SubsystemBase {
 
   // Positions
   private double targetPos;
+  public double manualOffset = 0.0; // Manual jogging to correct for skip
+
+  // The turret pulley has 120 teeth, so each jog is 1 tooth. This is a resolution of 8" at 10' from
+  // the turret
+  private static final double offsetJogAmount = 1.0 / 120.0;
+
   public static final double FRONT_POSITION = 0;
   public static final double LEFT_POSITION = -0.15;
   public static final double RIGHT_POSITION = 0.15;
   public static final double BACK_POSITION = 0.5;
 
   // PID variables
-  private static final double kP = RobotType.isAlpha() ? 25 : 200;
+  private static final double kP = 200;
   private static final double kI = 0;
-  private static final double kD = RobotType.isAlpha() ? 0 : 2;
+  private static final double kD = 2;
   private static final double kG = 0;
-  private static final double kS = RobotType.isAlpha() ? 0.41 : 0.65;
-  private static final double kV =
-      0; // volts per requested rps RobotType.isAlpha() ? 0.884766 / 1.125 : 12 / 1.29;
+  private static final double kS = 0.65;
+  private static final double kV = 0; // volts per requested rps  12 / 1.29;
   private static final double kA = 0; // 0.12;
 
   // Current limits
@@ -69,11 +72,11 @@ public class TurretSubsystem extends SubsystemBase {
   private static final int SUPPLY_CURRENT_LIMIT = 40; // amps
 
   // Gear Ratio
-  private static final double GEAR_RATIO = RobotType.isAlpha() ? 24 : 40;
+  private static final double GEAR_RATIO = 40;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 300; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -40; // degrees
+  public static final double TURRET_MAX = 300; // degrees
+  public static final double TURRET_MIN = -40; // degrees
 
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
@@ -87,10 +90,7 @@ public class TurretSubsystem extends SubsystemBase {
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
-    turretMotor =
-        new TalonFX(
-            Hardware.TURRET_MOTOR_ID,
-            RobotType.isAlpha() ? CANBus.roboRIO() : CompTunerConstants.kCANBus);
+    turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, CompTunerConstants.kCANBus);
     limitSwitch = new AnalogInput(Hardware.HALL_EFFECT_SENSOR_ID);
     turretConfig();
     turretMotor.clearStickyFaults();
@@ -102,6 +102,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     statorCurrentSignal = turretMotor.getStatorCurrent();
     Logger.recordOutput("Zero/zeroedTurret", false);
+
+    Logger.recordOutput("Turret/Turret Offset [Deg]", Math.round(manualOffset * 360.0));
   }
 
   public void turretConfig() {
@@ -139,6 +141,15 @@ public class TurretSubsystem extends SubsystemBase {
               targetPos = pos;
             })
         .withName("Set Turret Position");
+  }
+
+  public Command offsetTurretCommand(int direction) { // 1 is positive offset, -1 is negative offset
+    return Commands.runOnce(
+            () -> {
+              manualOffset += offsetJogAmount * direction;
+              Logger.recordOutput("Turret Offset [Deg]", Math.round(manualOffset * 360.0));
+            })
+        .withName("Changed Turret Offset");
   }
 
   public void setTurretRawPosition(double pos, double FFVelocity) {
@@ -213,9 +224,9 @@ public class TurretSubsystem extends SubsystemBase {
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
-  public boolean atTarget(DoubleSupplier turretTolerance) {
+  public boolean atTarget(double turretTolerance) {
     return Math.abs(positionSignal.getValueAsDouble() - targetPos)
-        < Units.radiansToRotations(turretTolerance.getAsDouble());
+        < Units.radiansToRotations(turretTolerance);
   }
 
   /**
@@ -237,6 +248,12 @@ public class TurretSubsystem extends SubsystemBase {
 
               double normalizedTarget =
                   MathUtil.inputModulus(targetDegrees, currentDegrees - 180, currentDegrees + 180);
+
+              normalizedTarget =
+                  normalizedTarget
+                      + manualOffset
+                          * 360; // Changing the target to account for jogging from driver. Convert
+              // from rotations to degrees
 
               double[] candidates = {
                 normalizedTarget, normalizedTarget + 360, normalizedTarget - 360,

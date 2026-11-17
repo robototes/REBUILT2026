@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Hardware;
 import frc.robot.util.CustomLoggedNetworkNumber;
-import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
@@ -86,20 +85,14 @@ public class Flywheels extends SubsystemBase {
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     // create PID gains
-    config.Slot0.kP = RobotType.isAlpha() ? 5 : 10;
+    config.Slot0.kP = 10;
     config.Slot0.kS = 5.0;
     config.Slot0.kA = 0.5;
 
-    config.MotorOutput.Inverted =
-        RobotType.isAlpha()
-            ? InvertedValue.Clockwise_Positive
-            : InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     applyConfig(flywheelOne, config);
 
-    config.MotorOutput.Inverted =
-        RobotType.isAlpha()
-            ? InvertedValue.CounterClockwise_Positive
-            : InvertedValue.Clockwise_Positive;
+    config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     applyConfig(flywheelTwo, config);
   }
 
