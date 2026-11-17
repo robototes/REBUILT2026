@@ -61,7 +61,6 @@ public class LauncherSubsystem extends SubsystemBase {
     if (launchParameters == null) {
       return false;
     }
-
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
     Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
@@ -90,12 +89,11 @@ public class LauncherSubsystem extends SubsystemBase {
 
     notUnderClimb =
         !LaunchCalculator.isUnderClimb(
-            s.drivebaseSubsystem.inputs.Pose.transformBy(LauncherConstants.turretTransform()));
+            driveState.Pose.transformBy(LauncherConstants.turretTransform()));
     Logger.recordOutput("AutoAim/NotUnderClimb", notUnderClimb);
 
     notGoingToBeUnderTrench =
-        !LaunchCalculator.isApproachingTrench(
-            s.drivebaseSubsystem.inputs.Pose, s.drivebaseSubsystem.inputs.Speeds);
+        !LaunchCalculator.isApproachingTrench(driveState.Pose, driveState.Speeds);
     Logger.recordOutput("AutoAim/NotUnderTrench", notGoingToBeUnderTrench);
 
     return flywheelAtTarget
