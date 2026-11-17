@@ -30,6 +30,7 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
 import frc.robot.subsystems.auto.BLine.Autos;
+import frc.robot.subsystems.auto.BLine.BLinesField;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -76,7 +77,7 @@ public class Robot extends LoggedRobot {
   private Runnable autoSmartDashboardUpdate;
   private final Timer autoSmartDashboardTimer = new Timer();
   private static final double UPDATE_RATE = 0.05;
-  private Autos autos;
+  public static  Autos autos;
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -196,8 +197,8 @@ public class Robot extends LoggedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       // AutoLogic.initCommandsAndPaths(false);
-      //autoSmartDashboardUpdate = AutonomousField.initSmartDashBoard(() -> "Field", 0, 0);
-     // autoSmartDashboardTimer.start();
+      autoSmartDashboardUpdate = BLinesField.initSmartDashBoard(() -> "Field", 0, 0,autos);
+      autoSmartDashboardTimer.start();
 
       //   AutoLogic.initAdvantageKit();
       //  CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
@@ -258,6 +259,7 @@ public class Robot extends LoggedRobot {
     }
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
+
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 
     Logger.recordOutput("GCCount", GCMonitor.getGcCount());
@@ -463,6 +465,7 @@ public class Robot extends LoggedRobot {
       }
     }
   }
+
 
   private void supplyRobotYawToLimelight(String limelightName, double heading) {
     LimelightHelpers.SetRobotOrientation(limelightName, heading, 0, 0, 0, 0, 0);

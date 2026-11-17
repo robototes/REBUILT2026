@@ -6,10 +6,13 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Subsystems;
+import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.util.AllianceFlipUtil;
@@ -38,19 +41,21 @@ public class Autos {
   private boolean autosRegistered = false;
 
   private final List<Path> paths = new ArrayList<>();
-  private final Map<String, List<Path>> pathsMap = new LinkedHashMap<>();
+  public final Map<String, List<Path>> pathsMap = new LinkedHashMap<>();
 
   // ============= BLINE PATHS =============
 
   private final Path Path1 = new Path("FirstNeutralTrench");
   private final Path Path2 = new Path("SecondNeutralTrench");
   private final Path Path3 = new Path("default");
+    private final Field2d field = new Field2d();
 
   public Supplier<Pose2d> TRENCH_START_LEFT;
 
   // ============= CONFIGURATION =============
 
   public void configure(Subsystems s) {
+
 
     systems = s;
     autoDelayEntry.setDefaultDouble(0.0);
@@ -74,6 +79,7 @@ public class Autos {
   }
 
   public void init(Subsystems s) {
+
     systems = s;
     initializePaths();
     FollowPath.registerEventTrigger("intake", AutosCommands.intakeCommand());
@@ -111,6 +117,18 @@ public class Autos {
     return pathsMap;
   }
 
+public Path getSelectedPath() {
+    String selectedAuto = autoChooser.getSelected();
+
+    List<Path> selectedPaths = pathsMap.get(selectedAuto);
+
+    if (selectedPaths == null || selectedPaths.isEmpty()) {
+        return null;
+    }
+
+    return selectedPaths.get(0);
+}
+
   public List<String> getBLinePathsNames() {
     return new ArrayList<>(pathsMap.keySet());
   }
@@ -126,7 +144,7 @@ public class Autos {
             auto(
                 TRENCH_START_LEFT.get(),
                 c ->
-                    c.addCommands(
+                    c.addCommands(Commands.runOnce(() ->BLineField.drawPath(field, Path3)),
                         pathBuilder.build(Path3), AutosCommands.launcherCommand(systems))));
 
     autoChooser.addCmd(
@@ -135,7 +153,7 @@ public class Autos {
             auto(
                 TRENCH_START_LEFT.get(),
                 c ->
-                    c.addCommands(
+                    c.addCommands(Commands.runOnce(() ->BLineField.drawPath(field, Path1)),
                         pathBuilder.build(Path1), AutosCommands.launcherCommand(systems))));
 
     autoChooser.addCmd(
@@ -144,7 +162,7 @@ public class Autos {
             auto(
                 AllianceFlipUtil.flipped(Path2.getStartPose()).get(),
                 c ->
-                    c.addCommands(
+                    c.addCommands( Commands.runOnce(() ->BLineField.drawPath(field, Path1)),
                         pathBuilder.build(Path1),
                         AutosCommands.launcherCommand(5, systems),
                         pathBuilder.build(Path2),
@@ -162,6 +180,10 @@ public class Autos {
 
   return getPath(0).getStartPose();
   }
+  public Autos get() {
+    return this;
+  }
+
 
 
   // ============= AUTO BUILDER HELPERS =============s
