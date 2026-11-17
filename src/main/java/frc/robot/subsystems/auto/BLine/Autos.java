@@ -16,6 +16,7 @@ import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.LoggedAutoChooser;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -72,15 +73,14 @@ public class Autos {
                             .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
                 new PIDController(3.0, 0.0, 0.0),
                 new PIDController(5.0, 0.0, 0.0),
-                new PIDController(2.0, 0.0, 0.0))
-            .withDefaultShouldFlip();
-
+                new PIDController(2.0, 0.0, 0.0)).withDefaultShouldFlip().withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
     registerAutos();
   }
 
   public void init(Subsystems s) {
 
     systems = s;
+    
     initializePaths();
     FollowPath.registerEventTrigger("intake", AutosCommands.intakeCommand());
     FollowPath.registerEventTrigger("shoot", AutosCommands.launcherCommand(5, s));
@@ -142,7 +142,7 @@ public Path getSelectedPath() {
         "Default Auto",
         () ->
             auto(
-                TRENCH_START_LEFT.get(),
+
                 c ->
                     c.addCommands(Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path3), AutosCommands.launcherCommand(systems))));
@@ -151,7 +151,7 @@ public Path getSelectedPath() {
         "SingleNeutralTrench",
         () ->
             auto(
-                TRENCH_START_LEFT.get(),
+
                 c ->
                     c.addCommands(Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path1), AutosCommands.launcherCommand(systems))));
@@ -160,7 +160,7 @@ public Path getSelectedPath() {
         "DoubleNeutralTrench",
         () ->
             auto(
-                AllianceFlipUtil.flipped(Path2.getStartPose()).get(),
+
                 c ->
                     c.addCommands(Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path1),
@@ -192,9 +192,9 @@ public Path getSelectedPath() {
 
     SequentialCommandGroup group = new SequentialCommandGroup();
 
-    group.addCommands(
-        Commands.runOnce(
-            () -> systems.drivebaseSubsystem.resetPose(startPose), systems.drivebaseSubsystem));
+   // group.addCommands(
+       // Commands.runOnce(
+        //    () -> systems.drivebaseSubsystem.resetPose(startPose), systems.drivebaseSubsystem));
 
     builder.accept(group);
 

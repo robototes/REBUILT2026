@@ -95,16 +95,16 @@ public class BLinesField {
     }
 
     if (autoPath == null) {
-        System.out.println("Selected path is NULL");
+
         return;
     }
 
     if (!autoPath.isValid()) {
-        System.out.println("Selected path is INVALID");
+
         return;
     }
 
-    System.out.println("Drawing path: " + autoPath);
+
 
     BLineField.drawPath(field, autoPath);
     fieldPoseStart.setRobotPose(autoPath.getStartPose());

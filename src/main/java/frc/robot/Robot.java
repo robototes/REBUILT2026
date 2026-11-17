@@ -345,6 +345,13 @@ public class Robot extends LoggedRobot {
       }
 
       // CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+
+
+
+
+
+        subsystems.drivebaseSubsystem.resetRotation(autos.getSelectedPath().getInitialModuleDirection());
+
       CommandScheduler.getInstance().schedule(autos.selectedCommand());
       Pose2d startingPose = autos.getSelectedAutoStartingPose();
       double initialYaw = startingPose != null ? startingPose.getRotation().getDegrees() : 0.0;
