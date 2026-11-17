@@ -78,6 +78,7 @@ public class Robot extends LoggedRobot {
   private final Timer autoSmartDashboardTimer = new Timer();
   private static final double UPDATE_RATE = 0.05;
   public static  Autos autos;
+  public static BLinesField field = new BLinesField();
 
   // Cached time for robot.periodic()
   private double LAST_TIME = 0;
@@ -197,8 +198,8 @@ public class Robot extends LoggedRobot {
 
     if (SubsystemConstants.DRIVEBASE_ENABLED) {
       // AutoLogic.initCommandsAndPaths(false);
-      //autoSmartDashboardUpdate = BLinesField.initSmartDashBoard(() -> "Field", 0, 0,autos);
-      //autoSmartDashboardTimer.start();
+      autoSmartDashboardUpdate = field.initSmartDashBoard(() -> "Field", 0, 0,autos);
+    autoSmartDashboardTimer.start();
 
       //   AutoLogic.initAdvantageKit();
       //  CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
@@ -259,6 +260,7 @@ public class Robot extends LoggedRobot {
     }
     CommandScheduler.getInstance().run();
     driveBaseSim.update();
+
 
     LauncherConstants.UpdateNT(subsystems.drivebaseSubsystem.getState().Pose);
 

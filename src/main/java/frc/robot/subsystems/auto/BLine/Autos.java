@@ -15,6 +15,7 @@ import frc.robot.Subsystems;
 import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
+import frc.robot.lib.BLine.Path.PathElement;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.LoggedAutoChooser;
@@ -99,8 +100,8 @@ public class Autos {
     if (pathsInitialized) return;
 
     pathsMap.put("SingleNeutralTrench", List.of(Path1));
-    pathsMap.put("bumptotrench", List.of(Path1, Path2));
-    pathsMap.put("default", List.of(Path3));
+    pathsMap.put("DoubleNeutralTrench", List.of(Path1, Path2));
+    pathsMap.put("Default Auto", List.of(Path3));
 
     pathsMap.values().forEach(pathList -> pathList.forEach(p -> paths.add(p)));
     TRENCH_START_LEFT = AllianceFlipUtil.flipped(Path1.getStartPose());
@@ -117,6 +118,15 @@ public class Autos {
 
   public Map<String, List<Path>> getMap() {
     return pathsMap;
+  }
+  public Path getPathsToDraw() {
+    Path ultraPath = new Path();
+    for (Path path : getPaths()) {
+      for(PathElement element : path.getPathElements()) {
+        ultraPath.addPathElement(element);
+      }
+    }
+    return ultraPath;
   }
 
   public Path getSelectedPath() {
@@ -141,6 +151,7 @@ public class Autos {
   // ============= AUTO REGISTRATION =============
 
   private void registerAutos() {
+
 
     if (autosRegistered) return;
     autoChooser.addCmd(
@@ -188,6 +199,11 @@ public class Autos {
   public Autos get() {
     return this;
   }
+  public List<Path> getSelectedPaths() {
+    String selectedAuto = autoChooser.getSelected();
+    SmartDashboard.putString("AUOTNOTN", selectedAuto);
+    return pathsMap.getOrDefault(selectedAuto, List.of(Path1));
+}
 
 
 

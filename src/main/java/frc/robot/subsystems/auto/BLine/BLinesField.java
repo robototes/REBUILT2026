@@ -10,6 +10,7 @@ import frc.robot.lib.BLine.BLineField;
 import frc.robot.lib.BLine.Path;
 
 import java.io.ObjectInputStream.GetField;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -19,29 +20,36 @@ public class BLinesField {
 
   private final static Field2d field = new Field2d();
     private final Field2d fieldPoseStart = new Field2d();
-  
-  
+
+
     /* ---------------- NetworkTables init ---------------- */
-  
+
     public static Runnable initSmartDashBoard(
         Supplier<String> tabName, int columnIndex, int rowIndex,Autos autos) {
-  
+
       NetworkTableEntry speedMultiplier =
           NetworkTableInstance.getDefault().getTable("Autos").getEntry("DisplaySpeed");
-  
+
       speedMultiplier.setDouble(DEFAULT_PLAYBACK_SPEED);
-  
+
       BLinesField autonomousField =
           new BLinesField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
-  
+
       SmartDashboard.putData("Selected auto", autonomousField.getField());
       SmartDashboard.putData("Start pose", autonomousField.getStartPose());
-  
-      return () -> {
-         BLineField.drawPath(field, autos.getSelectedPath());
-      autonomousField.update(autos.getSelectedPath());
 
-    };
+      return () -> {
+    List<Path> selectedPaths = autos.getSelectedPaths();
+
+    for (Path path : selectedPaths) {
+        BLineField.drawPath(field, path);
+    }
+
+    autonomousField.update(
+        autos.getSelectedPath(),
+        autos
+    );
+};
   }
 
   /* ---------------- Display ---------------- */
@@ -78,7 +86,7 @@ public class BLinesField {
 
   /* ---------------- Accessors ---------------- */
 
-  public Field2d getField() {
+  public static  Field2d getField() {
     return field;
   }
 
@@ -92,8 +100,8 @@ public class BLinesField {
 
   /* ---------------- Periodic update ---------------- */
 
-  public void update(Path autoPath) {
-
+  public void update(Path autoPath,Autos autos ) {
+    BLineField.drawPath(field, autos.getSelectedPath());
 
     fieldPoseStart.setRobotPose(autoPath.getStartPose());
     if (DriverStation.isEnabled()) {
