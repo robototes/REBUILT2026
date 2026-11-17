@@ -8,7 +8,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.robotType.ConfigShift;
-import frc.robot.util.robotType.RobotType;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
 
@@ -61,11 +60,11 @@ public class AutoBuilderConfig {
     }
   }
 
-  public static String setRobot(boolean unitTest) throws IOException, ParseException {
+  public static String setRobot(boolean unitTest) {
     if (unitTest) {
       return "sim";
     }
 
-    return (RobotType.isAlpha() ? "alpha" : "comp");
+    return ("comp");
   }
 }

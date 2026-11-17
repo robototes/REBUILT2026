@@ -7,61 +7,56 @@ import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleTopic;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Hardware;
-import frc.robot.generated.AlphaTunerConstants;
-import frc.robot.util.robotType.RobotType;
-import frc.robot.util.tuning.NtTunableBoolean;
-import frc.robot.util.tuning.NtTunableDouble;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class IntakeRollers extends SubsystemBase {
   // motors
   private final TalonFX leftRoller;
   private final TalonFX rightRoller;
-
-  // networktables and sim
-  private DoubleTopic leftRollerTopic;
-  private DoubleTopic rightRollerTopic;
-  private DoublePublisher leftRollerPub;
-  private DoublePublisher rightRollerPub;
   private RollerSim rollerSim;
 
   public final double TARGET_RPS = 68;
   public final double AGITATE_RPS = TARGET_RPS / 2;
-  private final NtTunableBoolean TUNABLE_ENABLE =
-      new NtTunableBoolean("SmartDashboard/Tunables/TuneIntakeRollers", false);
-  private final NtTunableDouble NT_TARGET_RPS =
-      new NtTunableDouble("SmartDashboard/intake/TargetVelocityRPS", TARGET_RPS);
+  private final LoggedNetworkBoolean TUNABLE_ENABLE =
+      new LoggedNetworkBoolean("Tuning/TuneIntakeRollers", false);
+  private final LoggedNetworkNumber NT_TARGET_RPS =
+      new LoggedNetworkNumber("Tuning/intake/TargetVelocityRPS", TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest = new VelocityTorqueCurrentFOC(0);
 
   // status signals
-  private final StatusSignal<AngularVelocity> SS_roller1;
-  private final StatusSignal<AngularVelocity> SS_roller2;
+  private final StatusSignal<AngularVelocity> rollerLeftVelocity;
+  private final StatusSignal<Current> rollerLeftStatorCurrent;
+  private final StatusSignal<Current> rollerLeftSupplyCurrent;
+  private final StatusSignal<AngularVelocity> rollerRightVelocity;
+  private final StatusSignal<Current> rollerRightStatorCurrent;
+  private final StatusSignal<Current> rollerRightSupplyCurrent;
 
   public IntakeRollers() {
     // define motors and configs
-    leftRoller =
-        new TalonFX(
-            Hardware.INTAKE_MOTOR_ONE_ID,
-            (RobotType.isAlpha() ? AlphaTunerConstants.kCANBus : CANBus.roboRIO()));
+    leftRoller = new TalonFX(Hardware.INTAKE_MOTOR_ONE_ID, (CANBus.roboRIO()));
     rightRoller = new TalonFX(Hardware.INTAKE_MOTOR_TWO_ID);
     motorConfigs();
     leftRoller.clearStickyFaults();
     rightRoller.clearStickyFaults();
-    networktables();
 
     // sim creator
     if (RobotBase.isSimulation()) {
       rollerSim = new RollerSim(leftRoller, rightRoller);
     }
 
-    SS_roller1 = leftRoller.getVelocity();
-    SS_roller2 = rightRoller.getVelocity();
+    rollerLeftVelocity = leftRoller.getVelocity();
+    rollerRightVelocity = rightRoller.getVelocity();
+    rollerLeftStatorCurrent = leftRoller.getStatorCurrent();
+    rollerLeftSupplyCurrent = leftRoller.getSupplyCurrent();
+    rollerRightStatorCurrent = rightRoller.getStatorCurrent();
+    rollerRightSupplyCurrent = rightRoller.getSupplyCurrent();
   }
 
   // roller configs
@@ -75,28 +70,14 @@ public class IntakeRollers extends SubsystemBase {
     talonFXConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    talonFXConfigs.Slot0.kP = RobotType.isAlpha() ? 5.0 : 4.0;
-    talonFXConfigs.Slot0.kS = RobotType.isAlpha() ? 5.0 : 1.0;
+    talonFXConfigs.Slot0.kP = 4.0;
+    talonFXConfigs.Slot0.kS = 1.0;
     talonFXConfigs.Slot0.kA = 0.2;
 
     // configurator
     leftRoller.getConfigurator().apply(talonFXConfigs);
     talonFXConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     rightRoller.getConfigurator().apply(talonFXConfigs);
-  }
-
-  // configure networktables
-  private void networktables() {
-    var nt = NetworkTableInstance.getDefault();
-    this.leftRollerTopic = nt.getDoubleTopic("intake/leftRollerSpeed");
-    this.leftRollerPub = leftRollerTopic.publish();
-
-    this.rightRollerTopic = nt.getDoubleTopic("intake/rightRollerSpeed");
-    this.rightRollerPub = rightRollerTopic.publish();
-
-    // default values
-    leftRollerPub.set(0);
-    rightRollerPub.set(0);
   }
 
   public void runRollers(double velocity) {
@@ -117,11 +98,25 @@ public class IntakeRollers extends SubsystemBase {
   @Override
   // update networktables
   public void periodic() {
-    // SS_roller1.refresh();
-    // SS_roller2.refresh();
-    StatusSignal.refreshAll(SS_roller1, SS_roller2);
-    leftRollerPub.set(SS_roller1.getValueAsDouble());
-    rightRollerPub.set(SS_roller2.getValueAsDouble());
+    StatusSignal.refreshAll(
+        rollerLeftVelocity,
+        rollerRightVelocity,
+        rollerLeftStatorCurrent,
+        rollerLeftSupplyCurrent,
+        rollerRightStatorCurrent,
+        rollerRightSupplyCurrent);
+    Logger.recordOutput(
+        "Intake/Rollers/Left/leftRollerSpeed", rollerLeftVelocity.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Right/rightRollerSpeed", rollerRightVelocity.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Left/leftRollerStator", rollerLeftStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Right/rightRollerStator", rollerRightStatorCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Left/leftRollerSupply", rollerLeftSupplyCurrent.getValueAsDouble());
+    Logger.recordOutput(
+        "Intake/Rollers/Right/rightRollerSupply", rollerRightSupplyCurrent.getValueAsDouble());
   }
 
   // update sim

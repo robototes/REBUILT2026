@@ -1,5 +1,6 @@
 package frc.robot;
 
+import static frc.robot.Subsystems.SubsystemConstants.BLOCKER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.DRIVEBASE_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FEEDER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.FLYWHEELS_ENABLED;
@@ -14,11 +15,9 @@ import static frc.robot.Subsystems.SubsystemConstants.SPINDEXER_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.TURRET_ENABLED;
 import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.generated.AlphaTunerConstants;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
+import frc.robot.subsystems.Blocker;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
@@ -31,8 +30,7 @@ import frc.robot.subsystems.launcher.Flywheels;
 import frc.robot.subsystems.launcher.Hood;
 import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
-import frc.robot.util.robotType.RobotType;
-import frc.robot.util.robotType.RobotTypesEnum;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 
 public class Subsystems {
   public static class SubsystemConstants {
@@ -52,6 +50,7 @@ public class Subsystems {
         HOOD_ENABLED && FLYWHEELS_ENABLED && TURRET_ENABLED;
     public static final boolean INDEXER_ENABLED = SPINDEXER_ENABLED && FEEDER_ENABLED;
     public static final boolean LEDS_ENABLED = true;
+    public static final boolean BLOCKER_ENABLED = true;
   }
 
   // Subsystems go here
@@ -68,8 +67,9 @@ public class Subsystems {
   public final TurretSubsystem turretSubsystem;
   public final IndexerSubsystem indexerSubsystem;
   public final LEDSubsystem ledSubsystem;
+  public final Blocker blocker;
 
-  public Subsystems(Mechanism2d mechanism2d) {
+  public Subsystems(LoggedMechanism2d mechanism2d) {
     // Initialize subsystems here (don't forget to check if they're enabled!)
     // Add specification for bonk, Enum? get team number?
 
@@ -82,10 +82,7 @@ public class Subsystems {
     // }
 
     if (DRIVEBASE_ENABLED) {
-      drivebaseSubsystem =
-          (RobotType.TYPE == RobotTypesEnum.ALPHA)
-              ? AlphaTunerConstants.createDrivetrain()
-              : CompTunerConstants.createDrivetrain();
+      drivebaseSubsystem = CompTunerConstants.createDrivetrain();
     } else {
       drivebaseSubsystem = null;
     }
@@ -158,9 +155,14 @@ public class Subsystems {
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
       visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
-      SmartDashboard.putData(visionSubsystem);
     } else {
       visionSubsystem = null;
+    }
+
+    if (BLOCKER_ENABLED) {
+      blocker = new Blocker();
+    } else {
+      blocker = null;
     }
   }
 }

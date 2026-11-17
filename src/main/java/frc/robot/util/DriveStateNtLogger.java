@@ -10,16 +10,20 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 
 public class DriveStateNtLogger {
   private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
   private final DriveStateSignalLogger telem;
   private final double MaxSpeed;
+
+  private static final String[] MODULE_KEYS = {
+    "Drive/Module 0", "Drive/Module 1", "Drive/Module 2", "Drive/Module 3"
+  };
 
   /* Robot swerve drive state */
   private final NetworkTable driveStateTable = inst.getTable("DriveState");
@@ -42,41 +46,48 @@ public class DriveStateNtLogger {
       driveStateTable.getDoubleTopic("OdometryFrequency").publish();
 
   /* Mechanisms to represent the swerve module states */
-  private final Mechanism2d[] m_moduleMechanisms =
-      new Mechanism2d[] {
-        new Mechanism2d(1, 1), new Mechanism2d(1, 1), new Mechanism2d(1, 1), new Mechanism2d(1, 1),
+  private final LoggedMechanism2d[] m_moduleMechanisms =
+      new LoggedMechanism2d[] {
+        new LoggedMechanism2d(1, 1),
+        new LoggedMechanism2d(1, 1),
+        new LoggedMechanism2d(1, 1),
+        new LoggedMechanism2d(1, 1),
       };
   /* A direction and length changing ligament for speed representation */
-  private final MechanismLigament2d[] m_moduleSpeeds =
-      new MechanismLigament2d[] {
+  private final LoggedMechanismLigament2d[] m_moduleSpeeds =
+      new LoggedMechanismLigament2d[] {
         m_moduleMechanisms[0]
             .getRoot("RootSpeed", 0.5, 0.5)
-            .append(new MechanismLigament2d("Speed", 0.5, 0)),
+            .append(new LoggedMechanismLigament2d("Speed", 0.5, 0)),
         m_moduleMechanisms[1]
             .getRoot("RootSpeed", 0.5, 0.5)
-            .append(new MechanismLigament2d("Speed", 0.5, 0)),
+            .append(new LoggedMechanismLigament2d("Speed", 0.5, 0)),
         m_moduleMechanisms[2]
             .getRoot("RootSpeed", 0.5, 0.5)
-            .append(new MechanismLigament2d("Speed", 0.5, 0)),
+            .append(new LoggedMechanismLigament2d("Speed", 0.5, 0)),
         m_moduleMechanisms[3]
             .getRoot("RootSpeed", 0.5, 0.5)
-            .append(new MechanismLigament2d("Speed", 0.5, 0)),
+            .append(new LoggedMechanismLigament2d("Speed", 0.5, 0)),
       };
   /* A direction changing and length constant ligament for module direction */
-  private final MechanismLigament2d[] m_moduleDirections =
-      new MechanismLigament2d[] {
+  private final LoggedMechanismLigament2d[] m_moduleDirections =
+      new LoggedMechanismLigament2d[] {
         m_moduleMechanisms[0]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
         m_moduleMechanisms[1]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
         m_moduleMechanisms[2]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
         m_moduleMechanisms[3]
             .getRoot("RootDirection", 0.5, 0.5)
-            .append(new MechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
+            .append(
+                new LoggedMechanismLigament2d("Direction", 0.1, 0, 0, new Color8Bit(Color.kWhite))),
       };
 
   public DriveStateNtLogger(DriveStateSignalLogger telemetry, double MaxSpeed) {
@@ -84,7 +95,7 @@ public class DriveStateNtLogger {
     this.telem = telemetry;
     /* Telemeterize the module states to a Mechanism2d */
     for (int i = 0; i < 4; ++i) {
-      SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
+      Logger.recordOutput("Drive/Module " + i, m_moduleMechanisms[i]);
     }
     // Legacy double[] publisher has been removed entirely
   }
@@ -111,5 +122,8 @@ public class DriveStateNtLogger {
     driveModulePositions.set(state.ModulePositions);
     driveTimestamp.set(state.Timestamp);
     driveOdometryFrequency.set(state.OdometryPeriod == 0 ? 0 : 1.0 / state.OdometryPeriod);
+    for (int i = 0; i < 4; ++i) {
+      Logger.recordOutput(MODULE_KEYS[i], m_moduleMechanisms[i]);
+    }
   }
 }
