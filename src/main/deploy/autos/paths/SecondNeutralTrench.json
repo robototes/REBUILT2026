@@ -58,10 +58,9 @@
         "end_ordinal": 0
       },
       {
-        "value": 0.37,
+        "value": 1.8,
         "start_ordinal": 1,
-        "end_ordinal": 1,
-        "source": "auto_velocity"
+        "end_ordinal": 1
       },
       {
         "value": 3.0,

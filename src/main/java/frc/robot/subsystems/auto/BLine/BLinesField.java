@@ -35,7 +35,7 @@ public class BLinesField {
       BLinesField autonomousField =
           new BLinesField(() -> speedMultiplier.getDouble(DEFAULT_PLAYBACK_SPEED));
 
-      SmartDashboard.putData("Selected auto", autonomousField.getField());
+      SmartDashboard.putData("Selected auto", getField());
       SmartDashboard.putData("Start pose", autonomousField.getStartPose());
 
       return () -> {
