@@ -17,6 +17,10 @@ public interface DrivebaseIO {
     public double OdometryPeriod = 0;
     public int SuccessfulDaqs = 0;
     public int FailedDaqs = 0;
+    public double[] driveSupplyCurrentAmps = new double[4];
+    public double[] driveStatorCurrentAmps = new double[4];
+    public double[] steerStatorCurrentAmps = new double[4];
+    public double[] driveTempCelsius = new double[4];
   }
 
   public default void updateInputs(DrivebaseIOInputs inputs, SwerveDriveState state) {}

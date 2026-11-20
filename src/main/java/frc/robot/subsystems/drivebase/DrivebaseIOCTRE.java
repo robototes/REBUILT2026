@@ -52,5 +52,11 @@ public class DrivebaseIOCTRE implements DrivebaseIO {
     inputs.OdometryPeriod = state.OdometryPeriod;
     inputs.SuccessfulDaqs = state.SuccessfulDaqs;
     inputs.FailedDaqs = state.FailedDaqs;
+    for (int i = 0; i < driveSupply.length; i++) {
+      inputs.driveSupplyCurrentAmps[i] = driveSupply[i].getValueAsDouble();
+      inputs.driveStatorCurrentAmps[i] = driveStator[i].getValueAsDouble();
+      inputs.steerStatorCurrentAmps[i] = steerStator[i].getValueAsDouble();
+      inputs.driveTempCelsius[i] = driveTemp[i].getValueAsDouble();
+    }
   }
 }
