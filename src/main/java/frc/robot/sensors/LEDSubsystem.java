@@ -25,7 +25,7 @@ public class LEDSubsystem extends SubsystemBase {
     DEFAULT;
   }
 
-  private enum LEDPattern {
+  public enum LEDPattern {
     SOLID,
     ALTERNATE,
     RAINBOW
