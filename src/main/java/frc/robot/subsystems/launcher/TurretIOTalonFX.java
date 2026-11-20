@@ -1,5 +1,7 @@
 package frc.robot.subsystems.launcher;
 
+import static edu.wpi.first.units.Units.Hertz;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -9,9 +11,6 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.wpilibj.AnalogInput;
-
-import static edu.wpi.first.units.Units.Hertz;
-
 import java.util.Objects;
 
 public class TurretIOTalonFX implements TurretIO {
@@ -32,11 +31,10 @@ public class TurretIOTalonFX implements TurretIO {
     this.velocityRPS = turretMotor.getVelocity();
     this.statorCurrentAmps = turretMotor.getStatorCurrent();
     this.motorTemp = turretMotor.getDeviceTemp();
-    BaseStatusSignal.setUpdateFrequencyForAll(Frequency.ofBaseUnits(50, Hertz), positionRotations, velocityRPS, statorCurrentAmps);
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        Frequency.ofBaseUnits(50, Hertz), positionRotations, velocityRPS, statorCurrentAmps);
     BaseStatusSignal.setUpdateFrequencyForAll(Frequency.ofBaseUnits(4, Hertz), motorTemp);
-    signals = new BaseStatusSignal[] {
-      positionRotations, velocityRPS, statorCurrentAmps, motorTemp
-    };
+    signals = new BaseStatusSignal[] {positionRotations, velocityRPS, statorCurrentAmps, motorTemp};
   }
 
   @Override
