@@ -32,7 +32,6 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
-import frc.robot.subsystems.drivebase.DrivebaseIO;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -227,7 +226,7 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotPeriodic() {
-    
+
     // Resume logging every X seconds
     double time = Timer.getFPGATimestamp();
     if (time - LAST_TIME >= 1) {

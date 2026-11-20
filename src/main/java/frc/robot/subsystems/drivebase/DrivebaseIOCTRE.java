@@ -1,8 +1,7 @@
 package frc.robot.subsystems.drivebase;
 
-import java.util.function.Supplier;
-
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import java.util.function.Supplier;
 
 public class DrivebaseIOCTRE implements DrivebaseIO {
   private final Supplier<SwerveDriveState> stateSupplier;
