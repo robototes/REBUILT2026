@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Subsystems.SubsystemConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sim.ShowVisionOnField;
@@ -472,7 +473,7 @@ public class Robot extends LoggedRobot {
   /** Only used in simulation to reset robot pose */
   private void resetRobotPose(Pose2d pose) {
     if (Robot.isSimulation()) {
-      System.out.println("Robot pose reset to: " + pose);
+      Commands.print("Robot pose reset to: " + pose);
 
       subsystems.drivebaseSubsystem.resetPose(pose);
 

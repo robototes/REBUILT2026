@@ -202,7 +202,6 @@ public class Autos {
 
   public List<Path> getSelectedPaths() {
     String selectedAuto = autoChooser.getSelected();
-    System.out.println("SELECTED WAS " + selectedAuto);
     return pathsMap.getOrDefault(selectedAuto, List.of(Path3));
   }
 
