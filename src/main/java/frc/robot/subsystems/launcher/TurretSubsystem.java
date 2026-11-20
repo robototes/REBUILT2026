@@ -2,7 +2,6 @@ package frc.robot.subsystems.launcher;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -14,9 +13,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -78,15 +74,13 @@ public class TurretSubsystem extends SubsystemBase {
   public static final double TURRET_MAX = 300; // degrees
   public static final double TURRET_MIN = -40; // degrees
 
+  private final TurretIOTalonFX io;
+  private final TurretIOInputsAutoLogged inputs;
+
   StructArrayPublisher<Pose2d> turretRotation =
       NetworkTableInstance.getDefault()
           .getStructArrayTopic("turretRotation", Pose2d.struct)
           .publish();
-
-  // Status signals
-  private final StatusSignal<Angle> positionSignal;
-  private final StatusSignal<AngularVelocity> velocitySignal;
-  private final StatusSignal<Current> statorCurrentSignal;
 
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
@@ -96,14 +90,11 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor.clearStickyFaults();
     turretRotation.set(new Pose2d[2]);
 
-    positionSignal = turretMotor.getPosition();
-
-    velocitySignal = turretMotor.getVelocity();
-
-    statorCurrentSignal = turretMotor.getStatorCurrent();
     Logger.recordOutput("Zero/zeroedTurret", false);
 
     Logger.recordOutput("Turret/Turret Offset [Deg]", Math.round(manualOffset * 360.0));
+    io = new TurretIOTalonFX(turretMotor, limitSwitch);
+    inputs = new TurretIOInputsAutoLogged();
   }
 
   public void turretConfig() {
@@ -216,16 +207,16 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public double getTurretPosition() {
-    return positionSignal.getValueAsDouble();
+    return inputs.positionRotations;
   }
 
   public boolean atTarget() {
-    return Math.abs(positionSignal.getValueAsDouble() - targetPos)
+    return Math.abs(inputs.positionRotations - targetPos)
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
   public boolean atTarget(double turretTolerance) {
-    return Math.abs(positionSignal.getValueAsDouble() - targetPos)
+    return Math.abs(inputs.positionRotations - targetPos)
         < Units.radiansToRotations(turretTolerance);
   }
 
@@ -233,7 +224,7 @@ public class TurretSubsystem extends SubsystemBase {
    * @return the angular velocity of the turret in rad/s
    */
   public double getOmega() {
-    return Units.rotationsToRadians(velocitySignal.getValueAsDouble());
+    return Units.rotationsToRadians(inputs.velocityRPS);
   }
 
   public Command rotateToTargetWithCalc() {
@@ -297,16 +288,9 @@ public class TurretSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
-    Logger.recordOutput("/Turret/Position", positionSignal.getValueAsDouble());
-
-    Logger.recordOutput("/Turret/Velocity", velocitySignal.getValueAsDouble());
-
-    Logger.recordOutput("/Turret/Current", statorCurrentSignal.getValueAsDouble());
-
+    io.updateInputs(inputs);
+    Logger.processInputs("Turret", inputs);
     Logger.recordOutput("/Turret/Target", targetPos);
-
-    Logger.recordOutput("/Turret/LimitSwitchCurrent", limitSwitch.getVoltage());
   }
 
   public void brakeTurret() {
@@ -329,7 +313,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public boolean atLimitSwitch() {
-    double velo = velocitySignal.getValueAsDouble();
+    double velo = inputs.velocityRPS;
     return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
   }
 
