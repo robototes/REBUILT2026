@@ -1,10 +1,12 @@
 package frc.robot.subsystems.drivebase;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import frc.robot.util.StatusSignalRefresher;
+import java.util.Objects;
 
 public class DrivebaseIOCTRE implements DrivebaseIO {
   private SwerveDriveState state;
@@ -15,11 +17,17 @@ public class DrivebaseIOCTRE implements DrivebaseIO {
   private StatusSignal<Temperature>[] driveTemp;
 
   public DrivebaseIOCTRE(CommandSwerveDrivetrain drivetrain) {
-    this.drivetrain = drivetrain;
+    this.drivetrain = Objects.requireNonNull(drivetrain, "drivetrain is null");
     this.state = drivetrain.getStateCopy();
     var refresher = StatusSignalRefresher.getInstance();
 
-    for (int i = 0; i < 4; i++) {
+    int n = drivetrain.getModules().length;
+    driveSupply = new StatusSignal[n];
+    driveStator = new StatusSignal[n];
+    steerStator = new StatusSignal[n];
+    driveTemp = new StatusSignal[n];
+
+    for (int i = 0; i < n; i++) {
       var drive = drivetrain.getModule(i).getDriveMotor();
       var steer = drivetrain.getModule(i).getSteerMotor();
 
@@ -28,10 +36,9 @@ public class DrivebaseIOCTRE implements DrivebaseIO {
       steerStator[i] = steer.getStatorCurrent();
       driveTemp[i] = drive.getDeviceTemp();
 
-      //   BaseStatusSignal.setUpdateFrequencyForAll(50, driveSupply[i], driveStator[i],
-      // steerStator[i]);
-      //   refresher.addStatusSignals(driveSupply[i], driveStator[i], steerStator[i]);
-      //   refresher.addStatusSignals(5, driveTemp[i]); // slow signal
+      BaseStatusSignal.setUpdateFrequencyForAll(50, driveSupply[i], driveStator[i], steerStator[i]);
+      refresher.addStatusSignals(driveSupply[i], driveStator[i], steerStator[i]);
+      refresher.addStatusSignals(5, driveTemp[i]); // slow signal
     }
   }
 
