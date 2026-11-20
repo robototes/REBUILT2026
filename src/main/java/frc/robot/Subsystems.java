@@ -87,16 +87,16 @@ public class Subsystems {
       drivebaseSubsystem = null;
     }
 
-    if (INTAKE_ROLLERS_ENABLED) {
-      intakeRollers = new IntakeRollers();
+    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
     } else {
-      intakeRollers = null;
+      visionSubsystem = null;
     }
 
-    if (INTAKE_ARM_ENABLED) {
-      intakePivot = new IntakePivot();
+    if (TURRET_ENABLED) {
+      turretSubsystem = new TurretSubsystem(drivebaseSubsystem);
     } else {
-      intakePivot = null;
+      turretSubsystem = null;
     }
 
     if (FLYWHEELS_ENABLED) {
@@ -111,6 +111,12 @@ public class Subsystems {
       hood = null;
     }
 
+    if (LAUNCHER_ENABLED) {
+      launcherSubsystem = new LauncherSubsystem(this);
+    } else {
+      launcherSubsystem = null;
+    }
+
     if (SPINDEXER_ENABLED) {
       spindexerSubsystem = new Spindexer();
     } else {
@@ -123,46 +129,39 @@ public class Subsystems {
       feederSubsystem = null;
     }
 
-    if (INTAKE_ENABLED) {
-      intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
-    } else {
-      intakeSubsystem = null;
-    }
-
-    if (TURRET_ENABLED) {
-      turretSubsystem = new TurretSubsystem(drivebaseSubsystem);
-    } else {
-      turretSubsystem = null;
-    }
-
-    if (LAUNCHER_ENABLED) {
-      launcherSubsystem = new LauncherSubsystem(this);
-    } else {
-      launcherSubsystem = null;
-    }
-
     if (INDEXER_ENABLED) {
       indexerSubsystem = new IndexerSubsystem(feederSubsystem, spindexerSubsystem);
     } else {
       indexerSubsystem = null;
     }
 
-    if (LEDS_ENABLED) {
-      ledSubsystem = new LEDSubsystem();
+    if (INTAKE_ROLLERS_ENABLED) {
+      intakeRollers = new IntakeRollers();
     } else {
-      ledSubsystem = null;
+      intakeRollers = null;
     }
 
-    if (VISION_ENABLED && DRIVEBASE_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
+    if (INTAKE_ARM_ENABLED) {
+      intakePivot = new IntakePivot();
     } else {
-      visionSubsystem = null;
+      intakePivot = null;
     }
 
+    if (INTAKE_ENABLED) {
+      intakeSubsystem = new IntakeSubsystem(intakePivot, intakeRollers);
+    } else {
+      intakeSubsystem = null;
+    }
     if (BLOCKER_ENABLED) {
       blocker = new Blocker();
     } else {
       blocker = null;
+    }
+
+    if (LEDS_ENABLED) {
+      ledSubsystem = new LEDSubsystem();
+    } else {
+      ledSubsystem = null;
     }
   }
 }

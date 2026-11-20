@@ -396,7 +396,7 @@ public class Controls {
                     case SPIN -> s.intakeSubsystem.runRollers();
                     case LAUNCH -> s.intakeSubsystem.intakeWhileLaunch();
                     case INTAKE ->
-                        s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.getState().Speeds);
+                        s.intakeSubsystem.smartIntake(() -> s.drivebaseSubsystem.inputs.Speeds);
                     case EXTAKE -> s.intakeSubsystem.extakeIntake();
                     case BLOCK -> s.intakeSubsystem.holdAtExtake();
                   }
