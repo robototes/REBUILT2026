@@ -345,7 +345,7 @@ public class Robot extends LoggedRobot {
       }
 
       // CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-autos.selectedCommand().addRequirements(subsystems.drivebaseSubsystem);
+      autos.selectedCommand().addRequirements(subsystems.drivebaseSubsystem);
 
       CommandScheduler.getInstance().schedule(autos.selectedCommand());
       Pose2d startingPose = autos.getSelectedAutoStartingPose();

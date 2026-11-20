@@ -227,12 +227,12 @@ public class Autos {
   private Command auto(Consumer<SequentialCommandGroup> builder) {
 
     SequentialCommandGroup group = new SequentialCommandGroup();
-group.addCommands(
+    group.addCommands(
         Commands.runOnce(
             () ->
                 systems.drivebaseSubsystem.resetRotation(
                     getSelectedPath().getInitialModuleDirection())));
-                    builder.accept(group);
+    builder.accept(group);
 
     return group;
   }
