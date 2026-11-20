@@ -337,12 +337,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   @Override
   public void resetPose(Pose2d pose) {
+    super.resetPose(pose);
     io.updateInputs(inputs, getState());
     Logger.processInputs("Drivebase", inputs);
   }
 
   @Override
   public void resetTranslation(Translation2d pose) {
+    super.resetTranslation(pose);
     io.updateInputs(inputs, getState());
     Logger.processInputs("Drivebase", inputs);
   }
