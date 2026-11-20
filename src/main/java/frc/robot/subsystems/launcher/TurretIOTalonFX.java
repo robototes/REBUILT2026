@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.wpilibj.AnalogInput;
 import java.util.Objects;
 
@@ -16,6 +17,7 @@ public class TurretIOTalonFX implements TurretIO {
   private final StatusSignal<Angle> positionRotations;
   private final StatusSignal<AngularVelocity> velocityRPS;
   private final StatusSignal<Current> statorCurrentAmps;
+  private final StatusSignal<Temperature> motorTemp;
 
   public TurretIOTalonFX(TalonFX motor, AnalogInput lSwitch) {
     this.turretMotor = Objects.requireNonNull(motor, "Turret motor cannot be null");
@@ -23,6 +25,7 @@ public class TurretIOTalonFX implements TurretIO {
     this.positionRotations = turretMotor.getPosition();
     this.velocityRPS = turretMotor.getVelocity();
     this.statorCurrentAmps = turretMotor.getStatorCurrent();
+    this.motorTemp = turretMotor.getDeviceTemp();
   }
 
   @Override
@@ -32,5 +35,6 @@ public class TurretIOTalonFX implements TurretIO {
     inputs.velocityRPS = velocityRPS.getValueAsDouble();
     inputs.statorCurrentAmps = statorCurrentAmps.getValueAsDouble();
     inputs.limitSwitchVolts = limitSwitch.getVoltage();
+    inputs.motorTemp = motorTemp.getValueAsDouble();
   }
 }

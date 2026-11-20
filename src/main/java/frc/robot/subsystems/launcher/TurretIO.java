@@ -10,6 +10,7 @@ public interface TurretIO {
     public double velocityRPS;
     public double statorCurrentAmps;
     public double limitSwitchVolts;
+    public double motorTemp;
   }
 
   public default void updateInputs(TurretIOInputs inputs) {}
