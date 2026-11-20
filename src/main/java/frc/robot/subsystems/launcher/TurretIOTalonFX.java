@@ -1,15 +1,13 @@
 package frc.robot.subsystems.launcher;
 
-import java.util.Objects;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.AnalogInput;
+import java.util.Objects;
 
 public class TurretIOTalonFX implements TurretIO {
 
