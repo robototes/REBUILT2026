@@ -11,6 +11,7 @@ public interface TurretIO {
     public double statorCurrentAmps;
     public double limitSwitchVolts;
     public double motorTemp;
+    public boolean isConnected;
   }
 
   public default void updateInputs(TurretIOInputs inputs) {}
