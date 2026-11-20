@@ -179,7 +179,7 @@ public class Autos {
                         Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path1),
                         AutosCommands.launcherCommand(5, systems),
-                        pathBuilder.build(Path2),
+                        pathBuilder.withPoseReset(pose -> {}).build(Path2),
                         AutosCommands.launcherCommand(systems))));
 
     autosRegistered = true;
@@ -227,8 +227,12 @@ public class Autos {
   private Command auto(Consumer<SequentialCommandGroup> builder) {
 
     SequentialCommandGroup group = new SequentialCommandGroup();
-
-    builder.accept(group);
+group.addCommands(
+        Commands.runOnce(
+            () ->
+                systems.drivebaseSubsystem.resetRotation(
+                    getSelectedPath().getInitialModuleDirection())));
+                    builder.accept(group);
 
     return group;
   }

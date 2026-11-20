@@ -9,11 +9,13 @@
         "width_meters": 0.8
       },
       "protrusions": {
-        "enabled": false,
-        "distance_meters": 0,
-        "side": "none",
-        "default_state": "",
-        "show_on_event_keys": [],
+        "enabled": true,
+        "distance_meters": 0.2,
+        "side": "front",
+        "default_state": "hidden",
+        "show_on_event_keys": [
+          "intake"
+        ],
         "hide_on_event_keys": []
       }
     },

@@ -337,6 +337,7 @@ public class Robot extends LoggedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.RAINBOW);
     if (autos.selectedCommand() != null) {
       if (Robot.isSimulation()) {
@@ -344,6 +345,7 @@ public class Robot extends LoggedRobot {
       }
 
       // CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
+autos.selectedCommand().addRequirements(subsystems.drivebaseSubsystem);
 
       CommandScheduler.getInstance().schedule(autos.selectedCommand());
       Pose2d startingPose = autos.getSelectedAutoStartingPose();
