@@ -75,8 +75,8 @@ public class TurretSubsystem extends SubsystemBase {
   private static final double GEAR_RATIO = 40;
 
   // Soft Limits
-  public static final double TURRET_MAX = RobotType.isAlpha() ? 190 : 300; // degrees
-  public static final double TURRET_MIN = RobotType.isAlpha() ? 0 : -40; // degrees
+  public static final double TURRET_MAX = 300; // degrees
+  public static final double TURRET_MIN = -40; // degrees
 
   private final TurretIOTalonFX io;
   private final TurretIOInputsAutoLogged inputs;
@@ -86,11 +86,6 @@ public class TurretSubsystem extends SubsystemBase {
           .getStructArrayTopic("turretRotation", Pose2d.struct)
           .publish();
 
-  // Status signals
-  private final StatusSignal<Angle> positionSignal;
-  private final StatusSignal<AngularVelocity> velocitySignal;
-  private final StatusSignal<Current> statorCurrentSignal;
-
   public TurretSubsystem(CommandSwerveDrivetrain driveTrain) {
     this.driveTrain = driveTrain;
     turretMotor = new TalonFX(Hardware.TURRET_MOTOR_ID, CompTunerConstants.kCANBus);
@@ -99,11 +94,6 @@ public class TurretSubsystem extends SubsystemBase {
     turretMotor.clearStickyFaults();
     turretRotation.set(new Pose2d[2]);
 
-    positionSignal = turretMotor.getPosition();
-
-    velocitySignal = turretMotor.getVelocity();
-
-    statorCurrentSignal = turretMotor.getStatorCurrent();
     Logger.recordOutput("Zero/zeroedTurret", false);
 
     Logger.recordOutput("Turret/Turret Offset [Deg]", Math.round(manualOffset * 360.0));
@@ -221,16 +211,16 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public double getTurretPosition() {
-    return positionSignal.getValueAsDouble();
+    return inputs.positionRotations;
   }
 
   public boolean atTarget() {
-    return Math.abs(positionSignal.getValueAsDouble() - targetPos)
+    return Math.abs(inputs.positionRotations - targetPos)
         < Units.degreesToRotations(TURRET_DEGREE_TOLERANCE);
   }
 
   public boolean atTarget(double turretTolerance) {
-    return Math.abs(positionSignal.getValueAsDouble() - targetPos)
+    return Math.abs(inputs.positionRotations - targetPos)
         < Units.radiansToRotations(turretTolerance);
   }
 
@@ -238,7 +228,7 @@ public class TurretSubsystem extends SubsystemBase {
    * @return the angular velocity of the turret in rad/s
    */
   public double getOmega() {
-    return Units.rotationsToRadians(velocitySignal.getValueAsDouble());
+    return Units.rotationsToRadians(inputs.velocityRPS);
   }
 
   public Command rotateToTargetWithCalc() {
@@ -302,7 +292,6 @@ public class TurretSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    StatusSignal.refreshAll(positionSignal, velocitySignal, statorCurrentSignal); // Refresh
     io.updateInputs(inputs);
     Logger.processInputs("Turret", inputs);
     Logger.recordOutput("/Turret/Target", targetPos);
@@ -328,7 +317,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public boolean atLimitSwitch() {
-    double velo = velocitySignal.getValueAsDouble();
+    double velo = inputs.velocityRPS;
     return limitSwitch.getVoltage() < HALL_EFFECT_THRESHOLD_VOLTS && velo < -0.01 && velo > -0.5;
   }
 

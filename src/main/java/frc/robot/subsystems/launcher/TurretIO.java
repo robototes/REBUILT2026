@@ -6,10 +6,10 @@ public interface TurretIO {
 
   @AutoLog
   public static class TurretIOInputs {
-    public double positionSignal;
-    public double velocitySignal;
-    public double statorCurrentSignal;
-    public double limitSwitchCurrent;
+    public double positionRotations;
+    public double velocityRPS;
+    public double statorCurrentAmps;
+    public double limitSwitchVolts;
   }
 
   public default void updateInputs(TurretIOInputs inputs) {}
