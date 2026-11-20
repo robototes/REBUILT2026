@@ -130,7 +130,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
-    io = new DrivebaseIOCTRE(getState());
+    io = new DrivebaseIOCTRE(this);
     inputs = new DrivebaseIOInputsAutoLogged();
   }
 
@@ -154,7 +154,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
 
-    io = new DrivebaseIOCTRE(getState());
+    io = new DrivebaseIOCTRE(this);
     inputs = new DrivebaseIOInputsAutoLogged();
   }
 
@@ -189,7 +189,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
 
-    io = new DrivebaseIOCTRE(getState());
+    io = new DrivebaseIOCTRE(this);
     inputs = new DrivebaseIOInputsAutoLogged();
   }
 
