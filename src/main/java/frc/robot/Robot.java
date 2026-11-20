@@ -247,6 +247,7 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotPeriodic() {
+
     // Resume logging every X seconds
     double time = Timer.getFPGATimestamp();
     if (time - LAST_TIME >= 1) {
