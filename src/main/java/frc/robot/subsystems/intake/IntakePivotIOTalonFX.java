@@ -26,7 +26,7 @@ public class IntakePivotIOTalonFX implements PivotIO {
     intakePivotSupplyCurrent = pivotMotor.getSupplyCurrent();
     motorTemp = pivotMotor.getDeviceTemp();
     BaseStatusSignal.setUpdateFrequencyForAll(
-        Frequency.ofBaseUnits(40, Hertz),
+        Frequency.ofBaseUnits(40, Hertz), // Balanced frequency where signals are being reused and refreshed at proper timings.
         intakePivotStatorCurrent,
         intakePivotSupplyCurrent,
         position);
