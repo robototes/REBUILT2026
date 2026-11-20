@@ -18,7 +18,6 @@ import static frc.robot.Subsystems.SubsystemConstants.VISION_ENABLED;
 import frc.robot.generated.CompTunerConstants;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.subsystems.Blocker;
-import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.drivebase.CommandSwerveDrivetrain;
 import frc.robot.subsystems.index.Feeder;
 import frc.robot.subsystems.index.IndexerSubsystem;
@@ -30,6 +29,10 @@ import frc.robot.subsystems.launcher.Flywheels;
 import frc.robot.subsystems.launcher.Hood;
 import frc.robot.subsystems.launcher.LauncherSubsystem;
 import frc.robot.subsystems.launcher.TurretSubsystem;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.subsystems.vision.VisionSubsystem;
+import frc.robot.util.robotType.RobotMode;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 
 public class Subsystems {
@@ -154,7 +157,15 @@ public class Subsystems {
     }
 
     if (VISION_ENABLED && DRIVEBASE_ENABLED) {
-      visionSubsystem = new VisionSubsystem(drivebaseSubsystem);
+      VisionIO[] visionIO =
+          (Robot.currentMode == RobotMode.REPLAY)
+              ? new VisionIO[] {new VisionIO() {}, new VisionIO() {}, new VisionIO() {}}
+              : new VisionIO[] {
+                new VisionIOLimelight(Hardware.LIMELIGHT_A),
+                new VisionIOLimelight(Hardware.LIMELIGHT_B),
+                new VisionIOLimelight(Hardware.LIMELIGHT_C)
+              };
+      visionSubsystem = new VisionSubsystem(drivebaseSubsystem, visionIO);
     } else {
       visionSubsystem = null;
     }
