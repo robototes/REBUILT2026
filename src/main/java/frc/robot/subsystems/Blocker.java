@@ -22,34 +22,34 @@ public class Blocker extends SubsystemBase {
 
   // Positions
   private double targetPos;
-  public static final double DEPLOYED_POS = 0;
+  public static final double DEPLOYED_POS = 0.35;
   public static final double RETRACTED_POS = 0;
-  private static final double degreeTolerance = 5;
+  private static final double degreeTolerance = 3;
 
   // PID variables
-  private static final double kP = 40;
+  private static final double kP = 60;
   private static final double kI = 0;
-  private static final double kD = 1;
-  private static final double kG = 0.4;
-  private static final double kS = 0.2;
-  private static final double kV = 0;
+  private static final double kD = 0;
+  private static final double kG = 0;
+  private static final double kS = 0.3;
+  private static final double kV = 4.5;
   private static final double kA = 0;
 
   // Current limits
-  private static final int STATOR_CURRENT_LIMIT = 60; // amps
-  private static final int SUPPLY_CURRENT_LIMIT = 30; // amps
+  private static final int STATOR_CURRENT_LIMIT = 30; // amps
+  private static final int SUPPLY_CURRENT_LIMIT = 20; // amps
 
   // Motion Magic Config
-  private static final double CRUISE_VELOCITY = 100;
-  private static final double ACCELERATION = 400;
+  private static final double CRUISE_VELOCITY = 2;
+  private static final double ACCELERATION = 6;
   private static final double JERK = 0;
 
   // Gear Ratio
-  private static final double GEAR_RATIO = 35;
+  private static final double GEAR_RATIO = 45;
 
   // Soft Limits
-  public static final double PIVOT_MIN = -0.45; // rotations
-  public static final double PIVOT_MAX = 0.0;
+  public static final double BLOCK_MIN = 0; // rotations
+  public static final double BLOCK_MAX = 0.36;
 
   // Status Signals
   private final StatusSignal<Current> SS_Current;
@@ -76,9 +76,9 @@ public class Blocker extends SubsystemBase {
     config.CurrentLimits.SupplyCurrentLimit = SUPPLY_CURRENT_LIMIT;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = PIVOT_MAX;
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = BLOCK_MAX;
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = PIVOT_MIN;
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = BLOCK_MIN;
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY;
@@ -101,12 +101,24 @@ public class Blocker extends SubsystemBase {
     blockerMotor.setControl(request.withPosition(pos));
   }
 
-  public Command blockerInCommand() {
-    return Commands.runOnce(() -> setPivotPosition(RETRACTED_POS)).withName("Blocker In");
+  public Command deployedCommand() {
+    return Commands.startEnd(
+        () -> {
+          setPivotPosition(DEPLOYED_POS);
+          // anything else that should happen on start
+        },
+        () -> {
+          setPivotPosition(RETRACTED_POS);
+          // anything else that should happen on end
+        });
   }
 
-  public Command blockerOutCommand() {
-    return Commands.runOnce(() -> setPivotPosition(DEPLOYED_POS)).withName("Blocker Out");
+  public Command deploy() {
+    return Commands.runOnce(() -> setPivotPosition(DEPLOYED_POS));
+  }
+
+  public Command retract() {
+    return Commands.runOnce(() -> setPivotPosition(RETRACTED_POS));
   }
 
   public Command zeroBlocker() {
@@ -134,15 +146,13 @@ public class Blocker extends SubsystemBase {
   @Override
   // update simulation
   public void periodic() {
-    StatusSignal.refreshAll(SS_position);
-    StatusSignal.refreshAll(SS_Current);
+    StatusSignal.refreshAll(SS_position, SS_Current);
     Logger.recordOutput("Blocker/blockerCurrent", getBlockerCurrent());
     Logger.recordOutput("Blocker/blockerCurrentPosition", getBlockerPosition());
     Logger.recordOutput("Blocker/blockerTargetPosition", getBlockerTargetPosition());
   }
 
   public boolean isAtTarget(double pose) {
-    return Math.abs(blockerMotor.getPosition().getValueAsDouble() - pose)
-        < Units.degreesToRotations(degreeTolerance);
+    return Math.abs(getBlockerPosition() - pose) < Units.degreesToRotations(degreeTolerance);
   }
 }
