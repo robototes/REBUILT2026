@@ -1,19 +1,17 @@
 package frc.robot.subsystems.drivebase;
 
-import java.util.function.Supplier;
-
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 public class DrivebaseIOCTRE implements DrivebaseIO {
-  private final Supplier<SwerveDriveState> stateSupplier;
+  private SwerveDriveState state;
 
-  public DrivebaseIOCTRE(Supplier<SwerveDriveState> stateSupplier) {
-    this.stateSupplier = stateSupplier;
+  public DrivebaseIOCTRE(SwerveDriveState state) {
+    this.state = state;
   }
 
   @Override
-  public void updateInputs(DrivebaseIOInputs inputs) {
-    SwerveDriveState state = stateSupplier.get();
+  public void updateInputs(DrivebaseIOInputs inputs, SwerveDriveState state) {
+    this.state = state;
     inputs.Pose = state.Pose;
     inputs.Speeds = state.Speeds;
     inputs.RawHeading = state.RawHeading;

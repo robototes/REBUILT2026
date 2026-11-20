@@ -81,8 +81,7 @@ public class AutoDriveRotate {
                   + Math.PI
                   + Math.toRadians(turretOffsetDegrees.getAsDouble()));
       double rotationOutput =
-          pidRotate.calculate(
-              drive.inputs.Pose.getRotation().getRadians(), targetRotate.getRadians());
+          pidRotate.calculate(currentPose.getRotation().getRadians(), targetRotate.getRadians());
       rotationOutput = MathUtil.clamp(rotationOutput, -SPEED_LIMIT, SPEED_LIMIT);
       anglePub.set(targetRotate.getDegrees());
       SwerveRequest request =

@@ -18,10 +18,12 @@ import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -32,7 +34,6 @@ import frc.robot.sim.SimWrapper;
 import frc.robot.subsystems.auto.AutoBuilderConfig;
 import frc.robot.subsystems.auto.AutoLogic;
 import frc.robot.subsystems.auto.AutonomousField;
-import frc.robot.subsystems.drivebase.DrivebaseIO;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.BuildInfo;
 import frc.robot.util.DriveStateNtLogger;
@@ -218,6 +219,25 @@ public class Robot extends LoggedRobot {
     }
   }
 
+  @Override
+  public void robotInit() {
+    try {
+      var iterativeRobotBaseClass = IterativeRobotBase.class;
+      var watchdogField = iterativeRobotBaseClass.getDeclaredField("m_watchdog");
+      watchdogField.setAccessible(true);
+      var watchdog = (Watchdog) watchdogField.get(this);
+      watchdog.setTimeout(67);
+
+      var commandSchedulerClass = CommandScheduler.class;
+      var watchdogFieldCS = commandSchedulerClass.getDeclaredField("m_watchdog");
+      watchdogFieldCS.setAccessible(true);
+      var watchdogCS = (Watchdog) watchdogFieldCS.get(CommandScheduler.getInstance());
+      watchdogCS.setTimeout(67);
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+  }
+
   /**
    * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
    * that you want ran during disabled, autonomous, teleoperated and test.
@@ -227,7 +247,6 @@ public class Robot extends LoggedRobot {
    */
   @Override
   public void robotPeriodic() {
-    
     // Resume logging every X seconds
     double time = Timer.getFPGATimestamp();
     if (time - LAST_TIME >= 1) {
@@ -243,9 +262,6 @@ public class Robot extends LoggedRobot {
       m_simWrapper.robotPeriodic();
     }
 
-    if (subsystems.visionSubsystem != null && subsystems.drivebaseSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
     // var robotState = subsystems.drivebaseSubsystem.getState();
     // LauncherConstants.update(robotState.Pose, subsystems.drivebaseSubsystem);
 
@@ -373,9 +389,6 @@ public class Robot extends LoggedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
 
-    if (subsystems.visionSubsystem != null) {
-      subsystems.visionSubsystem.update();
-    }
     subsystems.ledSubsystem.setMode(LEDSubsystem.LEDMode.DEFAULT);
     HubShiftUtil.initialize();
   }
