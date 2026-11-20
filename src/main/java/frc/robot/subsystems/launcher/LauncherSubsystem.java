@@ -50,6 +50,7 @@ public class LauncherSubsystem extends SubsystemBase {
         .withName("Launcher Aim Command");
   }
 
+  @Override
   public void periodic() {
     this.launchParameters =
         LaunchCalculator.getInstance().getParameters(s.drivebaseSubsystem, s.turretSubsystem);

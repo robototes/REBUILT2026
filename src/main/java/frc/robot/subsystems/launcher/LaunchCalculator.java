@@ -148,7 +148,6 @@ public class LaunchCalculator {
       double targetFlywheels,
       double targetTurretFeedforward,
       double distance,
-      double trueDistance,
       Pose2d turretPose) {}
 
   static {
@@ -323,7 +322,6 @@ public class LaunchCalculator {
                 cachedParams.targetFlywheels,
                 0,
                 cachedParams.distance,
-                cachedParams.trueDistance,
                 cachedParams.turretPose);
       }
       // Update differentiation state on cache hit so deltas stay valid next cycle.
@@ -552,7 +550,6 @@ public class LaunchCalculator {
         targetFlywheels,
         feedforwardAngularVelocity,
         distance,
-        trueDistance,
         turretPose);
   }
 
