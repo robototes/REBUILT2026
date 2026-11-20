@@ -8,14 +8,11 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.util.AllianceUtils;
 import frc.robot.util.GetTargetFromPose;
-import frc.robot.util.robotType.RobotType;
 import org.littletonrobotics.junction.Logger;
 
 public class LauncherConstants {
   private static final Transform2d LAUNCHER_OFFSET =
-      RobotType.isAlpha()
-          ? new Transform2d(new Translation2d(0.2159, -0.1397), Rotation2d.kZero)
-          : new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
+      new Transform2d(new Translation2d(0.2159, 0.1397), Rotation2d.kZero);
 
   private static double minTime = Double.POSITIVE_INFINITY;
   private static double maxTime = Double.NEGATIVE_INFINITY;
@@ -44,13 +41,6 @@ public class LauncherConstants {
     }
   }
 
-  private static final LauncherDistanceDataPoint[] alphaDistanceData = {
-    new LauncherDistanceDataPoint(1.0, 0.1, 55, 0.7),
-    new LauncherDistanceDataPoint(2.0, 0.3, 59, 1.3),
-    new LauncherDistanceDataPoint(3.0, 0.6, 65, 1.6),
-    new LauncherDistanceDataPoint(4.0, 1.2, 71, 1.9),
-  };
-
   private static final LauncherDistanceDataPoint[] compDistanceData = {
     new LauncherDistanceDataPoint(1, 1.5, 35, 1.018),
     new LauncherDistanceDataPoint(1.5, 2.2, 38, 1.138),
@@ -75,9 +65,19 @@ public class LauncherConstants {
     new LauncherDistanceDataPoint(2.319, 2.8, 60, 1)
   };
 
+  // Hood, flywheel, and TOF are all implemented
+  public static final LauncherDistanceDataPoint[] passingDistanceData = {
+    new LauncherDistanceDataPoint(3, 9, 25, 0.8), new LauncherDistanceDataPoint(11, 9, 90, 1.2)
+  };
+
   private static final InterpolatingDoubleTreeMap flywheelMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap timeMap = new InterpolatingDoubleTreeMap();
+
+  private static final InterpolatingDoubleTreeMap passingHoodMap = new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap passingFlywheelMap =
+      new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap passingTimeMap = new InterpolatingDoubleTreeMap();
 
   private static final InterpolatingDoubleTreeMap flywheelMapBalling =
       new InterpolatingDoubleTreeMap();
@@ -85,14 +85,19 @@ public class LauncherConstants {
   private static final InterpolatingDoubleTreeMap timeMapBalling = new InterpolatingDoubleTreeMap();
 
   static {
-    LauncherDistanceDataPoint[] distanceData =
-        RobotType.isAlpha() ? alphaDistanceData : compDistanceData;
+    LauncherDistanceDataPoint[] distanceData = compDistanceData;
     for (var point : distanceData) {
       flywheelMap.put(point.distance, point.flywheelPower);
       hoodMap.put(point.distance, point.hoodAngle);
       timeMap.put(point.distance, point.time);
       maxTime = Math.max(maxTime, point.time);
       minTime = Math.min(minTime, point.time);
+    }
+
+    for (var point : passingDistanceData) {
+      passingHoodMap.put(point.distance, point.hoodAngle);
+      passingFlywheelMap.put(point.distance, point.flywheelPower);
+      passingTimeMap.put(point.distance, point.time);
     }
 
     for (var point : ballingDistanceData) {
@@ -102,35 +107,22 @@ public class LauncherConstants {
     }
   }
 
-  private static InterpolatingDoubleTreeMap activeFlywheelMap() {
-    return GetTargetFromPose.BALLING.get() ? flywheelMapBalling : flywheelMap;
+  private static InterpolatingDoubleTreeMap activeFlywheelMap(boolean passing) {
+    return GetTargetFromPose.BALLING.get()
+        ? flywheelMapBalling
+        : passing ? passingFlywheelMap : flywheelMap;
   }
 
-  private static InterpolatingDoubleTreeMap activeHoodMap() {
-    return GetTargetFromPose.BALLING.get() ? hoodMapBalling : hoodMap;
+  private static InterpolatingDoubleTreeMap activeHoodMap(boolean passing) {
+    return GetTargetFromPose.BALLING.get() ? hoodMapBalling : passing ? passingHoodMap : hoodMap;
   }
 
-  private static InterpolatingDoubleTreeMap activeTimeMap() {
-    return GetTargetFromPose.BALLING.get() ? timeMapBalling : timeMap;
+  private static InterpolatingDoubleTreeMap activeTimeMap(boolean passing) {
+    return GetTargetFromPose.BALLING.get() ? timeMapBalling : passing ? passingTimeMap : timeMap;
   }
 
-  // public static void update(Pose2d robot, CommandSwerveDrivetrain driveTrain) {
-  //   Pose2d turret = LaunchCalculator.estimatedPose;
-  //   double turret_to_hub_dist = LaunchCalculator.estimatedDist;
-  //   LaunchingParameters params = LaunchCalculator.getInstance().getParameters(driveTrain);
-  //   double turretAngle = params.turretAngle().getRadians();
-  //   Pose2d updatedTarget =
-  //       new Pose2d(
-  //           new Translation2d(
-  //               turret_to_hub_dist * Math.cos(turretAngle),
-  //               turret_to_hub_dist * Math.sin(turretAngle)),
-  //           Rotation2d.kZero);
-  //   var array = new Pose2d[] {turret, updatedTarget};
-  //   turretToTarget.set(array, 0);
-  // }
-
-  public static double getFlywheelSpeedFromDistance(double distance) {
-    return activeFlywheelMap().get(distance);
+  public static double getFlywheelSpeedFromDistance(double distance, boolean passing) {
+    return activeFlywheelMap(passing).get(distance);
   }
 
   public static Translation2d launcherFromRobot(Pose2d robot) {
@@ -149,7 +141,9 @@ public class LauncherConstants {
 
   public static double getFlywheelSpeedFromPose2d(Translation2d target, Pose2d robot) {
     double distance = launcherFromRobot(robot).getDistance(target);
-    return getFlywheelSpeedFromDistance(distance);
+    // Passing is assumed to be false. This whole function is not called anywhere when passing was
+    // implemented.
+    return getFlywheelSpeedFromDistance(distance, false);
   }
 
   public static Transform2d turretTransform() {
@@ -163,17 +157,17 @@ public class LauncherConstants {
     return distToHub;
   }
 
-  public static double getHoodAngleFromDistance(double distance) {
-    return activeHoodMap().get(distance /*+ distanceOffset*/);
+  public static double getHoodAngleFromDistance(double distance, boolean passing) {
+    return activeHoodMap(passing).get(distance /*+ distanceOffset*/);
   }
 
-  public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot) {
+  public static double getHoodAngleFromPose2d(Translation2d target, Pose2d robot, boolean passing) {
     double distance = launcherFromRobot(robot).getDistance(target);
-    return getHoodAngleFromDistance(distance);
+    return getHoodAngleFromDistance(distance, passing);
   }
 
-  public static double getTimeFromDistance(double distance) {
-    return activeTimeMap().get(distance /*+ distanceOffset*/);
+  public static double getTimeFromDistance(double distance, boolean passing) {
+    return activeTimeMap(passing).get(distance /*+ distanceOffset*/);
   }
 
   public static double minTimeOfFlight() {
@@ -214,10 +208,14 @@ public class LauncherConstants {
   }
 
   public static Translation2d iterativeMovingShotFromFunnelClearance(
-      Pose2d robot, ChassisSpeeds fieldSpeeds, Translation2d target, int iterations) {
+      Pose2d robot,
+      ChassisSpeeds fieldSpeeds,
+      Translation2d target,
+      int iterations,
+      boolean passing) {
     // Perform initial estimation (assuming unmoving robot) to get time of flight estimate
     double distance = launcherFromRobot(robot).getDistance(target);
-    double timeOfFlight = getTimeFromDistance(distance);
+    double timeOfFlight = getTimeFromDistance(distance, passing);
     Translation2d predictedTarget = target;
 
     // Iterate the process, getting better time of flight estimations and updating the predicted
@@ -225,7 +223,7 @@ public class LauncherConstants {
     for (int i = 0; i < iterations; i++) {
       predictedTarget = predictTargetPos(target, fieldSpeeds, timeOfFlight, robot);
       distance = launcherFromRobot(robot).getDistance(predictedTarget);
-      timeOfFlight = getTimeFromDistance(distance);
+      timeOfFlight = getTimeFromDistance(distance, passing);
     }
 
     return predictedTarget;

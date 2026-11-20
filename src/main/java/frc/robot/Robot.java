@@ -71,7 +71,7 @@ public class Robot extends LoggedRobot {
   private final RobotSim robotSim;
   private final LoggedMechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
-  private static final double BROWNOUT_VOLTAGE = 7.0;
+  private static final double BROWNOUT_VOLTAGE = 5.5;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
   private final DriveStateSignalLogger logger;
@@ -251,7 +251,7 @@ public class Robot extends LoggedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
-    if (autoSmartDashboardTimer.advanceIfElapsed(UPDATE_RATE)) {
+    if (autoSmartDashboardUpdate != null && autoSmartDashboardTimer.advanceIfElapsed(UPDATE_RATE)) {
       autoSmartDashboardUpdate.run();
     }
     CommandScheduler.getInstance().run();
@@ -418,8 +418,9 @@ public class Robot extends LoggedRobot {
 
   private void setupLimelightForAprilTags(String limelightName, boolean isEnteringDisabled) {
     if (isEnteringDisabled) {
-      LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
+
       // seed internal limelight imu for mt2
+      LimelightHelpers.SetIMUAssistAlpha(limelightName, LL_IMU_CORRECTION_RATE);
       LimelightHelpers.SetIMUMode(limelightName, 0);
       LimelightHelpers.setPipelineIndex(limelightName, APRILTAG_PIPELINE);
 
