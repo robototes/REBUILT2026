@@ -130,7 +130,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
-    io = new DrivebaseIOCTRE(getState());
+    io = new DrivebaseIOCTRE(this);
     inputs = new DrivebaseIOInputsAutoLogged();
   }
 
@@ -154,7 +154,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
 
-    io = new DrivebaseIOCTRE(getState());
+    io = new DrivebaseIOCTRE(this);
     inputs = new DrivebaseIOInputsAutoLogged();
   }
 
@@ -189,7 +189,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
 
-    io = new DrivebaseIOCTRE(getState());
+    io = new DrivebaseIOCTRE(this);
     inputs = new DrivebaseIOInputsAutoLogged();
   }
 
@@ -234,8 +234,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Otherwise, only check and apply the operator perspective if the DS is disabled.
      * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
      */
-    io.updateInputs(inputs, getState());
-    Logger.processInputs("Drivebase", inputs);
 
     if (RobotBase.isSimulation()
         || !m_hasAppliedOperatorPerspective
@@ -250,6 +248,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               });
     }
     clampPoseToField();
+
+    io.updateInputs(inputs, getState());
+    Logger.processInputs("Drivebase", inputs);
   }
 
   private void startSimThread() {
@@ -332,5 +333,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     double pitch = Math.abs(getPigeon2().getPitch().getValueAsDouble());
     double roll = Math.abs(getPigeon2().getRoll().getValueAsDouble());
     return pitch > pitchThreshold || roll > pitchThreshold;
+  }
+
+  @Override
+  public void resetPose(Pose2d pose) {
+    io.updateInputs(inputs, getState());
+    Logger.processInputs("Drivebase", inputs);
+  }
+
+  @Override
+  public void resetTranslation(Translation2d pose) {
+    io.updateInputs(inputs, getState());
+    Logger.processInputs("Drivebase", inputs);
   }
 }

@@ -159,7 +159,8 @@ public class VisionSubsystem extends SubsystemBase {
     Logger.recordOutput("vision/limelight-c_time since last reading", 0.0);
   }
 
-  public void update() {
+  @Override
+  public void periodic() {
     if (getDisableVision()) {
       Logger.recordOutput("/vision/limelight-a_rejectReason", "vision-disabled");
       Logger.recordOutput("/vision/limelight-b_rejectReason", "vision-disabled");
