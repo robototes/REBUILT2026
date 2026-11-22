@@ -1,11 +1,14 @@
 package frc.robot.subsystems.auto.BLine;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.PointWheelsAt;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -22,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class Autos {
@@ -30,7 +35,10 @@ public class Autos {
 
   private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
   private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 0.0);
+    private final LoggedNetworkBoolean autoMirror = new LoggedNetworkBoolean("Mirrored Auto", false);
   private FollowPath.Builder pathBuilder;
+    private FollowPath.Builder noResetPathBuilder;
+  private SwerveRequest.PointWheelsAt pointWheelsAt = new PointWheelsAt();
   private final NetworkTableEntry autoDelayEntry =
       NetworkTableInstance.getDefault().getTable("Autos").getEntry("Auto Delay");
 
@@ -51,28 +59,24 @@ public class Autos {
 
   // ============= CONFIGURATION =============
 
-  public void configure(Subsystems s) {
+  private FollowPath.Builder createPathBuilder(Subsystems s, FollowPath.Builder builder) {
 
-    systems = s;
-    autoDelayEntry.setDefaultDouble(0.0);
-    initializePaths();
+    builder = new FollowPath.Builder(
+            s.drivebaseSubsystem,
+            () -> s.drivebaseSubsystem.getState().Pose,
+            () -> s.drivebaseSubsystem.getState().Speeds,
+            (speeds) ->
+                s.drivebaseSubsystem.setControl(
+                    new SwerveRequest.ApplyRobotSpeeds()
+                        .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
+            new PIDController(3.0, 0.0, 0.0),
+            new PIDController(5.0, 0.0, 0.0),
+            new PIDController(2.0, 0.0, 0.0))
+        .withDefaultShouldFlip().withShouldMirror(() -> autoMirror.get());
+          registerAutos();
+          return builder;
 
-    pathBuilder =
-        new FollowPath.Builder(
-                s.drivebaseSubsystem,
-                () -> s.drivebaseSubsystem.getState().Pose,
-                () -> s.drivebaseSubsystem.getState().Speeds,
-                speeds ->
-                    s.drivebaseSubsystem.setControl(
-                        new SwerveRequest.ApplyRobotSpeeds()
-                            .withSpeeds(ChassisSpeeds.discretize(speeds, 0.020))),
-                new PIDController(3.0, 0.0, 0.0),
-                new PIDController(5.0, 0.0, 0.0),
-                new PIDController(2.0, 0.0, 0.0))
-            .withDefaultShouldFlip()
-            .withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
 
-    registerAutos();
   }
 
   public void init(Subsystems s) {
@@ -82,6 +86,10 @@ public class Autos {
     initializePaths();
     FollowPath.registerEventTrigger("intake", AutosCommands.intakeCommand());
     FollowPath.registerEventTrigger("shoot", AutosCommands.launcherCommand(5, s));
+  }
+  public void configure(Subsystems s) {
+    pathBuilder = createPathBuilder(s, pathBuilder).withPoseReset(pose -> s.drivebaseSubsystem.resetPose(pose));
+  noResetPathBuilder = createPathBuilder(s, noResetPathBuilder).withPoseReset(pose -> {});
   }
 
   public void unitTestInit() {
@@ -179,7 +187,7 @@ public class Autos {
                         Commands.waitSeconds(getDelay()),
                         pathBuilder.build(Path1),
                         AutosCommands.launcherCommand(5, systems),
-                        pathBuilder.withPoseReset(pose -> {}).build(Path2),
+                        noResetPathBuilder.build(Path2),
                         AutosCommands.launcherCommand(systems))));
 
     autosRegistered = true;
@@ -224,18 +232,29 @@ public class Autos {
     return group;
   }
 
-  private Command auto(Consumer<SequentialCommandGroup> builder) {
+ private Command auto(Consumer<SequentialCommandGroup> builder) {
 
     SequentialCommandGroup group = new SequentialCommandGroup();
+
+    if (RobotState.isDisabled()) {
     group.addCommands(
-        Commands.runOnce(
-            () ->
-                systems.drivebaseSubsystem.resetRotation(
-                    getSelectedPath().getInitialModuleDirection())));
+        Commands.runOnce(() ->
+            pointWheelsAt.withModuleDirection(getSelectedPath().getInitialModuleDirection()))
+
+    );
+}
+
     builder.accept(group);
 
     return group;
-  }
+}
+private Command buildPath(Path path, boolean resetPose) {
+    if (systems == null || pathBuilder == null || noResetPathBuilder == null) {
+        return Commands.none();
+    }
+
+    return (resetPose ? pathBuilder : noResetPathBuilder).build(path);
+}
 
   public double getDelay() {
     double delay = autoDelayEntry.getDouble(0.0);
