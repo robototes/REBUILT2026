@@ -161,34 +161,31 @@ public class Autos {
     autoChooser.addCmd(
         "Default Auto",
         () ->
-            auto(
-                c ->
-                    c.addCommands(
+           Commands.sequence(
                         Commands.waitSeconds(getDelay()),
-                        pathBuilder.build(Path3),
-                        AutosCommands.launcherCommand(systems))));
+                        buildPath(Path3,true),
+                        AutosCommands.launcherCommand(systems)));
 
     autoChooser.addCmd(
         "SingleNeutralTrench",
         () ->
-            auto(
-                c ->
-                    c.addCommands(
+            Commands.sequence(
+
+
                         Commands.waitSeconds(getDelay()),
-                        pathBuilder.build(Path1),
-                        AutosCommands.launcherCommand(systems))));
+                        buildPath(Path1,true),
+                        AutosCommands.launcherCommand(systems)));
 
     autoChooser.addCmd(
         "DoubleNeutralTrench",
         () ->
-            auto(
-                c ->
-                    c.addCommands(
+            Commands.sequence(
+
                         Commands.waitSeconds(getDelay()),
-                        pathBuilder.build(Path1),
+                        buildPath(Path1,true),
                         AutosCommands.launcherCommand(5, systems),
-                        noResetPathBuilder.build(Path2),
-                        AutosCommands.launcherCommand(systems))));
+                        buildPath(Path2,false),
+                        AutosCommands.launcherCommand(systems)));
 
     autosRegistered = true;
   }
@@ -201,7 +198,7 @@ public class Autos {
 
   public Pose2d getSelectedAutoStartingPose() {
 
-    return getPath(0).getStartPose();
+    return getSelectedPath().getStartPose();
   }
 
   public Autos get() {
@@ -215,39 +212,9 @@ public class Autos {
 
   // ============= AUTO BUILDER HELPERS =============s
 
-  private Command auto(Pose2d startPose, Consumer<Command> builder) {
 
-    SequentialCommandGroup group = new SequentialCommandGroup();
 
-    // group.addCommands(
-    // Commands.runOnce(
-    //    () -> systems.drivebaseSubsystem.resetPose(startPose), systems.drivebaseSubsystem));
 
-    builder.accept(
-        Commands.runOnce(
-            () ->
-                systems.drivebaseSubsystem.resetRotation(
-                    getSelectedPath().getInitialModuleDirection())));
-
-    return group;
-  }
-
- private Command auto(Consumer<SequentialCommandGroup> builder) {
-
-    SequentialCommandGroup group = new SequentialCommandGroup();
-
-    if (RobotState.isDisabled()) {
-    group.addCommands(
-        Commands.runOnce(() ->
-            pointWheelsAt.withModuleDirection(getSelectedPath().getInitialModuleDirection()))
-
-    );
-}
-
-    builder.accept(group);
-
-    return group;
-}
 private Command buildPath(Path path, boolean resetPose) {
     if (systems == null || pathBuilder == null || noResetPathBuilder == null) {
         return Commands.none();
