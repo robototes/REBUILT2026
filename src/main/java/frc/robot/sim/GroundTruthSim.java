@@ -136,10 +136,10 @@ public class GroundTruthSim implements GroundTruthSimInterface {
   }
 
   /**
-   * Resets both poses to a PathPlanner auto starting pose, optionally flipping based on alliance.
-   * PathPlanner paths are designed for blue alliance origin.
+   * Resets both poses to a blue-origin auto starting pose, optionally flipping based on alliance.
+   * The caller applies B-line mirroring before passing the pose to this method.
    *
-   * @param blueAlliancePose The pose as defined in PathPlanner (blue alliance origin)
+   * @param blueAlliancePose The selected auto pose in blue alliance coordinates
    * @param useCorrectTeamSide If true, places robot on correct alliance side (flips for red). If
    *     false, places robot on the wrong side of the field.
    */

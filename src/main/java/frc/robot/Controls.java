@@ -22,7 +22,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.CompTunerConstants;
-import frc.robot.lib.BLine.Path;
 import frc.robot.sensors.LEDSubsystem;
 import frc.robot.sensors.LEDSubsystem.LEDMode;
 import frc.robot.sim.SimWrapper;
@@ -221,15 +220,7 @@ public class Controls {
           "Sim/Reset to Start Pose",
           s.drivebaseSubsystem
               .runOnce(
-                  () -> {
-                    Path resetPath = Robot.autos.getSelectedPath().copy();
-
-                    if (Robot.autos.isMirrored()) {
-                      resetPath.mirror();
-                    }
-
-                    m_simWrapper.cycleResetPosition(resetPath.getStartPose());
-                  })
+                  () -> m_simWrapper.cycleResetPosition(Robot.autos.getSelectedAutoStartingPose()))
               .ignoringDisable(true)
               .withName("Reset to Start Pose"));
 

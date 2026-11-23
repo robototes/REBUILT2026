@@ -7,6 +7,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -191,9 +193,35 @@ public class Autos {
     return autoChooser.selectedCommand();
   }
 
+  /*
+   * Return the selected start in blue field coordinates with the mirror setting applied.
+   * GroundTruthSim applies the alliance flip when cycling reset positions.
+   */
   public Pose2d getSelectedAutoStartingPose() {
+    return getSelectedAutoStartingPose(false);
+  }
 
-    return getSelectedPath().getStartPose();
+  /*
+   * Match B-line's flip-then-mirror order for the actual autonomous start.
+   * Use this pose before the path command performs its own pose reset.
+   */
+  public Pose2d getSelectedAutoStartingPoseForAlliance() {
+    return getSelectedAutoStartingPose(true);
+  }
+
+  /*
+   * Apply B-line's flip-then-mirror transforms to a copy of the path.
+   * Leave the selected source path unchanged for future runs.
+   */
+  private Pose2d getSelectedAutoStartingPose(boolean flipForAlliance) {
+    Path startPath = getSelectedPath().copy();
+    if (flipForAlliance && DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+      startPath.flip();
+    }
+    if (isMirrored()) {
+      startPath.mirror();
+    }
+    return startPath.getStartPose();
   }
 
   public Autos get() {

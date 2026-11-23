@@ -344,9 +344,13 @@ public class Robot extends LoggedRobot {
       }
 
       // CommandScheduler.getInstance().schedule(AutoLogic.getSelectedAuto());
-      subsystems.drivebaseSubsystem.resetPose(autos.getSelectedAutoStartingPose());
+      /*
+       * Initialize odometry and camera yaw at the transformed B-line start.
+       * The path command applies the same transforms when it begins after the delay.
+       */
+      Pose2d startingPose = autos.getSelectedAutoStartingPoseForAlliance();
+      subsystems.drivebaseSubsystem.resetPose(startingPose);
       CommandScheduler.getInstance().schedule(autos.selectedCommand());
-      Pose2d startingPose = autos.getSelectedAutoStartingPose();
       double initialYaw = startingPose != null ? startingPose.getRotation().getDegrees() : 0.0;
       if (subsystems.visionSubsystem != null) {
         if (subsystems.visionSubsystem.limelightaOnline) {
