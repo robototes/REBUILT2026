@@ -46,6 +46,7 @@ import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -67,6 +68,8 @@ public class Robot extends LoggedRobot {
   private final RobotSim robotSim;
   private final LoggedMechanism2d mechanismRobot;
   private final SimWrapper m_simWrapper;
+  private final LoggedNetworkBoolean autoModeResetsGroundTruth =
+      new LoggedNetworkBoolean("Auto-mode resets Ground Truth", true);
   private static final double BROWNOUT_VOLTAGE = 7.0;
   private static final double DATA_LOG_FLUSH_PERIOD_S = 1.0 / 14.0; // 14 Hz flush
   private final DriveStateNtLogger driveBaseSim;
@@ -350,6 +353,9 @@ public class Robot extends LoggedRobot {
        */
       Pose2d startingPose = autos.getSelectedAutoStartingPoseForAlliance();
       subsystems.drivebaseSubsystem.resetPose(startingPose);
+      if (m_simWrapper != null && autoModeResetsGroundTruth.get()) {
+        m_simWrapper.resetSimPose(startingPose);
+      }
       CommandScheduler.getInstance().schedule(autos.selectedCommand());
       double initialYaw = startingPose != null ? startingPose.getRotation().getDegrees() : 0.0;
       if (subsystems.visionSubsystem != null) {
