@@ -10,12 +10,15 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.SwerveDriveBrake;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -215,6 +218,24 @@ public class Controls {
 
     // $VISIONSIM - Bumper buttons
     if (Robot.isSimulation()) {
+      SmartDashboard.putData(
+          "Sim/Reset to Start Pose",
+          s.drivebaseSubsystem
+              .runOnce(
+                  () -> m_simWrapper.cycleResetPosition(Robot.autos.getSelectedAutoStartingPose()))
+              .ignoringDisable(true)
+              .withName("Reset to Start Pose"));
+
+      SmartDashboard.putData(
+          "Sim/Nudge Ground Truth Pose",
+          Commands.runOnce(
+                  () ->
+                      m_simWrapper.nudgeSimPose(
+                          new Transform2d(
+                              Units.feetToMeters(1.0), 0.0, Rotation2d.fromDegrees(20.0))))
+              .ignoringDisable(true)
+              .withName("Nudge Ground Truth Pose"));
+
       // In simulation, inject drift with POV-right to test vision correction
       visionTestController
           .povRight()
@@ -228,7 +249,10 @@ public class Controls {
           .povLeft()
           .onTrue(
               s.drivebaseSubsystem
-                  .runOnce(() -> m_simWrapper.cycleResetPosition(Pose2d.kZero))
+                  .runOnce(
+                      () ->
+                          m_simWrapper.cycleResetPosition(
+                              Robot.autos.getSelectedAutoStartingPose()))
                   .withName("Reset to Start Pose"));
     }
 

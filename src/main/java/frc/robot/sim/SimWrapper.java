@@ -4,6 +4,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -119,6 +120,16 @@ public class SimWrapper {
   public void resetSimPose(Pose2d pose) {
     m_groundTruthSim.resetGroundTruthPoseForSim(pose);
     m_sharedVisionSystemSim.resetRobotPose(pose);
+  }
+
+  /**
+   * Moves ground truth and simulated vision relative to the current ground truth pose, leaving the
+   * pose estimator unchanged.
+   *
+   * @param offset Translation in the robot's current frame and change in heading
+   */
+  public void nudgeSimPose(Transform2d offset) {
+    resetSimPose(m_groundTruthSim.getGroundTruthPose().transformBy(offset));
   }
 
   /** Proxy call to ground truth sim to inject odometry drift. */

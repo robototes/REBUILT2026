@@ -160,6 +160,34 @@
               "trajectory_color": 4294967295,
               "show_robot_outside_widget": true
             }
+          },
+          {
+            "title": "Cycle robot pose",
+            "x": 1024.0,
+            "y": 256.0,
+            "width": 384.0,
+            "height": 128.0,
+            "type": "Command",
+            "properties": {
+              "topic": "/SmartDashboard/Sim/Reset to Start Pose",
+              "period": 0.06,
+              "show_type": true,
+              "maximize_button_space": false
+            }
+          },
+          {
+            "title": "Nudge Ground Truth Pose",
+            "x": 1408.0,
+            "y": 256.0,
+            "width": 384.0,
+            "height": 128.0,
+            "type": "Command",
+            "properties": {
+              "topic": "/SmartDashboard/Sim/Nudge Ground Truth Pose",
+              "period": 0.06,
+              "show_type": true,
+              "maximize_button_space": false
+            }
           }
         ]
       }
