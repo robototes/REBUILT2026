@@ -165,7 +165,7 @@
             "title": "Cycle robot pose",
             "x": 1024.0,
             "y": 256.0,
-            "width": 384.0,
+            "width": 256.0,
             "height": 128.0,
             "type": "Command",
             "properties": {
@@ -177,9 +177,9 @@
           },
           {
             "title": "Nudge Ground Truth Pose",
-            "x": 1408.0,
+            "x": 1280.0,
             "y": 256.0,
-            "width": 384.0,
+            "width": 256.0,
             "height": 128.0,
             "type": "Command",
             "properties": {
@@ -187,6 +187,19 @@
               "period": 0.06,
               "show_type": true,
               "maximize_button_space": false
+            }
+          },
+          {
+            "title": "Disable Vision",
+            "x": 1536.0,
+            "y": 256.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "disableVision",
+              "period": 0.06,
+              "data_type": "boolean"
             }
           }
         ]
