@@ -32,7 +32,7 @@ public class Autos {
 
   private final LoggedAutoChooser autoChooser = new LoggedAutoChooser("Auto Chooser");
   private final LoggedNetworkNumber autoDelay = new LoggedNetworkNumber("Auto Delay", 0.0);
-  private final LoggedNetworkBoolean autoMirror = new LoggedNetworkBoolean("Mirrored Auto", false);
+  private final LoggedNetworkBoolean autoMirror = new LoggedNetworkBoolean("Mirrored Auto(Left Auto)", false);
   private FollowPath.Builder pathBuilder;
   private FollowPath.Builder noResetPathBuilder;
   private SwerveRequest.PointWheelsAt pointWheelsAt = new PointWheelsAt();
