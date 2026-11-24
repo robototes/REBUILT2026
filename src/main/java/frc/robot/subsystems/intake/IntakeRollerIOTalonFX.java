@@ -52,7 +52,6 @@ public class IntakeRollerIOTalonFX implements IntakeIO {
     BaseStatusSignal.setUpdateFrequencyForAll(50, rightSignals);
     BaseStatusSignal.setUpdateFrequencyForAll(4, rollerLeftTemp, rollerRightTemp);
 
-
     leftRoller.optimizeBusUtilization();
     rightRoller.optimizeBusUtilization();
 
