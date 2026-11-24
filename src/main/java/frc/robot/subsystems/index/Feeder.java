@@ -108,6 +108,6 @@ public class Feeder extends SubsystemBase {
   @Override
   public void periodic() {
     io.updateInputs(inputs);
-    Logger.processInputs("Feeder/Feeder", inputs);
+    Logger.processInputs("Feeder", inputs);
   }
 }
