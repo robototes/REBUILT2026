@@ -1,50 +1,47 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Hertz;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Temperature;
+import frc.robot.util.StatusSignalRefresher;
 
 public class IntakePivotIOTalonFX implements PivotIO {
-  private TalonFX pivotMotor;
+  private final TalonFX pivotMotor;
   private final StatusSignal<Current> intakePivotStatorCurrent;
   private final StatusSignal<Current> intakePivotSupplyCurrent;
   private final StatusSignal<Angle> position;
   private final StatusSignal<Temperature> motorTemp;
 
-  private final BaseStatusSignal[] signals;
+  private final BaseStatusSignal[] fastSignals;
 
-  public IntakePivotIOTalonFX(TalonFX pivotMotors) {
-    pivotMotor = pivotMotors;
+  public IntakePivotIOTalonFX(TalonFX pivotMotor) {
+    this.pivotMotor = pivotMotor;
     intakePivotStatorCurrent = pivotMotor.getStatorCurrent();
-    position = pivotMotor.getPosition();
     intakePivotSupplyCurrent = pivotMotor.getSupplyCurrent();
+    position = pivotMotor.getPosition();
     motorTemp = pivotMotor.getDeviceTemp();
+
     BaseStatusSignal.setUpdateFrequencyForAll(
-        Frequency.ofBaseUnits(
-            40, Hertz), // Balanced frequency where signals are being reused and refreshed at proper
-        // timings.
-        intakePivotStatorCurrent,
-        intakePivotSupplyCurrent,
-        position);
-    BaseStatusSignal.setUpdateFrequencyForAll(Frequency.ofBaseUnits(4, Hertz), motorTemp);
+        50, position, intakePivotStatorCurrent, intakePivotSupplyCurrent);
+    BaseStatusSignal.setUpdateFrequencyForAll(4, motorTemp);
+
     pivotMotor.optimizeBusUtilization();
-    signals =
-        new BaseStatusSignal[] {
-          position, intakePivotStatorCurrent, intakePivotSupplyCurrent, motorTemp
-        };
+
+    fastSignals =
+        new BaseStatusSignal[] {position, intakePivotStatorCurrent, intakePivotSupplyCurrent};
+
+    var refresher = StatusSignalRefresher.getInstance();
+    refresher.addStatusSignals(fastSignals);
+    refresher.addStatusSignals(12, motorTemp); // every 12 loops ~ 4 Hz
   }
 
   @Override
   public void updateInputs(PivotIOInputs inputs) {
-    StatusSignal.refreshAll(signals);
     inputs.currentPos = position.getValueAsDouble();
-    inputs.isConnected = BaseStatusSignal.isAllGood(signals);
+    inputs.isConnected = BaseStatusSignal.isAllGood(fastSignals);
     inputs.motorTemp = motorTemp.getValueAsDouble();
     inputs.statorCurrentPivot = intakePivotStatorCurrent.getValueAsDouble();
     inputs.supplyCurrentPivot = intakePivotSupplyCurrent.getValueAsDouble();
