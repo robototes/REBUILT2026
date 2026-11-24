@@ -41,6 +41,7 @@ import frc.robot.util.DriveStateSignalLogger;
 import frc.robot.util.GCMonitor;
 import frc.robot.util.HubShiftUtil;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.StatusSignalRefresher;
 import frc.robot.util.robotType.RobotMode;
 import frc.robot.util.simulation.RobotSim;
 import frc.robot.util.tuning.LauncherConstants;
@@ -135,6 +136,7 @@ public class Robot extends LoggedRobot {
     mechanismRobot = new LoggedMechanism2d(Units.inchesToMeters(30), Units.inchesToMeters(24));
     Logger.recordOutput("Mechanism2d", mechanismRobot);
     subsystems = new Subsystems(mechanismRobot);
+    StatusSignalRefresher.getInstance().finalizeStatusSignals();
 
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation()) {
@@ -254,6 +256,7 @@ public class Robot extends LoggedRobot {
       LAST_TIME = time;
       DataLogManager.getLog().resume();
     }
+    StatusSignalRefresher.getInstance().refreshStatusSignals();
 
     // $VISIONSIM - Wrapper for sim features
     if (Robot.isSimulation() && m_simWrapper != null) {
