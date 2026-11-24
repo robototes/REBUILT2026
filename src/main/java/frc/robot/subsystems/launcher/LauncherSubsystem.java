@@ -2,7 +2,6 @@ package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -45,12 +44,8 @@ public class LauncherSubsystem extends SubsystemBase {
   public Command launcherAimCommand() {
     return Commands.run(
             () -> {
-              LaunchingParameters para =
-                  LaunchCalculator.getInstance()
-                      .getParameters(s.drivebaseSubsystem, s.turretSubsystem);
-              this.launchParameters = para;
-              hoodGoal = para.targetHood();
-              flywheelsGoal = para.targetFlywheels() + flywheelOffset;
+              hoodGoal = launchParameters.targetHood();
+              flywheelsGoal = launchParameters.targetFlywheels() + flywheelOffset;
 
               Logger.recordOutput("AutoAim/hoodGoal", hoodGoal);
               Logger.recordOutput("AutoAim/flywheelGoal", flywheelsGoal);
@@ -72,15 +67,20 @@ public class LauncherSubsystem extends SubsystemBase {
         .withName("Changed Flywheel Offset");
   }
 
+  @Override
+  public void periodic() {
+    this.launchParameters =
+        LaunchCalculator.getInstance().getParameters(s.drivebaseSubsystem, s.turretSubsystem);
+  }
+
   // TODO: add tolerance range calculation
   public boolean isAtTarget() {
     if (launchParameters == null) {
       return false;
     }
     SwerveDriveState driveState = s.drivebaseSubsystem.getState();
-    Pose2d turretPose = driveState.Pose.transformBy(LauncherConstants.turretTransform());
     double flywheelTolerance = s.flywheels.FLYWHEEL_TOLERANCE;
-    boolean passing = GetTargetFromPose.isPassing(turretPose);
+    boolean passing = GetTargetFromPose.isPassing(launchParameters.turretPose());
 
     if (passing) {
       flywheelTolerance = 30;
