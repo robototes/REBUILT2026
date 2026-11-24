@@ -28,7 +28,7 @@ public class Spindexer extends SubsystemBase {
   private final TalonFX spindexerMotor;
 
   private final double D_TARGET_RPS = 70;
-  private final double D_TARGET_ACCEL = 1000; // Rotations /s /s
+  private final double D_TARGET_ACCEL = 1000; //rotations
   private final LoggedNetworkBoolean TUNABLE_ENABLE =
       new LoggedNetworkBoolean("Tuning/TuneSpindexer", false);
   private final LoggedNetworkNumber TARGET_ACCEL =
@@ -36,21 +36,24 @@ public class Spindexer extends SubsystemBase {
   private final LoggedNetworkNumber TARGET_RPS =
       new LoggedNetworkNumber("Tuning/SpindexerSubsystem/TargetVelocityRPS", D_TARGET_RPS);
   private final VelocityTorqueCurrentFOC velocityRequest =
-      new VelocityTorqueCurrentFOC(D_TARGET_RPS); // Rotations/s
+      new VelocityTorqueCurrentFOC(D_TARGET_RPS); //rotations
 
   private final FlywheelSim motorSim;
 
+  private final SpindexerIO io;
+  private final SpindexerIO.SpindexerIOInputs inputs;
+
   // Logs
-  private final StatusSignal<AngularVelocity> spindexerRPS;
   private final DoubleLogEntry statorCurrentLog;
   private final DoubleLogEntry supplyCurrentLog;
-  private final StatusSignal<Current> statorCurrent;
-  private final StatusSignal<Current> supplyCurrent;
+  private final DoubleLogEntry velocityLog;
 
   public Spindexer() {
     spindexerMotor = new TalonFX(Hardware.SPINDEXER_MOTOR_ID);
     spindexerConfig();
     spindexerMotor.clearStickyFaults();
+    io = new SpindexerIOTalonFX(spindexerMotor);
+    inputs = new SpindexerIO.SpindexerIOInputs();
 
     if (RobotBase.isSimulation()) {
       LinearSystem spindexerMotorSystem =
@@ -64,25 +67,20 @@ public class Spindexer extends SubsystemBase {
 
     // Instiate log variables
     DataLog log = DataLogManager.getLog();
-    statorCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/statorCurrent");
-    supplyCurrentLog = new DoubleLogEntry(log, "/SpindexerLogs/supplyCurrent");
-    statorCurrent = spindexerMotor.getStatorCurrent();
-    supplyCurrent = spindexerMotor.getSupplyCurrent();
-    spindexerRPS = spindexerMotor.getVelocity();
   }
 
   public void spindexerConfig() {
-    // DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
+    //DigitalInput m_sensor = new DigitalInput(HardwareConstants.digitalInputChannel);
 
     TalonFXConfigurator cfg = spindexerMotor.getConfigurator();
     TalonFXConfiguration talonFXConfiguration = new TalonFXConfiguration();
 
-    // Inverting motor output direction
-    talonFXConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-    // Setting the motor to brake when not moving
-    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    talonFXConfiguration.MotorOutput.Inverted =
+        (RobotType.isAlpha())
+            ? InvertedValue.Clockwise_Positive
+            : InvertedValue.CounterClockwise_Positive;
+    talonFXConfiguration.MotorOutput.NeutralMode = NeutralModeValue.Coast; //break when not moving
 
-    // enabling current limits
     talonFXConfiguration.CurrentLimits.StatorCurrentLimit = 50;
     talonFXConfiguration.CurrentLimits.StatorCurrentLimitEnable = true;
     talonFXConfiguration.CurrentLimits.SupplyCurrentLimit = 30;
@@ -126,11 +124,14 @@ public class Spindexer extends SubsystemBase {
   @Override
   public void periodic() {
     StatusSignal.refreshAll(statorCurrent, supplyCurrent, spindexerRPS);
-    Logger.recordOutput("SpindexerSubsystem/VelocityRPS", spindexerRPS.getValueAsDouble());
-    Logger.recordOutput("SpindexerSubsystem/StatorCurrent", statorCurrent.getValueAsDouble());
-    Logger.recordOutput("SpindexerSubsystem/SupplyCurrent", supplyCurrent.getValueAsDouble());
-    // Log stuff
-    statorCurrentLog.append(statorCurrent.getValueAsDouble());
-    supplyCurrentLog.append(supplyCurrent.getValueAsDouble());
+
+    io.updateInputs(inputs);
+
+    SmartDashboard.putNumber("SpindexerSubsystem/VelocityRPS", inputs.velocityRPS);
+
+    //log stuff
+    velocityLog.append(inputs.velocityRPS);
+    statorCurrentLog.append(inputs.statorCurrentAmps);
+    supplyCurrentLog.append(inputs.supplyCurrentAmps);
   }
 }
