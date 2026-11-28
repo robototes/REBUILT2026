@@ -7,21 +7,30 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Subsystems;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.lib.BLine.Path.PathElement;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.AllianceUtils;
 import frc.robot.util.LoggedAutoChooser;
+
+import static edu.wpi.first.units.Units.Meters;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -46,11 +55,15 @@ public class Autos {
   private final List<Path> paths = new ArrayList<>();
   public final Map<String, List<Path>> pathsMap = new LinkedHashMap<>();
 
+
   // ============= BLINE PATHS =============
 
   private final Path Path1 = new Path("FirstNeutralTrench");
   private final Path Path2 = new Path("SecondNeutralTrench");
   private final Path Path3 = new Path("default");
+    private final TunedPath tunedPath1 = TunedPath.of("FirstNeutralTrench", 0.15);
+  private final TunedPath tunedPath2 = TunedPath.of("SecondNeutralTrench", 0.15);
+  private final TunedPath tunedPath3 = TunedPath.of("default", 0.15);
   private final Field2d field = new Field2d();
 
   public Supplier<Pose2d> TRENCH_START_LEFT;
@@ -164,7 +177,7 @@ public class Autos {
         () ->
             Commands.sequence(
                 Commands.waitSeconds(getDelay()),
-                buildPath(Path3, true),
+              followUntil(TunedPath.getPath(tunedPath3),Meters.of(TunedPath.getHandOffThreshold(tunedPath3)), true),
                 AutosCommands.launcherCommand(systems)));
 
     autoChooser.addCmd(
@@ -172,7 +185,7 @@ public class Autos {
         () ->
             Commands.sequence(
                 Commands.waitSeconds(getDelay()),
-                buildPath(Path1, true),
+                followUntil(TunedPath.getPath(tunedPath1),Meters.of(TunedPath.getHandOffThreshold(tunedPath1)), true),
                 AutosCommands.launcherCommand(systems)));
 
     autoChooser.addCmd(
@@ -180,9 +193,9 @@ public class Autos {
         () ->
             Commands.sequence(
                 Commands.waitSeconds(getDelay()),
-                buildPath(Path1, true),
+                 followUntil(TunedPath.getPath(tunedPath1),Meters.of(TunedPath.getHandOffThreshold(tunedPath1)), true),
                 AutosCommands.launcherCommand(5, systems),
-                buildPath(Path2, false),
+                 followUntil(TunedPath.getPath(tunedPath2),Meters.of(TunedPath.getHandOffThreshold(tunedPath2)), true),
                 AutosCommands.launcherCommand(systems)));
 
     autosRegistered = true;
@@ -236,6 +249,12 @@ public class Autos {
 
   // ============= AUTO BUILDER HELPERS =============s
 
+  private FollowPath getFollowPath(Path path, boolean resetPose) {
+
+
+    return (resetPose ? pathBuilder : noResetPathBuilder).build(path);
+  }
+
   private Command buildPath(Path path, boolean resetPose) {
     if (systems == null || pathBuilder == null || noResetPathBuilder == null) {
       return Commands.none();
@@ -243,6 +262,7 @@ public class Autos {
 
     return (resetPose ? pathBuilder : noResetPathBuilder).build(path);
   }
+
 
   public boolean isMirrored() {
     return autoMirror.getAsBoolean();
@@ -252,4 +272,26 @@ public class Autos {
     double delay = autoDelayEntry.getDouble(0.0);
     return delay;
   }
+  protected Command followUntil(Path path, Distance threshold, boolean resetPose ) {
+        FollowPath pathCommand =  getFollowPath(path,resetPose);
+
+        return pathCommand.raceWith(
+            new WaitUntilCommand(() -> pathCommand.getRemainingPathDistanceMeters() < threshold.in(Units.Meters))
+        );
+    }
+
+
+
+
+     protected Command followUntil(TunedPath path, Distance threshold, boolean resetPose) {
+        FollowPath pathCommand =  getFollowPath(TunedPath.getPath(path),resetPose);
+
+        return pathCommand.raceWith(
+            new WaitUntilCommand(() -> pathCommand.getRemainingPathDistanceMeters() < threshold.in(Units.Meters))
+        );
+    }
+
+    protected Command resetPoseAtStart(Pose2d pose) {
+        return new InstantCommand(() -> systems.drivebaseSubsystem.resetPose(pose));
+    }
 }
